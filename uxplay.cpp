@@ -94,14 +94,12 @@ std::string find_mac() {
 
 void print_info(char *name) {
     printf("RPiPlay %s: An open-source AirPlay mirroring server for Raspberry Pi\n", VERSION);
-    printf("Usage: %s [-b (on|auto|off)] [-n name] [-a (hdmi|analog|off)]\n", name);
+    printf("Usage: %s [-n name]\n", name);
     printf("Options:\n");
-    printf("-n name               Specify the network name of the AirPlay server\n");
-    printf("-b (on|auto|off)      Show black background always, only during active connection, or never\n");
-    printf("-a (hdmi|analog|off)  Set audio output device\n");
-    printf("-l                    Enable low-latency mode (disables render clock)\n");
-    printf("-d                    Enable debug logging\n");
-    printf("-v/-h                 Displays this help and version information\n");
+    printf("-n name		Specify the network name of the AirPlay server\n");
+    printf("-a  	Turn audio off. Only video output\n");
+    printf("-d		Enable debug logging\n");
+    printf("-v/-h		Displays this help and version information\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -120,25 +118,8 @@ int main(int argc, char *argv[]) {
         if (arg == "-n") {
             if (i == argc - 1) continue;
             server_name = std::string(argv[++i]);
-        } else if (arg == "-b") {
-            // For backwards-compatibility, make just -b disable the background
-            if (i == argc - 1 || argv[i + 1][0] == '-') {
-                background = BACKGROUND_MODE_OFF;
-                continue;
-            }
-
-            std::string background_mode(argv[++i]);
-            background = background_mode == "off" ? BACKGROUND_MODE_OFF :
-                         background_mode == "auto" ? BACKGROUND_MODE_AUTO :
-                         BACKGROUND_MODE_ON;
         } else if (arg == "-a") {
-            if (i == argc - 1) continue;
-            std::string audio_device_name(argv[++i]);
-            audio_device = audio_device_name == "hdmi" ? AUDIO_DEVICE_HDMI :
-                           audio_device_name == "analog" ? AUDIO_DEVICE_ANALOG :
-                           AUDIO_DEVICE_NONE;
-        } else if (arg == "-l") {
-            low_latency = !low_latency;
+            audio_device = AUDIO_DEVICE_NONE;
         } else if (arg == "-d") {
             debug_log = !debug_log;
         } else if (arg == "-h" || arg == "-v") {
@@ -289,7 +270,7 @@ int stop_server() {
     raop_destroy(raop);
     dnssd_unregister_raop(dnssd);
     dnssd_unregister_airplay(dnssd);
-    audio_renderer_destroy(audio_renderer);
+    if (audio_renderer) audio_renderer_destroy(audio_renderer);
     video_renderer_destroy(video_renderer);
     return 0;
 }
