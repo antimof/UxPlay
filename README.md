@@ -8,7 +8,6 @@ Features:
 1. Video and audio are supported out of the box.
 3. Gstreamer decoding is plugin agnostic. Uses accelerated decoders if availible. VAAPI is preferable.
 4. Automatic screen orientation.
-5. No source timesync by now.
 
 Building:
 1. sudo apt-get install cmake
