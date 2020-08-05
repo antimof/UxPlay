@@ -14,5 +14,5 @@ add_subdirectory(renderers)
 add_executable( uxplay uxplay.cpp)
 target_link_libraries ( uxplay renderers airplay )
 
-install(PROGRAMS uxplay DESTINATION bin)
+install(TARGETS uxplay DESTINATION bin)
 
