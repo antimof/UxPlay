@@ -17,3 +17,11 @@ Building:
 5. cd build
 6. cmake ..
 7. make
+
+Building on Fedora:
+1. sudo dnf install cmake openssl-devel avahi-compat-libdns_sd-devel gstreamer1-devel gstreamer1-plugins-base-devel  gstreamer1-libav 
+2. sudo dnf install gstreamer1-vaapi
+3. mkdir build
+4. cd build 
+5. cmake ..
+6. make
