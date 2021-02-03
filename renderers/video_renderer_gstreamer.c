@@ -21,6 +21,13 @@
 #include <assert.h>
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <stdio.h>
+
+Display* display;
+Window root, my_window;
+const char* application_name = "UXPLAY";
 
 struct video_renderer_s {
     logger_t *logger;
@@ -49,7 +56,38 @@ static gboolean check_plugins (void)
   return ret;
 }
 
+Window enum_windows(Display* display, Window window, int depth) {
+  int i;
+
+  XTextProperty text;
+  XGetWMName(display, window, &text);
+  char* name;
+  XFetchName(display, window, &name);
+
+  if (name != 0 && strcmp(application_name, name) == 0) {
+	return window;
+  }
+
+  Window _root, parent;
+  Window* children;
+  int n;
+  XQueryTree(display, window, &_root, &parent, &children, &n);
+  if (children != NULL) {
+    for (i = 0; i < n; i++) {
+      Window w = enum_windows(display, children[i], depth + 1);
+      if (w != NULL) return w;
+    }
+    XFree(children);
+  }
+
+  return NULL;
+}
+
+
 video_renderer_t *video_renderer_init(logger_t *logger, background_mode_t background_mode, bool low_latency) {
+    display = XOpenDisplay(NULL);
+    root = XDefaultRootWindow(display);
+
     video_renderer_t *renderer;
     GError *error = NULL;
 
@@ -57,6 +95,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, background_mode_t backgr
     assert(renderer);
 
     gst_init(NULL, NULL);
+    g_set_application_name(application_name);
 
     renderer->logger = logger;
     
@@ -88,10 +127,20 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
     GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
     gst_buffer_fill(buffer, 0, data, data_len);
     gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
+
+    if (my_window == NULL) {
+	    my_window = enum_windows(display, root, 0);
+	    if (my_window != NULL) {
+		    char* str = "UxPlay";
+		    Atom _NET_WM_NAME = XInternAtom(display, "_NET_WM_NAME", 0);
+		    Atom UTF8_STRING = XInternAtom(display, "UTF8_STRING", 0);
+		    XChangeProperty(display, my_window, _NET_WM_NAME, UTF8_STRING, 8, 0, str, strlen(str));
+		    XSync(display, False);
+	    }
+    }
 }
 
 void video_renderer_flush(video_renderer_t *renderer) {
-
 }
 
 void video_renderer_destroy(video_renderer_t *renderer) {
@@ -104,5 +153,4 @@ void video_renderer_destroy(video_renderer_t *renderer) {
 }
 
 void video_renderer_update_background(video_renderer_t *renderer, int type) {
-
 }
