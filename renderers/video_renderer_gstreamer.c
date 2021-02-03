@@ -131,7 +131,7 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
     if (my_window == NULL) {
 	    my_window = enum_windows(display, root, 0);
 	    if (my_window != NULL) {
-		    char* str = "NEW NAME";
+		    char* str = "UxPlay";
 		    Atom _NET_WM_NAME = XInternAtom(display, "_NET_WM_NAME", 0);
 		    Atom UTF8_STRING = XInternAtom(display, "UTF8_STRING", 0);
 		    XChangeProperty(display, my_window, _NET_WM_NAME, UTF8_STRING, 8, 0, str, strlen(str));
