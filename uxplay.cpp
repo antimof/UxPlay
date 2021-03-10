@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sys/utsname.h> // uname(read hostname)
 
 #include "log.h"
 #include "lib/raop.h"
@@ -102,6 +103,18 @@ void print_info(char *name) {
     printf("-v/-h		Displays this help and version information\n");
 }
 
+/* read the mashines hostname an write it into name */
+void get_hostname(std::string& name) {
+    struct utsname buf;
+    int res = uname(&buf);
+    if(res) {
+        //error
+        printf("could not read hostname: %d %s\n", res, strerror(res));
+        return;
+    }
+    name = buf.nodename;
+}
+
 int main(int argc, char *argv[]) {
     init_signals();
 
@@ -111,6 +124,8 @@ int main(int argc, char *argv[]) {
     audio_device_t audio_device = DEFAULT_AUDIO_DEVICE;
     bool low_latency = DEFAULT_LOW_LATENCY;
     bool debug_log = DEFAULT_DEBUG_LOG;
+
+    get_hostname(server_name);
 
     // Parse arguments
     for (int i = 1; i < argc; i++) {
