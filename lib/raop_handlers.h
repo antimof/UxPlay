@@ -15,11 +15,11 @@
 /* This file should be only included from raop.c as it defines static handler
  * functions and depends on raop internals */
 
-#include "plist/plist/plist.h"
 #include "dnssdint.h"
 #include "utils.h"
 #include <ctype.h>
 #include <stdlib.h>
+#include <plist/plist.h>
 
 typedef void (*raop_handler_t)(raop_conn_t *, http_request_t *,
                                http_response_t *, char **, int *);
@@ -169,7 +169,7 @@ raop_handler_pairsetup(raop_conn_t *conn,
                        http_request_t *request, http_response_t *response,
                        char **response_data, int *response_datalen)
 {
-    unsigned char public_key[32];
+    unsigned char public_key[ED25519_KEY_SIZE];
     const char *data;
     int datalen;
 
@@ -198,8 +198,8 @@ raop_handler_pairverify(raop_conn_t *conn,
     if (pairing_session_check_handshake_status(conn->pairing)) {
         return;
     }
-    unsigned char public_key[32];
-    unsigned char signature[64];
+    unsigned char public_key[X25519_KEY_SIZE];
+    unsigned char signature[PAIRING_SIG_SIZE];
     const unsigned char *data;
     int datalen;
 
@@ -210,12 +210,12 @@ raop_handler_pairverify(raop_conn_t *conn,
     }
     switch (data[0]) {
         case 1:
-            if (datalen != 4 + 32 + 32) {
+            if (datalen != 4 + X25519_KEY_SIZE + X25519_KEY_SIZE) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
                 return;
             }
             /* We can fall through these errors, the result will just be garbage... */
-            if (pairing_session_handshake(conn->pairing, data + 4, data + 4 + 32)) {
+            if (pairing_session_handshake(conn->pairing, data + 4, data + 4 + X25519_KEY_SIZE)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error initializing pair-verify handshake");
             }
             if (pairing_session_get_public_key(conn->pairing, public_key)) {
@@ -233,7 +233,7 @@ raop_handler_pairverify(raop_conn_t *conn,
             }
             break;
         case 0:
-            if (datalen != 4 + 64) {
+            if (datalen != 4 + PAIRING_SIG_SIZE) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
                 return;
             }
@@ -363,7 +363,7 @@ raop_handler_setup(raop_conn_t *conn,
         // ekey is 72 bytes, aeskey is 16 bytes
         int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
-        unsigned char ecdh_secret[32];
+        unsigned char ecdh_secret[X25519_KEY_SIZE];
         pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret);
 
         // Time port
@@ -478,12 +478,11 @@ raop_handler_get_parameter(raop_conn_t *conn,
     if (!strcmp(content_type, "text/parameters")) {
         const char *current = data;
 
-        while (current) {
+        while (current && (datalen - (current - data) > 0)) {
             const char *next;
-            int handled = 0;
 
             /* This is a bit ugly, but seems to be how airport works too */
-            if (!strncmp(current, "volume\r\n", 8)) {
+            if ((datalen - (current - data) >= 8) && !strncmp(current, "volume\r\n", 8)) {
                 const char volume[] = "volume: 0.0\r\n";
 
                 http_response_add_header(response, "Content-Type", "text/parameters");
@@ -491,15 +490,18 @@ raop_handler_get_parameter(raop_conn_t *conn,
                 if (*response_data) {
                     *response_datalen = strlen(*response_data);
                 }
-                handled = 1;
+                return;
             }
 
-            next = strstr(current, "\r\n");
-            if (next && !handled) {
-                logger_log(conn->raop->logger, LOGGER_WARNING,
-                           "Found an unknown parameter: %.*s", (next - current), current);
-                current = next + 2;
-            } else if (next) {
+            for (next = current ; (datalen - (next - data) > 0) ; ++next)
+                if (*next == '\r')
+                    break;
+
+            if ((datalen - (next - data) >= 2) && !strncmp(next, "\r\n", 2)) {
+                if ((next - current) > 0) {
+                    logger_log(conn->raop->logger, LOGGER_WARNING,
+                               "Found an unknown parameter: %.*s", (next - current), current);
+                }
                 current = next + 2;
             } else {
                 current = NULL;
@@ -524,11 +526,11 @@ raop_handler_set_parameter(raop_conn_t *conn,
         datastr = calloc(1, datalen+1);
         if (data && datastr && conn->raop_rtp) {
             memcpy(datastr, data, datalen);
-            if (!strncmp(datastr, "volume: ", 8)) {
+            if ((datalen >= 8) && !strncmp(datastr, "volume: ", 8)) {
                 float vol = 0.0;
                 sscanf(datastr+8, "%f", &vol);
                 raop_rtp_set_volume(conn->raop_rtp, vol);
-            } else if (!strncmp(datastr, "progress: ", 10)) {
+            } else if ((datalen >= 10) && !strncmp(datastr, "progress: ", 10)) {
                 unsigned int start, curr, end;
                 sscanf(datastr+10, "%u/%u/%u", &start, &curr, &end);
                 raop_rtp_set_progress(conn->raop_rtp, start, curr, end);

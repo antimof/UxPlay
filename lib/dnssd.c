@@ -215,7 +215,7 @@ dnssd_init(const char* name, int name_len, const char* hw_addr, int hw_addr_len,
 #endif
 
     dnssd->name_len = name_len;
-    dnssd->name = calloc(1, name_len);
+    dnssd->name = calloc(1, name_len + 1);
     if (!dnssd->name) {
         free(dnssd);
         if (error) *error = DNSSD_ERROR_OUTOFMEM;
