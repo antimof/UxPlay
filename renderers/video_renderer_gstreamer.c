@@ -29,26 +29,26 @@ struct video_renderer_s {
 
 static gboolean check_plugins (void)
 {
-  int i;
-  gboolean ret;
-  GstRegistry *registry;
-  const gchar *needed[] = { "app", "libav", "playback", "autodetect", NULL};
+    int i;
+    gboolean ret;
+    GstRegistry *registry;
+    const gchar *needed[] = { "app", "libav", "playback", "autodetect", NULL};
 
-  registry = gst_registry_get ();
-  ret = TRUE;
-  for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
-    GstPlugin *plugin;
-    plugin = gst_registry_find_plugin (registry, needed[i]);
-    if (!plugin) {
-      g_print ("Required gstreamer plugin '%s' not found\n", needed[i]);
-      ret = FALSE;
-      continue;
+    registry = gst_registry_get ();
+    ret = TRUE;
+    for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
+        GstPlugin *plugin;
+        plugin = gst_registry_find_plugin (registry, needed[i]);
+        if (!plugin) {
+            g_print ("Required gstreamer plugin '%s' not found\n", needed[i]);
+            ret = FALSE;
+            continue;
+        }
+        gst_object_unref (plugin);
     }
-    gst_object_unref (plugin);
-  }
-  return ret;
+    return ret;
 }
-
+  
 video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name) {
     video_renderer_t *renderer;
     GError *error = NULL;
@@ -58,7 +58,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name)
 
     gst_init(NULL, NULL);
     g_set_application_name(server_name);
-    
+ 
     renderer->logger = logger;
      
     assert(check_plugins ());
@@ -69,7 +69,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name)
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
-    
+
     return renderer;
 }
 
@@ -106,4 +106,4 @@ void video_renderer_destroy(video_renderer_t *renderer) {
 /* not implemented for gstreamer */
 void video_renderer_update_background(video_renderer_t *renderer, int type) {
 
-}  
+}
