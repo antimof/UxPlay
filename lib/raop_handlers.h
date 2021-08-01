@@ -134,10 +134,10 @@ raop_handler_info(raop_conn_t *conn,
     plist_t displays_0_uuid_node = plist_new_string("e0ff8a27-6738-3d56-8a16-cc53aacee925");
     plist_t displays_0_width_physical_node = plist_new_uint(0);
     plist_t displays_0_height_physical_node = plist_new_uint(0);
-    plist_t displays_0_width_node = plist_new_uint(1920);
-    plist_t displays_0_height_node = plist_new_uint(1080);
-    plist_t displays_0_width_pixels_node = plist_new_uint(1920);
-    plist_t displays_0_height_pixels_node = plist_new_uint(1080);
+    plist_t displays_0_width_node = plist_new_uint(conn->raop->display_width);
+    plist_t displays_0_height_node = plist_new_uint(conn->raop->display_height);
+    plist_t displays_0_width_pixels_node = plist_new_uint(conn->raop->display_width);
+    plist_t displays_0_height_pixels_node = plist_new_uint(conn->raop->display_height);
     plist_t displays_0_rotation_node = plist_new_bool(0);
     plist_t displays_0_refresh_rate_node = plist_new_real(1.0 / 60.0);
     plist_t displays_0_overscanned_node = plist_new_bool(1);
@@ -372,12 +372,14 @@ raop_handler_setup(raop_conn_t *conn,
         plist_get_uint_val(time_note, &timing_rport);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "timing_rport = %llu", timing_rport);
 
-        unsigned short timing_lport;
+        unsigned short timing_lport = conn->raop->timing_lport;
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, conn->remote, conn->remotelen, timing_rport);
         raop_ntp_start(conn->raop_ntp, &timing_lport);
 
-        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, aesiv, ecdh_secret);
-        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, ecdh_secret);
+        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote,conn->remotelen,
+                                       aeskey, aesiv, ecdh_secret, conn->raop->control_lport, conn->raop->data_lport);
+        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen,
+                                                     aeskey, ecdh_secret, conn->raop->mirror_data_lport);
 
         plist_t res_event_port_node = plist_new_uint(conn->raop->port);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);
