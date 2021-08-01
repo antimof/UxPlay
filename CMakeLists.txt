@@ -4,6 +4,8 @@ project(uxplay)
 
 set (CMAKE_CXX_STANDARD 11)
 
+add_definitions(-DAVAHI_COMPAT_NOWARN)
+
 find_package(X11 REQUIRED)
 link_libraries(${X11_LIBRARIES})
 include_directories(${X11_INCLUDE_DIR})

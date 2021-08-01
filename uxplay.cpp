@@ -106,6 +106,12 @@ int main(int argc, char *argv[]) {
     bool use_audio = true;
     bool debug_log = DEFAULT_DEBUG_LOG;
 
+#ifdef AVAHI_COMPAT_NOWARN
+    //suppress avahi_compat nag message
+    char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN==1";
+    putenv(avahi_compat_nowarn);
+#endif
+    
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
