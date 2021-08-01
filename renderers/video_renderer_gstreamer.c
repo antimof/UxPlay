@@ -21,6 +21,12 @@
 #include <assert.h>
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <stdio.h>
+
+Display* display;
+Window root, my_window;
 
 struct video_renderer_s {
     logger_t *logger;
@@ -48,8 +54,38 @@ static gboolean check_plugins (void)
     }
     return ret;
 }
-  
+
+Window enum_windows(Display* display, Window window, int depth) {
+    int i;
+
+    XTextProperty text;
+    XGetWMName(display, window, &text);
+    char* name;
+    XFetchName(display, window, &name);
+
+    if (name != 0 &&  strcmp((const char*) g_get_application_name(), name) == 0) {
+        return window;
+      }
+
+    Window _root, parent;
+    Window* children;
+    unsigned int n;
+    XQueryTree(display, window, &_root, &parent, &children, &n);
+    if (children != NULL) {
+      for (i = 0; i < n; i++) {
+            Window w = enum_windows(display, children[i], depth + 1);
+            if (w) return w;
+        }
+        XFree(children);
+    }
+
+    return (Window) NULL;
+}
+
 video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name) {
+    display = XOpenDisplay(NULL);
+    root = XDefaultRootWindow(display);  
+
     video_renderer_t *renderer;
     GError *error = NULL;
 
@@ -88,6 +124,17 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
     GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
     gst_buffer_fill(buffer, 0, data, data_len);
     gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
+
+    if (!my_window) {
+        my_window = enum_windows(display, root, 0);
+        if (my_window) {
+	    const char* str = g_get_application_name();
+            Atom _NET_WM_NAME = XInternAtom(display, "_NET_WM_NAME", 0);
+            Atom UTF8_STRING = XInternAtom(display, "UTF8_STRING",0);
+            XChangeProperty(display, my_window, _NET_WM_NAME, UTF8_STRING, 8, 0, (const unsigned char *) str, strlen(str));
+            XSync(display, False);
+        }
+    }
 }
 
 void video_renderer_flush(video_renderer_t *renderer) {
@@ -105,5 +152,4 @@ void video_renderer_destroy(video_renderer_t *renderer) {
 
 /* not implemented for gstreamer */
 void video_renderer_update_background(video_renderer_t *renderer, int type) {
-
 }
