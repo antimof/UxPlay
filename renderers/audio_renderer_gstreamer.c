@@ -51,7 +51,7 @@ static gboolean check_plugins (void)
   return ret;
 }
 
-audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer, audio_device_t device, bool low_latency) {
+audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer) {
     audio_renderer_t *renderer;
     GError *error = NULL;
 

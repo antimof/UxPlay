@@ -49,7 +49,7 @@ static gboolean check_plugins (void)
   return ret;
 }
 
-video_renderer_t *video_renderer_init(logger_t *logger, background_mode_t background_mode, bool low_latency) {
+video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name) {
     video_renderer_t *renderer;
     GError *error = NULL;
 
@@ -57,19 +57,19 @@ video_renderer_t *video_renderer_init(logger_t *logger, background_mode_t backgr
     assert(renderer);
 
     gst_init(NULL, NULL);
-
-    renderer->logger = logger;
+    g_set_application_name(server_name);
     
+    renderer->logger = logger;
+     
     assert(check_plugins ());
 
     renderer->pipeline = gst_parse_launch("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
     "queue ! decodebin ! videoconvert ! autovideosink name=video_sink sync=false", &error);
     g_assert (renderer->pipeline);
 
-
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
-
+    
     return renderer;
 }
 
@@ -103,6 +103,7 @@ void video_renderer_destroy(video_renderer_t *renderer) {
     }
 }
 
+/* not implemented for gstreamer */
 void video_renderer_update_background(video_renderer_t *renderer, int type) {
 
-}
+}  

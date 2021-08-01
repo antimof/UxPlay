@@ -36,14 +36,10 @@
 #define VERSION "1.2"
 
 #define DEFAULT_NAME "UxPlay"
-#define DEFAULT_BACKGROUND_MODE BACKGROUND_MODE_ON
-#define DEFAULT_AUDIO_DEVICE AUDIO_DEVICE_HDMI
-#define DEFAULT_LOW_LATENCY false
 #define DEFAULT_DEBUG_LOG false
 #define DEFAULT_HW_ADDRESS { (char) 0x48, (char) 0x5d, (char) 0x60, (char) 0x7c, (char) 0xee, (char) 0x22 }
 
-int start_server(std::vector<char> hw_addr, std::string name, background_mode_t background_mode,
-                 audio_device_t audio_device, bool low_latency, bool debug_log);
+int start_server(std::vector<char> hw_addr, std::string name, bool use_audio,  bool debug_log);
 
 int stop_server();
 
@@ -105,11 +101,9 @@ void print_info(char *name) {
 int main(int argc, char *argv[]) {
     init_signals();
 
-    background_mode_t background = DEFAULT_BACKGROUND_MODE;
     std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr = DEFAULT_HW_ADDRESS;
-    audio_device_t audio_device = DEFAULT_AUDIO_DEVICE;
-    bool low_latency = DEFAULT_LOW_LATENCY;
+    bool use_audio = true;
     bool debug_log = DEFAULT_DEBUG_LOG;
 
     // Parse arguments
@@ -119,7 +113,7 @@ int main(int argc, char *argv[]) {
             if (i == argc - 1) continue;
             server_name = std::string(argv[++i]);
         } else if (arg == "-a") {
-            audio_device = AUDIO_DEVICE_NONE;
+            use_audio = false;
         } else if (arg == "-d") {
             debug_log = !debug_log;
         } else if (arg == "-h" || arg == "-v") {
@@ -134,7 +128,7 @@ int main(int argc, char *argv[]) {
         parse_hw_addr(mac_address, server_hw_addr);
     }
 
-    if (start_server(server_hw_addr, server_name, background, audio_device, low_latency, debug_log) != 0) {
+    if (start_server(server_hw_addr, server_name,  use_audio, debug_log) != 0) {
         return 1;
     }
 
@@ -204,8 +198,7 @@ extern "C" void log_callback(void *cls, int level, const char *msg) {
 
 }
 
-int start_server(std::vector<char> hw_addr, std::string name, background_mode_t background_mode,
-                 audio_device_t audio_device, bool low_latency, bool debug_log) {
+int start_server(std::vector<char> hw_addr, std::string name, bool use_audio, bool debug_log) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -229,16 +222,14 @@ int start_server(std::vector<char> hw_addr, std::string name, background_mode_t 
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
-    if (low_latency) logger_log(render_logger, LOGGER_INFO, "Using low-latency mode");
-
-    if ((video_renderer = video_renderer_init(render_logger, background_mode, low_latency)) == NULL) {
+    if ((video_renderer = video_renderer_init(render_logger, name.c_str())) == NULL) {
         LOGE("Could not init video renderer");
         return -1;
     }
 
-    if (audio_device == AUDIO_DEVICE_NONE) {
+    if (! use_audio) {
         LOGI("Audio disabled");
-    } else if ((audio_renderer = audio_renderer_init(render_logger, video_renderer, audio_device, low_latency)) ==
+    } else if ((audio_renderer = audio_renderer_init(render_logger, video_renderer)) ==
                NULL) {
         LOGE("Could not init audio renderer");
         return -1;
