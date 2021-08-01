@@ -38,8 +38,12 @@
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define DEFAULT_HW_ADDRESS { (char) 0x48, (char) 0x5d, (char) 0x60, (char) 0x7c, (char) 0xee, (char) 0x22 }
+#define DEFAULT_DISPLAY_WIDTH 1920
+#define DEFAULT_DISPLAY_HEIGHT 1080
 
-int start_server(std::vector<char> hw_addr, std::string name, bool use_audio,  bool debug_log);
+
+int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+                 bool use_audio,  bool debug_log);
 
 int stop_server();
 
@@ -92,10 +96,31 @@ void print_info(char *name) {
     printf("RPiPlay %s: An open-source AirPlay mirroring server for Raspberry Pi\n", VERSION);
     printf("Usage: %s [-n name]\n", name);
     printf("Options:\n");
-    printf("-n name		Specify the network name of the AirPlay server\n");
-    printf("-a  	Turn audio off. Only video output\n");
-    printf("-d		Enable debug logging\n");
-    printf("-v/-h		Displays this help and version information\n");
+    printf("-n name  Specify the network name of the AirPlay server\n");
+    printf("-s wxh   Set display size: width w height h default 1920x1080\n"); 
+    printf("-a       Turn audio off. Only video output\n");
+    printf("-d	     Enable debug logging\n");
+    printf("-v/-h    Displays this help and version information\n");
+}
+
+bool  get_display_size(char *str, unsigned short *w, unsigned short *h) {
+// assume str  = wxh or wXh is valid if w and h are positive decimal integers with less than 5 digits.
+    char *str1 = str;
+    for (int i = 0; i <  strlen(str); i++) {
+        str1++;
+        if (str[i] == 'x' || str[i] == 'X') {
+            str[i] = '\0';
+        }
+    }
+    bool valid_size = (strlen(str) < 5 && strlen(str1) < 5 && strlen(str) && strlen(str1) );
+    if(valid_size) {
+        char *end;
+        *w = (unsigned short) strtoul(str, &end, 10);
+        if(*end || *w == 0) valid_size = false;
+        *h = (unsigned short) strtoul(str1, &end, 10);
+        if(*end || *h == 0) valid_size = false;
+    }
+    return valid_size;
 }
 
 int main(int argc, char *argv[]) {
@@ -105,6 +130,8 @@ int main(int argc, char *argv[]) {
     std::vector<char> server_hw_addr = DEFAULT_HW_ADDRESS;
     bool use_audio = true;
     bool debug_log = DEFAULT_DEBUG_LOG;
+    unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH, (unsigned short) DEFAULT_DISPLAY_HEIGHT };
+
 
 #ifdef AVAHI_COMPAT_NOWARN
     //suppress avahi_compat nag message
@@ -118,6 +145,18 @@ int main(int argc, char *argv[]) {
         if (arg == "-n") {
             if (i == argc - 1) continue;
             server_name = std::string(argv[++i]);
+        } else if (arg == "-s") {
+            if (i == argc - 1 || argv[i + 1][0] == '-') {
+                LOGI("%s missing argument, skipping\n", argv[i]);
+                continue;
+            }
+	    std::string value(argv[++i]);
+            if (!get_display_size(argv[i], &display_size[1], &display_size[2])) {
+                fprintf(stderr, "Error: \"-s %s\" is invalid; format is \"-s 1920x1080\" (numbers <= 4 digits)\n",value.c_str());
+                exit(1);
+            }
+        } else if (arg == "-p") {
+   
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
@@ -134,7 +173,7 @@ int main(int argc, char *argv[]) {
         parse_hw_addr(mac_address, server_hw_addr);
     }
 
-    if (start_server(server_hw_addr, server_name,  use_audio, debug_log) != 0) {
+        if (start_server(server_hw_addr, server_name, display_size, use_audio, debug_log) != 0) {
         return 1;
     }
 
@@ -204,7 +243,8 @@ extern "C" void log_callback(void *cls, int level, const char *msg) {
 
 }
 
-int start_server(std::vector<char> hw_addr, std::string name, bool use_audio, bool debug_log) {
+int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+                 bool use_audio, bool debug_log) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -243,6 +283,9 @@ int start_server(std::vector<char> hw_addr, std::string name, bool use_audio, bo
 
     if (video_renderer) video_renderer_start(video_renderer);
     if (audio_renderer) audio_renderer_start(audio_renderer);
+
+    /* write desired display pixel width, pixel height to raop (use 0 for default values) */
+    raop_set_display_size(raop, display_size[0], display_size[1]);
 
     unsigned short port = 0;
     raop_start(raop, &port);
