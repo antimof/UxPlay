@@ -37,7 +37,6 @@
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
-#define DEFAULT_HW_ADDRESS { (char) 0x48, (char) 0x5d, (char) 0x60, (char) 0x7c, (char) 0xee, (char) 0x22 }
 #define DEFAULT_DISPLAY_WIDTH 1920
 #define DEFAULT_DISPLAY_HEIGHT 1080
 #define LOWEST_ALLOWED_PORT 1023
@@ -95,6 +94,28 @@ std::string find_mac() {
     return mac_address;
 }
 
+#define MULTICAST 0
+#define LOCAL 1
+#define OCTETS 6
+std::string  random_mac() {
+    char str[3];
+    std::string mac_address = "";
+    int octet = rand()%64;
+    for (int i = 0; i < OCTETS; i++) {
+        if(i == 0) {
+            octet = (octet << 1) + LOCAL;
+            octet = (octet << 1) + MULTICAST;
+        } else {
+            octet =  rand()%256;
+            mac_address = mac_address + ":";
+        }
+        snprintf(str,3,"%02x",octet);
+        mac_address = mac_address + str;
+    }
+    return mac_address;
+}
+
+
 void print_info(char *name) {
     printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
@@ -102,7 +123,8 @@ void print_info(char *name) {
     printf("-n name  Specify the network name of the AirPlay server\n");
     printf("-s wxh   Set display size: width w height h default 1920x1080\n");
     printf("-p n     Use fixed UDP+TCP network ports n:n+1:n+2 > 1023\n");
-    printf("-p       Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n"); 
+    printf("-p       Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
+    printf("-r       use random MAC address (use for concurrent UxPlay's\n");
     printf("-a       Turn audio off. Only video output\n");
     printf("-d       Enable debug logging\n");
     printf("-v/-h    Displays this help and version information\n");
@@ -142,8 +164,9 @@ int main(int argc, char *argv[]) {
     init_signals();
 
     std::string server_name = DEFAULT_NAME;
-    std::vector<char> server_hw_addr = DEFAULT_HW_ADDRESS;
+    std::vector<char> server_hw_addr;
     bool use_audio = true;
+    bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH, (unsigned short) DEFAULT_DISPLAY_HEIGHT };
     unsigned short tcp[2] = {0}, udp[3] = {0};
@@ -188,6 +211,8 @@ int main(int argc, char *argv[]) {
                         argv[i], LOWEST_ALLOWED_PORT, HIGHEST_PORT);
                 exit(1);
             }
+        } else if (arg == "-r") {
+            use_random_hw_addr  = true;
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
@@ -202,13 +227,17 @@ int main(int argc, char *argv[]) {
 
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d\n",
 		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[1] + 1);
-    
-    std::string mac_address = find_mac();
-    if (!mac_address.empty()) {
-        server_hw_addr.clear();
-        parse_hw_addr(mac_address, server_hw_addr);
-    }
 
+    std::string mac_address;
+    if (!use_random_hw_addr) mac_address = find_mac();
+    if (mac_address.empty()) {
+        srand(time(NULL) * getpid());
+        mac_address = random_mac();
+        LOGI("using randomly-generated MAC address %s\n",mac_address.c_str());
+    }
+      
+    parse_hw_addr(mac_address, server_hw_addr);
+    
     if (start_server(server_hw_addr, server_name, display_size, tcp, udp, use_audio, debug_log) != 0) {
         return 1;
     }
