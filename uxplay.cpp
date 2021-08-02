@@ -33,7 +33,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.2"
+#define VERSION "1.3"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -124,14 +124,14 @@ void print_info(char *name) {
     printf("-s wxh   Set display size: width w height h default 1920x1080\n");
     printf("-p n     Use fixed UDP+TCP network ports n:n+1:n+2 > 1023\n");
     printf("-p       Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
-    printf("-r       use random MAC address (use for concurrent UxPlay's\n");
+    printf("-r       use random MAC address (use for concurrent UxPlay's)\n");
     printf("-a       Turn audio off. Only video output\n");
     printf("-d       Enable debug logging\n");
     printf("-v/-h    Displays this help and version information\n");
 }
 
 bool  get_display_size(char *str, unsigned short *w, unsigned short *h) {
-// assume str  = wxh or wXh is valid if w and h are positive decimal integers with less than 5 digits.
+    // assume str  = wxh or wXh is valid if w and h are positive decimal integers with less than 5 digits.
     char *str1 = str;
     for (int i = 0; i <  strlen(str); i++) {
         str1++;
@@ -139,15 +139,14 @@ bool  get_display_size(char *str, unsigned short *w, unsigned short *h) {
             str[i] = '\0';
         }
     }
-    bool valid_size = (strlen(str) < 5 && strlen(str1) < 5 && strlen(str) && strlen(str1) );
-    if(valid_size) {
-        char *end;
-        *w = (unsigned short) strtoul(str, &end, 10);
-        if(*end || *w == 0) valid_size = false;
-        *h = (unsigned short) strtoul(str1, &end, 10);
-        if(*end || *h == 0) valid_size = false;
-    }
-    return valid_size;
+    if (str1[0] == '-') return false;
+    if (strlen(str) > 5 || strlen(str1) > 5 || !strlen(str) || !strlen(str1)) return false;
+    char *end;
+    *w = (unsigned short) strtoul(str, &end, 10);
+    if(*end || *w == 0)  return false;
+    *h = (unsigned short) strtoul(str1, &end, 10);
+    if(*end || *h == 0) return false;
+    return true;
 }
 
 bool get_lowest_port(char *str, unsigned short *n) {
@@ -185,11 +184,11 @@ int main(int argc, char *argv[]) {
             server_name = std::string(argv[++i]);
         } else if (arg == "-s") {
             if (i == argc - 1 || argv[i + 1][0] == '-') {
-                LOGI("%s missing argument, skipping\n", argv[i]);
-                continue;
+                 fprintf(stderr,"invalid \"-s\" had no argument\n");
+                 exit(1);
             }
 	    std::string value(argv[++i]);
-            if (!get_display_size(argv[i], &display_size[1], &display_size[2])) {
+            if (!get_display_size(argv[i], &display_size[0], &display_size[1])) {
                 fprintf(stderr, "invalid \"-s %s\"; default is  \"-s 1920x1080\" (< 5 digits)\n",
                         value.c_str());
                 exit(1);
@@ -235,13 +234,12 @@ int main(int argc, char *argv[]) {
         mac_address = random_mac();
         LOGI("using randomly-generated MAC address %s\n",mac_address.c_str());
     }
-      
+
     parse_hw_addr(mac_address, server_hw_addr);
-    
+
     if (start_server(server_hw_addr, server_name, display_size, tcp, udp, use_audio, debug_log) != 0) {
         return 1;
     }
-
     running = true;
     while (running) {
         sleep(1);
