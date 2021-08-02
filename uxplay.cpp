@@ -44,7 +44,7 @@
 
 
 int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
-                 unsigned short tcp[2], unsigned short udp[3],
+                 unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio,  bool debug_log);
 
 int stop_server();
@@ -120,8 +120,9 @@ void print_info(char *name) {
     printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
-    printf("-n name  Specify the network name of the AirPlay server\n");
-    printf("-s wxh   Set display size: width w height h default 1920x1080\n");
+    printf("-n name   Specify the network name of the AirPlay server\n");
+    printf("-s wxh    Set display size: width w height h default 1920x1080\n");
+    printf("-f {H|V|R|L|I} horizontal/vertical flip; rotate 90R/90L/180 deg\n");
     printf("-p n     Use fixed UDP+TCP network ports n:n+1:n+2 > 1023\n");
     printf("-p       Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-r       use random MAC address (use for concurrent UxPlay's)\n");
@@ -159,6 +160,33 @@ bool get_lowest_port(char *str, unsigned short *n) {
     return true;
 }
 
+bool get_videoflip(char *str, videoflip_t *videoflip) {
+  char c = str[0];
+  printf(" %c |%s|  %d\n",c, str, strlen(str));
+
+  if(strlen(str) > 1) return false;
+  printf(" %c |%s|  %d\n",c, str, strlen(str));
+  switch (c) {
+    case 'L':
+        *videoflip = LEFT;
+        break;
+    case 'R':
+        *videoflip = RIGHT;
+        break;
+    case 'I':
+        *videoflip = INVERT;
+        break;
+    case 'H':
+        *videoflip = HFLIP;
+        break;
+    case 'V':
+        *videoflip = VFLIP;
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
 int main(int argc, char *argv[]) {
     init_signals();
 
@@ -169,7 +197,8 @@ int main(int argc, char *argv[]) {
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH, (unsigned short) DEFAULT_DISPLAY_HEIGHT };
     unsigned short tcp[2] = {0}, udp[3] = {0};
-
+    videoflip_t  videoflip = NONE;
+    
 #ifdef AVAHI_COMPAT_NOWARN
     //suppress avahi_compat nag message
     char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN==1";
@@ -187,10 +216,19 @@ int main(int argc, char *argv[]) {
                  fprintf(stderr,"invalid \"-s\" had no argument\n");
                  exit(1);
             }
-	    std::string value(argv[++i]);
+            std::string value(argv[++i]);
             if (!get_display_size(argv[i], &display_size[0], &display_size[1])) {
                 fprintf(stderr, "invalid \"-s %s\"; default is  \"-s 1920x1080\" (< 5 digits)\n",
                         value.c_str());
+                exit(1);
+            }
+        } else if (arg == "-f") {
+            if (i == argc - 1 || argv[i + 1][0] == '-') {
+                fprintf(stderr,"invalid \"f\" had no argument\n");
+                exit(1);
+            }
+            if (!get_videoflip(argv[++i], &videoflip)) {
+                fprintf(stderr,"invalid \"-f %s\" , unknown videoflip type\n",argv[i]);
                 exit(1);
             }
         } else if (arg == "-p") {
@@ -220,7 +258,7 @@ int main(int argc, char *argv[]) {
             print_info(argv[0]);
             exit(0);
         } else {
-	  LOGI("unknown option %s, skipping\n",argv[i]);
+            LOGI("unknown option %s, skipping\n",argv[i]);
         }
     }
 
@@ -237,7 +275,8 @@ int main(int argc, char *argv[]) {
 
     parse_hw_addr(mac_address, server_hw_addr);
 
-    if (start_server(server_hw_addr, server_name, display_size, tcp, udp, use_audio, debug_log) != 0) {
+    if (start_server(server_hw_addr, server_name, display_size, tcp, udp, videoflip,
+                     use_audio, debug_log) != 0) {
         return 1;
     }
     running = true;
@@ -307,7 +346,7 @@ extern "C" void log_callback(void *cls, int level, const char *msg) {
 }
 
 int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
-                 unsigned short tcp[2], unsigned short udp[3],
+                 unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio, bool debug_log) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
@@ -332,7 +371,7 @@ int start_server(std::vector<char> hw_addr, std::string name, unsigned short dis
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
-    if ((video_renderer = video_renderer_init(render_logger, name.c_str())) == NULL) {
+    if ((video_renderer = video_renderer_init(render_logger, name.c_str(), videoflip)) == NULL) {
         LOGE("Could not init video renderer");
         return -1;
     }
@@ -351,7 +390,7 @@ int start_server(std::vector<char> hw_addr, std::string name, unsigned short dis
     /* write desired display pixel width, pixel height to raop (use 0 for default values) */
     raop_set_display_size(raop, display_size[0], display_size[1]);
 
-    /* network port selection (use value 0 for dynamic assignment) */
+    /* network port selection (ports listed as "0" will dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
     raop_set_udp_ports(raop, udp);
 

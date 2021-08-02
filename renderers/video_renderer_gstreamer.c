@@ -53,7 +53,7 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name) {
+video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip) {
     video_renderer_t *renderer;
     GError *error = NULL;
 
@@ -71,8 +71,29 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name)
      
     assert(check_plugins ());
 
-    renderer->pipeline = gst_parse_launch("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
-    "queue ! decodebin ! videoconvert ! autovideosink name=video_sink sync=false", &error);
+    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
+                     "queue ! decodebin ! videoconvert ! ");
+
+    /* image transform */
+    switch (videoflip) {
+    case LEFT:
+        g_string_append(launch, "videoflip method=counterclockwise ! ");
+       break;
+    case RIGHT: 
+        g_string_append(launch, "videoflip method=clockwise ! ");
+        break;
+    case INVERT:
+        g_string_append(launch, "videoflip method=rotate-180 ! ");
+	break;
+    case HFLIP:
+        g_string_append(launch, "videoflip method=horizontal-flip ! ");
+      break;
+    case VFLIP:
+        g_string_append(launch, "videoflip method=vertical-flip ! ");
+     }
+    
+    g_string_append(launch, "autovideosink name=video_sink sync=false");
+    renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
