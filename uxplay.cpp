@@ -45,6 +45,7 @@
 
 
 int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+                 unsigned short tcp[2], unsigned short udp[3],
                  bool use_audio,  bool debug_log);
 
 int stop_server();
@@ -194,6 +195,8 @@ int main(int argc, char *argv[]) {
         } else if (arg == "-h" || arg == "-v") {
             print_info(argv[0]);
             exit(0);
+        } else {
+	  LOGI("unknown option %s, skipping\n",argv[i]);
         }
     }
 
@@ -206,7 +209,7 @@ int main(int argc, char *argv[]) {
         parse_hw_addr(mac_address, server_hw_addr);
     }
 
-        if (start_server(server_hw_addr, server_name, display_size, use_audio, debug_log) != 0) {
+    if (start_server(server_hw_addr, server_name, display_size, tcp, udp, use_audio, debug_log) != 0) {
         return 1;
     }
 
@@ -277,6 +280,7 @@ extern "C" void log_callback(void *cls, int level, const char *msg) {
 }
 
 int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+                 unsigned short tcp[2], unsigned short udp[3],
                  bool use_audio, bool debug_log) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
@@ -320,7 +324,11 @@ int start_server(std::vector<char> hw_addr, std::string name, unsigned short dis
     /* write desired display pixel width, pixel height to raop (use 0 for default values) */
     raop_set_display_size(raop, display_size[0], display_size[1]);
 
-    unsigned short port = 0;
+    /* network port selection (use value 0 for dynamic assignment) */
+    raop_set_tcp_ports(raop, tcp);
+    raop_set_udp_ports(raop, udp);
+
+    unsigned short port = raop_get_port(raop);
     raop_start(raop, &port);
     raop_set_port(raop, port);
 
