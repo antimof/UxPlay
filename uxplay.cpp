@@ -40,6 +40,8 @@
 #define DEFAULT_HW_ADDRESS { (char) 0x48, (char) 0x5d, (char) 0x60, (char) 0x7c, (char) 0xee, (char) 0x22 }
 #define DEFAULT_DISPLAY_WIDTH 1920
 #define DEFAULT_DISPLAY_HEIGHT 1080
+#define LOWEST_ALLOWED_PORT 1023
+#define HIGHEST_PORT 65535
 
 
 int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
@@ -93,13 +95,15 @@ std::string find_mac() {
 }
 
 void print_info(char *name) {
-    printf("RPiPlay %s: An open-source AirPlay mirroring server for Raspberry Pi\n", VERSION);
-    printf("Usage: %s [-n name]\n", name);
+    printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
+    printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
     printf("-n name  Specify the network name of the AirPlay server\n");
-    printf("-s wxh   Set display size: width w height h default 1920x1080\n"); 
+    printf("-s wxh   Set display size: width w height h default 1920x1080\n");
+    printf("-p n     Use fixed UDP+TCP network ports n:n+1:n+2 > 1023\n");
+    printf("-p       Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n"); 
     printf("-a       Turn audio off. Only video output\n");
-    printf("-d	     Enable debug logging\n");
+    printf("-d       Enable debug logging\n");
     printf("-v/-h    Displays this help and version information\n");
 }
 
@@ -123,6 +127,16 @@ bool  get_display_size(char *str, unsigned short *w, unsigned short *h) {
     return valid_size;
 }
 
+bool get_lowest_port(char *str, unsigned short *n) {
+    if (strlen(str) > 5) return false;
+    char *end;
+    long l = strtoul(str, &end, 10);
+    if  (*end) return false;
+    if (l < LOWEST_ALLOWED_PORT || l > HIGHEST_PORT - 2 ) return false;
+    *n = (unsigned short) l;
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     init_signals();
 
@@ -131,7 +145,7 @@ int main(int argc, char *argv[]) {
     bool use_audio = true;
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH, (unsigned short) DEFAULT_DISPLAY_HEIGHT };
-
+    unsigned short tcp[2] = {0}, udp[3] = {0};
 
 #ifdef AVAHI_COMPAT_NOWARN
     //suppress avahi_compat nag message
@@ -152,11 +166,27 @@ int main(int argc, char *argv[]) {
             }
 	    std::string value(argv[++i]);
             if (!get_display_size(argv[i], &display_size[1], &display_size[2])) {
-                fprintf(stderr, "Error: \"-s %s\" is invalid; format is \"-s 1920x1080\" (numbers <= 4 digits)\n",value.c_str());
+                fprintf(stderr, "invalid \"-s %s\"; default is  \"-s 1920x1080\" (< 5 digits)\n",
+                        value.c_str());
                 exit(1);
             }
         } else if (arg == "-p") {
-   
+            if (i == argc - 1 || argv[i + 1][0] == '-') {
+	        tcp[0] = 7100; tcp[1] = 7000;
+	        udp[0] = 7011; udp[1] = 6001; udp[2] = 6000;
+		continue;
+            }
+	    unsigned short n;
+	    if(get_lowest_port(argv[++i], &n)) {
+                for (int i = 0; i < 3; i++) {
+		    udp[i] = n++;
+                    if (i < 2) tcp[i] = udp[i];
+                }
+            } else {
+                fprintf(stderr, "Error: \"-p %s\" is invalid (%d-%d is allowed)\n", 
+                        argv[i], LOWEST_ALLOWED_PORT, HIGHEST_PORT);
+                exit(1);
+            }
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
@@ -167,6 +197,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d\n",
+		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[1] + 1);
+    
     std::string mac_address = find_mac();
     if (!mac_address.empty()) {
         server_hw_addr.clear();
