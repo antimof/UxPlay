@@ -97,12 +97,12 @@ std::string find_mac () {
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
-std::string  random_mac () {
+std::string random_mac () {
     char str[3];
     std::string mac_address = "";
     int octet = rand()%64;
     for (int i = 0; i < OCTETS; i++) {
-        if(i == 0) {
+        if (i == 0) {
             octet = (octet << 1) + LOCAL;
             octet = (octet << 1) + MULTICAST;
         } else {
@@ -131,18 +131,18 @@ void print_info (char *name) {
     printf("-v/-h     Displays this help and version information\n");
 }
 
-bool  get_display_size (char *str, unsigned short *w, unsigned short *h) {
+bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
     // assume str  = wxh is valid if w and h are positive decimal integers with less than 5 digits.
     char *str1 = strchr(str,'x');
-    if(str1 == NULL) return false;
+    if (str1 == NULL) return false;
     str1[0] = '\0'; str1++;
     if (str1[0] == '-') return false;
-    if (strlen (str) > 5 || strlen (str1) > 5 || !strlen (str) || !strlen (str1)) return false;
+    if (strlen(str) > 5 || strlen(str1) > 5 || !strlen(str) || !strlen(str1)) return false;
     char *end;
-    *w = (unsigned short) strtoul (str, &end, 10);
-    if(*end || *w == 0)  return false;
-    *h = (unsigned short) strtoul (str1, &end, 10);
-    if(*end || *h == 0) return false;
+    *w = (unsigned short) strtoul(str, &end, 10);
+    if (*end || *w == 0)  return false;
+    *h = (unsigned short) strtoul(str1, &end, 10);
+    if (*end || *h == 0) return false;
     return true;
 }
 
@@ -150,7 +150,7 @@ bool get_lowest_port (char *str, unsigned short *n) {
     if (strlen(str) > 5) return false;
     char *end;
     long l = strtoul(str, &end, 10);
-    if  (*end) return false;
+    if (*end) return false;
     if (l < LOWEST_ALLOWED_PORT || l > HIGHEST_PORT - 2 ) return false;
     *n = (unsigned short) l;
     return true;
@@ -158,7 +158,7 @@ bool get_lowest_port (char *str, unsigned short *n) {
 
 bool get_videoflip (char *str, videoflip_t *videoflip) {
     char c = str[0];
-    if(strlen(str) > 1) return false;
+    if (strlen(str) > 1) return false;
     switch (c) {
     case 'L':
         *videoflip = LEFT;
@@ -180,7 +180,7 @@ bool get_videoflip (char *str, videoflip_t *videoflip) {
     }
     return true;
 }
-int main  (int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
     init_signals();
 
     std::string server_name = DEFAULT_NAME;
