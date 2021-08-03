@@ -136,7 +136,7 @@ bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
     char *str1 = strchr(str,'x');
     if (str1 == NULL) return false;
     str1[0] = '\0'; str1++;
-    if (str1[0] == '-') return false;
+    if (str1[0] == '-') return false; // first character of str is never '-'
     if (strlen(str) > 5 || strlen(str1) > 5 || !strlen(str) || !strlen(str1)) return false;
     char *end;
     *w = (unsigned short) strtoul(str, &end, 10);
