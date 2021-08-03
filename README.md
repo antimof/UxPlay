@@ -10,12 +10,21 @@ Features:
 available. VAAPI is preferable. (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
-Getting it:  (after sudo apt-get-install git)
-git clone https://github.com/FDH2/UxPlay.git .  This is a pull request on the
-original site https://github.com/antimof/UxPlay.git ; it may or may not ever
-get committed into code on the original site, as the antimof project may no longer be active.
+Getting it:  (after sudo apt-get-install git):
 
-**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes).
+git clone https://github.com/FDH2/UxPlay.git   
+
+This is a pull request on the
+original site https://github.com/antimof/UxPlay.git ; it may or may not ever
+get committed into the codebase  on the original antimof site, as the antimof
+project may no longer be active.
+If it has been  committed, replace "FDH2" by "antimof" in the above.
+
+**Building this version** (Instructions for Ubuntu; adapt these for other
+  Linuxes).
+  
+In a terminal window, change directories to the UxPlay directory of the
+downloaded source code, then do
 
 1. sudo apt-get install cmake
 2. sudo apt-get install libssl-dev libavahi-compat-libdnssd-dev
@@ -25,8 +34,13 @@ libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreame
 4. mkdir build
 5. cd build
 6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get the screen-sharing fix)
+(or "cmake -DCHANGE_DISPLAY_NAME=ON .. " to get the display name change from
+"uxplay" to the AirPlay server_name  without
+applying ZOOMFIX)
 7. make
 8. sudo make install
+
+Run uxplay in a terminal widow.
 
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
 
@@ -51,8 +65,8 @@ components of RPiPlay that are the basis of  UxPlay.
 Options:
 **-n server_name **;  server_name will be the name that appears offering
 AirPlay services to your iPad, iPhone etc.
-**NEW**: this will also be the name on the mirror window, if "ZOOMFIX" is
-applied when compiling uxplay.
+**NEW**: this will also be the name on the mirror window, if one of "ZOOMFIX"  or
+"CHANGE_DISPLAY_NAME" is applied with cmake before  compiling uxplay.
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -100,7 +114,9 @@ is "UxPlay" (note capitals) by default, and which can be changed by starting
 uxplay with the -n option.
 To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
 (ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available, since starting with
-that release, the gstreamer mirror window will be visible to screen-sharers.)
+that release, the gstreamer mirror window will be visible to screen-sharers;
+if you have such a newer gstreamer, compile with "cmake
+-DCHANGE_DISPLAY_NAME=ON .." to get the ZOOMFIX behavior without applying ZOOMFIX.)
 (Thanks to David Ventura  https://github.com/DavidVentura/UxPlay for the fix
 and also for getting it into  gstreamer-1.20).
 
