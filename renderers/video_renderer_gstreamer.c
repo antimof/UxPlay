@@ -90,6 +90,9 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
       break;
     case VFLIP:
         g_string_append(launch, "videoflip method=vertical-flip ! ");
+    case NONE:
+    case default:
+        break;
      }
     
     g_string_append(launch, "autovideosink name=video_sink sync=false");
