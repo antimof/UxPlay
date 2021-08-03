@@ -10,7 +10,7 @@ Features:
 available. VAAPI is preferable. (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
-Getting it:  (after sudo apt-get-install git):
+Getting it: (after sudo apt-get-install git):
 
 git clone https://github.com/FDH2/UxPlay.git   
 
