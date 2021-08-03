@@ -264,7 +264,7 @@ raop_rtp_mirror_thread(void *arg)
 
             int payload_size = byteutils_get_int(packet, 0);
             unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
-            unsigned short payload_option = byteutils_get_short(packet, 6);
+            //unused unsigned short payload_option = byteutils_get_short(packet, 6);
 
             if (payload == NULL) {
                 payload = malloc(payload_size);
@@ -311,7 +311,7 @@ raop_rtp_mirror_thread(void *arg)
                 unsigned char* payload_decrypted = malloc(payload_size);
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
-                int nalu_type = payload[4] & 0x1f;
+                //int nalu_type = payload[4] & 0x1f;
                 int nalu_size = 0;
                 int nalus_count = 0;
 
