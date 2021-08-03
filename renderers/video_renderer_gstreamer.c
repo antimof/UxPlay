@@ -59,8 +59,11 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 
 #ifdef X_DISPLAY_FIX
     get_x_display_root();
-    g_set_application_name(server_name);
 #endif
+
+#ifdef CHANGE_DISPLAY_NAME
+    g_set_application_name(server_name);
+#endif    
 
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
@@ -68,7 +71,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     gst_init(NULL, NULL);
 
     renderer->logger = logger;
-     
+ 
     assert(check_plugins ());
 
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
