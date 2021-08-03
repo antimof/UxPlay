@@ -149,10 +149,9 @@ bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
 bool get_lowest_port (char *str, unsigned short *n) {
     if (strlen(str) > 5) return false;
     char *end;
-    long l = strtoul(str, &end, 10);
+    *n = (unsigned short) strtoul(str, &end, 10);  // first character of str is never '-'
     if (*end) return false;
-    if (l < LOWEST_ALLOWED_PORT || l > HIGHEST_PORT - 2 ) return false;
-    *n = (unsigned short) l;
+    if (*n < LOWEST_ALLOWED_PORT || *n > HIGHEST_PORT - 2 ) return false;
     return true;
 }
 
