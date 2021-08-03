@@ -32,9 +32,10 @@ libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreame
 
 **Troubleshooting:**
 
-If uxplay starts, but stalls, it is probably because a firewall is protecting
-the server on whic it is running.  It possible, either turn of the firewall,
-if possible, to see if that is the problem, or get three consecutive ports,
+If uxplay starts, but stalls after "Initialized server sockets(s)" appears,
+it is probably because a firewall is blocking
+access to the server on which it is running.  If possible, either turn off the firewall
+to see if that is the problem, or get three consecutive network ports,
 starting at port n, opened  for both tcp and udp, and use "uxplay -p n".
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
