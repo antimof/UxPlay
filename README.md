@@ -11,11 +11,11 @@ available. VAAPI is preferable. (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
 Getting it:  (after sudo apt-get-install git)
-git clone https://github.com/FDH2/UxPlay.git .  This is a pull request to the
+git clone https://github.com/FDH2/UxPlay.git .  This is a pull request on the
 original site https://github.com/antimof/UxPlay.git ; it may or may not ever
-get "pulled" into the original site, as the antimof site may no longer be active.
+get committed into code on the original site, as the antimof project may no longer be active.
 
-Building this version
+**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes).
 
 1. sudo apt-get install cmake
 2. sudo apt-get install libssl-dev libavahi-compat-libdnssd-dev
@@ -28,7 +28,24 @@ libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreame
 7. make
 8. sudo make install
 
-Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.
+**Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
+
+**Troubleshooting:**
+
+If uxplay starts, but stalls, it is probably because a firewall is protecting
+the server on whic it is running.  It possible, either turn of the firewall,
+if possible, to see if that is the problem, or get three consecutive ports,
+starting at port n, opened  for both tcp and udp, and use "uxplay -p n".
+
+Try "uxplay -d " (debug log option)  to see what is happening. If you use an
+nVidia graphics card, make sure that the gstreamer1.0-vaapi
+plugin for Intel graphics is *NOT* installed.
+
+See the RPiPlay site https://github.com/FD-/RPiPlay.git for details of the
+prehistory of this project.  This includes a list of all the authors of
+components of RPiPlay that are the basis of  UxPlay.
+
+**Usage:**
 
 Options:
 **-n server_name **;  server_name will be the name that appears offering
@@ -44,7 +61,7 @@ applied when compiling uxplay.
 **-p**    allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall)   By itself, -p sets
    "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
-   35000)  sets TCP and UDP ports n, n+1, n+2.  Ports must be in thye range
+   35000)  sets TCP and UDP ports n, n+1, n+2.  Ports must be in the range
    [1024-65535].
 
 If the -p option is not used, the ports are chosen dynamically (randomly),
@@ -77,12 +94,14 @@ lib llhttp for html parsing.
 the mirrored window is now visible to screen-sharing applications such as
 Zoom.     You can tell if the "ZOOMFIX"
 is working by examining the title bar on the mirror window:
-it will be "uxplay" without the fix, and be the AirPlay server_name, which
-is "UxPlay" (note capitals) by default, and can be changed with the -n option.
+it will be "uxplay" without the fix; with the fix it will be the AirPlay server_name, which
+is "UxPlay" (note capitals) by default, and which can be changed by starting
+uxplay with the -n option.
 To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
-(ZOOMFIX will not be needed once  gstreamer-1.20 is available, since this
-update will make the gstreamer mirror window visible to screen-sharers.)
-(Thanks to David Ventura  https://github.com/DavidVentura/UxPlay ).
+(ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available, since starting with
+that release, the gstreamer mirror window will be visible to screen-sharers.)
+(Thanks to David Ventura  https://github.com/DavidVentura/UxPlay for the fix
+and also for getting it into  gstreamer-1.20).
 
 4. The avahi_compat nag warning on startup is suppressed.
 
