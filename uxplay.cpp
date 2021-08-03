@@ -179,6 +179,7 @@ bool get_videoflip (char *str, videoflip_t *videoflip) {
     }
     return true;
 }
+
 int main (int argc, char *argv[]) {
     init_signals();
 
