@@ -100,13 +100,13 @@ std::string find_mac () {
 std::string random_mac () {
     char str[3];
     std::string mac_address = "";
-    int octet = rand()%64;
+    int octet = rand() % 64;
     for (int i = 0; i < OCTETS; i++) {
         if (i == 0) {
             octet = (octet << 1) + LOCAL;
             octet = (octet << 1) + MULTICAST;
         } else {
-            octet =  rand()%256;
+            octet =  rand() % 256;
             mac_address = mac_address + ":";
         }
         snprintf(str,3,"%02x",octet);
