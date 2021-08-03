@@ -87,7 +87,7 @@ at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
 adding all changes since the original release of UxPlay by antimof.
 This involved crypto updates, replacement
 of the included plist library by the system-installed version, and  a change to
-lib llhttp for html parsing. 
+lib llhttp for http parsing. 
 
 2. added The -p, -s, -r and -f options.
 
