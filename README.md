@@ -85,7 +85,7 @@ which will not work if a firewall is running.
 **-r**  generates a random MAC address to use instead of the true hardware MAC
    number of the computer's network card.   (Different server_name,  MAC
    addresses,  and network ports are needed for each running uxplay  if you
-   attempt to  run two instances of uxplay on thye same computer.)
+   attempt to  run two instances of uxplay on the same computer.)
 
 **-f {H|V|R|L|I} **  implements "videoflip"  image transforms: H = horizontal flip
 (right-left mirror); V = vertical flip (up-down mirror); R = 90 deg. clockwise
@@ -123,8 +123,8 @@ and also for getting it into  gstreamer-1.20).
 4. The avahi_compat nag warning on startup is suppressed.
 
 5.   In principle, multiple instances of uxplay can be run simultaneously
-using the -r "random MAC address" option to give each a different
-(randomly-chosen "local") MAC address.
+using the -r (generate random MAC  address) option to give each a
+different ("local" as opposed to "universal")  MAC address.
 If the -p option is used, they also need separate network port choices.
 (However, there may be a large latency, and running two instances of uxplay
 simultaneously may not be very useful.)
