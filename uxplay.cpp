@@ -39,7 +39,7 @@
 #define DEFAULT_DEBUG_LOG false
 #define DEFAULT_DISPLAY_WIDTH 1920
 #define DEFAULT_DISPLAY_HEIGHT 1080
-#define LOWEST_ALLOWED_PORT 1023
+#define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 
 
@@ -123,12 +123,12 @@ void print_info(char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-s wxh    Set display size: width w height h default 1920x1080\n");
     printf("-f {H|V|R|L|I} horizontal/vertical flip; rotate 90R/90L/180 deg\n");
-    printf("-p n     Use fixed UDP+TCP network ports n:n+1:n+2 > 1023\n");
-    printf("-p       Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
-    printf("-r       use random MAC address (use for concurrent UxPlay's)\n");
-    printf("-a       Turn audio off. Only video output\n");
-    printf("-d       Enable debug logging\n");
-    printf("-v/-h    Displays this help and version information\n");
+    printf("-p n      Use fixed UDP+TCP network ports n:n+1:n+2. (n>1023)\n");
+    printf("-p        Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
+    printf("-r        use random MAC address (use for concurrent UxPlay's)\n");
+    printf("-a        Turn audio off. video output only\n");
+    printf("-d        Enable debug logging\n");
+    printf("-v/-h     Displays this help and version information\n");
 }
 
 bool  get_display_size(char *str, unsigned short *w, unsigned short *h) {
@@ -161,12 +161,9 @@ bool get_lowest_port(char *str, unsigned short *n) {
 }
 
 bool get_videoflip(char *str, videoflip_t *videoflip) {
-  char c = str[0];
-  printf(" %c |%s|  %d\n",c, str, strlen(str));
-
-  if(strlen(str) > 1) return false;
-  printf(" %c |%s|  %d\n",c, str, strlen(str));
-  switch (c) {
+    char c = str[0];
+    if(strlen(str) > 1) return false;
+    switch (c) {
     case 'L':
         *videoflip = LEFT;
         break;
@@ -195,7 +192,8 @@ int main(int argc, char *argv[]) {
     bool use_audio = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
-    unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH, (unsigned short) DEFAULT_DISPLAY_HEIGHT };
+    unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH,
+                                       (unsigned short) DEFAULT_DISPLAY_HEIGHT };
     unsigned short tcp[2] = {0}, udp[3] = {0};
     videoflip_t  videoflip = NONE;
     
@@ -275,8 +273,8 @@ int main(int argc, char *argv[]) {
 
     parse_hw_addr(mac_address, server_hw_addr);
 
-    if (start_server(server_hw_addr, server_name, display_size, tcp, udp, videoflip,
-                     use_audio, debug_log) != 0) {
+    if (start_server(server_hw_addr, server_name, display_size, tcp, udp,
+                     videoflip,use_audio, debug_log) != 0) {
         return 1;
     }
     running = true;
@@ -390,7 +388,7 @@ int start_server(std::vector<char> hw_addr, std::string name, unsigned short dis
     /* write desired display pixel width, pixel height to raop (use 0 for default values) */
     raop_set_display_size(raop, display_size[0], display_size[1]);
 
-    /* network port selection (ports listed as "0" will dynamically assigned) */
+    /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
     raop_set_udp_ports(raop, udp);
 
