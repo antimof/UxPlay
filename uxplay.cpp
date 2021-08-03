@@ -43,11 +43,11 @@
 #define HIGHEST_PORT 65535
 
 
-int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+int start_server (std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio,  bool debug_log);
 
-int stop_server();
+int stop_server ();
 
 static bool running = false;
 static dnssd_t *dnssd = NULL;
@@ -55,7 +55,7 @@ static raop_t *raop = NULL;
 static video_renderer_t *video_renderer = NULL;
 static audio_renderer_t *audio_renderer = NULL;
 
-static void signal_handler(int sig) {
+static void signal_handler (int sig) {
     switch (sig) {
         case SIGINT:
         case SIGTERM:
@@ -64,7 +64,7 @@ static void signal_handler(int sig) {
     }
 }
 
-static void init_signals(void) {
+static void init_signals (void) {
     struct sigaction sigact;
 
     sigact.sa_handler = signal_handler;
@@ -74,14 +74,14 @@ static void init_signals(void) {
     sigaction(SIGTERM, &sigact, NULL);
 }
 
-static int parse_hw_addr(std::string str, std::vector<char> &hw_addr) {
+static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     for (int i = 0; i < str.length(); i += 3) {
         hw_addr.push_back((char) stol(str.substr(i), NULL, 16));
     }
     return 0;
 }
 
-std::string find_mac() {
+std::string find_mac () {
     std::ifstream iface_stream("/sys/class/net/eth0/address");
     if (!iface_stream) {
         iface_stream.open("/sys/class/net/wlan0/address");
@@ -97,7 +97,7 @@ std::string find_mac() {
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
-std::string  random_mac() {
+std::string  random_mac () {
     char str[3];
     std::string mac_address = "";
     int octet = rand()%64;
@@ -116,7 +116,7 @@ std::string  random_mac() {
 }
 
 
-void print_info(char *name) {
+void print_info (char *name) {
     printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
@@ -131,26 +131,22 @@ void print_info(char *name) {
     printf("-v/-h     Displays this help and version information\n");
 }
 
-bool  get_display_size(char *str, unsigned short *w, unsigned short *h) {
-    // assume str  = wxh or wXh is valid if w and h are positive decimal integers with less than 5 digits.
-    char *str1 = str;
-    for (int i = 0; i <  strlen(str); i++) {
-        str1++;
-        if (str[i] == 'x' || str[i] == 'X') {
-            str[i] = '\0';
-        }
-    }
+bool  get_display_size (char *str, unsigned short *w, unsigned short *h) {
+    // assume str  = wxh is valid if w and h are positive decimal integers with less than 5 digits.
+    char *str1 = strchr(str,'x');
+    if(str1 == NULL) return false;
+    str1[0] = '\0'; str1++;
     if (str1[0] == '-') return false;
-    if (strlen(str) > 5 || strlen(str1) > 5 || !strlen(str) || !strlen(str1)) return false;
+    if (strlen (str) > 5 || strlen (str1) > 5 || !strlen (str) || !strlen (str1)) return false;
     char *end;
-    *w = (unsigned short) strtoul(str, &end, 10);
+    *w = (unsigned short) strtoul (str, &end, 10);
     if(*end || *w == 0)  return false;
-    *h = (unsigned short) strtoul(str1, &end, 10);
+    *h = (unsigned short) strtoul (str1, &end, 10);
     if(*end || *h == 0) return false;
     return true;
 }
 
-bool get_lowest_port(char *str, unsigned short *n) {
+bool get_lowest_port (char *str, unsigned short *n) {
     if (strlen(str) > 5) return false;
     char *end;
     long l = strtoul(str, &end, 10);
@@ -160,7 +156,7 @@ bool get_lowest_port(char *str, unsigned short *n) {
     return true;
 }
 
-bool get_videoflip(char *str, videoflip_t *videoflip) {
+bool get_videoflip (char *str, videoflip_t *videoflip) {
     char c = str[0];
     if(strlen(str) > 1) return false;
     switch (c) {
@@ -184,7 +180,7 @@ bool get_videoflip(char *str, videoflip_t *videoflip) {
     }
     return true;
 }
-int main(int argc, char *argv[]) {
+int main  (int argc, char *argv[]) {
     init_signals();
 
     std::string server_name = DEFAULT_NAME;
@@ -287,39 +283,39 @@ int main(int argc, char *argv[]) {
 }
 
 // Server callbacks
-extern "C" void conn_init(void *cls) {
+extern "C" void conn_init (void *cls) {
     video_renderer_update_background(video_renderer, 1);
 }
 
-extern "C" void conn_destroy(void *cls) {
+extern "C" void conn_destroy (void *cls) {
     video_renderer_update_background(video_renderer, -1);
 }
 
-extern "C" void audio_process(void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
+extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
     if (audio_renderer != NULL) {
         audio_renderer_render_buffer(audio_renderer, ntp, data->data, data->data_len, data->pts);
     }
 }
 
-extern "C" void video_process(void *cls, raop_ntp_t *ntp, h264_decode_struct *data) {
+extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *data) {
     video_renderer_render_buffer(video_renderer, ntp, data->data, data->data_len, data->pts, data->frame_type);
 }
 
-extern "C" void audio_flush(void *cls) {
+extern "C" void audio_flush (void *cls) {
     audio_renderer_flush(audio_renderer);
 }
 
-extern "C" void video_flush(void *cls) {
+extern "C" void video_flush (void *cls) {
     video_renderer_flush(video_renderer);
 }
 
-extern "C" void audio_set_volume(void *cls, float volume) {
+extern "C" void audio_set_volume (void *cls, float volume) {
     if (audio_renderer != NULL) {
         audio_renderer_set_volume(audio_renderer, volume);
     }
 }
 
-extern "C" void log_callback(void *cls, int level, const char *msg) {
+extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {
             LOGD("%s", msg);
@@ -343,7 +339,7 @@ extern "C" void log_callback(void *cls, int level, const char *msg) {
 
 }
 
-int start_server(std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+int start_server (std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio, bool debug_log) {
     raop_callbacks_t raop_cbs;
@@ -411,7 +407,7 @@ int start_server(std::vector<char> hw_addr, std::string name, unsigned short dis
     return 0;
 }
 
-int stop_server() {
+int stop_server () {
     raop_destroy(raop);
     dnssd_unregister_raop(dnssd);
     dnssd_unregister_airplay(dnssd);
