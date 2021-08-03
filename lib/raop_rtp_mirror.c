@@ -30,6 +30,7 @@
 #include "mirror_buffer.h"
 #include "stream.h"
 
+static int raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
 
 struct h264codec_s {
     unsigned char compatibility;

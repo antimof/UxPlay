@@ -29,9 +29,6 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
                                         unsigned short mirror_data_lport);
 void raop_rtp_init_mirror_aes(raop_rtp_mirror_t *raop_rtp_mirror, uint64_t streamConnectionID);
 void raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport);
-
-static int raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
-
 void raop_rtp_mirror_stop(raop_rtp_mirror_t *raop_rtp_mirror);
 void raop_rtp_mirror_destroy(raop_rtp_mirror_t *raop_rtp_mirror);
 #endif //RAOP_RTP_MIRROR_H
