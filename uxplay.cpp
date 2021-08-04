@@ -99,22 +99,19 @@ std::string find_mac () {
 #define OCTETS 6
 std::string random_mac () {
     char str[3];
-    std::string mac_address = "";
     int octet = rand() % 64;
-    for (int i = 0; i < OCTETS; i++) {
-        if (i == 0) {
-            octet = (octet << 1) + LOCAL;
-            octet = (octet << 1) + MULTICAST;
-        } else {
-            octet =  rand() % 256;
-            mac_address = mac_address + ":";
-        }
+    octet = (octet << 1) + LOCAL;
+    octet = (octet << 1) + MULTICAST;
+    snprintf(str,3,"%02x",octet);
+    std::string mac_address = str;
+    for (int i = 1; i < OCTETS; i++) {
+        mac_address = mac_address + ":";
+        octet =  rand() % 256;
         snprintf(str,3,"%02x",octet);
         mac_address = mac_address + str;
     }
     return mac_address;
 }
-
 
 void print_info (char *name) {
     printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
