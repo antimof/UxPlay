@@ -137,7 +137,7 @@ void video_renderer_flush(video_renderer_t *renderer) {
 
 }
 
-bool  video_renderer_listen(video_renderer_t *renderer) {
+bool video_renderer_listen(video_renderer_t *renderer) {
     GstMessage *msg = NULL;
 
     /* Wait until error or EOS */
