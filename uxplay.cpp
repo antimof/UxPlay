@@ -156,9 +156,8 @@ bool get_lowest_port (char *str, unsigned short *n) {
 }
 
 bool get_videoflip (char *str, videoflip_t *videoflip) {
-    char c = str[0];
     if (strlen(str) > 1) return false;
-    switch (c) {
+    switch (str[0]) {
     case 'L':
         *videoflip = LEFT;
         break;
