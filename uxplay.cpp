@@ -262,8 +262,8 @@ int main (int argc, char *argv[]) {
         mac_address = random_mac();
         LOGI("using randomly-generated MAC address %s\n",mac_address.c_str());
     }
-
     parse_hw_addr(mac_address, server_hw_addr);
+    mac_address.clear();
 
     if (start_server(server_hw_addr, server_name, display_size, tcp, udp,
                      videoflip,use_audio, debug_log) != 0) {
