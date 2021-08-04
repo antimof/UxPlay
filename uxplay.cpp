@@ -43,11 +43,11 @@
 #define HIGHEST_PORT 65535
 
 
-int start_server (std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio,  bool debug_log);
 
-int stop_server ();
+static int stop_server ();
 
 static bool running = false;
 static dnssd_t *dnssd = NULL;
@@ -81,7 +81,7 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     return 0;
 }
 
-std::string find_mac () {
+static std::string find_mac () {
     std::ifstream iface_stream("/sys/class/net/eth0/address");
     if (!iface_stream) {
         iface_stream.open("/sys/class/net/wlan0/address");
@@ -97,7 +97,7 @@ std::string find_mac () {
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
-std::string random_mac () {
+static std::string random_mac () {
     char str[3];
     int octet = rand() % 64;
     octet = (octet << 1) + LOCAL;
@@ -113,7 +113,7 @@ std::string random_mac () {
     return mac_address;
 }
 
-void print_info (char *name) {
+static void print_info (char *name) {
     printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
@@ -128,7 +128,7 @@ void print_info (char *name) {
     printf("-v/-h     Displays this help and version information\n");
 }
 
-bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
+static bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
     // assume str  = wxh is valid if w and h are positive decimal integers with less than 5 digits.
     char *str1 = strchr(str,'x');
     if (str1 == NULL) return false;
@@ -143,7 +143,7 @@ bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
     return true;
 }
 
-bool get_lowest_port (char *str, unsigned short *n) {
+static bool get_lowest_port (char *str, unsigned short *n) {
     if (strlen(str) > 5) return false;
     char *end;
     *n = (unsigned short) strtoul(str, &end, 10);  // first character of str is never '-'
@@ -152,7 +152,7 @@ bool get_lowest_port (char *str, unsigned short *n) {
     return true;
 }
 
-bool get_videoflip (char *str, videoflip_t *videoflip) {
+static bool get_videoflip (char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
     case 'L':
