@@ -47,7 +47,7 @@ static int start_server (std::vector<char> hw_addr, std::string name, unsigned s
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio,  bool debug_log);
 
-static int stop_server ();
+int stop_server ();
 
 static bool running = false;
 static dnssd_t *dnssd = NULL;
