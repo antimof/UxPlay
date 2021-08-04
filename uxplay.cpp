@@ -118,7 +118,7 @@ void print_info (char *name) {
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
-    printf("-s wxh    Set display size: width w height h default 1920x1080\n");
+    printf("-s wxh    Set display resolution: width w height h default 1920x1080\n");
     printf("-f {H|V|R|L|I} horizontal/vertical flip; rotate 90R/90L/180 deg\n");
     printf("-p n      Use fixed UDP+TCP network ports n:n+1:n+2. (n>1023)\n");
     printf("-p        Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
