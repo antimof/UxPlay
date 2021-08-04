@@ -47,7 +47,7 @@ static int start_server (std::vector<char> hw_addr, std::string name, unsigned s
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip,
                  bool use_audio,  bool debug_log);
 
-int stop_server ();
+static int stop_server ();
 
 static bool running = false;
 static dnssd_t *dnssd = NULL;
@@ -271,7 +271,7 @@ int main (int argc, char *argv[]) {
     }
     running = true;
     while (running) {
-        sleep(1);
+        if (!(video_renderer_listen(video_renderer))) break;
     }
 
     LOGI("Stopping...");

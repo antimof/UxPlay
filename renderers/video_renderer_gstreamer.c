@@ -29,6 +29,7 @@
 struct video_renderer_s {
     logger_t *logger;
     GstElement *appsrc, *pipeline, *sink;
+    GstBus *bus;
 };
 
 static gboolean check_plugins (void)
@@ -107,9 +108,13 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     return renderer;
 }
 
+
+
+
 void video_renderer_start(video_renderer_t *renderer) {
     //g_signal_connect( renderer->pipeline, "deep-notify", G_CALLBACK(gst_object_default_deep_notify ), NULL );
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+    renderer->bus = gst_element_get_bus(renderer->pipeline);
 }
 
 void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
@@ -132,8 +137,40 @@ void video_renderer_flush(video_renderer_t *renderer) {
 
 }
 
+bool  video_renderer_listen(video_renderer_t *renderer) {
+    GstMessage *msg = NULL;
+
+    /* Wait until error or EOS */
+    msg = gst_bus_timed_pop_filtered(renderer->bus, GST_CLOCK_TIME_NONE,
+                                     GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
+
+    /* parse message */
+    if (msg != NULL)  {
+        GError *err;
+        gchar *debug_info;
+
+        switch (GST_MESSAGE_TYPE (msg)) {
+	case GST_MESSAGE_ERROR:
+            gst_message_parse_error (msg, &err, &debug_info);
+            g_printerr("GStreamer: %s\n", err->message);
+            g_clear_error (&err);
+	    g_free (debug_info);
+            break;
+        case GST_MESSAGE_EOS:
+            g_print("End-Of-Stream reached.\n");
+            break;
+        default:
+            g_printerr("unexpected message\n");
+            break;
+        }
+        gst_message_unref(msg);
+    }
+    return false;
+}
+
 void video_renderer_destroy(video_renderer_t *renderer) {
     gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+    gst_object_unref(renderer->bus);
     gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
     gst_object_unref (renderer->pipeline);
     if (renderer) {
