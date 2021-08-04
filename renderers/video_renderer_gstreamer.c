@@ -154,7 +154,7 @@ bool  video_renderer_listen(video_renderer_t *renderer) {
             gst_message_parse_error (msg, &err, &debug_info);
             g_printerr("GStreamer: %s\n", err->message);
             g_clear_error (&err);
-	    g_free (debug_info);
+            g_free (debug_info);
             break;
         case GST_MESSAGE_EOS:
             g_print("End-Of-Stream reached.\n");
