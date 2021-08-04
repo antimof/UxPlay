@@ -103,7 +103,7 @@ std::string random_mac () {
     octet = (octet << 1) + LOCAL;
     octet = (octet << 1) + MULTICAST;
     snprintf(str,3,"%02x",octet);
-    std::string mac_address = str;
+    std::string mac_address(str);
     for (int i = 1; i < OCTETS; i++) {
         mac_address = mac_address + ":";
         octet =  rand() % 256;
