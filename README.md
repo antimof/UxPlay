@@ -34,7 +34,7 @@ libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreame
 4. mkdir build
 5. cd build
 6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get a screen-sharing fix to
-make the mirror display windom visible to screen-sharing applications such as
+make the mirror display window visible to screen-sharing applications such as
 Zoom, see below).
 7. make
 8. sudo make install
