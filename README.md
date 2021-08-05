@@ -10,7 +10,7 @@ Features:
 available. VAAPI is preferable. (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
-Getting it: (after sudo apt-get-install git):
+Getting it: (after sudo apt-get-install git cmake):
 
 git clone https://github.com/FDH2/UxPlay.git   
 
@@ -26,11 +26,10 @@ If it has been  committed, replace "FDH2" by "antimof" in the above.
 In a terminal window, change directories to the UxPlay directory of the
 downloaded source code, then do
 
-1. sudo apt-get install cmake
-2. sudo apt-get install libssl-dev libavahi-compat-libdnssd-dev
-libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad  libplist-dev
-3. sudo apt-get install gstreamer1.0-vaapi (For Intel graphics, but not nVidia graphics)
-4. sudo apt-get install libx11-dev  (for the X_display name fix for screen-sharing with e.g.,  ZOOM)
+
+1. sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad 
+2. sudo apt-get install gstreamer1.0-vaapi (For Intel graphics, but not nVidia graphics)
+3. sudo apt-get install libx11-dev  (for the X_display name fix for screen-sharing with e.g.,  ZOOM)
 4. mkdir build
 5. cd build
 6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get a screen-sharing fix to
@@ -39,25 +38,31 @@ Zoom, see below).
 7. make
 8. sudo make install
 
-Run uxplay in a terminal widow.
+Run uxplay in a terminal window.
 
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
 
-**Troubleshooting:**
+**Red Hat, Fedora, CentOS:** 
+(sudo yum install) openssl-devel libplist-devel avahi-compat-lbdns_sd-devel (+ libX11-devel for ZOOMFIX)  
+gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics)
 
-If uxplay starts, but stalls after "Initialized server sockets(s)" appears,
+**OpenSUSE:**
+(sudo zypper install) libopenssl-devel libplist-devel avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX)
+gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics)
+
+# **Troubleshooting:**
+
+If uxplay starts, but stalls after "Initialized server socket(s)" appears,
 it is probably because a firewall is blocking
 access to the server on which it is running.  If possible, either turn off the firewall
 to see if that is the problem, or get three consecutive network ports,
-starting at port n, opened  for both tcp and udp, and use "uxplay -p n".
+starting at port n, opened  for both tcp and udp, and use "uxplay -p n"
+(or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
+
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
-plugin for Intel graphics is *NOT* installed.
-
-See the RPiPlay site https://github.com/FD-/RPiPlay.git for details of the
-prehistory of this project.  This includes a list of all the authors of
-components of RPiPlay that are the basis of  UxPlay.
+plugin for Intel graphics is *NOT* installed (de-install it!).
 
 #  **Usage:**
 
