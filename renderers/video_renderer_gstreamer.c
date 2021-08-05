@@ -54,7 +54,7 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip) {
+video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip[2]) {
     video_renderer_t *renderer;
     GError *error = NULL;
 
@@ -75,29 +75,42 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
  
     assert(check_plugins ());
 
-    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
+    GString *launch = g_string_new("-e appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
 
+    if (videoflip[0] == INVERT && videoflip[1] == RIGHT) {
+        videoflip[0] = NONE;
+        videoflip[1] = LEFT;
+    } else if (videoflip[0] == INVERT && videoflip[1] == LEFT) {
+        videoflip[0] = NONE;
+        videoflip[1] = RIGHT;
+    }
+
     /* image transform */
-    switch (videoflip) {
-    case LEFT:
-        g_string_append(launch, "videoflip method=counterclockwise ! ");
-       break;
-    case RIGHT: 
-        g_string_append(launch, "videoflip method=clockwise ! ");
-        break;
+    switch (videoflip[0]) {
     case INVERT:
         g_string_append(launch, "videoflip method=rotate-180 ! ");
 	break;
     case HFLIP:
         g_string_append(launch, "videoflip method=horizontal-flip ! ");
-      break;
+        break;
     case VFLIP:
         g_string_append(launch, "videoflip method=vertical-flip ! ");
-    case NONE:
+    default:
         break;
-     }
+    }
     
+    switch (videoflip[1]) {
+    case LEFT:
+        g_string_append(launch, "videoflip method=counterclockwise ! ");
+        break;
+    case RIGHT: 
+        g_string_append(launch, "videoflip method=clockwise ! ");
+        break;
+    default:
+        break;
+    }
+
     g_string_append(launch, "autovideosink name=video_sink sync=false");
     renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
@@ -140,10 +153,12 @@ void video_renderer_flush(video_renderer_t *renderer) {
 bool video_renderer_listen(video_renderer_t *renderer) {
     GstMessage *msg = NULL;
 
-    /* Wait until error or EOS */
-    msg = gst_bus_timed_pop_filtered(renderer->bus, GST_CLOCK_TIME_NONE,
-                                     GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
-
+    /* listen  on the gstreamer pipeline bus for an error or EOS.   */
+    /* return true if this occurred, and false if 100 millisec have */
+    /* elapsed with no such event occuring.                         */
+    
+    msg = gst_bus_timed_pop_filtered(renderer->bus, 100 * GST_MSECOND,
+                                  GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
     /* parse message */
     if (msg != NULL)  {
         GError *err;
@@ -164,6 +179,7 @@ bool video_renderer_listen(video_renderer_t *renderer) {
             break;
         }
         gst_message_unref(msg);
+        return true;
     }
     return false;
 }
