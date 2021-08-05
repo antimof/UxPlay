@@ -286,13 +286,17 @@ int main (int argc, char *argv[]) {
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();
 
+    relaunch:
     if (start_server(server_hw_addr, server_name, display_size, tcp, udp,
                      videoflip,use_audio, debug_log) != 0) {
         return 1;
     }
     running = true;
     while (running) {
-        if ((video_renderer_listen(video_renderer))) break;
+        if ((video_renderer_listen(video_renderer))) {
+            stop_server();
+            goto relaunch;
+        }
     }
 
     LOGI("Stopping...");

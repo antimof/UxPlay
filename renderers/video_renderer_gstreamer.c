@@ -63,9 +63,9 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 #endif
 
     /* this call to g_set_application_name makes server_name appear in the display window title bar, */
-    /* (instead of the program name uxplay taken from (argv[0]) */
+    /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
 
-    g_set_application_name(server_name);
+    if (!g_get_application_name()) g_set_application_name(server_name);
 
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);

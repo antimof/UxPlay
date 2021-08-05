@@ -124,8 +124,9 @@ visible for screen-sharing.) Thanks to David Ventura
 https://github.com/DavidVentura/UxPlay for the fix
 and also for getting it into  gstreamer-1.20.
 
-4. uxplay now terminates correctly when the gstreamer display window is
-closed, as well as  when Ctrl-C is typed in the terminal window. 
+4. The AirPlay server now terminates correctly when the gstreamer display window is
+closed, and is relaunched with the same settings to wait for a new connection.
+The program uxplay terminates when Ctrl-C is typed in the terminal window. 
 
 5.   In principle, multiple instances of uxplay can be run simultaneously
 using the **-m** (generate random MAC address) option to give each a
