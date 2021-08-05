@@ -157,7 +157,7 @@ Given the large number of third-party AirPlay receivers (mostly closed-source) a
 
 # RPiPlay Authors (Notes by fdraschbacher, RPiPlay creator.)
 
-(From the  https//github.com/FD-/RPiPlay.git repository.)
+(From the  https://github.com/FD-/RPiPlay.git repository.)
 
 The code in this repository accumulated from various sources over time. Here
 is my (__fdrachbacher__) attempt at listing the various authors and the components they created:
