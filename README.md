@@ -33,10 +33,9 @@ libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreame
 4. sudo apt-get install libx11-dev  (for the X_display name fix for screen-sharing with e.g.,  ZOOM)
 4. mkdir build
 5. cd build
-6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get the screen-sharing fix)
-(or "cmake -DCHANGE_DISPLAY_NAME=ON .. " to get the display name change from
-"uxplay" to the AirPlay server_name  without
-applying ZOOMFIX)
+6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get a screen-sharing fix to
+make the mirror display windom visible to screen-sharing applications such as
+Zoom, see below).
 7. make
 8. sudo make install
 
@@ -65,8 +64,7 @@ components of RPiPlay that are the basis of  UxPlay.
 Options:
 **-n server_name **;  server_name will be the name that appears offering
 AirPlay services to your iPad, iPhone etc.
-**NEW**: this will also be the name on the mirror window, if one of "ZOOMFIX"  or
-"CHANGE_DISPLAY_NAME" is applied with cmake before  compiling uxplay.
+**NEW**: this will also now be the name shown above the mirror display  window, 
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -74,7 +72,7 @@ AirPlay services to your iPad, iPhone etc.
    be the final resolution you get).
 
 **-p**    allows you to select the network ports used by UxPlay (these need
-   to be opened if the server is behind a firewall)   By itself, -p sets
+   to be opened if the server is behind a firewall).   By itself, -p sets
    "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
    35000)  sets TCP and UDP ports n, n+1, n+2.  Ports must be in the range
    [1024-65535].
@@ -82,17 +80,21 @@ AirPlay services to your iPad, iPhone etc.
 If the -p option is not used, the ports are chosen dynamically (randomly),
 which will not work if a firewall is running.
 
-**-r**  generates a random MAC address to use instead of the true hardware MAC
+**-m**  generates a random MAC address to use instead of the true hardware MAC
    number of the computer's network card.   (Different server_name,  MAC
    addresses,  and network ports are needed for each running uxplay  if you
    attempt to  run two instances of uxplay on the same computer.)
 
-**-f {H|V|R|L|I} **  implements "videoflip"  image transforms: H = horizontal flip
-(right-left mirror); V = vertical flip (up-down mirror); R = 90 deg. clockwise
-rotation; L = 90 deg counter-clockwise rotation; I = 180 deg. rotation or inversion.
-
 **-a** disable audio, leaving only the video playing.
 
+Also: image transforms that had been added to RPiPlay have been ported to UxPlay:
+
+**-f {H|V|I}**  implements "videoflip" image transforms: H = horizontal flip
+(right-left flip, or mirror image); V = vertical flip ;  I =
+180 degree rotation or inversion (which is the combination of H with V).
+
+**-r {R|L}**  90 degree Right (clockwise) or Left (counter-clockwise)
+   rotations; these are carried out after any **-f** transforms.
 
 New features available: (v 1.3 2021-08)
 
@@ -100,44 +102,46 @@ New features available: (v 1.3 2021-08)
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
 adding all changes since the original release of UxPlay by antimof.
 This involved crypto updates, replacement
-of the included plist library by the system-installed version, and  a change to
-lib llhttp for http parsing. 
+of the included plist library by the system-installed version, and  a change
+over to a library llhttp for http parsing. 
 
-2. Added the -p, -s, -r and -f options.
+2. Added the -s, -p, -m, -r  and -f options.
 
 3. If "cmake -DZOOMFIX=ON .."  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
-Zoom.     You can tell if the "ZOOMFIX"
-is working by examining the title bar on the mirror window:
-it will be "uxplay" without the fix; with the fix it will be the AirPlay server_name, which
-is "UxPlay" (note capitals) by default, and which can be changed by starting
-uxplay with the -n option.
-To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
-(ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available, since starting with
-that release, the gstreamer mirror window will be visible to screen-sharers;
-if you have such a newer gstreamer, compile with "cmake
--DCHANGE_DISPLAY_NAME=ON .." to get the ZOOMFIX behavior without applying ZOOMFIX.)
-(Thanks to David Ventura  https://github.com/DavidVentura/UxPlay for the fix
-and also for getting it into  gstreamer-1.20).
+Zoom. To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
+(ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available,
+since starting with that release, the GStreamer mirror window will be natively
+visible for screen-sharing.) Thanks to David Ventura
+https://github.com/DavidVentura/UxPlay for the fix
+and also for getting it into  gstreamer-1.20.
 
-4. The avahi_compat nag warning on startup is suppressed.
+4. uxplay now terminates correctly when the gstreamer display window is
+closed, as well as  when Ctrl-C is typed in the terminal window. 
 
 5.   In principle, multiple instances of uxplay can be run simultaneously
-using the -r (generate random MAC  address) option to give each a
+using the **-m** (generate random MAC address) option to give each a
 different ("local" as opposed to "universal")  MAC address.
-If the -p option is used, they also need separate network port choices.
+If the **-p** option is used, they also need separate network port choices.
 (However, there may be a large latency, and running two instances of uxplay
-simultaneously may not be very useful.)
+simultaneously on the same computer may not be very useful.)
 
-6.  Without the -p [n] option,  uxplay makes a random dynamic assignment of
+6.  Without the **-p** [n] option,  uxplay makes a random dynamic assignment of
 network ports. This will not work if most ports are closed by a firewall.
-With e.g., -p 45000   you should open both TCP and UDP on
+With e.g., **-p 45000**   you should open both TCP and UDP on
 ports 45000, 45001, 45002.   Minimum allowed port is 1024, maximum is 65535.
-The option "-p " with no argument uses a "legacy" set of ports TCP 7100,
+The option "**-p**" with no argument uses a "legacy" set of ports TCP 7100,
 7000, 7001, and UDP  7011, 6000, 6001.
 
 7.  The default resolution setting is 1920x1080 width x height pixels.
-To change this, use "-s wxh" (or wXh) where w and h are positive  decimals
+To change this, use "**-s wxh**"  where w and h are positive  decimals
 with 4 or less digits.   It seems that the width and height may be negotiated
 with the AirPlay client, so this may not be the actual screen geometry that
 displays.
+
+8. The title on the GStreamer display window is now is the Airplay server name
+(default "UxPlay", but can be changed with option **-n**), rather than the program
+name "uxplay" (note the difference in capitalization).
+
+9. The avahi_compat "nag" warning on startup is suppressed, by placing
+"AVAHI_COMPAT_NOWARN=1" into the runtime environment when uxplay starts.

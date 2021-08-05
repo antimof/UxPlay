@@ -62,9 +62,10 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     get_x_display_root();
 #endif
 
-#ifdef CHANGE_DISPLAY_NAME
+    /* this call to g_set_application_name makes server_name appear in the display window title bar, */
+    /* (instead of the program name uxplay taken from (argv[0]) */
+
     g_set_application_name(server_name);
-#endif    
 
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
@@ -121,9 +122,6 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     return renderer;
 }
 
-
-
-
 void video_renderer_start(video_renderer_t *renderer) {
     //g_signal_connect( renderer->pipeline, "deep-notify", G_CALLBACK(gst_object_default_deep_notify ), NULL );
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
@@ -154,7 +152,7 @@ bool video_renderer_listen(video_renderer_t *renderer) {
     GstMessage *msg = NULL;
 
     /* listen  on the gstreamer pipeline bus for an error or EOS.   */
-    /* return true if this occurred, and false if 100 millisec have */
+    /* return true if this occurs, and false if 100 millisecs have */
     /* elapsed with no such event occuring.                         */
     
     msg = gst_bus_timed_pop_filtered(renderer->bus, 100 * GST_MSECOND,
