@@ -43,7 +43,7 @@ Run uxplay in a terminal window.
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
 
 **Red Hat, Fedora, CentOS:** 
-(sudo yum install) openssl-devel libplist-devel avahi-compat-lbdns_sd-devel (+libX11-devel for ZOOMFIX).   The required
+(sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (+libX11-devel for ZOOMFIX).   The required
 GStreamer packages are:
 gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).
 
