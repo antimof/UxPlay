@@ -37,8 +37,6 @@
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
-#define DEFAULT_DISPLAY_WIDTH 1920
-#define DEFAULT_DISPLAY_HEIGHT 1080
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 
@@ -195,9 +193,7 @@ int main (int argc, char *argv[]) {
     bool use_audio = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
-    unsigned short display_size[2] = { (unsigned short) DEFAULT_DISPLAY_WIDTH,
-                                       (unsigned short) DEFAULT_DISPLAY_HEIGHT };
-    unsigned short tcp[2] = {0}, udp[3] = {0};
+    unsigned short display_size[2] = {0}, tcp[2] = {0}, udp[3] = {0};
     videoflip_t videoflip[2] = { NONE , NONE };
     
 #ifdef AVAHI_COMPAT_NOWARN
