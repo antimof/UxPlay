@@ -196,10 +196,11 @@ int main (int argc, char *argv[]) {
     unsigned short display_size[2] = {0}, tcp[2] = {0}, udp[3] = {0};
     videoflip_t videoflip[2] = { NONE , NONE };
     
-#ifdef AVAHI_COMPAT_NOWARN
-    //suppress avahi_compat nag message
-    char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN==1";
-    putenv(avahi_compat_nowarn);
+#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
+    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
+    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
+    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
+    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
 #endif
     
     // Parse arguments

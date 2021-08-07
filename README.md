@@ -154,6 +154,8 @@ name "uxplay" (note the difference in capitalization).
 
 9. The avahi_compat "nag" warning on startup is suppressed, by placing
 "AVAHI_COMPAT_NOWARN=1" into the runtime environment when uxplay starts.
+(This uses a call to putenv(), If for any reason you dont want this fix,
+ run cmake as "cmake -DNO_AVAHI_FIX=ON -DZOOMFIX=ON .. ").
 
 # Disclaimer
 
