@@ -77,7 +77,21 @@ AirPlay services to your iPad, iPhone etc.
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
    request made to the AirPlay client, and perhaps will not
-   be the final resolution you get).
+   be the final resolution you get.)   w and h are whole numbers with four
+   digits or less.
+
+**-s wxh@r**  As above, but also informs the AirPlay  client about the screen
+   refresh rate of the display. Default is r=60 (60 Hz); r is a whole number
+   with three digits or less.
+   
+**-fps n ** sets a maximum frame rate (in frames per second) for the AirPlay
+   client to stream video; n must be a whole number with 3 digits or less.
+   (The client may choose to serve video at any frame rate lower
+   than this;  default is 30 fps.)    Values greater than the display
+   refresh rate are ignored, and replaced by the refresh rate.    A setting
+   below 30 fps might be useful to reduce latency if you are running more than
+   one instance of uxplay at the same time.
+   
 
 **-p**    allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets
@@ -104,16 +118,16 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-r {R|L}**  90 degree Right (clockwise) or Left (counter-clockwise)
    rotations; these are carried out after any **-f** transforms.
 
-# New features available: (v 1.3 2021-08)
+# New features available: (v 1.31 2021-08-09)
 
-1. Updates of the RAOP (AirPlay protocol, not AirPlay 2)  collection of codes  maintained
+1. Updates of the RAOP (AirPlay protocol)  collection of codes  maintained
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
 adding all changes since the original release of UxPlay by antimof.
 This involved crypto updates, replacement
 of the included plist library by the system-installed version, and  a change
 over to a library llhttp for http parsing. 
 
-2. Added the -s, -p, -m, -r  and -f options.
+2. Added the -s, -p, -m, -r,  -f, and -fps  options.
 
 3. If "cmake -DZOOMFIX=ON .."  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
@@ -131,9 +145,10 @@ The program uxplay terminates when Ctrl-C is typed in the terminal window.
 5.   In principle, multiple instances of uxplay can be run simultaneously
 using the **-m** (generate random MAC address) option to give each a
 different ("local" as opposed to "universal")  MAC address.
-If the **-p** option is used, they also need separate network port choices.
+If the **-p [n]** option is used, they also need separate network port choices.
 (However, there may be a large latency, and running two instances of uxplay
-simultaneously on the same computer may not be very useful.)
+simultaneously on the same computer may not be very usefu;l using -fps option
+to force streaming framerates below 30fps could be useful.)
 
 6.  Without the **-p** [n] option,  uxplay makes a random dynamic assignment of
 network ports. This will not work if most ports are closed by a firewall.
@@ -148,14 +163,16 @@ with 4 or less digits.   It seems that the width and height may be negotiated
 with the AirPlay client, so this may not be the actual screen geometry that
 displays.
 
-8. The title on the GStreamer display window is now is the Airplay server name
+8. The title on the GStreamer display window is now is the AirPlay server name
 (default "UxPlay", but can be changed with option **-n**), rather than the program
 name "uxplay" (note the difference in capitalization).
 
 9. The avahi_compat "nag" warning on startup is suppressed, by placing
 "AVAHI_COMPAT_NOWARN=1" into the runtime environment when uxplay starts.
-(This uses a call to putenv(), If for any reason you dont want this fix,
- run cmake as "cmake -DNO_AVAHI_FIX=ON -DZOOMFIX=ON .. ").
+(This uses a call to putenv() in a form that is believed to be safe against
+memory leaks, at least in modern Linux; if for any reason you don't want
+this fix, comment out the line in CMakeLists.txt that activates it when uxplay
+is compiled.)
 
 # Disclaimer
 

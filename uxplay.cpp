@@ -33,7 +33,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.3"
+#define VERSION "1.31"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -41,7 +41,7 @@
 #define HIGHEST_PORT 65535
 
 
-static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[4],
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip[2],
                  bool use_audio,  bool debug_log);
 
@@ -116,7 +116,8 @@ static void print_info (char *name) {
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
-    printf("-s wxh    Set display resolution: width w height h default 1920x1080\n");
+    printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080@60\n");
+    printf("-fps n    Set maximum streaming fps, default 30 \n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-p n      Use fixed UDP+TCP network ports n:n+1:n+2. (n>1023)\n");
@@ -127,9 +128,16 @@ static void print_info (char *name) {
     printf("-v/-h     Displays this help and version information\n");
 }
 
-static bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
-    // assume str  = wxh is valid if w and h are positive decimal integers with less than 5 digits.
+      static bool get_display_settings (char *str, unsigned short *w, unsigned short *h, unsigned short *r) {
+    // assume str  = wxh@r is valid if w and h are positive decimal integers
+    // with no more than 5 digits, r no more than 3 digits.
     char *str1 = strchr(str,'x');
+    char *str2 = strchr(str1,'@');
+    if (str2) {
+      if (strlen(str2) == 0) return false; 
+        str2[0] = '\0'; str2++;
+	if (strlen(str2) > 3 || str2[0] == '-') return false;
+    }
     if (str1 == NULL) return false;
     str1[0] = '\0'; str1++;
     if (str1[0] == '-') return false;  // first character of str is never '-'
@@ -139,6 +147,18 @@ static bool get_display_size (char *str, unsigned short *w, unsigned short *h) {
     if (*end || *w == 0)  return false;
     *h = (unsigned short) strtoul(str1, &end, 10);
     if (*end || *h == 0) return false;
+    if (!str2) return true;;
+    *r = (unsigned short) strtoul(str2, &end, 10);
+    if (*end || *r == 0) return false;
+    return true;
+}
+
+static bool get_fps (char *str, unsigned short *n) {
+    if (strlen(str) > 3) return false;
+    char *end;
+    unsigned long l;
+    *n = (unsigned short) (l = strtoul(str, &end, 10));  // first character of str is never '-'
+    if (*end || !l) return false;
     return true;
 }
 
@@ -185,6 +205,14 @@ static bool get_videorotate (char *str, videoflip_t *videoflip) {
     return true;
 }
 
+bool option_has_value(int i, int argc, char *argv[]) {
+    if (i >= argc - 1 || argv[i + 1][0] == '-') {
+        fprintf(stderr,"invalid \"%s\" had no argument\n",argv[i]);
+        return false;
+     }
+    return true;
+}
+
 int main (int argc, char *argv[]) {
     init_signals();
 
@@ -193,7 +221,7 @@ int main (int argc, char *argv[]) {
     bool use_audio = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
-    unsigned short display_size[2] = {0}, tcp[2] = {0}, udp[3] = {0};
+    unsigned short display[4] = {0}, tcp[2] = {0}, udp[3] = {0};
     videoflip_t videoflip[2] = { NONE , NONE };
     
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
@@ -207,40 +235,38 @@ int main (int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
         if (arg == "-n") {
-            if (i == argc - 1) continue;
+            if (!option_has_value(i, argc, argv)) exit(1);
             server_name = std::string(argv[++i]);
         } else if (arg == "-s") {
-            if (i == argc - 1 || argv[i + 1][0] == '-') {
-                 fprintf(stderr,"invalid \"-s\" had no argument\n");
-                 exit(1);
-            }
+	    if (!option_has_value(i, argc, argv)) exit(1);
             std::string value(argv[++i]);
-            if (!get_display_size(argv[i], &display_size[0], &display_size[1])) {
-                fprintf(stderr, "invalid \"-s %s\"; default is  \"-s 1920x1080\" (< 5 digits)\n",
+            if (!get_display_settings(argv[i], &display[0], &display[1],&display[2])) {
+                fprintf(stderr, "invalid \"-s %s\"; default is  \"-s 1920x1080\" (up to 4 digits)\n",
+                        value.c_str());
+                exit(1);
+            }
+        } else if (arg == "-fps") {
+            if (!option_has_value(i, argc, argv)) exit(1);
+            std::string value(argv[++i]);
+            if (!get_fps(argv[i], &display[3])) {
+                fprintf(stderr, "invalid \"-fps %s\"; default is  \"-s 30\" (up to 3 digits)\n",
                         value.c_str());
                 exit(1);
             }
         } else if (arg == "-f") {
-            if (i == argc - 1 || argv[i + 1][0] == '-') {
-                fprintf(stderr,"invalid \"-f\" had no argument\n");
-                exit(1);
-            }
+            if (!option_has_value(i, argc, argv)) exit(1);
             if (!get_videoflip(argv[++i], &videoflip[0])) {
                 fprintf(stderr,"invalid \"-f %s\" , unknown flip type, choices are H, V, I\n",argv[i]);
                 exit(1);
             }
-
         } else if (arg == "-r") {
-            if (i == argc - 1 || argv[i + 1][0] == '-') {
-                fprintf(stderr,"invalid \"-r\" had no argument\n");
-                exit(1);
-            }
+            if (!option_has_value(i, argc, argv)) exit(1);
             if (!get_videorotate(argv[++i], &videoflip[1])) {
                 fprintf(stderr,"invalid \"-r %s\" , unknown rotation  type, choices are R, L\n",argv[i]);
                 exit(1);
             }
         } else if (arg == "-p") {
-            if (i == argc - 1 || argv[i + 1][0] == '-') {
+            if (i >= argc - 1 || argv[i + 1][0] == '-') {
 	        tcp[0] = 7100; tcp[1] = 7000;
 	        udp[0] = 7011; udp[1] = 6001; udp[2] = 6000;
 		continue;
@@ -266,10 +292,11 @@ int main (int argc, char *argv[]) {
             print_info(argv[0]);
             exit(0);
         } else {
-            LOGI("unknown option %s, skipping\n",argv[i]);
+            LOGE("unknown option %s, stopping\n",argv[i]);
+	    exit(1);
         }
     }
-
+    
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d\n",
 		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[1] + 1);
 
@@ -284,7 +311,7 @@ int main (int argc, char *argv[]) {
     mac_address.clear();
 
     relaunch:
-    if (start_server(server_hw_addr, server_name, display_size, tcp, udp,
+    if (start_server(server_hw_addr, server_name, display, tcp, udp,
                      videoflip,use_audio, debug_log) != 0) {
         return 1;
     }
@@ -357,7 +384,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 
 }
 
-int start_server (std::vector<char> hw_addr, std::string name, unsigned short display_size[2],
+int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[4],
                  unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip[2],
                  bool use_audio, bool debug_log) {
     raop_callbacks_t raop_cbs;
@@ -399,8 +426,9 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     if (video_renderer) video_renderer_start(video_renderer);
     if (audio_renderer) audio_renderer_start(audio_renderer);
 
-    /* write desired display pixel width, pixel height to raop (use 0 for default values) */
-    raop_set_display_size(raop, display_size[0], display_size[1]);
+    /* write desired display pixel width, pixel height, refresh_rate, */
+    /* and  max_fps to raop (use 0 for default values)                */
+    raop_set_display(raop, display[0], display[1], display[2], display[3]);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);

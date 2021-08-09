@@ -14,10 +14,7 @@ include_directories(${X11_INCLUDE_DIR})
 endif (ZOOMFIX)
 
 
-if (NO_AVAHI_FIX)
-else()
 add_definitions(-DSUPPRESS_AVAHI_COMPAT_WARNING)
-endif(NO_AVAHI_FIX)
 
 add_subdirectory(lib/llhttp)
 add_subdirectory(lib/playfair)

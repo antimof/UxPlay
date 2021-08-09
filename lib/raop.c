@@ -52,7 +52,8 @@ struct raop_s {
 
     unsigned short display_width;
     unsigned short display_height;
-
+    unsigned short display_refresh_rate;
+    unsigned short display_max_fps;
 };
 
 struct raop_conn_s {
@@ -319,10 +320,12 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     raop->data_lport = 0;
     raop->mirror_data_lport = 0;
 
-    /* initialize display width, height */
+    /* initialize display width, height, refresh_rate, max_fps */
     raop->display_width = 1920;
     raop->display_height = 1080;
-    
+    raop->display_refresh_rate = 60;
+    raop->display_max_fps = 30;
+
     return raop;
 }
 
@@ -354,11 +357,17 @@ raop_set_log_level(raop_t *raop, int level) {
     logger_set_level(raop->logger, level);
 }
 
-void raop_set_display_size(raop_t *raop, unsigned short width, unsigned short height){
-     assert(raop);
+void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
+		      unsigned short refresh_rate, unsigned short max_fps){
+    assert(raop);
 
-     if (width) raop->display_width = width;
-     if (height) raop->display_height = height;
+    if (width) raop->display_width = width;
+    if (height) raop->display_height = height;
+    if (refresh_rate) raop->display_refresh_rate = refresh_rate;
+    if (max_fps) raop->display_max_fps = max_fps;
+    if (raop->display_max_fps > raop->display_refresh_rate) {
+        raop->display_max_fps = raop->display_refresh_rate;
+    }
 }
 
 void
