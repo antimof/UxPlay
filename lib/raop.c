@@ -50,10 +50,10 @@ struct raop_s {
     unsigned short data_lport;
     unsigned short mirror_data_lport;  
 
-    unsigned short display_width;
-    unsigned short display_height;
-    unsigned short display_refresh_rate;
-    unsigned short display_max_fps;
+    uint16_t display_width;
+    uint16_t display_height;
+    uint8_t display_refresh_rate;
+    uint8_t display_max_fps;
 };
 
 struct raop_conn_s {
@@ -361,15 +361,16 @@ void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
 		      unsigned short refresh_rate, unsigned short max_fps){
     assert(raop);
 
-    if (width) raop->display_width = width;
-    if (height) raop->display_height = height;
+    // these must fit into two  8-bit bytes
+    if (width) raop->display_width = (uint16_t) width;
+    if (height) raop->display_height = (uint16_t) height;
 
-    // these must fit into a single byte
+    // these must fit into a single 8-bit byte
     if (refresh_rate > 255) refresh_rate = 255;
-    if (max_fps > 255) max_fps = 255;
+    if (refresh_rate) raop->display_refresh_rate = (uint8_t) refresh_rate;    
 
-    if (refresh_rate) raop->display_refresh_rate = refresh_rate;    
-    if (max_fps) raop->display_max_fps = max_fps;
+    if (max_fps > 255) max_fps = 255;
+    if (max_fps) raop->display_max_fps =  (uint8_t) max_fps;
 
     if (raop->display_max_fps > raop->display_refresh_rate) {
         raop->display_max_fps = raop->display_refresh_rate;     
