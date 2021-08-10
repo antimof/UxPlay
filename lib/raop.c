@@ -363,10 +363,16 @@ void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
 
     if (width) raop->display_width = width;
     if (height) raop->display_height = height;
-    if (refresh_rate) raop->display_refresh_rate = refresh_rate;
+
+    // these must fit into a single byte
+    if (refresh_rate > 255) refresh_rate = 255;
+    if (max_fps > 255) max_fps = 255;
+
+    if (refresh_rate) raop->display_refresh_rate = refresh_rate;    
     if (max_fps) raop->display_max_fps = max_fps;
+
     if (raop->display_max_fps > raop->display_refresh_rate) {
-        raop->display_max_fps = raop->display_refresh_rate;
+        raop->display_max_fps = raop->display_refresh_rate;     
     }
 }
 
