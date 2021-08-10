@@ -147,7 +147,7 @@ using the **-m** (generate random MAC address) option to give each a
 different ("local" as opposed to "universal")  MAC address.
 If the **-p [n]** option is used, they also need separate network port choices.
 (However, there may be a large latency, and running two instances of uxplay
-simultaneously on the same computer may not be very usefu;l using -fps option
+simultaneously on the same computer may not be very useful; using -fps option
 to force streaming framerates below 30fps could be useful.)
 
 6.  Without the **-p** [n] option,  uxplay makes a random dynamic assignment of

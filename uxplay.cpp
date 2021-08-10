@@ -117,7 +117,7 @@ static void print_info (char *name) {
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080@60\n");
-    printf("-fps n    Set maximum streaming fps, default 30 \n");
+    printf("-fps n    Set maximum allowed streaming fps, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-p n      Use fixed UDP+TCP network ports n:n+1:n+2. (n>1023)\n");
@@ -131,42 +131,45 @@ static void print_info (char *name) {
       static bool get_display_settings (char *str, unsigned short *w, unsigned short *h, unsigned short *r) {
     // assume str  = wxh@r is valid if w and h are positive decimal integers
     // with no more than 5 digits, r no more than 3 digits.
+    // first character of str is never '-'
     char *str1 = strchr(str,'x');
+    if(str1 == NULL) return false;
+    str1[0] = '\0'; str1++;
+    if(str1[0] == '-') return false;
+    if (strlen(str) > 5 || strlen(str) == 0) return false;
     char *str2 = strchr(str1,'@');
     if (str2) {
-      if (strlen(str2) == 0) return false; 
         str2[0] = '\0'; str2++;
-	if (strlen(str2) > 3 || str2[0] == '-') return false;
-    }
-    if (str1 == NULL) return false;
-    str1[0] = '\0'; str1++;
-    if (str1[0] == '-') return false;  // first character of str is never '-'
-    if (strlen(str) > 5 || strlen(str1) > 5 || !strlen(str) || !strlen(str1)) return false;
+        if (str2[0] == '-') return false;        
+	if (strlen(str2) > 3 || strlen(str2) == 0) return false;
+    }	
+
     char *end;
     *w = (unsigned short) strtoul(str, &end, 10);
     if (*end || *w == 0)  return false;
     *h = (unsigned short) strtoul(str1, &end, 10);
     if (*end || *h == 0) return false;
-    if (!str2) return true;;
+    if (str2 == NULL) return true;;
     *r = (unsigned short) strtoul(str2, &end, 10);
-    if (*end || *r == 0) return false;
+    if (*end || *r == 0 || *r > 255) return false;
     return true;
 }
 
 static bool get_fps (char *str, unsigned short *n) {
+    // first character of str is never '-'
     if (strlen(str) > 3) return false;
     char *end;
-    unsigned long l;
-    *n = (unsigned short) (l = strtoul(str, &end, 10));  // first character of str is never '-'
-    if (*end || !l) return false;
+    *n = (unsigned short) strtoul(str, &end, 10);  
+    if (*end || *n == 0 || *n > 255) return false;
     return true;
 }
 
 static bool get_lowest_port (char *str, unsigned short *n) {
+    // first character of str is never '-'
     if (strlen(str) > 5) return false;
     char *end;
     unsigned long l;
-    *n = (unsigned short) (l = strtoul(str, &end, 10));  // first character of str is never '-'
+    *n = (unsigned short) (l = strtoul(str, &end, 10));  
     if (*end) return false;
     if (l  < LOWEST_ALLOWED_PORT || l > HIGHEST_PORT - 2 ) return false;
     return true;
@@ -240,8 +243,8 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-s") {
 	    if (!option_has_value(i, argc, argv)) exit(1);
             std::string value(argv[++i]);
-            if (!get_display_settings(argv[i], &display[0], &display[1],&display[2])) {
-                fprintf(stderr, "invalid \"-s %s\"; default is  \"-s 1920x1080\" (up to 4 digits)\n",
+            if (!get_display_settings(argv[i], &display[0], &display[1], &display[2])) {
+                fprintf(stderr, "invalid \"-s %s\"; -s wxh : max w,h=9999; -s wxh@r : max r=255\n",
                         value.c_str());
                 exit(1);
             }
@@ -249,7 +252,7 @@ int main (int argc, char *argv[]) {
             if (!option_has_value(i, argc, argv)) exit(1);
             std::string value(argv[++i]);
             if (!get_fps(argv[i], &display[3])) {
-                fprintf(stderr, "invalid \"-fps %s\"; default is  \"-s 30\" (up to 3 digits)\n",
+                fprintf(stderr, "invalid \"-fps %s\"; -fps n : max n=255, default n=30\n",
                         value.c_str());
                 exit(1);
             }
@@ -266,7 +269,7 @@ int main (int argc, char *argv[]) {
                 exit(1);
             }
         } else if (arg == "-p") {
-            if (i >= argc - 1 || argv[i + 1][0] == '-') {
+            if (i == argc - 1 || argv[i + 1][0] == '-') {
 	        tcp[0] = 7100; tcp[1] = 7000;
 	        udp[0] = 7011; udp[1] = 6001; udp[2] = 6000;
 		continue;
@@ -293,10 +296,10 @@ int main (int argc, char *argv[]) {
             exit(0);
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
-	    exit(1);
+            exit(1);
         }
     }
-    
+
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d\n",
 		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[1] + 1);
 
