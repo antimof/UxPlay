@@ -128,22 +128,21 @@ static void print_info (char *name) {
     printf("-v/-h     Displays this help and version information\n");
 }
 
-      static bool get_display_settings (char *str, unsigned short *w, unsigned short *h, unsigned short *r) {
+static bool get_display_settings (char *str, unsigned short *w, unsigned short *h, unsigned short *r) {
     // assume str  = wxh@r is valid if w and h are positive decimal integers
-    // with no more than 5 digits, r no more than 3 digits.
+    // with no more than 4 digits, r < 256 (will be stored in one byte).
     // first character of str is never '-'
     char *str1 = strchr(str,'x');
     if(str1 == NULL) return false;
     str1[0] = '\0'; str1++;
     if(str1[0] == '-') return false;
-    if (strlen(str) > 5 || strlen(str) == 0) return false;
+    if (strlen(str) > 4 || strlen(str) == 0) return false;
     char *str2 = strchr(str1,'@');
     if (str2) {
         str2[0] = '\0'; str2++;
         if (str2[0] == '-') return false;        
 	if (strlen(str2) > 3 || strlen(str2) == 0) return false;
     }	
-
     char *end;
     *w = (unsigned short) strtoul(str, &end, 10);
     if (*end || *w == 0)  return false;
