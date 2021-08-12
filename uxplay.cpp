@@ -116,8 +116,8 @@ static void print_info (char *name) {
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
-    printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080@60\n");
-    printf("-fps n    Set maximum allowed streaming fps, default 30\n");
+    printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
+    printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-p n      Use fixed UDP+TCP network ports n:n+1:n+2. (n>1023)\n");
@@ -142,7 +142,8 @@ static bool get_display_settings (char *str, unsigned short *w, unsigned short *
         str2[0] = '\0'; str2++;
         if (str2[0] == '-') return false;        
 	if (strlen(str2) > 3 || strlen(str2) == 0) return false;
-    }	
+    }
+    if (strlen(str1) > 4 || strlen(str1) == 0) return false;
     char *end;
     *w = (unsigned short) strtoul(str, &end, 10);
     if (*end || *w == 0)  return false;
