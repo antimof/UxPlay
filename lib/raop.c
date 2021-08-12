@@ -372,7 +372,6 @@ void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
     if (max_fps > 255) max_fps = 255;
     if (max_fps) raop->display_max_fps =  (uint8_t) max_fps;
 
-    }
 }
 
 void
