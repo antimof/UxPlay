@@ -205,20 +205,12 @@ static bool get_videorotate (const char *str, videoflip_t *videoflip) {
     case 'L':
         *videoflip = LEFT;
         break;
-    case 'H':
+    case 'R':
         *videoflip = RIGHT;
         break;
     default:
         return false;
     }
-    return true;
-}
-
-bool option_has_value(int i, int argc, char *argv[]) {
-    if (i >= argc - 1 || argv[i + 1][0] == '-') {
-        fprintf(stderr,"invalid \"%s\" had no argument\n",argv[i]);
-        return false;
-     }
     return true;
 }
 
@@ -244,7 +236,7 @@ int main (int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
         if (arg == "-n") {
-            if (!option_has_value(i, argc, argv)) exit(1);
+            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             server_name = std::string(argv[++i]);
         } else if (arg == "-s") {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
