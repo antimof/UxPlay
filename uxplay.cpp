@@ -128,54 +128,60 @@ static void print_info (char *name) {
     printf("-v/-h     Displays this help and version information\n");
 }
 
-static bool get_display_settings (char *str, unsigned short *w, unsigned short *h, unsigned short *r) {
-    // assume str  = wxh@r is valid if w and h are positive decimal integers
-    // with no more than 4 digits, r < 256 (will be stored in one byte).
-    // first character of str is never '-'
-    char *str1 = strchr(str,'x');
-    if(str1 == NULL) return false;
-    str1[0] = '\0'; str1++;
-    if(str1[0] == '-') return false;
-    if (strlen(str) > 4 || strlen(str) == 0) return false;
-    char *str2 = strchr(str1,'@');
-    if (str2) {
-        str2[0] = '\0'; str2++;
-        if (str2[0] == '-') return false;        
-	if (strlen(str2) > 3 || strlen(str2) == 0) return false;
-    }
-    if (strlen(str1) > 4 || strlen(str1) == 0) return false;
-    char *end;
-    *w = (unsigned short) strtoul(str, &end, 10);
-    if (*end || *w == 0)  return false;
-    *h = (unsigned short) strtoul(str1, &end, 10);
-    if (*end || *h == 0) return false;
-    if (str2 == NULL) return true;;
-    *r = (unsigned short) strtoul(str2, &end, 10);
-    if (*end || *r == 0 || *r > 255) return false;
+bool option_has_value(const int i, const int argc, const char *arg, const char *next_arg) {
+    if (i >= argc - 1 || next_arg[0] == '-') {
+        fprintf(stderr,"invalid \"%s\" had no argument\n", arg);
+        return false;
+     }
     return true;
 }
 
-static bool get_fps (char *str, unsigned short *n) {
-    // first character of str is never '-'
-    if (strlen(str) > 3) return false;
+static bool get_display_settings (std::string value, unsigned short *w, unsigned short *h, unsigned short *r) {
+    // assume str  = wxh@r is valid if w and h are positive decimal integers
+    // with no more than 4 digits, r < 256 (stored in one byte).
     char *end;
-    *n = (unsigned short) strtoul(str, &end, 10);  
+    std::size_t pos = value.find_first_of("x");
+    if (!pos) return false;
+    std::string str1 = value.substr(pos+1);
+    value.erase(pos);
+    if (value.length() == 0 || value.length() > 4 || value[0] == '-') return false;
+    *w = (unsigned short) strtoul(value.c_str(), &end, 10);
+    if (*end || *w == 0)  return false;
+    pos = str1.find_first_of("@");
+    if(pos) {
+        std::string str2 = str1.substr(pos+1);
+        if (str2.length() == 0 || str2.length() > 3 || str2[0] == '-') return false;
+        *r = (unsigned short) strtoul(str2.c_str(), &end, 10);
+        if (*end || *r == 0 || *r > 255) return false;
+        str1.erase(pos);
+    }
+    if (str1.length() == 0 || str1.length() > 4 || str1[0] == '-') return false;
+    *h = (unsigned short) strtoul(str1.c_str(), &end, 10);
+    if (*end || *h == 0) return false;
+    return true;
+}
+
+static bool get_fps (const char *str, unsigned short *n) {
+    // str must be a positive decimal integer < 256 (stored in one byte)
+    char *end;
+    if (strlen(str) == 0 || strlen(str) > 3 || str[0] == '-') return false;
+    *n = (unsigned short) strtoul(str, &end, 10);
     if (*end || *n == 0 || *n > 255) return false;
     return true;
 }
 
-static bool get_lowest_port (char *str, unsigned short *n) {
-    // first character of str is never '-'
-    if (strlen(str) > 5) return false;
+static bool get_lowest_port (const char *str, unsigned short *n) {
+    //str must be a positive decimal integer in allowed range, 5 digits max.
     char *end;
     unsigned long l;
-    *n = (unsigned short) (l = strtoul(str, &end, 10));  
+    if (strlen(str)  == 0 || strlen(str) > 5 || str[0] == '-') return false;
+    *n = (unsigned short) (l = strtoul(str, &end, 10));
     if (*end) return false;
     if (l  < LOWEST_ALLOWED_PORT || l > HIGHEST_PORT - 2 ) return false;
     return true;
 }
 
-static bool get_videoflip (char *str, videoflip_t *videoflip) {
+static bool get_videoflip (const char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
     case 'I':
@@ -193,7 +199,7 @@ static bool get_videoflip (char *str, videoflip_t *videoflip) {
     return true;
 }
 
-static bool get_videorotate (char *str, videoflip_t *videoflip) {
+static bool get_videorotate (const char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
     case 'L':
@@ -241,29 +247,27 @@ int main (int argc, char *argv[]) {
             if (!option_has_value(i, argc, argv)) exit(1);
             server_name = std::string(argv[++i]);
         } else if (arg == "-s") {
-	    if (!option_has_value(i, argc, argv)) exit(1);
+            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             std::string value(argv[++i]);
-            if (!get_display_settings(argv[i], &display[0], &display[1], &display[2])) {
+            if (!get_display_settings(value, &display[0], &display[1], &display[2])) {
                 fprintf(stderr, "invalid \"-s %s\"; -s wxh : max w,h=9999; -s wxh@r : max r=255\n",
-                        value.c_str());
+                        argv[i]);
                 exit(1);
             }
         } else if (arg == "-fps") {
-            if (!option_has_value(i, argc, argv)) exit(1);
-            std::string value(argv[++i]);
-            if (!get_fps(argv[i], &display[3])) {
-                fprintf(stderr, "invalid \"-fps %s\"; -fps n : max n=255, default n=30\n",
-                        value.c_str());
+            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
+            if (!get_fps(argv[++i], &display[3])) {
+                fprintf(stderr, "invalid \"-fps %s\"; -fps n : max n=255, default n=30\n", argv[i]);
                 exit(1);
             }
         } else if (arg == "-f") {
-            if (!option_has_value(i, argc, argv)) exit(1);
+            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             if (!get_videoflip(argv[++i], &videoflip[0])) {
                 fprintf(stderr,"invalid \"-f %s\" , unknown flip type, choices are H, V, I\n",argv[i]);
                 exit(1);
             }
         } else if (arg == "-r") {
-            if (!option_has_value(i, argc, argv)) exit(1);
+            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             if (!get_videorotate(argv[++i], &videoflip[1])) {
                 fprintf(stderr,"invalid \"-r %s\" , unknown rotation  type, choices are R, L\n",argv[i]);
                 exit(1);
