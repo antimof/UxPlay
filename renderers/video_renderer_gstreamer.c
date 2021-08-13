@@ -54,6 +54,63 @@ static gboolean check_plugins (void)
     return ret;
 }
 
+static void append_videoflip (GString *launch, const videoflip_t *flip, const videoflip_t *rot) {
+    /* videoflip image transform */
+    switch (*flip) {
+    case INVERT:
+        switch (*rot)  {
+        case LEFT:
+	    g_string_append(launch, "videoflip method=clockwise ! ");
+	    break;
+        case RIGHT:
+            g_string_append(launch, "videoflip method=counterclockwise ! ");
+            break;
+        default:
+	    g_string_append(launch, "videoflip method=rotate-180 ! ");
+	    break;
+        }
+        break;
+    case HFLIP:
+        switch (*rot) {
+        case LEFT:
+            g_string_append(launch, "videoflip method=upper-left-diagonal ! ");
+            break;
+        case RIGHT: 
+            g_string_append(launch, "videoflip method=upper-right-diagonal ! ");
+            break;
+        default:
+            g_string_append(launch, "videoflip method=horizontal-flip ! ");
+            break;
+        }
+        break;
+    case VFLIP:
+        switch (*rot) {
+        case LEFT:
+            g_string_append(launch, "videoflip method=upper-right-diagonal ! ");
+            break;
+        case RIGHT: 
+            g_string_append(launch, "videoflip method=upper-left-diagonal ! ");
+            break;
+        default:
+            g_string_append(launch, "videoflip method=vertical-flip ! ");
+	  break;
+	}
+        break;
+    default:
+        switch (*rot) {
+        case LEFT:
+            g_string_append(launch, "videoflip method=counterclockwise ! ");
+            break;
+        case RIGHT: 
+            g_string_append(launch, "videoflip method=clockwise ! ");
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+}	
+
 video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip[2]) {
     video_renderer_t *renderer;
     GError *error = NULL;
@@ -78,40 +135,8 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 
     GString *launch = g_string_new("-e appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
-
-    if (videoflip[0] == INVERT && videoflip[1] == RIGHT) {
-        videoflip[0] = NONE;
-        videoflip[1] = LEFT;
-    } else if (videoflip[0] == INVERT && videoflip[1] == LEFT) {
-        videoflip[0] = NONE;
-        videoflip[1] = RIGHT;
-    }
-
-    /* image transform */
-    switch (videoflip[0]) {
-    case INVERT:
-        g_string_append(launch, "videoflip method=rotate-180 ! ");
-	break;
-    case HFLIP:
-        g_string_append(launch, "videoflip method=horizontal-flip ! ");
-        break;
-    case VFLIP:
-        g_string_append(launch, "videoflip method=vertical-flip ! ");
-    default:
-        break;
-    }
-    
-    switch (videoflip[1]) {
-    case LEFT:
-        g_string_append(launch, "videoflip method=counterclockwise ! ");
-        break;
-    case RIGHT: 
-        g_string_append(launch, "videoflip method=clockwise ! ");
-        break;
-    default:
-        break;
-    }
-
+    append_videoflip(launch, &videoflip[0], &videoflip[1]);
+    /* replace "autovideosink" with "fpsdisplaysink" (from gstreamer-plugins-bad) to display framerate */   
     g_string_append(launch, "autovideosink name=video_sink sync=false");
     renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
