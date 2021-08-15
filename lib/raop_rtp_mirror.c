@@ -526,6 +526,8 @@ raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 
     /* Set port values */
     raop_rtp_mirror->mirror_data_lport = dport;
+    logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp: mirror_data_lport socket %d at port TCP %d",
+               dsock, dport);
     return 0;
 
     sockets_cleanup:

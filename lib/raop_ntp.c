@@ -192,7 +192,8 @@ raop_ntp_init_socket(raop_ntp_t *raop_ntp, int use_ipv6)
     unsigned short tport = 0;
 
     assert(raop_ntp);
-
+    tport = raop_ntp->timing_lport;
+      
     tsock = netutils_init_socket(&tport, use_ipv6, 1);
 
     if (tsock == -1) {
@@ -212,6 +213,9 @@ raop_ntp_init_socket(raop_ntp_t *raop_ntp, int use_ipv6)
 
     /* Set port values */
     raop_ntp->timing_lport = tport;
+    
+    logger_log(raop_ntp->logger, LOGGER_INFO, "raop_ntp timing_lport socket %d UDP port %d",
+               tsock, tport);
     return 0;
 
     sockets_cleanup:
@@ -348,6 +352,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
     int use_ipv6 = 0;
 
     assert(raop_ntp);
+    raop_ntp->timing_lport = *timing_lport;
 
     MUTEX_LOCK(raop_ntp->run_mutex);
     if (raop_ntp->running || !raop_ntp->joined) {
@@ -366,7 +371,6 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
         return;
     }
     if (timing_lport) *timing_lport = raop_ntp->timing_lport;
-
     /* Create the thread and initialize running values */
     raop_ntp->running = 1;
     raop_ntp->joined = 0;
