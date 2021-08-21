@@ -157,17 +157,15 @@ since starting with that release, the GStreamer mirror window will be natively
 visible for screen-sharing.) Thanks to David Ventura
 https://github.com/DavidVentura/UxPlay for the fix
 and also for getting it into  gstreamer-1.20.
-
 [If uxplay was compiled after
 cmake was run without -DZOOMFIX=ON, and your gstreamer version is older than
 1.20, you can still manually make the window visible to screen-sharing apps with the X11 utility
-xdotool, if it is installed on your system:
-
+xdotool, if it is installed, with: 
 ```
-xdotool selectwindow set_window --name "name"
+ xdotool selectwindow set_window --name <name>
 ```
-where "name" is your choice of name, and then select the uxplay window with
-the mouse.]
+, where ```<name>``` is your choice of name, and then select the uxplay window
+by clicking on it with the mouse.]
 
 4. The AirPlay server now terminates correctly when the gstreamer display window is
 closed, and is relaunched with the same settings to wait for a new connection.
