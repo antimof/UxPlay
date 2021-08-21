@@ -59,9 +59,8 @@ If uxplay starts, but stalls after "Initialized server socket(s)" appears,
 it is probably because a firewall is blocking
 access to the server on which it is running.  If possible, either turn off the firewall
 to see if that is the problem, or get three consecutive network ports,
-starting at port n, opened  for both tcp and udp, and use "uxplay -p n"
+starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
 (or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
-
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
@@ -78,7 +77,10 @@ AirPlay services to your iPad, iPhone etc.
    in pixels).   (This may be a
    request made to the AirPlay client, and perhaps will not
    be the final resolution you get.)   w and h are whole numbers with four
-   digits or less.
+   digits or less.   Note that the **height** pixel size is the controlling
+   one used by the client for determining the streaming format; the width is
+   dynamically adjusted to the shape of the image (portait or landscape
+   format, depending on how an iPad is held, for example). 
 
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
    refresh rate of the display. Default is r=60 (60 Hz); r is a whole number
@@ -92,11 +94,19 @@ AirPlay services to your iPad, iPhone etc.
    below 30 fps might be useful to reduce latency if you are running more than
    one instance of uxplay at the same time.
    
+**-o** turns on an "overscanned" option for the display window.    This
+   reduces the image resolution by using some of the pixels requested
+   by  option -s wxh (or their default values 1920x1080) by adding an empty
+   boundary frame of unused pixels (which would be lost in a full-screen
+   dispaly that overscans, and is not displayed by gstreamer).
+   Recomnendation: **don't use this option**.
 
-**-p**    allows you to select the network ports used by UxPlay (these need
+**-p**  allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets
    "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
-   35000)  sets TCP and UDP ports n, n+1, n+2.  Ports must be in the range
+   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comman separated
+   values) sets each port separatey; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
+   or -p udp n sets just the TCP or UDP ports.  Ports must be in the range
    [1024-65535].
 
 If the -p option is not used, the ports are chosen dynamically (randomly),
@@ -118,7 +128,13 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-r {R|L}**  90 degree Right (clockwise) or Left (counter-clockwise)
    rotations; these are carried out after any **-f** transforms.
 
-# New features available: (v 1.31 2021-08-09)
+**-vs videosink** chooses the GStreamer videosink, instead of letting
+   autovideosink pick it for you. For example, xvimagesink, vaapisink, or
+   fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
+   "..." might allow some parameters to be included with the videosink name. 
+   
+
+# New features available: (v 1.32 2021-08-21)
 
 1. Updates of the RAOP (AirPlay protocol)  collection of codes  maintained
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
@@ -127,7 +143,7 @@ This involved crypto updates, replacement
 of the included plist library by the system-installed version, and  a change
 over to a library llhttp for http parsing. 
 
-2. Added the -s, -p, -m, -r,  -f, and -fps  options.
+2. Added the -s, -o -p, -m, -r,  -f,  -fps, and -vs  options.
 
 3. If "cmake -DZOOMFIX=ON .."  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
@@ -137,6 +153,16 @@ since starting with that release, the GStreamer mirror window will be natively
 visible for screen-sharing.) Thanks to David Ventura
 https://github.com/DavidVentura/UxPlay for the fix
 and also for getting it into  gstreamer-1.20.
+
+If uxplay was compiled after
+cmake was run without -DZOOMFIX=ON, and your gstreamer version is older that
+1.20, you can still manually make the window visible with the X11 utility
+xdotool, if it is installed on your system:
+```
+xdotool selectwindow set_window --name "name"
+```
+where "name" is your choice of name, and then select the uxplay window with
+the mouse.
 
 4. The AirPlay server now terminates correctly when the gstreamer display window is
 closed, and is relaunched with the same settings to wait for a new connection.
@@ -173,6 +199,8 @@ name "uxplay" (note the difference in capitalization).
 memory leaks, at least in modern Linux; if for any reason you don't want
 this fix, comment out the line in CMakeLists.txt that activates it when uxplay
 is compiled.)
+
+10.  Allow choice (with -vs option) of the videosink that ends the GStreamer pipline. 
 
 # Disclaimer
 

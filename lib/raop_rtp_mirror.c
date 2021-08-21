@@ -30,7 +30,6 @@
 #include "mirror_buffer.h"
 #include "stream.h"
 
-static int raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
 
 struct h264codec_s {
     unsigned char compatibility;
@@ -433,6 +432,8 @@ raop_rtp_mirror_thread(void *arg)
     return 0;
 }
 
+static int raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
+
 void
 raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport)
 {
@@ -526,8 +527,7 @@ raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 
     /* Set port values */
     raop_rtp_mirror->mirror_data_lport = dport;
-    logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp: mirror_data_lport socket %d at port TCP %d",
-               dsock, dport);
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror local data port socket %d port TCP %d", dsock, dport);
     return 0;
 
     sockets_cleanup:

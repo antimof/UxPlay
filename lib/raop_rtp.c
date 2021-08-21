@@ -251,10 +251,8 @@ raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6, int use_udp)
     /* Set port values */
     raop_rtp->control_lport = cport;
     raop_rtp->data_lport = dport;
-    logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp: control_lport socket %d at port UDP %d",
-               csock, cport);
-    logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp: data_lport    socket %d at port UDP %d",
-               dsock, dport);
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp local control port socket %d port UDP %d", csock, cport);
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp local data port    socket %d port UDP %d", dsock, dport);
     return 0;
 
     sockets_cleanup:

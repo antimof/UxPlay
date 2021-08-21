@@ -213,9 +213,7 @@ raop_ntp_init_socket(raop_ntp_t *raop_ntp, int use_ipv6)
 
     /* Set port values */
     raop_ntp->timing_lport = tport;
-    
-    logger_log(raop_ntp->logger, LOGGER_INFO, "raop_ntp timing_lport socket %d UDP port %d",
-               tsock, tport);
+    logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp local timing port socket %d port UDP %d", tsock, tport);
     return 0;
 
     sockets_cleanup:
@@ -371,6 +369,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
         return;
     }
     if (timing_lport) *timing_lport = raop_ntp->timing_lport;
+
     /* Create the thread and initialize running values */
     raop_ntp->running = 1;
     raop_ntp->joined = 0;
