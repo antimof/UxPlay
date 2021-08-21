@@ -102,7 +102,7 @@ AirPlay services to your iPad, iPhone etc.
    by  option -s wxh (or their default values 1920x1080) by adding an empty
    boundary frame of unused pixels (which would be lost in a full-screen
    display that overscans, and is not displayed by gstreamer).
-   Recomnendation: **don't use this option** unless there is some special
+   Recommendation: **don't use this option** unless there is some special
    reason to use it.
 
 **-p**  allows you to select the network ports used by UxPlay (these need
