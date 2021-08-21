@@ -94,7 +94,8 @@ AirPlay services to your iPad, iPhone etc.
    one instance of uxplay at the same time.   Values greater than 255 are
    ignored.  This setting is only an advisory to the client device, so setting
    a high value will not force a high framerate.
-   (You can test using "-vs fpsdisplaysink" to see what the framerate actully is.)
+   (You can test using "-vs fpsdisplaysink" to see what framerate is being
+   received.)
    
 **-o** turns on an "overscanned" option for the display window.    This
    reduces the image resolution by using some of the pixels requested
