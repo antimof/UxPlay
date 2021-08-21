@@ -121,7 +121,7 @@ static void print_info (char *name) {
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  rotate 90 degrees Right (cw) or Left (ccw)\n");
-    printf("-p        Use legacy UDP 6000:6001:7011 TCP 7000:7001:7100\n");
+    printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range 1024-56535\n");
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports only\n");
@@ -488,10 +488,8 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     dnssd_register_raop(dnssd, port);
     if (tcp[2]) {
         port = tcp[2];
-    } else if (port < 56535) {
-        port++;
     } else {
-        port--;
+      port = (port != HIGHEST_PORT ? port + 1 : port - 1);
     }
     dnssd_register_airplay(dnssd, port);
 
