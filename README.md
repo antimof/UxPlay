@@ -84,22 +84,25 @@ AirPlay services to your iPad, iPhone etc.
 
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
    refresh rate of the display. Default is r=60 (60 Hz); r is a whole number
-   with three digits or less.
+   with three digits or less.   Values greater that 255 are ignored.
    
 **-fps n ** sets a maximum frame rate (in frames per second) for the AirPlay
    client to stream video; n must be a whole number with 3 digits or less.
    (The client may choose to serve video at any frame rate lower
-   than this;  default is 30 fps.)    Values greater than the display
-   refresh rate are ignored, and replaced by the refresh rate.    A setting
+   than this;  default is 30 fps.)  A setting
    below 30 fps might be useful to reduce latency if you are running more than
-   one instance of uxplay at the same time.
+   one instance of uxplay at the same time.   Values greater than 255 are
+   ignored.  This setting is only an advisory to the client device, so setting
+   a high value will not force a high framerate.
+   (You can test using "-vs fpsdisplaysink" to see what the framerate actully is.)
    
 **-o** turns on an "overscanned" option for the display window.    This
    reduces the image resolution by using some of the pixels requested
    by  option -s wxh (or their default values 1920x1080) by adding an empty
    boundary frame of unused pixels (which would be lost in a full-screen
-   dispaly that overscans, and is not displayed by gstreamer).
-   Recomnendation: **don't use this option**.
+   display that overscans, and is not displayed by gstreamer).
+   Recomnendation: **don't use this option** unless there is some special
+   reason to use it.
 
 **-p**  allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets
