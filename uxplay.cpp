@@ -122,7 +122,7 @@ static void print_info (char *name) {
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
-    printf("-p n      Use TCP and UDP ports n,n+1,n+2. range 1024-56535\n");
+    printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports only\n");
     printf("-m        use random MAC address (use for concurrent UxPlay's)\n");
