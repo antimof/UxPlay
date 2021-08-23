@@ -111,7 +111,7 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
     }
 }	
 
-video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip[2]) {
+video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
     video_renderer_t *renderer;
     GError *error = NULL;
 
@@ -136,8 +136,13 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     GString *launch = g_string_new("-e appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
-    /* replace "autovideosink" with "fpsdisplaysink" (from gstreamer-plugins-bad) to display framerate */   
-    g_string_append(launch, "autovideosink name=video_sink sync=false");
+    /* replace "autovideosink" with "fpsdisplaysink" (from gstreamer-plugins-bad) to display framerate */
+    if (videosink) {
+        g_string_append(launch, videosink);
+    } else {
+        g_string_append(launch, "autovideosink");
+    }
+    g_string_append(launch, " name=video_sink sync=false");
     renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
 
