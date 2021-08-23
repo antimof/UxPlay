@@ -108,8 +108,8 @@ AirPlay services to your iPad, iPhone etc.
 **-p**  allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets
    "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
-   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comman separated
-   values) sets each port separatey; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
+   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comma-separated
+   values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
    or -p udp n sets just the TCP or UDP ports.  Ports must be in the range
    [1024-65535].
 
@@ -136,7 +136,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    autovideosink pick it for you. For example, xvimagesink, vaapisink, or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
    "..." might allow some parameters to be included with the videosink name. 
-   
+   (Some choices of videosink might not work on your system.)
 
 # New features available: (v 1.32 2021-08-21)
 
