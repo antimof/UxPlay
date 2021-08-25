@@ -355,7 +355,7 @@ int main (int argc, char *argv[]) {
     }
     running = true;
     while (running) {
-      if ((video_renderer_listen(video_renderer)) || (had_connection && !open_connections)) {
+        if ((video_renderer_listen(video_renderer)) || (had_connection && !open_connections)) {
             stop_server();
             LOGI("Re-launching server...");
             goto relaunch;
