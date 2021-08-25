@@ -48,6 +48,8 @@ static int start_server (std::vector<char> hw_addr, std::string name, unsigned s
 static int stop_server ();
 
 static bool running = false;
+static uint open_connections = 0;
+static bool had_connection = false;
 static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static video_renderer_t *video_renderer = NULL;
@@ -346,14 +348,16 @@ int main (int argc, char *argv[]) {
     mac_address.clear();
 
     relaunch:
+    had_connection = false;
     if (start_server(server_hw_addr, server_name, display, tcp, udp,
                      videoflip,use_audio, debug_log, videosink)) {
         return 1;
     }
     running = true;
     while (running) {
-        if ((video_renderer_listen(video_renderer))) {
+        if ((video_renderer_listen(video_renderer))||(had_connection&&(!open_connections))) {
             stop_server();
+            LOGI("Re-launching server...");
             goto relaunch;
         }
     }
@@ -364,11 +368,16 @@ int main (int argc, char *argv[]) {
 
 // Server callbacks
 extern "C" void conn_init (void *cls) {
+    open_connections++;
+    had_connection = true;
+    LOGI("Open connections: %i", open_connections);
     video_renderer_update_background(video_renderer, 1);
 }
 
 extern "C" void conn_destroy (void *cls) {
     video_renderer_update_background(video_renderer, -1);
+    open_connections--;
+    LOGI("Open connections: %i", open_connections);
 }
 
 extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
