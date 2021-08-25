@@ -33,7 +33,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.32"
+#define VERSION "1.33"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -355,7 +355,7 @@ int main (int argc, char *argv[]) {
     }
     running = true;
     while (running) {
-        if ((video_renderer_listen(video_renderer))||(had_connection&&(!open_connections))) {
+      if ((video_renderer_listen(video_renderer)) || (had_connection && !open_connections)) {
             stop_server();
             LOGI("Re-launching server...");
             goto relaunch;
