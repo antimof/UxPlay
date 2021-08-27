@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-/* code from David Ventura https://github.com/DavidVentura/UxPlay */
+/* based on code from David Ventura https://github.com/DavidVentura/UxPlay */
 
 #ifndef X_DISPLAY_FIX_H
 #define X_DISPLAY_FIX_H
@@ -30,54 +30,52 @@ extern "C" {
 #include <X11/Xutil.h>
 #include <stdio.h>
 
-static Display* display;
-static Window root, my_window;
+struct window_s {
+    Display * display;
+    Window window, root;
+    const char * name;
+} typedef window_t;
 
-void get_x_display_root() {
-    display = XOpenDisplay(NULL);
-    root = XDefaultRootWindow(display);  
+void get_x_display(window_t * X11, const char * window_name) {
+    X11->display = XOpenDisplay(NULL);
+    X11->root = XDefaultRootWindow(X11->display);
+    X11->window = (Window) NULL;
+    X11->name = window_name;
 }
-  
-Window enum_windows(Display* display, Window window, int depth) {
-    int i;
 
+Window enum_windows(const char * str, Display* display, Window window, int depth) {
+    int i;
     XTextProperty text;
     XGetWMName(display, window, &text);
     char* name;
     XFetchName(display, window, &name);
-
-    if (name != 0 &&  strcmp((const char*) g_get_application_name(), name) == 0) {
+    if (name != 0 &&  strcmp(str, name) == 0) {
         return window;
       }
-
     Window _root, parent;
     Window* children;
     unsigned int n;
     XQueryTree(display, window, &_root, &parent, &children, &n);
     if (children != NULL) {
       for (i = 0; i < n; i++) {
-            Window w = enum_windows(display, children[i], depth + 1);
+	Window w = enum_windows(str, display, children[i], depth + 1);
             if (w) return w;
         }
         XFree(children);
     }
-
     return (Window) NULL;
 }
 
-void fix_x_window_name() {
-    if (!my_window) {
-        my_window = enum_windows(display, root, 0);
-        if (my_window) {
-	    const char* str = g_get_application_name();
-            Atom _NET_WM_NAME = XInternAtom(display, "_NET_WM_NAME", 0);
-            Atom UTF8_STRING = XInternAtom(display, "UTF8_STRING",0);
-            XChangeProperty(display, my_window, _NET_WM_NAME, UTF8_STRING, 8, 0, (const unsigned char *) str, strlen(str));
-            XSync(display, False);
-        }
+void fix_x_window_name(window_t * X11) {
+    X11->window  = enum_windows(X11->name, X11->display, X11->root, 0);
+    if (X11->window) {
+        Atom _NET_WM_NAME = XInternAtom(X11->display, "_NET_WM_NAME", 0);
+        Atom UTF8_STRING = XInternAtom(X11->display, "UTF8_STRING", 0);
+        XChangeProperty(X11->display, X11->window, _NET_WM_NAME, UTF8_STRING, 8, 0,
+                        (const unsigned char *) X11->name, strlen(X11->name));
+        XSync(X11->display, False);
     }
 }
-
 
 #ifdef __cplusplus
 }

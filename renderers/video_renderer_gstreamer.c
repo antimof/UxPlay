@@ -30,6 +30,9 @@ struct video_renderer_s {
     logger_t *logger;
     GstElement *appsrc, *pipeline, *sink;
     GstBus *bus;
+#ifdef X_DISPLAY_FIX
+    window_t *X11;
+#endif
 };
 
 static gboolean check_plugins (void)
@@ -115,10 +118,6 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     video_renderer_t *renderer;
     GError *error = NULL;
 
-#ifdef X_DISPLAY_FIX
-    get_x_display_root();
-#endif
-
     /* this call to g_set_application_name makes server_name appear in the display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
 
@@ -148,7 +147,11 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
-
+#ifdef X_DISPLAY_FIX
+    renderer->X11 = calloc(1, sizeof(window_t));
+    assert(renderer->X11);
+    get_x_display(renderer->X11, server_name);
+#endif
     return renderer;
 }
 
@@ -170,7 +173,9 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
     gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 
 #ifdef X_DISPLAY_FIX
-    fix_x_window_name();
+    if(!renderer->X11->window) {
+        fix_x_window_name(renderer->X11);
+    }
 #endif
 }
 
@@ -217,11 +222,11 @@ void video_renderer_destroy(video_renderer_t *renderer) {
     gst_object_unref(renderer->bus);
     gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
     gst_object_unref (renderer->pipeline);
+#ifdef X_DISPLAY_FIX
+    free(renderer->X11);
+#endif    
     if (renderer) {
         free(renderer);
-#ifdef X_DISPLAY_FIX
-        my_window = (Window) NULL;
-#endif
     }
 }
 
