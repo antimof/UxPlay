@@ -51,14 +51,14 @@ Window enum_windows(const char * str, Display* display, Window window, int depth
     XFetchName(display, window, &name);
     if (name != 0 &&  strcmp(str, name) == 0) {
         return window;
-      }
+    }
     Window _root, parent;
     Window* children;
     unsigned int n;
     XQueryTree(display, window, &_root, &parent, &children, &n);
     if (children != NULL) {
-      for (i = 0; i < n; i++) {
-	Window w = enum_windows(str, display, children[i], depth + 1);
+        for (i = 0; i < n; i++) {
+            Window w = enum_windows(str, display, children[i], depth + 1);
             if (w) return w;
         }
         XFree(children);
