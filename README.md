@@ -66,6 +66,12 @@ Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
 plugin for Intel graphics is *NOT* installed (de-install it!).
 
+If your mirror window has no title showing, the "ZOOMFIX" will not work.
+The window is created by GStreamer, using a  videosink that the default "autovideosink" 
+has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink;
+"-vs xvimagesink" or "-vs ximagesink" will create window titles on displays managed by X11.
+
+
 #  **Usage:**
 
 Options:
@@ -138,7 +144,13 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    "..." might allow some parameters to be included with the videosink name. 
    (Some choices of videosink might not work on your system.)
 
-# New features available: (v 1.32 2021-08-21)
+# ChangeLog
+1.34  2021-08-27   Fixed "ZOOMFIX": the X11 window name fix was only being made the
+                   first time the GStreamer window was created by uxplay, and
+		   not if the server was relaunched after the GStreamer window
+		   was closed, with uxplay still running.   Corrected in v. 1.34
+
+# New features available: (v 1.32 2021-08-20)
 
 1. Updates of the RAOP (AirPlay protocol)  collection of codes  maintained
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
