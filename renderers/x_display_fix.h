@@ -31,8 +31,8 @@ extern "C" {
 #include <stdio.h>
 
 struct X11_Window_s {
-  Display * display;
-  Window window;
+    Display * display;
+    Window window;
 } typedef X11_Window_t;
 
 void get_X11_Display(X11_Window_t  * X11) {

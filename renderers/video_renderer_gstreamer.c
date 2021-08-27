@@ -30,8 +30,8 @@ struct video_renderer_s {
     logger_t *logger;
     GstElement *appsrc, *pipeline, *sink;
     GstBus *bus;
-    const char * server_name;
 #ifdef  X_DISPLAY_FIX
+    const char * server_name;  
     X11_Window_t * gst_window;
 #endif
 };
@@ -149,10 +149,8 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
 
- 
-
-    renderer->server_name = server_name;
 #ifdef X_DISPLAY_FIX
+    renderer->server_name = server_name;
     renderer->gst_window = calloc(1, sizeof(X11_Window_t));
     assert(renderer->gst_window);
     get_X11_Display(renderer->gst_window);
