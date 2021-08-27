@@ -30,20 +30,17 @@ extern "C" {
 #include <X11/Xutil.h>
 #include <stdio.h>
 
-struct window_s {
-    Display * display;
-    Window window, root;
-    const char * name;
-} typedef window_t;
+struct X11_Window_s {
+  Display * display;
+  Window window;
+} typedef X11_Window_t;
 
-void get_x_display(window_t * X11, const char * window_name) {
+void get_X11_Display(X11_Window_t  * X11) {
     X11->display = XOpenDisplay(NULL);
-    X11->root = XDefaultRootWindow(X11->display);
     X11->window = (Window) NULL;
-    X11->name = window_name;
 }
 
-Window enum_windows(const char * str, Display* display, Window window, int depth) {
+Window enum_windows(const char * str, Display * display, Window window, int depth) {
     int i;
     XTextProperty text;
     XGetWMName(display, window, &text);
@@ -66,13 +63,14 @@ Window enum_windows(const char * str, Display* display, Window window, int depth
     return (Window) NULL;
 }
 
-void fix_x_window_name(window_t * X11) {
-    X11->window  = enum_windows(X11->name, X11->display, X11->root, 0);
+void fix_x_window_name(X11_Window_t * X11, const char * name) {
+    Window root = XDefaultRootWindow(X11->display);     
+    X11->window  = enum_windows(name, X11->display, root, 0);
     if (X11->window) {
         Atom _NET_WM_NAME = XInternAtom(X11->display, "_NET_WM_NAME", 0);
         Atom UTF8_STRING = XInternAtom(X11->display, "UTF8_STRING", 0);
-        XChangeProperty(X11->display, X11->window, _NET_WM_NAME, UTF8_STRING, 8, 0,
-                        (const unsigned char *) X11->name, strlen(X11->name));
+        XChangeProperty(X11->display, X11->window, _NET_WM_NAME, UTF8_STRING, 
+                        8, 0, (const unsigned char *) name, strlen(name));
         XSync(X11->display, False);
     }
 }

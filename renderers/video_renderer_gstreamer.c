@@ -30,8 +30,9 @@ struct video_renderer_s {
     logger_t *logger;
     GstElement *appsrc, *pipeline, *sink;
     GstBus *bus;
-#ifdef X_DISPLAY_FIX
-    window_t *X11;
+    const char * server_name;
+#ifdef  X_DISPLAY_FIX
+    X11_Window_t * gst_window;
 #endif
 };
 
@@ -147,10 +148,14 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
+
+ 
+
+    renderer->server_name = server_name;
 #ifdef X_DISPLAY_FIX
-    renderer->X11 = calloc(1, sizeof(window_t));
-    assert(renderer->X11);
-    get_x_display(renderer->X11, server_name);
+    renderer->gst_window = calloc(1, sizeof(X11_Window_t));
+    assert(renderer->gst_window);
+    get_X11_Display(renderer->gst_window);
 #endif
     return renderer;
 }
@@ -173,8 +178,8 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
     gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 
 #ifdef X_DISPLAY_FIX
-    if(!renderer->X11->window) {
-        fix_x_window_name(renderer->X11);
+    if(!(renderer->gst_window->window)) {
+        fix_x_window_name(renderer->gst_window, renderer->server_name);
     }
 #endif
 }
@@ -223,7 +228,7 @@ void video_renderer_destroy(video_renderer_t *renderer) {
     gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
     gst_object_unref (renderer->pipeline);
 #ifdef X_DISPLAY_FIX
-    free(renderer->X11);
+    free(renderer->gst_window);
 #endif    
     if (renderer) {
         free(renderer);
