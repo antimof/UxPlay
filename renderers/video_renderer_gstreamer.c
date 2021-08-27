@@ -22,6 +22,7 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 
+
 #ifdef X_DISPLAY_FIX
 #include "x_display_fix.h"
 #endif
@@ -219,6 +220,9 @@ void video_renderer_destroy(video_renderer_t *renderer) {
     gst_object_unref (renderer->pipeline);
     if (renderer) {
         free(renderer);
+#ifdef X_DISPLAY_FIX
+	my_window = (Window) NULL;
+#endif
     }
 }
 
