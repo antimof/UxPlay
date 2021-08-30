@@ -35,7 +35,7 @@ struct X11_Window_s {
     Window window;
 } typedef X11_Window_t;
 
-void get_X11_Display(X11_Window_t  * X11) {
+void get_X11_Display(X11_Window_t * X11) {
     X11->display = XOpenDisplay(NULL);
     X11->window = (Window) NULL;
 }
