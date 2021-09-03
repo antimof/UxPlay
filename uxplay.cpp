@@ -42,7 +42,7 @@
 
 
 static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                 unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip[2],
+                 unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
 			 bool use_audio,  bool debug_log, std::string videosink);
 
 static int stop_server ();
@@ -251,7 +251,7 @@ int main (int argc, char *argv[]) {
     bool use_audio = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
-    unsigned short display[5] = {0}, tcp[2] = {0}, udp[3] = {0};
+    unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
     videoflip_t videoflip[2] = { NONE , NONE };
     std::string videosink = "autovideosink";
     
@@ -298,7 +298,7 @@ int main (int argc, char *argv[]) {
             }
         } else if (arg == "-p") {
             if (i == argc - 1 || argv[i + 1][0] == '-') {
-	        tcp[0] = 7100; tcp[1] = 7000;
+                tcp[0] = 7100; tcp[1] = 7000; tcp[2] = 7001;
 	        udp[0] = 7011; udp[1] = 6001; udp[2] = 6000;
 		continue;
             }
@@ -429,7 +429,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 }
 
 int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                 unsigned short tcp[2], unsigned short udp[3], videoflip_t videoflip[2],
+                 unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
 		  bool use_audio, bool debug_log, std::string videosink) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
