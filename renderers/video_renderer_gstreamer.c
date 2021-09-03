@@ -145,6 +145,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     g_string_append(launch, " name=video_sink sync=false");
     renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
+    g_string_free(launch, TRUE);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
