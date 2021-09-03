@@ -299,8 +299,8 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-p") {
             if (i == argc - 1 || argv[i + 1][0] == '-') {
                 tcp[0] = 7100; tcp[1] = 7000; tcp[2] = 7001;
-	        udp[0] = 7011; udp[1] = 6001; udp[2] = 6000;
-		continue;
+                udp[0] = 7011; udp[1] = 6001; udp[2] = 6000;
+                continue;
             }
             std::string value(argv[++i]);
             if (value == "tcp") {
