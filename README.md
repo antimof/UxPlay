@@ -145,6 +145,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    (Some choices of videosink might not work on your system.)
 
 # ChangeLog
+1.341 2021-09-04   fixed: render_logger was not being destroyed by stop_server()
 1.34  2021-08-27   Fixed "ZOOMFIX": the X11 window name fix was only being made the
                    first time the GStreamer window was created by uxplay, and
 		   not if the server was relaunched after the GStreamer window

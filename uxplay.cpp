@@ -33,7 +33,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.34"
+#define VERSION "1.341"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -54,6 +54,7 @@ static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static video_renderer_t *video_renderer = NULL;
 static audio_renderer_t *audio_renderer = NULL;
+static logger_t *render_logger = NULL;
 
 static void signal_handler (int sig) {
     switch (sig) {
@@ -511,5 +512,6 @@ int stop_server () {
     if (dnssd) dnssd_unregister_airplay(dnssd);
     if (audio_renderer) audio_renderer_destroy(audio_renderer);
     if (video_renderer) video_renderer_destroy(video_renderer);
+    if (render_logger) logger_destroy(render_logger);
     return 0;
 }
