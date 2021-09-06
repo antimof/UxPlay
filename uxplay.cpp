@@ -459,7 +459,12 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     raop_set_log_callback(raop, log_callback, NULL);
     raop_set_log_level(raop, debug_log ? RAOP_LOG_DEBUG : LOGGER_INFO);
 
-    logger_t *render_logger = logger_init();
+    render_logger = logger_init();
+    if (render_logger == NULL){
+        LOGE("Count not init render_logger\n");
+        stop_server();
+        return -1;
+    }
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
@@ -510,6 +515,7 @@ int stop_server () {
     if (raop) raop_destroy(raop);
     if (dnssd) dnssd_unregister_raop(dnssd);
     if (dnssd) dnssd_unregister_airplay(dnssd);
+    if (dnssd) dnssd_destroy(dnssd);
     if (audio_renderer) audio_renderer_destroy(audio_renderer);
     if (video_renderer) video_renderer_destroy(video_renderer);
     if (render_logger) logger_destroy(render_logger);
