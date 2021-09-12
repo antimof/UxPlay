@@ -74,8 +74,8 @@ Click on them to install (they install to
 It is recommended you use GStreamer.framework rather than install Gstreamer with Brew or MacPorts (see later).
 
 Next install OpenSSL-1.1.1 and libplist:
-MacPorts: "sudo port install openssl liblist-dev "; Brew: "brew install openssl libplist".   
-Since the static forms of these libraries are used in the MacOs build, the OpenSSL and libplist packages can be uninstalled after building uxplay
+MacPorts: "sudo port install openssl liblist-dev "; Brew: "brew install openssl libplist".   Since the
+static forms of these libraries are used in the MacOs build, the OpenSSL and libplist packages can be uninstalled after building uxplay
 (so you could just install MacPorts or Brew before building uxplay, and uninstall it afterwards).
 Unfortunately, Fink's openssl package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and it
 does not supply a recent libplist.
