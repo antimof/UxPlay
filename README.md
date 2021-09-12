@@ -293,7 +293,7 @@ with 4 or less digits.   It seems that the width and height may be negotiated
 with the AirPlay client, so this may not be the actual screen geometry that
 displays.
 
-8.The title on the GStreamer display window is now is the AirPlay server name
+8. The title on the GStreamer display window is now is the AirPlay server name
 (default "UxPlay", but can be changed with option **-n**), rather than the program
 name "uxplay" (note the difference in capitalization).  (This works for X11 windows created
 by gstreamer videosinks ximagesink, xvimagesink, but not OpenGL windows created by glimagesink.)
