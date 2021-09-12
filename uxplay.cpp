@@ -499,8 +499,6 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
         stop_server();
         return -1;
     }
-
-
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
