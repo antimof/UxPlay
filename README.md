@@ -36,6 +36,9 @@ Zoom, see below).
 7. make
 8. sudo make install
 
+(One user reported that his "```cd build; cmake ..```" placed the Build files in UxPlay  instead of UxPlay/build; if this happens,
+add "```-B .```" to the end of the cmake invocation.)
+
 Run uxplay in a terminal window.
 
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
