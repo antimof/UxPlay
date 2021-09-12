@@ -1,13 +1,13 @@
-This project is an early stage prototype of unix AirPlay server.
-Work is based on https://github.com/FD-/RPiPlay.
+This project is a  unix AirPlay server which  now also works on MacOs.
+The work is based on https://github.com/FD-/RPiPlay.
 Tested on Ubuntu 19.10 desktop.
-5G Wifi connection is the must.
+Tested on MacOS 10.15
 
 Features:
 1. Based on Gstreamer.
 2. Video and audio are supported out of the box.
 3. Gstreamer decoding is plugin agnostic. Uses accelerated decoders if
-available. VAAPI is preferable. (but don't use VAAPI with nVidia)
+available. VAAPI is preferable, (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
 Getting it: (after sudo apt-get-install git cmake):
@@ -18,18 +18,16 @@ This is a pull request on the
 original site https://github.com/antimof/UxPlay.git ; it may or may not ever
 get committed into the codebase  on the original antimof site, as the antimof
 project may no longer be active.
-If it has been  committed, replace "FDH2" by "antimof" in the above.
+If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.
 
-**Building this version** (Instructions for Ubuntu; adapt these for other
-  Linuxes).
-  
+**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOs, see below).
+
 In a terminal window, change directories to the UxPlay directory of the
 downloaded source code, then do
 
-
 1. sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad 
 2. sudo apt-get install gstreamer1.0-vaapi (For Intel graphics, but not nVidia graphics)
-3. sudo apt-get install libx11-dev  (for the X_display name fix for screen-sharing with e.g.,  ZOOM)
+3. sudo apt-get install libx11-dev  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
 4. mkdir build
 5. cd build
 6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get a screen-sharing fix to
@@ -52,6 +50,75 @@ gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugi
 avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
 GStreamer packages are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
+
+**MacOs**  (Currently only for Intel X86_64 Macs)
+
+These instructions asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
+
+It is also assumed that CMake >= 2.13 is installed:
+this can be done with package managers [MacPorts](http://www.macports.org),
+[Fink](http://finkproject.org) or [Brew](http://brew.sh), or by a download from
+[https://cmake.org/download/](https://cmake.org/download/).
+
+
+Start by downloading the latest MacOs release of GStreamer-1.0
+from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
+Install both the MacOs runtime and development installer packages. Assuming that the latest release is 1.18.4 they are
+
+```
+gstreamer-1.0-1.18.4-x86_64.pkg
+gstreamer-1.0-devel-1.18.4-x86_64.pkg
+```
+Click on them to install (they install to
+/Library/FrameWorks/GStreamer.framework).
+It is recommended you use GStreamer.framework rather than install Gstreamer with Brew or MacPorts (see later).
+
+Next install OpenSSL-1.1.1 and libplist:
+MacPorts: "sudo port install openssl liblist-dev "; Brew: "brew install openssl libplist".   
+Since the static forms of these libraries are used in the MacOs build, the OpenSSL and libplist packages can be uninstalled after building uxplay
+(so you could just install MacPorts or Brew before building uxplay, and uninstall it afterwards).
+Unfortunately, Fink's openssl package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and it
+does not supply a recent libplist.
+
+If you have have the standard GNU-Linux toolset (autoconf, automake, libtool, etc.) installed,
+you can also  download and compile the source code for these libraries from
+[https://www.openssl.org/source/](https://www.openssl.org/source/), 
+[https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist).
+Compile the downloaded
+openssl-1.1.1 by opening a terminal in your Downloads directory, and  unpacking the source distribution openssl-1.1.1x.tar.gz (where "x" is a "patch" label,
+currently given by  "x" = "l"):
+("tar -xvzf openssl-1.1.1x.tar.gz ; cd openssl-1.1.1x"). Then install with
+"./config; make ; sudo make install_dev" and clean up after building uxplay  with "sudo make uninstall" in the same directory.
+Similarly, for libplist, download the source as a zipfile from github as
+[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip), then
+unpack ("unzip libplist-master.zip ; cd libplist-master"), compile
+("./autogen.sh ; make ; sudo make install)" and clean up after uxplay is built  with "sudo uninstall"  in the same directory.  
+
+Finally, build and install uxplay (without ZOOMFIX):
+"cd UxPlay; mkdir build ; cd build ; cmake .. ; make ; sudo make install ".
+
+The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
+the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
+screen-sharing apps (e.g., Zoom).   The option -t _timeout_
+cannot be used because if the GStreamer pipeline is destroyed while the OpenGL window is still open,
+and uxplay is left running, a segfault occurs.
+Also, the resolution settings "-s wxh" do not affect
+the (small) initial mirror window size, but the window can be expanded using the mouse.
+
+
+**Other ways (Brew, MacPorts) to install GStreamer on MacOs (not recommended):**
+
+First make sure that pkgconfig is installed  (Brew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
+
+(a) with Brew: "brew gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
+to using GStreamer.framework, but causes a large number of extra packages to be installed by Brew as dependencies.
+
+(b) with MacPorts: "sudo port install gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
+The MacPorts GStreamer is built to use X11, so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
+option "-vs ximagesink".  On an older unibody MacBook Pro, the default setting wxh = 1920x1080 was too large  for
+the non-retina display, but 800x600 worked; However, the Gstreamer pipeline is fragile against attempts to change
+the X11 window size, or to rotations that switch a connected iPad client between portrait and landscape mode while uxplay is running. 
+Using the MacPorts X11 GStreamer is only viable if the image size is left unchanged from the initial "-s wxh" setting. 
 
 # **Troubleshooting:**
 
@@ -77,7 +144,7 @@ has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs op
 Options:
 **-n server_name **;  server_name will be the name that appears offering
 AirPlay services to your iPad, iPhone etc.
-**NEW**: this will also now be the name shown above the mirror display  window, 
+**NEW**: this will also now be the name shown above the mirror display (X11)  window, 
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -126,6 +193,7 @@ which will not work if a firewall is running.
    number of the computer's network card.   (Different server_name,  MAC
    addresses,  and network ports are needed for each running uxplay  if you
    attempt to  run two instances of uxplay on the same computer.)
+   On MacOs, random MAC addresses are always used.
 
 **-a** disable audio, leaving only the video playing.
 
@@ -138,20 +206,33 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-r {R|L}**  90 degree Right (clockwise) or Left (counter-clockwise)
    rotations; these are carried out after any **-f** transforms.
 
-**-vs videosink** chooses the GStreamer videosink, instead of letting
+**-vs _videosink_** chooses the GStreamer videosink, instead of letting
    autovideosink pick it for you. For example, xvimagesink, vaapisink, or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
    "..." might allow some parameters to be included with the videosink name. 
    (Some choices of videosink might not work on your system.)
 
+** -t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
+have been present during the previous _timeout_ seconds.  (You may wish to use this  because an idle Bonjour
+registration eventually becomes unavailable for new connections.)  This option should not be
+used if the display window is an OpenGL window (e.g., on MacOS without X11), as an  OpenGL window created
+by GStreamer does not terminate correctly (it causes a segfault)
+if it is still open when the  GStreamer pipeline is closed.
+
+
 # ChangeLog
-1.341 2021-09-04   fixed: render_logger was not being destroyed by stop_server()
+1.35  2021-09-10   now uses a GLib MainLoop, and builds on MacOS (tested on Intel Mac, 10.15 ).
+                   New option  -t _timeout_ for relauching server if no connections were active in
+                   previous _timeout_ seconds (to renew Bonjour registration).
+                   
+1.341 2021-09-04   fixed: render logger was not being destroyed by stop_server()
+
 1.34  2021-08-27   Fixed "ZOOMFIX": the X11 window name fix was only being made the
                    first time the GStreamer window was created by uxplay, and
 		   not if the server was relaunched after the GStreamer window
 		   was closed, with uxplay still running.   Corrected in v. 1.34
 
-# New features available: (v 1.32 2021-08-20)
+# New features available: (v 1.35 2021-09-10)
 
 1. Updates of the RAOP (AirPlay protocol)  collection of codes  maintained
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
@@ -160,7 +241,7 @@ This involved crypto updates, replacement
 of the included plist library by the system-installed version, and  a change
 over to a library llhttp for http parsing. 
 
-2. Added the -s, -o -p, -m, -r,  -f,  -fps, and -vs  options.
+2. Added the -s, -o -p, -m, -r,  -f,  -fps  -vs and -t  options.
 
 3. If "cmake -DZOOMFIX=ON .."  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
@@ -205,18 +286,17 @@ with 4 or less digits.   It seems that the width and height may be negotiated
 with the AirPlay client, so this may not be the actual screen geometry that
 displays.
 
-8. The title on the GStreamer display window is now is the AirPlay server name
+8.The title on the GStreamer display window is now is the AirPlay server name
 (default "UxPlay", but can be changed with option **-n**), rather than the program
-name "uxplay" (note the difference in capitalization).
+name "uxplay" (note the difference in capitalization).  (This works for X11 windows created
+by gstreamer videosinks ximagesink, xvimagesink, but not OpenGL windows created by glimagesink.)
 
 9. The avahi_compat "nag" warning on startup is suppressed, by placing
 "AVAHI_COMPAT_NOWARN=1" into the runtime environment when uxplay starts.
 (This uses a call to putenv() in a form that is believed to be safe against
 memory leaks, at least in modern Linux; if for any reason you don't want
 this fix, comment out the line in CMakeLists.txt that activates it when uxplay
-is compiled.)
-
-10.  Allow choice (with -vs option) of the videosink that ends the GStreamer pipline. 
+is compiled.) On MacOS, Avahi is not used.
 
 # Disclaimer
 

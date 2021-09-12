@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <glib-unix.h>
 
 #include "log.h"
 #include "lib/raop.h"
@@ -33,13 +34,12 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.341"
+#define VERSION "1.35"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
-
 
 static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
@@ -47,33 +47,59 @@ static int start_server (std::vector<char> hw_addr, std::string name, unsigned s
 
 static int stop_server ();
 
-static bool running = false;
-static uint open_connections = 0;
-static bool had_connection = false;
 static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static video_renderer_t *video_renderer = NULL;
 static audio_renderer_t *audio_renderer = NULL;
 static logger_t *render_logger = NULL;
 
-static void signal_handler (int sig) {
-    switch (sig) {
-        case SIGINT:
-        case SIGTERM:
-            running = 0;
-            break;
+static bool relaunch_server = false;
+static uint open_connections = 0;
+static bool connections_stopped = false;
+static unsigned int server_timeout = 0;
+static unsigned int counter;
+
+gboolean connection_callback (gpointer loop){
+  if (!connections_stopped) {
+        counter = 0;
+    } else {
+        if (++counter == server_timeout) {
+	    LOGI("no connections for %d seconds: relaunch server\n",server_timeout);
+	    g_main_loop_quit((GMainLoop *) loop);
+        }
     }
+    return TRUE;
+}
+    static gboolean  sigint_callback(gpointer loop) {
+    relaunch_server = false;
+    g_main_loop_quit((GMainLoop *) loop);
+    return TRUE;
 }
 
-static void init_signals (void) {
-    struct sigaction sigact;
-
-    sigact.sa_handler = signal_handler;
-    sigemptyset(&sigact.sa_mask);
-    sigact.sa_flags = 0;
-    sigaction(SIGINT, &sigact, NULL);
-    sigaction(SIGTERM, &sigact, NULL);
+static gboolean  sigterm_callback(gpointer loop) {
+    relaunch_server = false;
+    g_main_loop_quit((GMainLoop *) loop);
+    return TRUE;
 }
+
+static void main_loop()  {
+    guint connection_watch_id = 0;
+    GMainLoop *loop = g_main_loop_new(NULL,FALSE);
+    if (server_timeout) {
+        connection_watch_id = g_timeout_add_seconds(1, (GSourceFunc) connection_callback, (gpointer) loop);
+    }  
+    guint gst_bus_watch_id = (guint) video_renderer_listen((void *)loop, video_renderer);
+    guint sigterm_watch_id = g_unix_signal_add(SIGTERM, (GSourceFunc) sigterm_callback, (gpointer) loop);
+    guint sigint_watch_id = g_unix_signal_add(SIGINT, (GSourceFunc) sigint_callback, (gpointer) loop);
+    relaunch_server = true;
+    g_main_loop_run(loop);
+
+    if (gst_bus_watch_id > 0) g_source_remove(gst_bus_watch_id);
+    if (sigint_watch_id > 0) g_source_remove(sigint_watch_id);
+    if (sigterm_watch_id > 0) g_source_remove(sigterm_watch_id);
+    if (connection_watch_id > 0) g_source_remove(connection_watch_id);
+    g_main_loop_unref(loop);
+}    
 
 static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     for (int i = 0; i < str.length(); i += 3) {
@@ -123,14 +149,15 @@ static void print_info (char *name) {
     printf("-o        Set mirror \"overscanned\" mode on (not usually needed)\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
-    printf("-r {R|L}  rotate 90 degrees Right (cw) or Left (ccw)\n");
+    printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports only\n");
-    printf("-m        use random MAC address (use for concurrent UxPlay's)\n");
+    printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
     printf("-a        Turn audio off. video output only\n");
-    printf("-vs       choose the  GStreamer videosink; default \"autovideosink\"\n");
+    printf("-t n      Relaunch server if no connection existed in last n seconds\n");
+    printf("-vs       Choose the  GStreamer videosink; default \"autovideosink\"\n");
     printf("          choices: ximagesink,xvimagesink,vaapisink,fpsdisplaysink, etc.\n"); 
     printf("-d        Enable debug logging\n");
     printf("-v/-h     Displays this help and version information\n");
@@ -169,12 +196,13 @@ static bool get_display_settings (std::string value, unsigned short *w, unsigned
     return true;
 }
 
-static bool get_fps (const char *str, unsigned short *n) {
-    // str must be a positive decimal integer < 256 (stored in one byte)
+static bool get_value (const char *str, unsigned int *n) {
+    // str must be a positive decimal <= input value *n  
+    if (strlen(str) == 0 || strlen(str) > 10 || str[0] == '-') return false;
     char *end;
-    if (strlen(str) == 0 || strlen(str) > 3 || str[0] == '-') return false;
-    *n = (unsigned short) strtoul(str, &end, 10);
-    if (*end || *n == 0 || *n > 255) return false;
+    unsigned long l = strtoul(str, &end, 10);
+    if (*end || l == 0 || (*n > 0 && l > *n)) return false;
+    *n = (unsigned int) l;
     return true;
 }
 
@@ -245,8 +273,6 @@ static bool get_videorotate (const char *str, videoflip_t *videoflip) {
 }
 
 int main (int argc, char *argv[]) {
-    init_signals();
-
     std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr;
     bool use_audio = true;
@@ -279,10 +305,12 @@ int main (int argc, char *argv[]) {
             }
         } else if (arg == "-fps") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
-            if (!get_fps(argv[++i], &display[3])) {
+            unsigned int n = 255;
+            if (!get_value(argv[++i], &n)) {
                 fprintf(stderr, "invalid \"-fps %s\"; -fps n : max n=255, default n=30\n", argv[i]);
                 exit(1);
             }
+            display[3] = (unsigned short) n;
         } else if (arg == "-o") {
             display[4] = 1;
         } else if (arg == "-f") {
@@ -329,7 +357,11 @@ int main (int argc, char *argv[]) {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             videosink.erase();
             videosink.append(argv[++i]);
-        } else {
+        } else if (arg == "-t") {
+            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
+            server_timeout = 0;
+            get_value(argv[++i], &server_timeout);
+	} else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
@@ -349,28 +381,27 @@ int main (int argc, char *argv[]) {
     mac_address.clear();
 
     relaunch:
-    had_connection = false;
+    connections_stopped = false;
     if (start_server(server_hw_addr, server_name, display, tcp, udp,
                      videoflip,use_audio, debug_log, videosink)) {
         return 1;
     }
-    running = true;
-    while (running) {
-        if ((video_renderer_listen(video_renderer)) || (had_connection && !open_connections)) {
-            stop_server();
-            LOGI("Re-launching server...");
-            goto relaunch;
-        }
-    }
 
-    LOGI("Stopping...");
-    stop_server();
+    main_loop();
+    if (relaunch_server) {
+            LOGI("Re-launching server...");
+            stop_server();
+            goto relaunch;
+    } else {
+        LOGI("Stopping...");
+        stop_server();
+    }
 }
 
 // Server callbacks
 extern "C" void conn_init (void *cls) {
     open_connections++;
-    had_connection = true;
+    connections_stopped = false;
     LOGI("Open connections: %i", open_connections);
     video_renderer_update_background(video_renderer, 1);
 }
@@ -379,6 +410,9 @@ extern "C" void conn_destroy (void *cls) {
     video_renderer_update_background(video_renderer, -1);
     open_connections--;
     LOGI("Open connections: %i", open_connections);
+    if(!open_connections) {
+        connections_stopped = true;
+    }
 }
 
 extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
@@ -460,11 +494,13 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     raop_set_log_level(raop, debug_log ? RAOP_LOG_DEBUG : LOGGER_INFO);
 
     render_logger = logger_init();
-    if (render_logger == NULL){
-        LOGE("Count not init render_logger\n");
+    if (render_logger == NULL) {
+        LOGE("Could not init render_logger\n");
         stop_server();
         return -1;
     }
+
+
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 

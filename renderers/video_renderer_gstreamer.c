@@ -119,7 +119,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     video_renderer_t *renderer;
     GError *error = NULL;
 
-    /* this call to g_set_application_name makes server_name appear in the display window title bar, */
+    /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
 
     if (!g_get_application_name()) g_set_application_name(server_name);
@@ -184,41 +184,6 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
 }
 
 void video_renderer_flush(video_renderer_t *renderer) {
-
-}
-
-bool video_renderer_listen(video_renderer_t *renderer) {
-    GstMessage *msg = NULL;
-
-    /* listen  on the gstreamer pipeline bus for an error or EOS.   */
-    /* return true if this occurs, and false if 100 millisecs have */
-    /* elapsed with no such event occuring.                         */
-    
-    msg = gst_bus_timed_pop_filtered(renderer->bus, 100 * GST_MSECOND,
-                                  GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
-    /* parse message */
-    if (msg != NULL)  {
-        GError *err;
-        gchar *debug_info;
-
-        switch (GST_MESSAGE_TYPE (msg)) {
-	case GST_MESSAGE_ERROR:
-            gst_message_parse_error (msg, &err, &debug_info);
-            g_printerr("GStreamer: %s\n", err->message);
-            g_clear_error (&err);
-            g_free (debug_info);
-            break;
-        case GST_MESSAGE_EOS:
-            g_print("End-Of-Stream reached.\n");
-            break;
-        default:
-            g_printerr("unexpected message\n");
-            break;
-        }
-        gst_message_unref(msg);
-        return true;
-    }
-    return false;
 }
 
 void video_renderer_destroy(video_renderer_t *renderer) {
@@ -237,3 +202,32 @@ void video_renderer_destroy(video_renderer_t *renderer) {
 /* not implemented for gstreamer */
 void video_renderer_update_background(video_renderer_t *renderer, int type) {
 }
+
+gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpointer loop) {
+    switch (GST_MESSAGE_TYPE (message)) {
+    case GST_MESSAGE_ERROR: {
+        GError *err;
+        gchar *debug;
+        gst_message_parse_error (message, &err, &debug);
+        g_print ("GStreamer error: %s\n", err->message);
+        g_error_free (err);
+        g_free (debug);
+        g_main_loop_quit( (GMainLoop *) loop);
+        break;
+    }
+    case GST_MESSAGE_EOS:
+      /* end-of-stream */
+        g_print("GStreamer: End-Of-Stream\n");
+        g_main_loop_quit( (GMainLoop *) loop);
+        break;
+    default:
+      /* unhandled message */
+        break;
+    }
+    return TRUE;
+}
+
+unsigned int video_renderer_listen(void *loop, video_renderer_t *renderer) {
+    return (unsigned int) gst_bus_add_watch(renderer->bus, (GstBusFunc)
+                                            gstreamer_pipeline_bus_callback, (gpointer) loop);    
+}  
