@@ -80,7 +80,7 @@ static forms of these libraries are used in the MacOs build, the OpenSSL and lib
 Unfortunately, Fink's openssl package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and it
 does not supply a recent libplist.
 
-If you have have the standard GNU-Linux toolset (autoconf, automake, libtool, etc.) installed,
+If you have have the standard GNU toolset (autoconf, automake, libtool, etc.) installed,
 you can also  download and compile the source code for these libraries from
 [https://www.openssl.org/source/](https://www.openssl.org/source/), 
 [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist).
