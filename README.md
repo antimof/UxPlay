@@ -212,7 +212,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    "..." might allow some parameters to be included with the videosink name. 
    (Some choices of videosink might not work on your system.)
 
-** -t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
+**-t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
 have been present during the previous _timeout_ seconds.  (You may wish to use this  because an idle Bonjour
 registration eventually becomes unavailable for new connections.)  This option should not be
 used if the display window is an OpenGL window (e.g., on MacOS without X11), as an  OpenGL window created
