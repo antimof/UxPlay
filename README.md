@@ -12,9 +12,10 @@ Features:
 available. VAAPI is preferable, (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
-Getting it: (after sudo apt-get-install git cmake):
+**Getting it**:  either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
+or (after sudo apt-get-install git):
 
-git clone https://github.com/FDH2/UxPlay.git   
+```git clone https://github.com/FDH2/UxPlay.git```.   
 
 This is a pull request on the
 original site https://github.com/antimof/UxPlay.git ; it may or may not ever
@@ -24,6 +25,7 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 
 **Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOs, see below).
 
+If it is not installed, install cmake>=2.4.3: (sudo apt-get-install cmake).
 In a terminal window, change directories to the UxPlay directory of the
 downloaded source code, then do
 
