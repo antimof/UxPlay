@@ -78,7 +78,6 @@ package is too old.
 
 Finally, build and install uxplay (without ZOOMFIX):
 "cd UxPlay; mkdir build ; cd build ; cmake .. ; make ; sudo make install ".
-. 
 
 The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
 the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
