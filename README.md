@@ -89,7 +89,7 @@ Also, the resolution settings "-s wxh" do not affect
 the (small) initial mirror window size, but the window can be expanded using the mouse.
 
 
-***Building OpenSSL-1.1.1 and libplist from source***
+***Building OpenSSL-1.1.1 and libplist from source on MacOS***
 
 If you have have the standard GNU toolset (autoconf, automake, libtool, etc.) installed,
 you can also  download and compile the source code for these libraries from
