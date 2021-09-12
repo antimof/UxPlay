@@ -132,10 +132,13 @@ starting at port n, all three in the range 1024-65535, opened  for both tcp and 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
 plugin for Intel graphics is *NOT* installed (de-install it!).
+(You can test for this  by explicitly choosing the GStreamer videosink with option
+"-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
+reproduces the problem.)
 
 If your mirror window has no title showing, the "ZOOMFIX" will not work.
 The window is created by GStreamer, using a  videosink that the default "autovideosink" 
-has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink;
+has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink:
 "-vs xvimagesink" or "-vs ximagesink" will create window titles on displays managed by X11.
 
 
