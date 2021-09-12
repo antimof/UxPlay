@@ -164,7 +164,7 @@ AirPlay services to your iPad, iPhone etc.
 
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
    refresh rate of the display. Default is r=60 (60 Hz); r is a whole number
-   with three digits or less.   Values greater that 255 are ignored.
+   with three digits or less.   Values greater than 255 are ignored.
    
 **-fps n ** sets a maximum frame rate (in frames per second) for the AirPlay
    client to stream video; n must be a whole number with 3 digits or less.
