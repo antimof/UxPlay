@@ -1,3 +1,5 @@
+# UxPlay 1.35
+
 This project is a  unix AirPlay server which  now also works on MacOs.
 The work is based on https://github.com/FD-/RPiPlay.
 Tested on Ubuntu 19.10 desktop.
