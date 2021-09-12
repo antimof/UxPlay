@@ -73,12 +73,27 @@ Click on them to install (they install to
 /Library/FrameWorks/GStreamer.framework).
 It is recommended you use GStreamer.framework rather than install Gstreamer with Brew or MacPorts (see later).
 
-Next install OpenSSL-1.1.1 and libplist:
-MacPorts: "sudo port install openssl liblist-dev "; Brew: "brew install openssl libplist".   Since the
-static forms of these libraries are used in the MacOs build, the OpenSSL and libplist packages can be uninstalled after building uxplay
-(so you could just install MacPorts or Brew before building uxplay, and uninstall it afterwards).
-Unfortunately, Fink's openssl package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and it
-does not supply a recent libplist.
+Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
+MacPorts "sudo port install openssl liblist-dev "or Brew "brew install openssl libplist".   Since the
+static forms of the two  libraries wiil used, if you dont have MacPorts or Brew installed, you can just install one of these package-managers
+before building  uxplay, and uninstall it afterwards if you don't want to keep it.
+Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and its libplist1
+package is too old.
+
+Finally, build and install uxplay (without ZOOMFIX):
+"cd UxPlay; mkdir build ; cd build ; cmake .. ; make ; sudo make install ".
+. 
+
+The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
+the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
+screen-sharing apps (e.g., Zoom).   The option -t _timeout_
+cannot be used because if the GStreamer pipeline is destroyed while the OpenGL window is still open,
+and uxplay is left running, a segfault occurs.
+Also, the resolution settings "-s wxh" do not affect
+the (small) initial mirror window size, but the window can be expanded using the mouse.
+
+
+***Building OpenSSL-1.1.1 and libplist from source***
 
 If you have have the standard GNU toolset (autoconf, automake, libtool, etc.) installed,
 you can also  download and compile the source code for these libraries from
@@ -94,19 +109,8 @@ Similarly, for libplist, download the source as a zipfile from github as
 unpack ("unzip libplist-master.zip ; cd libplist-master"), compile
 ("./autogen.sh ; make ; sudo make install)" and clean up after uxplay is built  with "sudo uninstall"  in the same directory.  
 
-Finally, build and install uxplay (without ZOOMFIX):
-"cd UxPlay; mkdir build ; cd build ; cmake .. ; make ; sudo make install ".
 
-The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
-the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
-screen-sharing apps (e.g., Zoom).   The option -t _timeout_
-cannot be used because if the GStreamer pipeline is destroyed while the OpenGL window is still open,
-and uxplay is left running, a segfault occurs.
-Also, the resolution settings "-s wxh" do not affect
-the (small) initial mirror window size, but the window can be expanded using the mouse.
-
-
-**Other ways (Brew, MacPorts) to install GStreamer on MacOs (not recommended):**
+***Other ways (Brew, MacPorts) to install GStreamer on MacOs (not recommended):***
 
 First make sure that pkgconfig is installed  (Brew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
