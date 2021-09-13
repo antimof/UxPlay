@@ -37,12 +37,17 @@ downloaded source code, then do
 5. `cd build`
 6. `cmake ..`      (or "`cmake -DZOOMFIX=ON ..`" to get a screen-sharing fix to
 make the mirror display window visible to screen-sharing applications such as
-Zoom, see below). Here "`..`" is "DOTDOT" (no space between the dots),
-the source directory above "build". 
+Zoom, see below).
 7. `make`
 8. `sudo make install`
 
 Run uxplay in a terminal window.
+
+***Troubleshooting***:  "cmake [-DZOOMFIX=ON] .." should create the Build files in the directory ("build") that it runs in.  The source directory
+above it ("..", no space between the dots) should only contain the files downloaded.
+In particular, it must not contain a "CMakeCache.txt" which would be there if
+cmake had previously been run in the source directory by mistake.
+
 
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
 
