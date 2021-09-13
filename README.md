@@ -249,17 +249,17 @@ over to a library llhttp for http parsing.
 
 2. Added the -s, -o -p, -m, -r,  -f,  -fps  -vs and -t  options.
 
-3. If "cmake -DZOOMFIX=ON .."  is run before compiling,
+3. If "`cmake -DZOOMFIX=ON`"  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
 Zoom. To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
 (ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available,
-since starting with that release, the GStreamer mirror window will be natively
+since starting with that release, the GStreamer X11 mirror window will be natively
 visible for screen-sharing.) Thanks to David Ventura
 https://github.com/DavidVentura/UxPlay for the fix
 and also for getting it into  gstreamer-1.20.
 [If uxplay was compiled after
 cmake was run without -DZOOMFIX=ON, and your gstreamer version is older than
-1.20, you can still manually make the window visible to screen-sharing apps with the X11 utility
+1.20, you can still manually make the X11 window visible to screen-sharing apps with the X11 utility
 xdotool, if it is installed, with: ``` xdotool selectwindow set_window --name <name>```
 (where ```<name>``` is your choice of name), and then select the uxplay window
 by clicking on it with the mouse.]
