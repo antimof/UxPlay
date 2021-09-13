@@ -149,7 +149,7 @@ has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs op
 
 Options:
 
-**-n server_name **;  server_name will be the name that appears offering
+**-n server_name**;  server_name will be the name that appears offering
 AirPlay services to your iPad, iPhone etc.
 **NEW**: this will also now be the name shown above the mirror display (X11)  window, 
 
@@ -166,7 +166,7 @@ AirPlay services to your iPad, iPhone etc.
    refresh rate of the display. Default is r=60 (60 Hz); r is a whole number
    with three digits or less.   Values greater than 255 are invalid.
    
-**-fps n ** sets a maximum frame rate (in frames per second) for the AirPlay
+**-fps n** sets a maximum frame rate (in frames per second) for the AirPlay
    client to stream video; n must be a whole number with 3 digits or less.
    (The client may choose to serve video at any frame rate lower
    than this;  default is 30 fps.)  A setting
