@@ -27,27 +27,19 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 
 You need a C/C++ compiler with the standard development libraries installed.
 Make sure that cmake>=3.4.1 and pkgconfig are also installed: "apt-get-install cmake pkgconfig".
-In a terminal window, change directories to the UxPlay directory of the
-downloaded source code, then do
+In a terminal window, change directories to the source directory of the
+downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads), then do
 
 1. `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad` 
 2. `sudo apt-get install gstreamer1.0-vaapi` (For Intel graphics, but not nVidia graphics)
 3. `sudo apt-get install libx11-dev`  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
-4. `mkdir build`
-5. `cd build`
-6. `cmake ..`      (or "`cmake -DZOOMFIX=ON ..`" to get a screen-sharing fix to
+4. `cmake` (or "`cmake -DZOOMFIX=ON`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
 Zoom, see below).
-7. `make`
-8. `sudo make install`
+5. `make`
+6. `sudo make install`
 
 Run uxplay in a terminal window.
-
-***Troubleshooting***:  "cmake [-DZOOMFIX=ON] .." should create the Build files in the directory ("build") that it runs in.  The source directory
-above it ("..", no space between the dots) should only contain the files downloaded.
-In particular, it must not contain a "CMakeCache.txt" which would be there if
-cmake had previously been run in the source directory by mistake.
-
 
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
 
@@ -82,13 +74,14 @@ It is recommended you use GStreamer.framework rather than install Gstreamer with
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
 MacPorts "sudo port install openssl liblist-dev "or Brew "brew install openssl libplist".   Since the
-static forms of the two  libraries wiil used, if you dont have MacPorts or Brew installed, you can just install one of these package-managers
+static forms of the two  libraries will used, if you dont have MacPorts or Brew installed, you can just install one of these package-managers
 before building  uxplay, and uninstall it afterwards if you don't want to keep it.
 Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and its libplist1
 package is too old.
 
-Finally, build and install uxplay (without ZOOMFIX):
-"cd UxPlay; mkdir build ; cd build ; cmake .. ; make ; sudo make install ".
+Finally, build and install uxplay (without ZOOMFIX): open a terminal and change into the UxPlay source directory
+("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
+"cmake ; make ; sudo make install ".  
 
 The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
 the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
@@ -108,11 +101,11 @@ you can also  download and compile the source code for these libraries from
 Compile the downloaded
 openssl-1.1.1 by opening a terminal in your Downloads directory, and  unpacking the source distribution openssl-1.1.1x.tar.gz (where "x" is a "patch" label,
 currently given by  "x" = "l"):
-("tar -xvzf openssl-1.1.1x.tar.gz ; cd openssl-1.1.1x"). Then install with
-"./config; make ; sudo make install_dev" and clean up after building uxplay  with "sudo make uninstall" in the same directory.
+("tar -xvzf openssl-1.1.1x.tar.gz ; cd openssl-1.1.1x"). Then build/install with
+"./config ; make ; sudo make install_dev" and clean up after building uxplay  with "sudo make uninstall" in the same directory.
 Similarly, for libplist, download the source as a zipfile from github as
 [libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip), then
-unpack ("unzip libplist-master.zip ; cd libplist-master"), compile
+unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install)" and clean up after uxplay is built  with "sudo uninstall"  in the same directory.  
 
 
