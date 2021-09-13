@@ -231,3 +231,4 @@ unsigned int video_renderer_listen(void *loop, video_renderer_t *renderer) {
     return (unsigned int) gst_bus_add_watch(renderer->bus, (GstBusFunc)
                                             gstreamer_pipeline_bus_callback, (gpointer) loop);    
 }  
+

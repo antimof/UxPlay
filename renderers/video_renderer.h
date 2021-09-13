@@ -59,3 +59,4 @@ void video_renderer_update_background (video_renderer_t *renderer, int type);
 #endif
 
 #endif //VIDEO_RENDERER_H
+

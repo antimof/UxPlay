@@ -50,3 +50,4 @@ if( APPLE )
   message( "APPLE ONLY: \"target_link_directories\" used here requires CMake >= 3.13 ")
   target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )
 endif()
+

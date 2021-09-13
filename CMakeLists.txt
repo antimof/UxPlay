@@ -42,3 +42,4 @@ target_link_libraries( uxplay
 		   )
 
 install( TARGETS  uxplay RUNTIME DESTINATION bin )
+
