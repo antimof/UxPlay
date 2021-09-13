@@ -36,7 +36,7 @@ downloaded source code, then do
 4. `mkdir build`
 5. `cd build`
 6. `cmake ..`      (or "`cmake -DZOOMFIX=ON ..`" to get a screen-sharing fix to
-make the mirror display window visible to screen-sharing applications such as
+make X11 mirror display windows visible to screen-sharing applications such as
 Zoom, see below).
 7. `make`
 8. `sudo make install`
