@@ -98,7 +98,7 @@ If you have have the standard GNU toolset (autoconf, automake, libtool, etc.) in
 you can also  download and compile the source code for these libraries from
 [https://www.openssl.org/source/](https://www.openssl.org/source/), 
 [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist).
-Compile the downloaded
+Install the downloaded
 openssl-1.1.1 by opening a terminal in your Downloads directory, and  unpacking the source distribution openssl-1.1.1x.tar.gz (where "x" is a "patch" label,
 currently given by  "x" = "l"):
 ("tar -xvzf openssl-1.1.1x.tar.gz ; cd openssl-1.1.1x"). Then build/install with
@@ -118,8 +118,8 @@ to using GStreamer.framework, but causes a large number of extra packages to be 
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 The MacPorts GStreamer is built to use X11, so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
-option "-vs ximagesink".  On an older unibody MacBook Pro, the default setting wxh = 1920x1080 was too large  for
-the non-retina display, but 800x600 worked; However, the Gstreamer pipeline is fragile against attempts to change
+option "-vs ximagesink".  On an older unibody MacBook Pro, the default resolution  wxh = 1920x1080 was too large  for
+the non-retina display, but using option "-s 800x600" worked; However, the Gstreamer pipeline is fragile against attempts to change
 the X11 window size, or to rotations that switch a connected iPad client between portrait and landscape mode while uxplay is running. 
 Using the MacPorts X11 GStreamer is only viable if the image size is left unchanged from the initial "-s wxh" setting. 
 
