@@ -74,7 +74,7 @@ It is recommended you use GStreamer.framework rather than install Gstreamer with
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
 MacPorts "sudo port install openssl liblist-dev "or Brew "brew install openssl libplist".   Since the
-static forms of the two  libraries will used, if you dont have MacPorts or Brew installed, you can just install one of these package-managers
+static forms of the two  libraries will used, if you don't have MacPorts or Brew installed, you can just install one of these package-managers
 before building  uxplay, and uninstall it afterwards if you don't want to keep it.
 Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and its libplist1
 package is too old.
@@ -148,6 +148,7 @@ has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs op
 #  **Usage:**
 
 Options:
+
 **-n server_name **;  server_name will be the name that appears offering
 AirPlay services to your iPad, iPhone etc.
 **NEW**: this will also now be the name shown above the mirror display (X11)  window, 
@@ -238,7 +239,7 @@ if it is still open when the  GStreamer pipeline is closed.
 		   not if the server was relaunched after the GStreamer window
 		   was closed, with uxplay still running.   Corrected in v. 1.34
 
-# New features available: (v 1.35 2021-09-10)
+# Improvements since the original UxPlay by antimof:
 
 1. Updates of the RAOP (AirPlay protocol)  collection of codes  maintained
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
@@ -266,15 +267,16 @@ by clicking on it with the mouse.]
 
 4. The AirPlay server now terminates correctly when the gstreamer display window is
 closed, and is relaunched with the same settings to wait for a new connection.
-The program uxplay terminates when Ctrl-C is typed in the terminal window. 
+The program uxplay terminates when Ctrl-C is typed in the terminal window. The **-t _timeout_**
+option relaunches the server after _timeout_ seconds  of inactivity to allow new connections to be made.
 
 5.   In principle, multiple instances of uxplay can be run simultaneously
 using the **-m** (generate random MAC address) option to give each a
 different ("local" as opposed to "universal")  MAC address.
 If the **-p [n]** option is used, they also need separate network port choices.
 (However, there may be a large latency, and running two instances of uxplay
-simultaneously on the same computer may not be very useful; using -fps option
-to force streaming framerates below 30fps could be useful.)
+simultaneously on the same computer may not be very useful; using the **-fps** option
+to force streaming framerates below 30fps could be helpful.)
 
 6.  Without the **-p** [n] option,  uxplay makes a random dynamic assignment of
 network ports. This will not work if most ports are closed by a firewall.
@@ -300,6 +302,9 @@ by gstreamer videosinks ximagesink, xvimagesink, but not OpenGL windows created 
 memory leaks, at least in modern Linux; if for any reason you don't want
 this fix, comment out the line in CMakeLists.txt that activates it when uxplay
 is compiled.) On MacOS, Avahi is not used.
+
+10. UxPlay now builds on MacOs.
+
 
 # Disclaimer
 
