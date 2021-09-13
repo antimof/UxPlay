@@ -25,23 +25,22 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 
 **Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOs, see below).
 
-If it is not installed, install cmake>=2.4.3: (sudo apt-get-install cmake).
+You need a C/C++ compiler with the standard development libraries installed.
+Make sure that cmake>=3.4.1 and pkgconfig are also installed: "apt-get-install cmake pkgconfig".
 In a terminal window, change directories to the UxPlay directory of the
 downloaded source code, then do
 
-1. sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad 
-2. sudo apt-get install gstreamer1.0-vaapi (For Intel graphics, but not nVidia graphics)
-3. sudo apt-get install libx11-dev  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
-4. mkdir build
-5. cd build
-6. cmake ..      (or "cmake -DZOOMFIX=ON .." to get a screen-sharing fix to
+1. `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad` 
+2. `sudo apt-get install gstreamer1.0-vaapi` (For Intel graphics, but not nVidia graphics)
+3. `sudo apt-get install libx11-dev`  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
+4. `mkdir build`
+5. `cd build`
+6. `cmake ..`      (or "`cmake -DZOOMFIX=ON ..`" to get a screen-sharing fix to
 make the mirror display window visible to screen-sharing applications such as
-Zoom, see below).
-7. make
-8. sudo make install
-
-(One user reported that his "```cd build; cmake ..```" placed the Build files in UxPlay  instead of UxPlay/build; if this happens,
-add "```-B .```" to the end of the cmake invocation.)
+Zoom, see below). Here "`..`" is "DOTDOT" (no space between the dots),
+the source directory above "build". 
+7. `make`
+8. `sudo make install`
 
 Run uxplay in a terminal window.
 
@@ -62,7 +61,7 @@ gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-p
 
 These instructions asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
-It is also assumed that CMake >= 2.13 is installed:
+It is also assumed that CMake >= 3.13 is installed:
 this can be done with package managers [MacPorts](http://www.macports.org),
 [Fink](http://finkproject.org) or [Brew](http://brew.sh), or by a download from
 [https://cmake.org/download/](https://cmake.org/download/).
