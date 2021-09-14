@@ -8,7 +8,7 @@ on a host running Linux, MacOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
 The work is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
-Tested on Ubuntu 20.04, OpenSUSE 15.3, MacOS 10.15.
+Tested on Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, MacOS 10.15.
 
 Features:
 1. Based on Gstreamer.
@@ -29,7 +29,7 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 **Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOS, see below).
 
 You need a C/C++ compiler with the standard development libraries installed.
-Make sure that cmake>=3.4.1 and pkgconfig are also installed: "apt-get-install cmake pkgconfig".
+Make sure that cmake>=3.4.1 and pkg-config are also installed: "apt-get-install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads), then do
 
