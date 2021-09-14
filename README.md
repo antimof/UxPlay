@@ -72,7 +72,7 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 [https://cmake.org/download/](https://cmake.org/download/).
 
 
-Start by downloading the latest MacOS release of GStreamer-1.0
+First get the latest MacOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
 Install both the MacOS runtime and development installer packages. Assuming that the latest release is 1.18.4
 they are ```gstreamer-1.0-1.18.4-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.4-x86_64.pkg```.
@@ -81,11 +81,11 @@ Click on them to install (they install to
 It is recommended you use GStreamer.framework rather than install Gstreamer with Brew or MacPorts (see later).
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
-MacPorts "sudo port install openssl liblist-dev "or Brew "brew install openssl libplist".   Since the
-static forms of the two  libraries will used, if you don't have MacPorts or Brew installed, you can just install one of these package-managers
-before building  uxplay, and uninstall it afterwards if you don't want to keep it.
-Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the needed library libcrypto, and its libplist1
-package is too old.
+MacPorts "sudo port install openssl liblist-dev" or Brew "brew install openssl libplist".   Only the
+static forms of the two  libraries will used: if you don't have MacPorts or Brew installed, you can just install
+one of these package-managers before building  uxplay, and uninstall it afterwards if you don't want to keep it.
+Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the
+needed library libcrypto, and its libplist1 package is too old.
 
 Finally, build and install uxplay (without ZOOMFIX): open a terminal and change into the UxPlay source directory
 ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
@@ -95,7 +95,8 @@ The MacOS build uses OpenGL, not X11, to create the mirror display window.   Thi
 the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
 screen-sharing apps (e.g., Zoom).   The option -t _timeout_
 cannot be used because if the GStreamer pipeline is destroyed while the OpenGL window is still open,
-and uxplay is left running, a segfault occurs (this is an issue with the glimagesink GStreamer plugin, not UxPlay).
+and uxplay is left running, a segfault occurs (this is an issue with the glimagesink GStreamer OpenGL
+plugin, not UxPlay).
 Also, the resolution settings "-s wxh" do not affect
 the (small) initial mirror window size, but the window can be expanded using the mouse.
 
