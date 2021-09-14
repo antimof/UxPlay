@@ -2,8 +2,7 @@
 
 This project is a  unix AirPlay server which  now also works on MacOs.
 The work is based on https://github.com/FD-/RPiPlay.
-Tested on Ubuntu 19.10 desktop.
-Tested on MacOS 10.15
+Tested on Ubuntu 20.04 desktop, OpenSUSE 15.3, MacOS 10.15
 
 Features:
 1. Based on Gstreamer.
@@ -33,11 +32,14 @@ downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git
 1. `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad` 
 2. `sudo apt-get install gstreamer1.0-vaapi` (For Intel graphics, but not nVidia graphics)
 3. `sudo apt-get install libx11-dev`  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
-4. `cmake` (or "`cmake -DZOOMFIX=ON`" to get a screen-sharing fix to
+4. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
 Zoom, see below).
 5. `make`
 6. `sudo make install`
+
+_Note that older cmake does not require the final "`.`" to specify the current directory as the source directory,
+but newer cmake requires it._
 
 Run uxplay in a terminal window.
 
@@ -81,7 +83,7 @@ package is too old.
 
 Finally, build and install uxplay (without ZOOMFIX): open a terminal and change into the UxPlay source directory
 ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
-"cmake ; make ; sudo make install ".  
+"cmake . ; make ; sudo make install ".  
 
 The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
 the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
@@ -250,7 +252,7 @@ over to a library llhttp for http parsing.
 
 2. Added the -s, -o -p, -m, -r,  -f,  -fps  -vs and -t  options.
 
-3. If "`cmake -DZOOMFIX=ON`"  is run before compiling,
+3. If "`cmake -DZOOMFIX=ON .`"  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
 Zoom. To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
 (ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available,
