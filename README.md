@@ -7,7 +7,7 @@ sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, MacOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
 The work is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
-https://github.con/antimof/UxPlay.
+https://github.com/antimof/UxPlay.
 Tested on Ubuntu 20.04, OpenSUSE 15.3, MacOS 10.15.
 
 Features:
