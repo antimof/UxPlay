@@ -39,7 +39,9 @@ Zoom, see below).
 _Note that older cmake does not require the final "`.`" to specify the current directory as the source directory,
 but newer cmake requires it._
 
-Run uxplay in a terminal window.
+The above script installs the executable file "`uxplay`" to `/usr/local/bin`.
+It can also be found in the build directory after the build
+processs. Run uxplay in a terminal window.
 
 **Note libplist-dev and (for ZOOMFIX) libx11-dev are new dependencies.**
 
