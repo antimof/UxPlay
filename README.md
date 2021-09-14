@@ -12,7 +12,7 @@ available. VAAPI is preferable, (but don't use VAAPI with nVidia)
 4. Automatic screen orientation.
 
 **Getting it**:  either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
-or (after installing  git):"`git clone https://github.com/FDH2/UxPlay.git`".   
+or (after installing  git): "git clone https://github.com/FDH2/UxPlay".   
 
 This is a pull request on the
 original site https://github.com/antimof/UxPlay.git ; it may or may not ever
