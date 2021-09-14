@@ -1,26 +1,32 @@
 # UxPlay 1.35
 
-This project is a  unix AirPlay server which  now also works on MacOs.
-The work is based on https://github.com/FD-/RPiPlay.
-Tested on Ubuntu 20.04 desktop, OpenSUSE 15.3, MacOS 10.15
+This project is a GPLv3  unix AirPlay server which  now also works on MacOS.
+Its main use is screen-mirroring (with audio) of iOS clients
+(iPads and iPhones) in a window on the server display (with the possibility of
+sharing that window on screen-sharing applications such as Zoom)
+on a host running Linux, MacOS, or other unix,
+using Apple's  AirPlay Mirror protocol first available in iOS 5.
+The work is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+https://github.con/antimof/UxPlay.
+Tested on Ubuntu 20.04, OpenSUSE 15.3, MacOS 10.15.
 
 Features:
 1. Based on Gstreamer.
 2. Video and audio are supported out of the box.
 3. Gstreamer decoding is plugin agnostic. Uses accelerated decoders if
-available. VAAPI is preferable, (but don't use VAAPI with nVidia)
+available. VAAPI is preferable, (but don't use VAAPI with nVidia).
 4. Automatic screen orientation.
 
 **Getting it**:  either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
-or (after installing  git): "git clone https://github.com/FDH2/UxPlay".   
+or (if git is installed): "git clone https://github.com/FDH2/UxPlay".   
 
-This is a pull request on the
-original site https://github.com/antimof/UxPlay.git ; it may or may not ever
-get committed into the codebase  on the original antimof site, as the antimof
+*This is a pull request on the
+original site https://github.com/antimof/UxPlay ; it may or may not ever
+get committed into the codebase  on the antimof site, as that
 project may no longer be active.
-If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.
+If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.*
 
-**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOs, see below).
+**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOS, see below).
 
 You need a C/C++ compiler with the standard development libraries installed.
 Make sure that cmake>=3.4.1 and pkgconfig are also installed: "apt-get-install cmake pkgconfig".
@@ -56,9 +62,9 @@ avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
 GStreamer packages are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
-**MacOs**  (Currently only for Intel X86_64 Macs)
+**MacOS**  (Currently only for Intel X86_64 Macs):
 
-These instructions asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
+These instructions for MacOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
 It is also assumed that CMake >= 3.13 is installed:
 this can be done with package managers [MacPorts](http://www.macports.org),
@@ -66,9 +72,9 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 [https://cmake.org/download/](https://cmake.org/download/).
 
 
-Start by downloading the latest MacOs release of GStreamer-1.0
+Start by downloading the latest MacOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
-Install both the MacOs runtime and development installer packages. Assuming that the latest release is 1.18.4
+Install both the MacOS runtime and development installer packages. Assuming that the latest release is 1.18.4
 they are ```gstreamer-1.0-1.18.4-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.4-x86_64.pkg```.
 Click on them to install (they install to
 /Library/FrameWorks/GStreamer.framework).
@@ -83,13 +89,13 @@ package is too old.
 
 Finally, build and install uxplay (without ZOOMFIX): open a terminal and change into the UxPlay source directory
 ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
-"cmake . ; make ; sudo make install ".  
+"cmake . ; make ; sudo make install " (same as for Linux).  
 
-The MacOs build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
+The MacOS build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
 the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
 screen-sharing apps (e.g., Zoom).   The option -t _timeout_
 cannot be used because if the GStreamer pipeline is destroyed while the OpenGL window is still open,
-and uxplay is left running, a segfault occurs.
+and uxplay is left running, a segfault occurs (this is an issue with the glimagesink GStreamer plugin, not UxPlay).
 Also, the resolution settings "-s wxh" do not affect
 the (small) initial mirror window size, but the window can be expanded using the mouse.
 
@@ -111,7 +117,7 @@ unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install)" and clean up after uxplay is built  with "sudo uninstall"  in the same directory.  
 
 
-***Other ways (Brew, MacPorts) to install GStreamer on MacOs (not recommended):***
+***Other ways (Brew, MacPorts) to install GStreamer on MacOS (not recommended):***
 
 First make sure that pkgconfig is installed  (Brew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
@@ -202,7 +208,7 @@ which will not work if a firewall is running.
    number of the computer's network card.   (Different server_name,  MAC
    addresses,  and network ports are needed for each running uxplay  if you
    attempt to  run two instances of uxplay on the same computer.)
-   On MacOs, random MAC addresses are always used.
+   On MacOS, random MAC addresses are always used.
 
 **-a** disable audio, leaving only the video playing.
 
@@ -305,7 +311,7 @@ memory leaks, at least in modern Linux; if for any reason you don't want
 this fix, comment out the line in CMakeLists.txt that activates it when uxplay
 is compiled.) On MacOS, Avahi is not used.
 
-10. UxPlay now builds on MacOs.
+10. UxPlay now builds on MacOS.
 
 
 # Disclaimer
