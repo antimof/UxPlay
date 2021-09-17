@@ -28,7 +28,7 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 
 **Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOS, see below).
 
-You need a C/C++ compiler with the standard development libraries installed.
+You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.
 Make sure that cmake>=3.4.1 and pkg-config are also installed: "apt-get-install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads), then do
@@ -43,7 +43,7 @@ Zoom, see below).
 6. `sudo make install`
 
 _Note that older cmake does not require the final "`.`" to specify the current directory as the source directory,
-but newer cmake requires it._
+but newer cmake requires it. If you intend to modify the code, use a separate "build" directory: replace "cmake  [ ] ." by "mkdir build ; cd build ; cmake [ ] .."; you can then restore the clean source with "rm -rf build"._
 
 The above script installs the executable file "`uxplay`" to `/usr/local/bin`.
 It can also be found in the build directory after the build
@@ -140,6 +140,10 @@ access to the server on which it is running.  If possible, either turn off the f
 to see if that is the problem, or get three consecutive network ports,
 starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
 (or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
+
+Stalling after "Initialize server socket(s)", with the server showing as available on the iPad/iPhone,
+is almost certainly a firewall problem: one user was unaware that
+_two_ firewalls (ufw and firewalld) were both active  on their system.
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
