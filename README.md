@@ -130,7 +130,9 @@ The MacPorts GStreamer is built to use X11, so must be run from an XQuartz termi
 option "-vs ximagesink".  On an older unibody MacBook Pro, the default resolution  wxh = 1920x1080 was too large  for
 the non-retina display, but using option "-s 800x600" worked; However, the Gstreamer pipeline is fragile against attempts to change
 the X11 window size, or to rotations that switch a connected iPad client between portrait and landscape mode while uxplay is running. 
-Using the MacPorts X11 GStreamer is only viable if the image size is left unchanged from the initial "-s wxh" setting. 
+Using the MacPorts X11 GStreamer is only viable if the image size is left unchanged from the initial "-s wxh" setting 
+(use the iPad setting that locks the screen against switching  between portrait and landscape mode
+as the iPad is rotated).
 
 # **Troubleshooting:**
 
