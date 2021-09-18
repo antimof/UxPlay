@@ -70,7 +70,8 @@ gboolean connection_callback (gpointer loop){
     }
     return TRUE;
 }
-    static gboolean  sigint_callback(gpointer loop) {
+
+static gboolean  sigint_callback(gpointer loop) {
     relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
