@@ -157,7 +157,7 @@ reproduces the problem.)
 If your mirror window has no title showing, the "ZOOMFIX" will not work.
 The window is created by GStreamer, using a  videosink that the default "autovideosink" 
 has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink:
-"-vs xvimagesink" or "-vs ximagesink" will create window titles on displays managed by X11.
+"-vs xvimagesink" or "-vs ximagesink" will create windows with titles on displays managed by X11.
 
 
 #  **Usage:**
