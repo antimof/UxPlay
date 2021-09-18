@@ -298,7 +298,8 @@ network ports. This will not work if most ports are closed by a firewall.
 With e.g., **-p 45000**   you should open both TCP and UDP on
 ports 45000, 45001, 45002.   Minimum allowed port is 1024, maximum is 65535.
 The option "**-p**" with no argument uses a "legacy" set of ports TCP 7100,
-7000, 7001, and UDP  7011, 6000, 6001.
+7000, 7001, and UDP  7011, 6000, 6001.  Finer control is also
+possible: "**-p udp n1,n2,n3 -p tcp n4,n5,n6**" sets all six ports individually.
 
 7.  The default resolution setting is 1920x1080 width x height pixels.
 To change this, use "**-s wxh**"  where w and h are positive  decimals
