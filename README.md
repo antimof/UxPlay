@@ -1,8 +1,8 @@
 # UxPlay 1.35
 
 This project is a GPLv3  unix AirPlay server which  now also works on MacOS.
-Its main use is screen-mirroring (with audio) of iOS clients
-(iPads and iPhones) in a window on the server display (with the possibility of
+Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/MacOS clients
+(iPads, iPhones, MacBooks) in a window on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, MacOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
