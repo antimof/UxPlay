@@ -236,11 +236,14 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    (Some choices of videosink might not work on your system.)
 
 **-t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
-have been present during the previous _timeout_ seconds.  (You may wish to use this  because an idle Bonjour
-registration eventually becomes unavailable for new connections.)  This option should not be
-used if the display window is an OpenGL window (e.g., on MacOS without X11), as an  OpenGL window created
+have been present during the previous _timeout_ seconds.  (You may wish to use this  because the Server may not be
+visible to  new Clients that were inactive when the Server was launched, and an idle Bonjour
+registration also eventually becomes unavailable for new connections.)  The timer only starts once a
+Client has first made a mirror connection and then has disconnected with "Stop Mirrroring".
+_This option should **not** be
+used if the display window is an OpenGL window on MacOS, as such an  OpenGL window created
 by GStreamer does not terminate correctly (it causes a segfault)
-if it is still open when the  GStreamer pipeline is closed.
+if it is still open when the  GStreamer pipeline is closed._
 
 
 # ChangeLog
