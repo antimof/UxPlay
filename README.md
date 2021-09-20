@@ -82,7 +82,8 @@ It is recommended you use GStreamer.framework rather than install Gstreamer with
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
 MacPorts "sudo port install openssl liblist-dev" or Brew "brew install openssl libplist".   Only the
-static forms of the two  libraries will used: if you don't have MacPorts or Brew installed, you can just install
+static forms of the two libraries will used for the MacOS build, so they do not need to remain installed after you have built uxplay:
+if you don't have MacPorts or Brew installed, you can just install
 one of these package-managers before building  uxplay, and uninstall it afterwards if you don't want to keep it.
 Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the
 needed library libcrypto, and its libplist1 package is too old.
@@ -149,7 +150,7 @@ _two_ firewalls (ufw and firewalld) were both active  on their system.
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
-plugin for Intel graphics is *NOT* installed (de-install it!).
+plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installed!).
 (You can test for this  by explicitly choosing the GStreamer videosink with option
 "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
 reproduces the problem.)
