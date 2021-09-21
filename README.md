@@ -62,7 +62,10 @@ avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
 GStreamer packages are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
-**MacOS**  (Currently only for Intel X86_64 Macs):
+**MacOS**  (Intel X86_64 Macs only):
+
+_Note: A native AirPlay Server feature is  included in upcoming MacOS 12 Monterey,
+but UxPlay can run  on older MacOS systems that will not be able to run Monterey._
 
 These instructions for MacOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
@@ -248,7 +251,7 @@ if it is still open when the  GStreamer pipeline is closed._
 
 # ChangeLog
 1.35  2021-09-10   now uses a GLib MainLoop, and builds on MacOS (tested on Intel Mac, 10.15 ).
-                   New option  -t _timeout_ for relauching server if no connections were active in
+                   New option  -t _timeout_ for relaunching server if no connections were active in
                    previous _timeout_ seconds (to renew Bonjour registration).
                    
 1.341 2021-09-04   fixed: render logger was not being destroyed by stop_server()

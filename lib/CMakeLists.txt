@@ -52,15 +52,15 @@ elseif( APPLE )
   message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
   message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
   find_library( LIBCRYPTO libcrypto.a PATHS ${OPENSSL_LIBRARY_DIRS} REQUIRED )
-  find_library( LIBZ libz.a)  # needed by MacPorts openssl
   message( "LIBCRYPTO "  ${LIBCRYPTO}  )
+  target_link_libraries( airplay ${LIBCRYPTO} )
+  if( LIBCRYPTO MATCHES "/opt/local/lib/libcrypto.a" ) #MacPorts openssl
+    find_library( LIBZ libz.a)  # needed by MacPorts openssl
+    message("(MacPorts) LIBZ= " ${LIBZ} )
+    target_link_libraries( airplay ${LIBZ} )
+  endif()
   target_include_directories( airplay PRIVATE
                              ${OPENSSL_INCLUDE_DIRS}
 			     )
-
-  target_link_libraries( airplay
-                      ${LIBCRYPTO}
-		      ${LIBZ}
-		       )
 endif()
 

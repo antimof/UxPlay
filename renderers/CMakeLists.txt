@@ -17,6 +17,11 @@ pkg_check_modules(GST REQUIRED    gstreamer-1.0>=1.4
                                   gstreamer-app-1.0>=1.4
                                   )
 message( "GST_LIBRARIES" ${GST_LIBRARIES} )
+# hack to fix cmake confusion due to links in path
+if( GST_LIBRARY_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/lib" )
+   set( GST_LIBRARY_DIRS "/Library/FrameWorks/GStreamer.framework/Libraries")
+endif()
+
 message( "GST_LIBRARY_DIRS " ${GST_LIBRARY_DIRS} )
 message( "GST_CFLAGS " ${GST_CFLAGS} )
 message( "GST_LDFLAGS " ${GST_LDFLAGS} )
