@@ -126,7 +126,7 @@ unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
 
 First make sure that pkgconfig is installed  (Brew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
-(a) with Brew: "brew gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
+(a) with Brew: "brew install gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
 to using GStreamer.framework, but causes a large number of extra packages to be installed by Brew as dependencies.
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
