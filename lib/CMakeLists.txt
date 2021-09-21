@@ -29,7 +29,7 @@ elseif( APPLE )
    find_library( LIBPLIST libplist-2.0.a REQUIRED )
    message( "LIBPLIST" ${LIBPLIST} )
    target_include_directories( airplay PRIVATE
-                            /usr/local/include  # standard and MacPorts
+                            /usr/local/include  # standard and Brew
 			    /opt/local/include  # MacPorts
                             )
 endif()
