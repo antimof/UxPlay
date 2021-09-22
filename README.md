@@ -8,6 +8,8 @@ on a host running Linux, MacOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
 The work is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
+(UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
+audio and video renderers also found in RPiPlay.)
 Tested on Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, MacOS 10.15.
 
 Features:
