@@ -86,7 +86,7 @@ Click on them to install (they install to
 It is recommended you use GStreamer.framework rather than install Gstreamer with Brew or MacPorts (see later).
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
-MacPorts "sudo port install openssl liblist-dev" or Brew "brew install openssl libplist".   Only the
+MacPorts "sudo port install openssl libplist-devel" or Brew "brew install openssl libplist".   Only the
 static forms of the two libraries will used for the MacOS build, so they do not need to remain installed after you have built uxplay:
 if you don't have MacPorts or Brew installed, you can just install
 one of these package-managers before building  uxplay, and uninstall it afterwards if you don't want to keep it.
