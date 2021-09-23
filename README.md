@@ -1,16 +1,16 @@
 # UxPlay 1.35
 
-This project is a GPLv3  unix AirPlay server which  now also works on MacOS.
-Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/MacOS clients
+This project is a GPLv3  unix AirPlay server which  now also works on macOS.
+Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
 (iPads, iPhones, MacBooks) in a window on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
-on a host running Linux, MacOS, or other unix,
+on a host running Linux, macOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
 The work is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
-Tested on Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, MacOS 10.15.
+Tested on Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15.
 
 Features:
 1. Based on Gstreamer.
@@ -28,7 +28,7 @@ get committed into the codebase  on the antimof site, as that
 project may no longer be active.
 If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.*
 
-**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and MacOS, see below).
+**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and macOS, see below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.
 Make sure that cmake>=3.4.1 and pkg-config are also installed: "apt-get-install cmake pkg-config".
@@ -64,12 +64,12 @@ avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
 GStreamer packages are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
-**MacOS**  (Intel X86_64 Macs only):
+**macOS**  (Intel X86_64 Macs only):
 
-_Note: A native AirPlay Server feature is  included in upcoming MacOS 12 Monterey,
-but UxPlay can run  on older MacOS systems that will not be able to run Monterey._
+_Note: A native AirPlay Server feature is  included in upcoming macOS 12 Monterey,
+but UxPlay can run  on older macOS systems that will not be able to run Monterey._
 
-These instructions for MacOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
+These instructions for macOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
 It is also assumed that CMake >= 3.13 is installed:
 this can be done with package managers [MacPorts](http://www.macports.org),
@@ -77,9 +77,9 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 [https://cmake.org/download/](https://cmake.org/download/).
 
 
-First get the latest MacOS release of GStreamer-1.0
+First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
-Install both the MacOS runtime and development installer packages. Assuming that the latest release is 1.18.4
+Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.18.4
 they are ```gstreamer-1.0-1.18.4-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.4-x86_64.pkg```.
 Click on them to install (they install to
 /Library/FrameWorks/GStreamer.framework).
@@ -87,7 +87,7 @@ It is recommended you use GStreamer.framework rather than install Gstreamer with
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
 MacPorts "sudo port install openssl libplist-devel" or Brew "brew install openssl libplist".   Only the
-static forms of the two libraries will used for the MacOS build, so they do not need to remain installed after you have built uxplay:
+static forms of the two libraries will used for the macOS build, so they do not need to remain installed after you have built uxplay:
 if you don't have MacPorts or Brew installed, you can just install
 one of these package-managers before building  uxplay, and uninstall it afterwards if you don't want to keep it.
 Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the
@@ -97,7 +97,7 @@ Finally, build and install uxplay (without ZOOMFIX): open a terminal and change 
 ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install " (same as for Linux).  
 
-The MacOS build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
+The macOS build uses OpenGL, not X11, to create the mirror display window.   This has some "quirks":
 the window title is "OpenGL renderer" instead of the Airplay server name, but it is visible to
 screen-sharing apps (e.g., Zoom).   The option -t _timeout_
 cannot be used because if the GStreamer pipeline is destroyed while the OpenGL window is still open,
@@ -107,7 +107,7 @@ Also, the resolution settings "-s wxh" do not affect
 the (small) initial mirror window size, but the window can be expanded using the mouse.
 
 
-***Building OpenSSL-1.1.1 and libplist from source on MacOS***
+***Building OpenSSL-1.1.1 and libplist from source on macOS***
 
 If you have have the standard GNU toolset (autoconf, automake, libtool, etc.) installed,
 you can also  download and compile the source code for these libraries from
@@ -124,7 +124,7 @@ unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install)" and clean up after uxplay is built  with "sudo make uninstall"  in the same directory.  
 
 
-***Other ways (Brew, MacPorts) to install GStreamer on MacOS (not recommended):***
+***Other ways (Brew, MacPorts) to install GStreamer on macOS (not recommended):***
 
 First make sure that pkgconfig is installed  (Brew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
@@ -221,7 +221,7 @@ which will not work if a firewall is running.
    number of the computer's network card.   (Different server_name,  MAC
    addresses,  and network ports are needed for each running uxplay  if you
    attempt to  run two instances of uxplay on the same computer.)
-   On MacOS, random MAC addresses are always used.
+   On macOS, random MAC addresses are always used.
 
 **-a** disable audio, leaving only the video playing.
 
@@ -246,13 +246,13 @@ visible to  new Clients that were inactive when the Server was launched, and an 
 registration also eventually becomes unavailable for new connections.)  The timer only starts once a
 Client has first made a mirror connection and then has disconnected with "Stop Mirrroring".
 _This option should **not** be
-used if the display window is an OpenGL window on MacOS, as such an  OpenGL window created
+used if the display window is an OpenGL window on macOS, as such an  OpenGL window created
 by GStreamer does not terminate correctly (it causes a segfault)
 if it is still open when the  GStreamer pipeline is closed._
 
 
 # ChangeLog
-1.35  2021-09-10   now uses a GLib MainLoop, and builds on MacOS (tested on Intel Mac, 10.15 ).
+1.35  2021-09-10   now uses a GLib MainLoop, and builds on macOS (tested on Intel Mac, 10.15 ).
                    New option  -t _timeout_ for relaunching server if no connections were active in
                    previous _timeout_ seconds (to renew Bonjour registration).
                    
@@ -326,9 +326,9 @@ by gstreamer videosinks ximagesink, xvimagesink, but not OpenGL windows created 
 (This uses a call to putenv() in a form that is believed to be safe against
 memory leaks, at least in modern Linux; if for any reason you don't want
 this fix, comment out the line in CMakeLists.txt that activates it when uxplay
-is compiled.) On MacOS, Avahi is not used.
+is compiled.) On macOS, Avahi is not used.
 
-10. UxPlay now builds on MacOS.
+10. UxPlay now builds on macOS.
 
 
 # Disclaimer
