@@ -41,7 +41,8 @@ raop_handler_info(raop_conn_t *conn,
     const char *hw_addr_raw = dnssd_get_hw_addr(conn->raop->dnssd, &hw_addr_raw_len);
 
     char *hw_addr = calloc(1, 3 * hw_addr_raw_len);
-    int hw_addr_len = utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
+    //int hw_addr_len =
+    utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
 
     int pk_len = 0;
     char *pk = utils_parse_hex(AIRPLAY_PK, strlen(AIRPLAY_PK), &pk_len);
@@ -172,10 +173,11 @@ raop_handler_pairsetup(raop_conn_t *conn,
                        char **response_data, int *response_datalen)
 {
     unsigned char public_key[ED25519_KEY_SIZE];
-    const char *data;
+    //const char *data;
     int datalen;
 
-    data = http_request_get_data(request, &datalen);
+    //data =
+    http_request_get_data(request, &datalen);
     if (datalen != 32) {
         logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-setup data");
         return;
