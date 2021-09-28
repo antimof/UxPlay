@@ -163,6 +163,7 @@ Stalling this way, but _without_ the server showing as available on the client,
 probably means that your network **does not have a running Bonjour/zeroconf server**.
 On Linux, make sure Avahi is installed,
 and start the avahi-daemon service (your distribution will document how to do  this).
+Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS service.
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
