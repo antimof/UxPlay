@@ -6,7 +6,13 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/
 sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, macOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
-The work is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+The UxPlay server and its client must be on the same local area network,
+on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running.
+On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.avahi.org),
+through the avahi-daemon service, and is included in  most Linux distributions (this
+service can also be provided by MacOS, iOS or Windows servers).
+
+UxPlay 1.35 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
@@ -149,9 +155,14 @@ to see if that is the problem, or get three consecutive network ports,
 starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
 (or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
 
-Stalling after "Initialize server socket(s)", with the server showing as available on the iPad/iPhone,
+Stalling after "Initialize server socket(s)", with the server showing as available on the client iPad/iPhone,
 is almost certainly a firewall problem: one user was unaware that
 _two_ firewalls (ufw and firewalld) were both active  on their system.
+
+Stalling this way, but _without_ the server showing as available on the client,
+probably means that your network **does not have a running Bonjour/zeroconf server**.
+On Linux, make sure Avahi is installed,
+and start the avahi-daemon service (your distribution will document how to do  this).
 
 Try "uxplay -d " (debug log option)  to see what is happening. If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
