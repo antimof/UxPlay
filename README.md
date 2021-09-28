@@ -160,7 +160,7 @@ is almost certainly a firewall problem: one user was unaware that
 _two_ firewalls (ufw and firewalld) were both active  on their system.
 
 Stalling this way, but _without_ the server showing as available on the client,
-probably means that your network **does not have a running Bonjour/zeroconf server**.
+probably means that your network **does not have a running Bonjour/zeroconf mDNS server**.
 On Linux, make sure Avahi is installed,
 and start the avahi-daemon service (your distribution will document how to do  this).
 Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS service.
