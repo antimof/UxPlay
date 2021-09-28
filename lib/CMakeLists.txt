@@ -27,13 +27,13 @@ if( UNIX AND NOT APPLE )
 elseif( APPLE )
    pkg_check_modules( PLIST REQUIRED libplist-2.0 )
    find_library( LIBPLIST libplist-2.0.a REQUIRED )
-   message( "LIBPLIST" ${LIBPLIST} )
    target_include_directories( airplay PRIVATE
                             /usr/local/include  # standard and Brew
 			    /opt/local/include  # MacPorts
                             )
 endif()
-message( "LIBPLIST" ${LIBPLIST} )
+message( "-- LIBPLIST " ${LIBPLIST} )
+
 target_link_libraries( airplay
         pthread
         playfair
@@ -44,6 +44,13 @@ if( UNIX AND NOT APPLE )
   find_package(OpenSSL 1.1.1 REQUIRED)
   target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
   target_link_libraries( airplay OpenSSL::Crypto )
+  find_file( DNS_SD_H dns_sd.h PATHS /usr/include /usr/local/include )
+  if( NOT DNS_SD_H )
+    message( FATAL_ERROR "(avahi_compat) did not find dns_sd.h" )
+  endif()
+  string( REPLACE "dns_sd.h" "" DNS_SD ${DNS_SD_H} )
+  message( "-- found dns_sd.h in " ${DNS_SD} )
+  target_include_directories( airplay PRIVATE ${DNS_SD} )
   target_link_libraries( airplay dns_sd )
 elseif( APPLE )
   # can either compile Openssl 1.1.1 from source (install_dev  to /usr/local) or use Macports or Brew
