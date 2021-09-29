@@ -16,7 +16,7 @@ _Note: UxPlay currently only uses the AirPlay screen-mirroring protocol
 (not the AirPlay audio-only streaming protocol)
 but the **-vs 0** option streams audio without displaying the client's screen._
 
-UxPlay 1.35.1 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+UxPlay 1.36 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
