@@ -1,4 +1,4 @@
-# UxPlay 1.35.1
+# UxPlay 1.36
 
 This project is a GPLv3  unix AirPlay server which  now also works on macOS.
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
@@ -189,6 +189,7 @@ Options:
 **-n server_name**;  server_name will be the name that appears offering
 AirPlay services to your iPad, iPhone etc.
 **NEW**: this will also now be the name shown above the mirror display (X11)  window, 
+If this option is not used, the hostname of the server will be used as the server name.
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -271,6 +272,9 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
+1.36 2012-09-29    Implemented suggestion (by @mrbesen and @PetrusZ) to use hostname of machine
+                   runing uxplay as the default server name 
+
 1.35.1 2021-09-28  Added the -vs 0 option for streaming audio, but not displaying video.
 
 1.35  2021-09-10   now uses a GLib MainLoop, and builds on macOS (tested on Intel Mac, 10.15 ).
@@ -338,8 +342,7 @@ with the AirPlay client, so this may not be the actual screen geometry that
 displays.
 
 8. The title on the GStreamer display window is now is the AirPlay server name
-(default "UxPlay", but can be changed with option **-n**), rather than the program
-name "uxplay" (note the difference in capitalization).  (This works for X11 windows created
+(This works for X11 windows created
 by gstreamer videosinks ximagesink, xvimagesink, but not OpenGL windows created by glimagesink.)
 
 9. The avahi_compat "nag" warning on startup is suppressed, by placing
@@ -351,6 +354,8 @@ is compiled.) On macOS, Avahi is not used.
 
 10. UxPlay now builds on macOS.
 
+11. Unless the **-n * option is used, the default server name is now the hostname of the server, obtained with uname
+(if the call to unanme produces an error, "UxPlay" is still used as default).
 
 # Disclaimer
 
@@ -407,7 +412,7 @@ Some time [around 2008](https://weblog.rogueamoeba.com/2008/01/10/a-tour-of-airf
 When the Apple TV 2nd generation was introduced in 2010, it received support for the AirTunes protocol. However, because this device allowed playback of visual content, the protocol was extended and renamed AirPlay. It was now possible to stream photo slideshows and videos. Shortly after the release of the Apple TV 2nd generation, AirPlay support for iOS was included in the iOS 4.2 update. It seems like at that point, the audio stream was still actually using the same AirTunes 2 protocol as described above. The video and photo streams were added as a whole new protocol based on HTTP, pretty much independent from the audio stream. Soon, the first curious developers began to [investigate how it worked](https://web.archive.org/web/20101211213705/http://www.tuaw.com/2010/12/08/dear-aunt-tuaw-can-i-airplay-to-my-mac/). Their conclusion was that visual content is streamed unencrypted.
 
 
-In April 2011, a talented hacker [extracted the AirPlay private key](http://www.macrumors.com/2011/04/11/apple-airplay-private-key-exposed-opening-door-to-airport-express-emulators/) from an AirPort Express. This meant that finally, third-party developers were able to also build AirPlay reveiver (server) programs.
+In April 2011, a talented hacker [extracted the AirPlay private key](http://www.macrumors.com/2011/04/11/apple-airplay-private-key-exposed-opening-door-to-airport-express-emulators/) from an AirPort Express. This meant that finally, third-party developers were able to also build AirPlay receiver (server) programs.
 
 
 For iOS 5, released in 2011, Apple added a new protocol to the AirPlay suite: AirPlay mirroring. [Initial investigators](https://www.aorensoftware.com/blog/2011/08/20/exploring-airplay-mirroring-internals/) found this new protocol used encryption in order to protect the transferred video data.

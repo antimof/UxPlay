@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sys/utsname.h>
 #include <glib-unix.h>
 
 #include "log.h"
@@ -34,7 +35,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.35.1"
+#define VERSION "1.36"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -276,6 +277,13 @@ static bool get_videorotate (const char *str, videoflip_t *videoflip) {
     return true;
 }
 
+static void get_hostname(std::string &hostname) {
+    struct utsname buf;
+    if (!uname(&buf)) {
+        hostname = buf.nodename;
+    }
+}
+
 int main (int argc, char *argv[]) {
     std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr;
@@ -292,7 +300,10 @@ int main (int argc, char *argv[]) {
     static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
     if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
 #endif
-    
+
+    get_hostname(server_name);
+    printf("%s\n",server_name.c_str());
+
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
