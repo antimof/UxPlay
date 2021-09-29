@@ -41,7 +41,7 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 **Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and macOS, see below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.
-Make sure that cmake>=3.4.1 and pkg-config are also installed: "apt-get-install cmake pkg-config".
+Make sure that cmake>=3.4.1 and pkg-config are also installed: "apt-get install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads), then do
 
@@ -341,7 +341,7 @@ with 4 or less digits.   It seems that the width and height may be negotiated
 with the AirPlay client, so this may not be the actual screen geometry that
 displays.
 
-8. The title on the GStreamer display window is now is the AirPlay server name
+8. The title on the GStreamer display window is now is the AirPlay server name.
 (This works for X11 windows created
 by gstreamer videosinks ximagesink, xvimagesink, but not OpenGL windows created by glimagesink.)
 
