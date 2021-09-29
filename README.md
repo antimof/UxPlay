@@ -356,8 +356,8 @@ is compiled.) On macOS, Avahi is not used.
 
 10. UxPlay now builds on macOS.
 
-11. Unless the **-n** option is used, the default server name is now the hostname of the server, obtained with uname
-(if the call to uname produces an error, "UxPlay" is still used as default).
+11. The hostname of the server running uxplay is now appended to the AirPlay server name,
+    which is now displayed as _name_@hostname, where _name_ is "UxPlay", (or whatever is set with the **-n** option).
 
 # Disclaimer
 
