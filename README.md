@@ -1,4 +1,4 @@
-# UxPlay 1.35
+# UxPlay 1.35.1
 
 This project is a GPLv3  unix AirPlay server which  now also works on macOS.
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
@@ -12,7 +12,11 @@ On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.a
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
 
-UxPlay 1.35 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+_Note: UxPlay currently only uses the AirPlay screen-mirroring protocol
+(not the AirPlay audio-only streaming protocol)
+but the **-vs 0** option streams audio without displaying the client's screen._
+
+UxPlay 1.35.1 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
@@ -252,18 +256,23 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    "..." might allow some parameters to be included with the videosink name. 
    (Some choices of videosink might not work on your system.)
 
+**-vs 0** suppresses display of streamed video, but plays  streamed audio.   (The client's screen
+   is still mirrored at a reduced rate of 1 frame per second,  but is not rendered or displayed.)
+
 **-t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
-have been present during the previous _timeout_ seconds.  (You may wish to use this  because the Server may not be
-visible to  new Clients that were inactive when the Server was launched, and an idle Bonjour
-registration also eventually becomes unavailable for new connections.)  The timer only starts once a
-Client has first made a mirror connection and then has disconnected with "Stop Mirrroring".
-_This option should **not** be
-used if the display window is an OpenGL window on macOS, as such an  OpenGL window created
-by GStreamer does not terminate correctly (it causes a segfault)
-if it is still open when the  GStreamer pipeline is closed._
+   have been present during the previous _timeout_ seconds.  (You may wish to use this  because the Server may not be
+   visible to  new Clients that were inactive when the Server was launched, and an idle Bonjour
+   registration also eventually becomes unavailable for new connections.)  The timer only starts once a
+   Client has first made a mirror connection and then has disconnected with "Stop Mirrroring".
+   _This option should **not** be
+   used if the display window is an OpenGL window on macOS, as such an  OpenGL window created
+   by GStreamer does not terminate correctly (it causes a segfault)
+   if it is still open when the  GStreamer pipeline is closed._
 
 
 # ChangeLog
+1.35.1 2021-09-28  Added the -vs 0 option for streaming audio, but not displaying video.
+
 1.35  2021-09-10   now uses a GLib MainLoop, and builds on macOS (tested on Intel Mac, 10.15 ).
                    New option  -t _timeout_ for relaunching server if no connections were active in
                    previous _timeout_ seconds (to renew Bonjour registration).

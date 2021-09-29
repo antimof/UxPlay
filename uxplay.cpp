@@ -34,7 +34,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.35"
+#define VERSION "1.35.1"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -58,6 +58,7 @@ static uint open_connections = 0;
 static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
+static bool use_video = true;
 
 gboolean connection_callback (gpointer loop){
   if (!connections_stopped) {
@@ -85,11 +86,12 @@ static gboolean  sigterm_callback(gpointer loop) {
 
 static void main_loop()  {
     guint connection_watch_id = 0;
+    guint gst_bus_watch_id = 0;
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     if (server_timeout) {
         connection_watch_id = g_timeout_add_seconds(1, (GSourceFunc) connection_callback, (gpointer) loop);
     }  
-    guint gst_bus_watch_id = (guint) video_renderer_listen((void *)loop, video_renderer);
+    if (use_video) gst_bus_watch_id = (guint) video_renderer_listen((void *)loop, video_renderer);
     guint sigterm_watch_id = g_unix_signal_add(SIGTERM, (GSourceFunc) sigterm_callback, (gpointer) loop);
     guint sigint_watch_id = g_unix_signal_add(SIGINT, (GSourceFunc) sigint_callback, (gpointer) loop);
     relaunch_server = true;
@@ -160,6 +162,7 @@ static void print_info (char *name) {
     printf("-t n      Relaunch server if no connection existed in last n seconds\n");
     printf("-vs       Choose the  GStreamer videosink; default \"autovideosink\"\n");
     printf("          choices: ximagesink,xvimagesink,vaapisink,fpsdisplaysink, etc.\n"); 
+    printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-d        Enable debug logging\n");
     printf("-v/-h     Displays this help and version information\n");
 }
@@ -485,6 +488,11 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
 
     /* write desired display pixel width, pixel height, refresh_rate, max_fps, overscanned.  */
     /* use 0 for default values 1920,1080,60,30,0; these are sent to the Airplay client      */
+    
+    if(videosink == "0") {
+        use_video = false;
+        display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
+    }
     raop_set_display(raop, display[0], display[1], display[2], display[3], display[4]);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
@@ -518,7 +526,7 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
         return -1;
     }
 
-    if (video_renderer) video_renderer_start(video_renderer);
+    if (use_video && video_renderer) video_renderer_start(video_renderer);
     if (audio_renderer) audio_renderer_start(audio_renderer);
 
     unsigned short port = raop_get_port(raop);
