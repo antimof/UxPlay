@@ -277,15 +277,17 @@ static bool get_videorotate (const char *str, videoflip_t *videoflip) {
     return true;
 }
 
-static void get_hostname(std::string &hostname) {
+static void get_name(std::string &server_name) {
     struct utsname buf;
     if (!uname(&buf)) {
-        hostname = buf.nodename;
+        server_name = buf.nodename;
+    } else {
+        server_name = DEFAULT_NAME;
     }
 }
 
 int main (int argc, char *argv[]) {
-    std::string server_name = DEFAULT_NAME;
+    std::string server_name;
     std::vector<char> server_hw_addr;
     bool use_audio = true;
     bool use_random_hw_addr = false;
@@ -301,7 +303,7 @@ int main (int argc, char *argv[]) {
     if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
 #endif
 
-    get_hostname(server_name);
+    get_name(server_name);
 
     // Parse arguments
     for (int i = 1; i < argc; i++) {
