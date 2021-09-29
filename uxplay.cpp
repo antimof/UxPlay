@@ -302,7 +302,6 @@ int main (int argc, char *argv[]) {
 #endif
 
     get_hostname(server_name);
-    printf("%s\n",server_name.c_str());
 
     // Parse arguments
     for (int i = 1; i < argc; i++) {
