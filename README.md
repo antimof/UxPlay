@@ -1,4 +1,4 @@
-# UxPlay 1.36
+# UxPlay 1.37
 
 This project is a GPLv3  unix AirPlay server which  now also works on macOS.
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
@@ -16,7 +16,7 @@ _Note: UxPlay currently only uses the AirPlay screen-mirroring protocol
 (not the AirPlay audio-only streaming protocol)
 but the **-vs 0** option streams audio without displaying the client's screen._
 
-UxPlay 1.36 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+UxPlay 1.37 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
@@ -186,10 +186,9 @@ has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs op
 
 Options:
 
-**-n server_name**;  server_name will be the name that appears offering
-AirPlay services to your iPad, iPhone etc.
-**NEW**: this will also now be the name shown above the mirror display (X11)  window, 
-If this option is not used, the hostname of the server will be used as the server name.
+**-n server_name** (Default: UxPlay);  server_name@_hostname_ will be the name that appears offering
+   AirPlay services to your iPad, iPhone etc, where _hostname_ is the name of the server running uxplay. 
+   This will also now be the name shown above the mirror display (X11)  window.
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -272,6 +271,9 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
+1.37 2012-09-29    Append "@hostname" to AirPlay Server name, where "hostname" is the name of the
+                   server running uxplay (reworked change in 1.36).
+
 1.36 2012-09-29    Implemented suggestion (by @mrbesen and @PetrusZ) to use hostname of machine
                    runing uxplay as the default server name 
 
