@@ -183,7 +183,11 @@ reproduces the problem.)
 If your mirror window has no title showing, the "ZOOMFIX" will not work.
 The window is created by GStreamer, using a  videosink that the default "autovideosink" 
 has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink:
-"-vs xvimagesink" or "-vs ximagesink" will create windows with titles on displays managed by X11.
+"-vs xvimagesink" or "-vs ximagesink" will create windows with titles on displays managed by X11.   Note that ZOOMFIX is a fix for a 
+problem specific to X11 windows (or possibly other window types (Wayland ?) in an X11-compatibility mode).   Non-X11 windows (such
+as OpenGL windows created by the videosink glimagesink) may be visible on Zoom without any fix (note that glimagesink has some
+problems, and may or may not work on your system).
+   
 
 
 #  **Usage:**
