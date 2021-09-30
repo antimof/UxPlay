@@ -169,7 +169,11 @@ On Linux, make sure Avahi is installed,
 and start the avahi-daemon service (your distribution will document how to do  this).
 Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS service.
 
-Try "uxplay -d " (debug log option)  to see what is happening. If you use an
+For other problems after a connection is made, use "uxplay -d " (debug log option)  to see what is happening.
+Such problems are usually due to a GStreamer plugin that doesn't work on your system (by default,
+GStreamer uses an algorithm to guess what is the "best"
+plugin to use on your system).
+If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
 plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installed!).
 (You can test for this  by explicitly choosing the GStreamer videosink with option
