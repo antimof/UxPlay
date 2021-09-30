@@ -180,15 +180,22 @@ plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installe
 "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
 reproduces the problem.)
 
+If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
+ZOOMFIX does not fix the Zoom recognition issue for the OpenGL plugin glimagesink when it is running under X11,
+and is specifically not used if uxplay  is  invoked using "-vs glimagesink".    Please report, as an "issue" at
+[https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) , 
+any plugins that are broken
+by ZOOMFIX, but work without it, so they can be added to the list of videosinks that don't use ZOOMFIX when it is available.    
+
+
 If your mirror window has no title showing, the "ZOOMFIX" will not work.
 The window is created by GStreamer, using a  videosink that the default "autovideosink" 
 has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink:
 "-vs xvimagesink" or "-vs ximagesink" will create windows with titles on displays managed by X11.   Note that ZOOMFIX is a fix for a 
-problem specific to X11 windows (or possibly other window types (Wayland ?) in an X11-compatibility mode).   Non-X11 windows (such
-as OpenGL windows created by the videosink glimagesink) may be visible on Zoom without any fix (note that glimagesink has some
-problems, and may or may not work on your system).
-   
+problem specific to X11 windows (or possibly other window types (Wayland ?) in an X11-compatibility mode).
 
+The "OpenGL renderer" window created by glimagesink sometimes does not close properly when its "close" button is clicked.
+(this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
 
 #  **Usage:**
 

@@ -152,9 +152,18 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 
 #ifdef X_DISPLAY_FIX
     renderer->server_name = server_name;
-    renderer->gst_window = calloc(1, sizeof(X11_Window_t));
-    assert(renderer->gst_window);
-    get_X11_Display(renderer->gst_window);
+    bool x_display_fix = true;
+    if (videosink) {
+        /* X_DISPLAY_FIX doesn't work with glimagesink*/
+        /* list excluded videosinks: */
+        if (strcmp(videosink,"0") == 0) x_display_fix = false;
+        if (strcmp(videosink,"glimagesink") == 0) x_display_fix = false; 
+    }
+    if (x_display_fix) {
+        renderer->gst_window = calloc(1, sizeof(X11_Window_t));
+        assert(renderer->gst_window);
+        get_X11_Display(renderer->gst_window);
+    }
 #endif
     return renderer;
 }
@@ -177,7 +186,7 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
     gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 
 #ifdef X_DISPLAY_FIX
-    if(!(renderer->gst_window->window)) {
+    if(renderer->gst_window && !(renderer->gst_window->window)) {
         fix_x_window_name(renderer->gst_window, renderer->server_name);
     }
 #endif
@@ -192,7 +201,7 @@ void video_renderer_destroy(video_renderer_t *renderer) {
     gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
     if(renderer->pipeline) gst_object_unref (renderer->pipeline);
 #ifdef X_DISPLAY_FIX
-    free(renderer->gst_window);
+    if(renderer->gst_window) free(renderer->gst_window);
 #endif    
     if (renderer) {
         free(renderer);
