@@ -114,7 +114,7 @@ cannot be used because if the GStreamer pipeline is destroyed while the OpenGL w
 and uxplay is left running, a segfault occurs (this is an issue with the glimagesink GStreamer OpenGL
 plugin, not UxPlay).
 Also, the resolution settings "-s wxh" do not affect
-the (small) initial mirror window size, but the window can be expanded using the mouse.
+the (small) initial mirror window size, but the window can be expanded using the mouse or trackpad.
 
 
 ***Building OpenSSL-1.1.1 and libplist from source on macOS***
