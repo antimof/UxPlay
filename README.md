@@ -271,10 +271,10 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
-1.37 2012-09-29    Append "@hostname" to AirPlay Server name, where "hostname" is the name of the
+1.37 2021-09-29    Append "@hostname" to AirPlay Server name, where "hostname" is the name of the
                    server running uxplay (reworked change in 1.36).
 
-1.36 2012-09-29    Implemented suggestion (by @mrbesen and @PetrusZ) to use hostname of machine
+1.36 2021-09-29    Implemented suggestion (by @mrbesen and @PetrusZ) to use hostname of machine
                    runing uxplay as the default server name 
 
 1.35.1 2021-09-28  Added the -vs 0 option for streaming audio, but not displaying video.
