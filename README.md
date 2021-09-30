@@ -131,7 +131,7 @@ currently given by  "x" = "l"):
 Similarly, for libplist, download the source as a zipfile from github as
 [libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip), then
 unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
-("./autogen.sh ; make ; sudo make install)" and clean up after uxplay is built  with "sudo make uninstall"  in the same directory.  
+("./autogen.sh ; make ; sudo make install") and clean up after uxplay is built  with "sudo make uninstall"  in the same directory.  
 
 
 ***Other ways (Brew, MacPorts) to install GStreamer on macOS (not recommended):***
