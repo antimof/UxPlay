@@ -83,7 +83,7 @@ These instructions for macOS asssume that the Xcode command-line developer tools
 
 It is also assumed that CMake >= 3.13 is installed:
 this can be done with package managers [MacPorts](http://www.macports.org),
-[Fink](http://finkproject.org) or [Brew](http://brew.sh), or by a download from
+[Fink](http://finkproject.org) or [Homebrew](http://brew.sh), or by a download from
 [https://cmake.org/download/](https://cmake.org/download/).
 
 
@@ -93,12 +93,12 @@ Install both the macOS runtime and development installer packages. Assuming that
 they are ```gstreamer-1.0-1.18.5-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.5-x86_64.pkg```.
 Click on them to install (they install to
 /Library/FrameWorks/GStreamer.framework).
-It is recommended you use GStreamer.framework rather than install Gstreamer with Brew or MacPorts (see later).
+It is recommended you use GStreamer.framework rather than install Gstreamer with Homebrew or MacPorts (see later).
 
 Next install OpenSSL-1.1.1 and libplist:  these can be built from source (see below) but it's easier to get them using
-MacPorts "sudo port install openssl libplist-devel" or Brew "brew install openssl libplist".   Only the
+MacPorts "sudo port install openssl libplist-devel" or Homebrew "brew install openssl libplist".   Only the
 static forms of the two libraries will used for the macOS build, so they do not need to remain installed after you have built uxplay:
-if you don't have MacPorts or Brew installed, you can just install
+if you don't have MacPorts or Homebrew installed, you can just install
 one of these package-managers before building  uxplay, and uninstall it afterwards if you don't want to keep it.
 Unfortunately, Fink's openssl11-dev package currently doesn't supply the static (libcrypto.a) form of the
 needed library libcrypto, and its libplist1 package is too old.
@@ -134,20 +134,20 @@ unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install") and clean up after uxplay is built  with "sudo make uninstall"  in the same directory.  
 
 
-***Other ways (Brew, MacPorts) to install GStreamer on macOS (not recommended):***
+***Other ways (Homebrew, MacPorts) to install GStreamer on macOS (not recommended):***
 
-First make sure that pkgconfig is installed  (Brew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
+First make sure that pkgconfig is installed  (Homebrew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
-(a) with Brew: "brew install gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
-to using GStreamer.framework, but causes a large number of extra packages to be installed by Brew as dependencies.
+(a) with Homebrew: "brew install gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
+to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 The MacPorts GStreamer is built to use X11, so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
 option "-vs ximagesink".  On an older unibody MacBook Pro, the default resolution  wxh = 1920x1080 was too large  for
-the non-retina display, but using option "-s 800x600" worked; However, the Gstreamer pipeline is fragile against attempts to change
+the non-retina display, but using option "-s 800x600" worked; However, the GStreamer pipeline is fragile against attempts to change
 the X11 window size, or to rotations that switch a connected client between portrait and landscape mode while uxplay is running. 
 Using the MacPorts X11 GStreamer is only viable if the image size is left unchanged from the initial "-s wxh" setting 
-(use the iPad/iPhone setting that locks the screen against switching  between portrait and landscape mode
+(also use the iPad/iPhone setting that locks the screen orientation against switching  between portrait and landscape mode
 as the device is rotated).
 
 # **Troubleshooting:**
