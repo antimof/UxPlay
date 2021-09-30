@@ -196,7 +196,7 @@ Options:
    be the final resolution you get.)   w and h are whole numbers with four
    digits or less.   Note that the **height** pixel size is the controlling
    one used by the client for determining the streaming format; the width is
-   dynamically adjusted to the shape of the image (portait or landscape
+   dynamically adjusted to the shape of the image (portrait or landscape
    format, depending on how an iPad is held, for example). 
 
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
