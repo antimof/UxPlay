@@ -136,12 +136,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     GString *launch = g_string_new("-e appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
-    /* replace "autovideosink" with "fpsdisplaysink" (from gstreamer-plugins-bad) to display framerate */
-    if (videosink) {
-        g_string_append(launch, videosink);
-    } else {
-        g_string_append(launch, "autovideosink");
-    }
+    g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink sync=false");
     renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
@@ -153,12 +148,10 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 #ifdef X_DISPLAY_FIX
     renderer->server_name = server_name;
     bool x_display_fix = true;
-    if (videosink) {
-        /* X_DISPLAY_FIX doesn't work with glimagesink*/
-        /* list excluded videosinks: */
-        if (strcmp(videosink,"0") == 0) x_display_fix = false;
-        if (strcmp(videosink,"glimagesink") == 0) x_display_fix = false; 
-    }
+    x_display_fix = false;
+    if (strcmp(videosink,"autovideosink") == 0) x_display_fix = true;
+    if (strcmp(videosink,"ximagesink") == 0) x_display_fix = true;
+    if (strcmp(videosink,"xvimagesink") == 0) x_display_fix = true;
     if (x_display_fix) {
         renderer->gst_window = calloc(1, sizeof(X11_Window_t));
         assert(renderer->gst_window);

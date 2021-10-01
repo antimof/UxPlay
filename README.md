@@ -181,20 +181,17 @@ plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installe
 reproduces the problem.)
 
 If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
-ZOOMFIX does not fix the Zoom recognition issue for the OpenGL plugin glimagesink when it is running under X11,
-and is specifically not used if uxplay  is  invoked using "-vs glimagesink".    Please report, as an "issue" at
-[https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) , 
-any plugins that are broken
-by ZOOMFIX, but work without it, so they can be added to the list of videosinks that don't use ZOOMFIX when it is available.    
+ZOOMFIX is only applied to the default videosink choice ("autovideosink") and the two X11 videosinks
+"ximagesink" and "xvimagesink".   ZOOMFIX is only designed for these last two, but it is possible that
+autovideosink chooses a different videosink that is incompatible with ZOOMFIX. 
+If you are using the X11 windowing system (standard on Linux), and have trouble with screen-sharing on Zoom, use
+ZOOMFIX and "-vs xvimagesink" (or "-vs ximagesink" if the previous choice doesn't work). 
 
+Other videosink choices are not affected by ZOOMFIX, and may or may not be visible to screen-sharing apps.
+Windows created on Linux with "gtksink" are visible to screen-sharing aps without ZOOMFIX; windows on macOS created by
+"glimagesink" (default choice) and "osximagesink" are also visible.
 
-If your mirror window has no title showing, the "ZOOMFIX" will not work.
-The window is created by GStreamer, using a  videosink that the default "autovideosink" 
-has chosen for you. Maybe an unusual videosink was chosen.   Fix: use the -vs option to make your own choice of videosink:
-"-vs xvimagesink" or "-vs ximagesink" will create windows with titles on displays managed by X11.   Note that ZOOMFIX is a fix for a 
-problem specific to X11 windows (or possibly other window types (Wayland ?) in an X11-compatibility mode).
-
-The "OpenGL renderer" window created by glimagesink sometimes does not close properly when its "close" button is clicked.
+The "OpenGL renderer" window created on Linux by glimagesink sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
 
 #  **Usage:**
@@ -266,10 +263,11 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    rotations; these are carried out after any **-f** transforms.
 
 **-vs _videosink_** chooses the GStreamer videosink, instead of letting
-   autovideosink pick it for you. For example, xvimagesink, vaapisink, or
+   autovideosink pick it for you.  Some videosink choices are:  ximagesink, xvimagesink,
+   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
    "..." might allow some parameters to be included with the videosink name. 
-   (Some choices of videosink might not work on your system.)
+   (Some choices of videosink might not work on your system.)   
 
 **-vs 0** suppresses display of streamed video, but plays  streamed audio.   (The client's screen
    is still mirrored at a reduced rate of 1 frame per second,  but is not rendered or displayed.)
