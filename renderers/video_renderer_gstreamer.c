@@ -147,8 +147,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
 
 #ifdef X_DISPLAY_FIX
     renderer->server_name = server_name;
-    bool x_display_fix = true;
-    x_display_fix = false;
+    bool x_display_fix = false;
     if (strcmp(videosink,"autovideosink") == 0) x_display_fix = true;
     if (strcmp(videosink,"ximagesink") == 0) x_display_fix = true;
     if (strcmp(videosink,"xvimagesink") == 0) x_display_fix = true;
