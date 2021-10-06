@@ -61,9 +61,16 @@ The above script installs the executable file "`uxplay`" to `/usr/local/bin`.
 It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
 
-**Note libplist-dev (must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  On ubuntu 16.04, libplist-dev version 1.12 is too old: either attempt to install libplist-dev from a later ubuntu release, or see the instructions below for macOS on building libplist  from source,
-but do not uninstall the libplist  libraries which must remain in /usr/local/lib. "sudo ldconfig" may be needed to make the libraries available to uxplay (it may be necessary to  create a file /etc/ld.so.conf.d/plist.conf containing  the text
-"/usr/local/lib" before running ldconfig).**
+**Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  Older distributions (such as
+ubuntu 16.04) may only supply libplist 1.x, which is too old.**
+
+_If your older distribution does not supply libplist 2.x, and you don't wish to  upgrade, see the instructions below
+(in the macOS section) on building libplist from source (you need autoconf, automake, libtool, and may need to also install some libpython*-dev package)
+but (unlike the statically-linked macOS case) do not uninstall the libplist library after building uxplay; it  must remain installed.
+It is in /usr/local/lib. If uxplay fails to find libplist when you run it, this is probably because /usr/local/lib is not in the library path (by default,
+this is the case in ubuntu). To fix this, run  "sudo ldconfig" (you might also need to create a file /etc/ld.so.conf.d/libplist.conf
+containing  the text "/usr/local/lib" before running ldconfig) to permanently
+add /usr/local/lib  to the library path._
 
 **Red Hat, Fedora, CentOS:** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (+libX11-devel for ZOOMFIX).   The required
