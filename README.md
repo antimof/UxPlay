@@ -62,7 +62,7 @@ It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
 
 **Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  Older distributions
-may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.] **
+may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.]**
 
 _If you  cannot find a libplist-2.x package that installs on your older distribution, and you don't wish to  upgrade, see the instructions below
 (in the macOS section) on building libplist from source (you need autoconf, automake, libtool, and may need to also install some libpython*-dev package)
