@@ -61,7 +61,9 @@ The above script installs the executable file "`uxplay`" to `/usr/local/bin`.
 It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
 
-**Note libplist-dev (must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  On ubuntu 16.04, libplist-dev version 1.12 is too old: either attempt to install libplist-dev from a later ubuntu release, or see the instructions below for macOS on building libplist  from source.**
+**Note libplist-dev (must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  On ubuntu 16.04, libplist-dev version 1.12 is too old: either attempt to install libplist-dev from a later ubuntu release, or see the instructions below for macOS on building libplist  from source,
+but do not uninstall the libplist  libraries which must remain in /usr/local/lib. "sudo ldconfig" may be needed to make the libraries available to uxplay (it may be necessary to  create a file /etc/ld.so.conf.d/plist.conf containing  the text
+"/usr/local/lib" before running ldconfig).**
 
 **Red Hat, Fedora, CentOS:** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (+libX11-devel for ZOOMFIX).   The required
