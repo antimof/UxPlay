@@ -61,10 +61,10 @@ The above script installs the executable file "`uxplay`" to `/usr/local/bin`.
 It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
 
-**Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  Older distributions (such as
-ubuntu 16.04) may only supply libplist 1.x, which is too old.**
+**Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  Older distributions
+may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.] **
 
-_If your older distribution does not supply libplist 2.x, and you don't wish to  upgrade, see the instructions below
+_If you  cannot find a libplist-2.x package that installs on your older distribution, and you don't wish to  upgrade, see the instructions below
 (in the macOS section) on building libplist from source (you need autoconf, automake, libtool, and may need to also install some libpython*-dev package)
 but (unlike the statically-linked macOS case) do not uninstall the libplist library after building uxplay; it  must remain installed.
 It is in /usr/local/lib. If uxplay fails to find libplist when you run it, this is probably because /usr/local/lib is not in the library path (by default,
