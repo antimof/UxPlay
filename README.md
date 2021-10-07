@@ -12,9 +12,12 @@ On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.a
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
 
-_Note: UxPlay currently only uses the AirPlay screen-mirroring protocol
-(not the AirPlay audio-only streaming protocol)
-but the **-vs 0** option streams audio without displaying the client's screen._
+_Note: UxPlay currently only works using the AirPlay screen-mirroring protocol (which streams audio in **AAC** format)
+(not the AirPlay audio-only  streaming protocol which uses lossless **ALAC** format)
+but the **uxplay -vs 0** option streams AAC audio using screen-mirroring without displaying the client's screen.
+If the client streams audio using  AirPlay as opposed to AirPlay screen-mirroring, non-AAC data can be seen to be received as
+input into UxPlay's GStreamer audio-rendering pipeline, but does not get rendered into audio output.   If someone can adapt the GStreamer audio
+pipeline to also render these Airplay audio streams, such an enhancement of UxPlay  would be welcome as a Pull Request!_
 
 UxPlay 1.37 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
@@ -29,16 +32,20 @@ Features:
 available. VAAPI is preferable, (but don't use VAAPI with nVidia).
 4. Automatic screen orientation.
 
-**Getting it**:  either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
+# Getting UxPlay:
+
+Either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".   
 
 *This is a pull request on the
 original site https://github.com/antimof/UxPlay ; it may or may not ever
 get committed into the codebase  on the antimof site, as that
-project may no longer be active.
+project appears to no longer be active.
 If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.*
 
-**Building this version** (Instructions for Ubuntu; adapt these for other Linuxes, and macOS, see below).
+# Building this version:
+
+(Instructions for Ubuntu; adapt these for other Linuxes; for macOS, see below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.
 Make sure that cmake>=3.4.1 and pkg-config are also installed: "sudo apt-get install cmake pkg-config".
@@ -179,7 +186,7 @@ and start the avahi-daemon service (your distribution will document how to do  t
 Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS service.
 
 For other problems after a connection is made, use "uxplay -d " (debug log option)  to see what is happening.
-Such problems are usually due to a GStreamer plugin that doesn't work on your system (by default,
+**Such problems are usually due to a GStreamer plugin that doesn't work on your system**: (by default,
 GStreamer uses an algorithm to guess what is the "best"
 plugin to use on your system).
 If you use an
