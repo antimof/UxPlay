@@ -200,16 +200,16 @@ reproduces the problem.)
 
 If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
 ZOOMFIX is only applied to the default videosink choice ("autovideosink") and the two X11 videosinks
-"ximagesink" and "xvimagesink".   ZOOMFIX is only designed for these last two, but it is possible that
-autovideosink chooses a different videosink that is incompatible with ZOOMFIX. 
+"ximagesink" and "xvimagesink".   ZOOMFIX is only designed for these last two; if
+autovideosink chooses a different videosink, ZOOMFIX is now ignored. 
 If you are using the X11 windowing system (standard on Linux), and have trouble with screen-sharing on Zoom, use
 ZOOMFIX and "-vs xvimagesink" (or "-vs ximagesink" if the previous choice doesn't work). 
 
-Other videosink choices are not affected by ZOOMFIX, and may or may not be visible to screen-sharing apps.
-Windows created on Linux with "gtksink" are visible to screen-sharing aps without ZOOMFIX; windows on macOS created by
-"glimagesink" (default choice) and "osximagesink" are also visible.
+As other  videosink choices are not affected by ZOOMFIX, they  may or may not be visible to screen-sharing apps.
+Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sharing aps without ZOOMFIX; windows on macOS created by
+"-vs glimagesink" (default choice) and "-vs osximagesink" are also visible.
 
-The "OpenGL renderer" window created on Linux by glimagesink sometimes does not close properly when its "close" button is clicked.
+The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
 
 #  **Usage:**
