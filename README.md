@@ -8,8 +8,8 @@ on a host running Linux, macOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
 
 The UxPlay server and its client must be on the same local area network,
-on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running
-(only DNS-SD is necessary, it is not necessary that the local network also be of the ".local" mDNS-based type). 
+on which a **Bonjour/Zeroconf mDNS/DNS-SD server**  is also running
+(only DNS-SD "Service Discovery" service is necessary, it is not necessary that the local network also be of the ".local" mDNS-based type). 
 On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.avahi.org),
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
