@@ -180,10 +180,11 @@ is almost certainly a firewall problem: one user was unaware that
 _two_ firewalls (ufw and firewalld) were both active  on their system.
 
 Stalling this way, but _without_ the server showing as available on the client,
-probably means that your network **does not have a running Bonjour/zeroconf mDNS server**.
+probably means that your network **does not have a running Bonjour/zeroconf mDNS-SD server**;
+(it is not necessary that the local network also be of the ".local" mDNS-based type). 
 On Linux, make sure Avahi is installed,
 and start the avahi-daemon service (your distribution will document how to do  this).
-Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS service.
+Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS-SD service.
 
 For other problems after a connection is made, use "uxplay -d " (debug log option)  to see what is happening.
 **Such problems are usually due to a GStreamer plugin that doesn't work on your system**: (by default,
