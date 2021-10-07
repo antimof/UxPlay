@@ -7,7 +7,8 @@ sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, macOS, or other unix,
 using Apple's  AirPlay Mirror protocol first available in iOS 5.
 The UxPlay server and its client must be on the same local area network,
-on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running.
+on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running
+(only DNS-SD is necessary, it is not necessary that the local network also be of the ".local" mDNS-based type). 
 On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.avahi.org),
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
@@ -180,11 +181,10 @@ is almost certainly a firewall problem: one user was unaware that
 _two_ firewalls (ufw and firewalld) were both active  on their system.
 
 Stalling this way, but _without_ the server showing as available on the client,
-probably means that your network **does not have a running Bonjour/zeroconf mDNS-SD server**;
-(it is not necessary that the local network also be of the ".local" mDNS-based type). 
+probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
 On Linux, make sure Avahi is installed,
 and start the avahi-daemon service (your distribution will document how to do  this).
-Some  systems  may instead use the mdnsd daemon as an alternative to provide mDNS-SD service.
+Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.
 
 For other problems after a connection is made, use "uxplay -d " (debug log option)  to see what is happening.
 **Such problems are usually due to a GStreamer plugin that doesn't work on your system**: (by default,
