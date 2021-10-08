@@ -1,4 +1,4 @@
-# UxPlay 1.37
+# UxPlay 1.38
 
 This project is a GPLv3  unix AirPlay server which  now also works on macOS.
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
@@ -21,7 +21,7 @@ If the client streams audio using  AirPlay as opposed to AirPlay screen-mirrorin
 input into the GStreamer audio-rendering pipeline, but does not get rendered into audio output.   If someone can adapt the GStreamer audio
 pipeline to also render these Airplay audio streams, such an enhancement of UxPlay  would be welcome as a Pull Request!_
 
-UxPlay 1.37 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+UxPlay 1.38 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
@@ -198,6 +198,11 @@ plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installe
 "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
 reproduces the problem.)
 
+You can try to fix audio problems by using the "-as _audiosink_"  option to choose the GStreamer audiosink , rather than
+have autoaudiosink pick one for you.    The command "gst_inspect-1.0 | grep Sink | grep Audio" " will show you which audiosinks and videosinks are 
+available on your system.  (Replace  "Audio" by "Video" to see videosinks).   Common audiosinks are pulsesink, alsasink, osssink, oss4sink,
+and osxaudiosink (macOS).  
+ 
 If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
 ZOOMFIX is only applied to the default videosink choice ("autovideosink") and the two X11 videosinks
 "ximagesink" and "xvimagesink".   ZOOMFIX is only designed for these last two; if
@@ -269,7 +274,7 @@ which will not work if a firewall is running.
    attempt to  run two instances of uxplay on the same computer.)
    On macOS, random MAC addresses are always used.
 
-**-a** disable audio, leaving only the video playing.
+
 
 Also: image transforms that had been added to RPiPlay have been ported to UxPlay:
 
@@ -290,6 +295,14 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-vs 0** suppresses display of streamed video, but plays  streamed audio.   (The client's screen
    is still mirrored at a reduced rate of 1 frame per second,  but is not rendered or displayed.)
 
+**-as _audiosink_** chooses the GStreamer audiosink, instead of letting
+   autoaudiosink pick it for you.  Some audiosink choices are:  pulsesink, alsasink, 
+   osssink, oss4sink, and osxaudiosink (for macOS).  Using quotes
+   "..." might allow some parameters to be included with the audiosink name. 
+   (Some choices of audiosink might not work on your system.)   
+
+**-as 0** or **-a**  suppresses playing of streamed audio, but displays streamed video.
+
 **-t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
    have been present during the previous _timeout_ seconds.  (You may wish to use this  because the Server may not be
    visible to  new Clients that were inactive when the Server was launched, and an idle Bonjour
@@ -302,6 +315,8 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
+1.38 2021-10-8     Add -as _audiosink_ option to allow user to choose the  GStreamer audiosink.
+
 1.37 2021-09-29    Append "@hostname" to AirPlay Server name, where "hostname" is the name of the
                    server running uxplay (reworked change in 1.36).
 
@@ -330,7 +345,7 @@ This involved crypto updates, replacement
 of the included plist library by the system-installed version, and  a change
 over to a library llhttp for http parsing. 
 
-2. Added the -s, -o -p, -m, -r,  -f,  -fps  -vs and -t  options.
+2. Added the -s, -o -p, -m, -r,  -f, -fps  -vs -va  and -t  options.
 
 3. If "`cmake -DZOOMFIX=ON .`"  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as

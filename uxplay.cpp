@@ -35,7 +35,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.37"
+#define VERSION "1.38"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -44,7 +44,7 @@
 
 static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
-			 bool use_audio,  bool debug_log, std::string videosink);
+			 bool use_audio,  bool debug_log, std::string videosink, std::string audiosink);
 
 static int stop_server ();
 
@@ -159,13 +159,15 @@ static void print_info (char *name) {
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports only\n");
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
-    printf("-a        Turn audio off. video output only\n");
     printf("-t n      Relaunch server if no connection existed in last n seconds\n");
-    printf("-vs       Choose the  GStreamer videosink; default \"autovideosink\"\n");
-    printf("          choices: ximagesink,xvimagesink,vaapisink,fpsdisplaysink, etc.\n"); 
+    printf("-vs       Choose the GStreamer videosink; default \"autovideosink\"\n");
+    printf("          choices: ximagesink,xvimagesink,vaapisink,glimagesink, etc.\n"); 
     printf("-vs 0     Streamed audio only, with no video display window\n");
+    printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
+    printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
+    printf("-as 0     (or -a)  Turn audio off, video output only\n");
     printf("-d        Enable debug logging\n");
-    printf("-v/-h     Displays this help and version information\n");
+    printf("-v or -h  Displays this help and version information\n");
 }
 
 bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
@@ -296,7 +298,8 @@ int main (int argc, char *argv[]) {
     unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
     videoflip_t videoflip[2] = { NONE , NONE };
     std::string videosink = "autovideosink";
-    
+    std::string audiosink = "autoaudiosink";
+
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
     // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
     // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
@@ -373,6 +376,10 @@ int main (int argc, char *argv[]) {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             videosink.erase();
             videosink.append(argv[++i]);
+        } else if (arg == "-as") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            audiosink.erase();
+            audiosink.append(argv[++i]);
         } else if (arg == "-t") {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             server_timeout = 0;
@@ -401,7 +408,7 @@ int main (int argc, char *argv[]) {
     relaunch:
     connections_stopped = false;
     if (start_server(server_hw_addr, server_name, display, tcp, udp,
-                     videoflip,use_audio, debug_log, videosink)) {
+                     videoflip,use_audio, debug_log, videosink, audiosink)) {
         return 1;
     }
 
@@ -483,7 +490,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 
 int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
-		  bool use_audio, bool debug_log, std::string videosink) {
+		  bool use_audio, bool debug_log, std::string videosink, std::string audiosink) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -507,6 +514,10 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
         use_video = false;
         display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
     }
+    if(audiosink == "0") {
+        use_audio = false;
+    }
+
     raop_set_display(raop, display[0], display[1], display[2], display[3], display[4]);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
@@ -533,7 +544,7 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
 
     if (! use_audio) {
         LOGI("Audio disabled");
-    } else if ((audio_renderer = audio_renderer_init(render_logger, video_renderer)) ==
+    } else if ((audio_renderer = audio_renderer_init(render_logger, video_renderer, audiosink.c_str())) ==
                NULL) {
         LOGE("Could not init audio renderer");
         stop_server();

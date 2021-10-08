@@ -51,7 +51,7 @@ static gboolean check_plugins (void)
   return ret;
 }
 
-audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer) {
+audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer, const char* audiosink) {
     audio_renderer_t *renderer;
     GError *error = NULL;
 
@@ -63,8 +63,11 @@ audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_
 
     assert(check_plugins ());
 
-    renderer->pipeline = gst_parse_launch("appsrc name=audio_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! decodebin !"
-    "audioconvert ! volume name=volume ! level ! autoaudiosink sync=false", &error);
+    GString *launch = g_string_new("appsrc name=audio_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! decodebin !"
+    "audioconvert ! volume name=volume ! level ! ");
+    g_string_append(launch, audiosink);
+    g_string_append(launch, " sync=false");
+    renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "audio_source");

@@ -23,7 +23,7 @@ add_library( airplay
 find_package(PkgConfig REQUIRED)
 
 if( UNIX AND NOT APPLE )
-   find_library( LIBPLIST NAMES plist plist-2.0 )
+   find_library( LIBPLIST NAMES plist3 plist  plist-2.0 )
 elseif( APPLE )
    pkg_check_modules( PLIST REQUIRED libplist-2.0 )
    find_library( LIBPLIST libplist-2.0.a REQUIRED )
