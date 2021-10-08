@@ -199,8 +199,8 @@ plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installe
 reproduces the problem.)
 
 You can try to fix audio problems by using the "-as _audiosink_"  option to choose the GStreamer audiosink , rather than
-have autoaudiosink pick one for you.    The command "gst_inspect-1.0 | grep Sink | grep Audio" " will show you which audiosinks and videosinks are 
-available on your system.  (Replace  "Audio" by "Video" to see videosinks).   Common audiosinks are pulsesink, alsasink, osssink, oss4sink,
+have autoaudiosink pick one for you.    The command "gst_inspect-1.0 | grep Sink | grep Audio" " will show you which audiosinks are 
+available on your system.  (Replace  "Audio" by "Video" to see videosinks).   Some possible audiosinks are pulsesink, alsasink, osssink, oss4sink,
 and osxaudiosink (macOS).  
  
 If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
