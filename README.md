@@ -347,7 +347,7 @@ This involved crypto updates, replacement
 of the included plist library by the system-installed version, and  a change
 over to a library llhttp for http parsing. 
 
-2. Added the -s, -o -p, -m, -r,  -f, -fps  -vs -va  and -t  options.
+2. Added the -s, -o -p, -m, -r,  -f, -fps  -vs -as  and -t  options.
 
 3. If "`cmake -DZOOMFIX=ON .`"  is run before compiling,
 the mirrored window is now visible to screen-sharing applications such as
