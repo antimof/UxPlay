@@ -61,14 +61,15 @@ downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git
 make X11 mirror display windows visible to screen-sharing applications such as
 Zoom, see below).
 5. `make`
-6. `sudo make install`
+6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
 
 _Note that older cmake does not require the final "`.`" to specify the current directory as the source directory,
 but newer cmake requires it. If you intend to modify the code, use a separate "build" directory: replace "cmake  [ ] ." by "mkdir build ; cd build ; cmake [ ] .."; you can then get back to the clean source (with any changes you made) with "cd .. ; rm -rf build"._
 
-The above script installs the executable file "`uxplay`" to `/usr/local/bin`.
+The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage and README files)
 It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
+
 
 **Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies.  Older distributions
 may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.]**

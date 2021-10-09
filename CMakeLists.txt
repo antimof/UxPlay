@@ -1,6 +1,10 @@
-cmake_minimum_required( VERSION 3.4.1 )
+cmake_minimum_required( VERSION 3.4.3 )
 
 project( uxplay )
+
+message( STATUS "Project name: " ${PROJECT_NAME} )
+
+include(GNUInstallDirs)
 
 set ( CMAKE_CXX_STANDARD 11 )
 
@@ -42,4 +46,16 @@ target_link_libraries( uxplay
 		   )
 
 install( TARGETS  uxplay RUNTIME DESTINATION bin )
+install( FILES uxplay.1 DESTINATION man/man1 )
+install( FILES README.md README.txt README.html LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR} ) 
 
+# uninstall target
+if(NOT TARGET uninstall)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+endif()

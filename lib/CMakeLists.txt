@@ -32,7 +32,7 @@ elseif( APPLE )
 			    /opt/local/include  # MacPorts
                             )
 endif()
-message( "-- LIBPLIST " ${LIBPLIST} )
+message( STATUS "LIBPLIST " ${LIBPLIST} )
 
 target_link_libraries( airplay
         pthread
@@ -42,6 +42,7 @@ target_link_libraries( airplay
 
 if( UNIX AND NOT APPLE )
   find_package(OpenSSL 1.1.1 REQUIRED)
+  message( "OpenSSL " ${OpenSSL} )
   target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
   target_link_libraries( airplay OpenSSL::Crypto )
   find_file( DNS_SD_H dns_sd.h PATHS /usr/include/* /usr/local/include/* )
@@ -49,7 +50,7 @@ if( UNIX AND NOT APPLE )
     message( FATAL_ERROR "(avahi_compat) did not find dns_sd.h" )
   endif()
   string( REPLACE "dns_sd.h" "" DNS_SD ${DNS_SD_H} )
-  message( "-- found dns_sd.h in " ${DNS_SD} )
+  message( STATUS "found dns_sd.h in " ${DNS_SD} )
   target_include_directories( airplay PRIVATE ${DNS_SD} )
   target_link_libraries( airplay dns_sd )
 elseif( APPLE )
