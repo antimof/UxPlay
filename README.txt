@@ -87,9 +87,10 @@ you can then get back to the clean source (with any changes you made)
 with "cd .. ; rm -rf build".*
 
 The above script installs the executable file "`uxplay`" to
-`/usr/local/bin`, (and installs a manpage and README files) It can also
-be found in the build directory after the build processs. Run uxplay in
-a terminal window.
+`/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and
+README files to `/usr/local/share/doc/uxplay`). It can also be found in
+the build directory after the build processs. Run uxplay in a terminal
+window.
 
 **Note libplist-dev (which must be for libplist version 2.0 or greater)
 and (for ZOOMFIX) libx11-dev are new dependencies. Older distributions

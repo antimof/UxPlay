@@ -66,7 +66,8 @@ Zoom, see below).
 _Note that older cmake does not require the final "`.`" to specify the current directory as the source directory,
 but newer cmake requires it. If you intend to modify the code, use a separate "build" directory: replace "cmake  [ ] ." by "mkdir build ; cd build ; cmake [ ] .."; you can then get back to the clean source (with any changes you made) with "cd .. ; rm -rf build"._
 
-The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage and README files)
+The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and README
+files to `/usr/local/share/doc/uxplay`).
 It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
 
