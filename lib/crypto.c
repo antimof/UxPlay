@@ -122,8 +122,6 @@ aes_ctx_t *aes_ctr_decrypt_init(const uint8_t *key, const uint8_t *iv) {
     return aes_init(key, iv, EVP_aes_128_ctr(), AES_DECRYPT);
 }
 
-
-
 void aes_ctr_encrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len) {
     aes_encrypt(ctx, in, out, len);
     ctx->block_offset = (ctx->block_offset + len) % AES_128_BLOCK_SIZE;
