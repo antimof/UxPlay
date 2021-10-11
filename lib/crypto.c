@@ -114,9 +114,15 @@ void aes_reset(aes_ctx_t *ctx, const EVP_CIPHER *type, aes_direction_t direction
 
 // AES CTR
 
-aes_ctx_t *aes_ctr_init(const uint8_t *key, const uint8_t *iv) {
+aes_ctx_t *aes_ctr_encrypt_init(const uint8_t *key, const uint8_t *iv) {
     return aes_init(key, iv, EVP_aes_128_ctr(), AES_ENCRYPT);
 }
+
+aes_ctx_t *aes_ctr_decrypt_init(const uint8_t *key, const uint8_t *iv) {
+    return aes_init(key, iv, EVP_aes_128_ctr(), AES_DECRYPT);
+}
+
+
 
 void aes_ctr_encrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len) {
     aes_encrypt(ctx, in, out, len);
@@ -130,7 +136,7 @@ void aes_ctr_start_fresh_block(aes_ctx_t *ctx) {
 }
 
 void aes_ctr_decrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len) {
-    aes_encrypt(ctx, in, out, len);
+    aes_decrypt(ctx, in, out, len);
 }
 
 void aes_ctr_reset(aes_ctx_t *ctx) {

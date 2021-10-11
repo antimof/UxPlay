@@ -41,7 +41,8 @@ typedef enum aes_direction_e { AES_DECRYPT, AES_ENCRYPT } aes_direction_t;
 
 typedef struct aes_ctx_s aes_ctx_t;
 
-aes_ctx_t *aes_ctr_init(const uint8_t *key, const uint8_t *iv);
+aes_ctx_t *aes_ctr_encrypt_init(const uint8_t *key, const uint8_t *iv);
+aes_ctx_t *aes_ctr_decrypt_init(const uint8_t *key, const uint8_t *iv);
 void aes_ctr_reset(aes_ctx_t *ctx);
 void aes_ctr_encrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len);
 void aes_ctr_decrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len);
