@@ -16,7 +16,7 @@ service can also be provided by macOS, iOS or Windows servers).
 
 _Note: UxPlay currently only works using the AirPlay screen-mirroring protocol (which streams audio in **AAC** format)
 (not the AirPlay audio-only  streaming protocol which uses lossless **ALAC** format)
-but the **uxplay -vs 0** option streams AAC audio using screen-mirroring without displaying the client's screen.
+but the **uxplay -vs 0** option streams AAC-ELD audio using screen-mirroring without displaying the client's screen.
 If the client streams audio using  AirPlay as opposed to AirPlay screen-mirroring, non-AAC data can be seen to be received and processed by UxPlay, and then
 input into the GStreamer audio-rendering pipeline, but does not get rendered into audio output.   If someone can adapt the GStreamer audio
 pipeline to also render these Airplay audio streams, such an enhancement of UxPlay  would be welcome as a Pull Request!_
