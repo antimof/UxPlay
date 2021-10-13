@@ -703,3 +703,53 @@ raop_rtp_is_running(raop_rtp_t *raop_rtp)
     return running;
 }
 
+const char* audio_format_name(audio_format_t audio_format) {
+    const char * aac_eld = "AAC_ELD";
+    const char * alac = "ALAC";
+    const char * aac = "AAC";
+    const char * pcm = "PCM";
+    const char * unknown = "UNKNOWN";
+    const char * invalid = "";
+    
+    switch (audio_format) {
+    case AAC_ELD:
+        return aac_eld;
+        break;
+    case ALAC:
+        return alac;
+        break;
+    case AAC:
+        return aac;
+        break;
+    case PCM:
+        return pcm;
+        break;
+    case UNKNOWN:
+        return unknown;
+        break;
+    default:
+        break;
+    }
+    return invalid;
+}
+
+
+audio_format_t get_audio_format(int format) {
+    switch (format) {
+    case (AAC_ELD):
+        return AAC_ELD;
+        break;
+    case (ALAC):
+        return ALAC;
+        break;
+    case (AAC):
+        return AAC;
+        break;
+    case (PCM):
+        return PCM;
+        break;
+    default:
+        return UNKNOWN;
+        break;
+    }
+}
