@@ -444,11 +444,10 @@ raop_handler_setup(raop_conn_t *conn,
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "audioFormat = 0X%X %s",  audioFormat, audio_format_name(audio_format));
 
                     if (audio_format == UNKNOWN) {
-		        logger_log(conn->raop->logger, LOGGER_ERR, "RAOP cannot play UNKNOWN audio format 0X%X\n", (int) audioFormat);
+                        logger_log(conn->raop->logger, LOGGER_ERR, "RAOP cannot play UNKNOWN audio format 0X%X\n", (int) audioFormat);
                         http_response_set_disconnect(response, 1);
                     }
-                     
-		    
+
                     uint8_t  usingScreen; 		    
                     plist_t using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
                     plist_get_bool_val(using_screen_node, &usingScreen);
@@ -470,7 +469,7 @@ raop_handler_setup(raop_conn_t *conn,
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "%d %d %d %d %d %d %d", latencyMax, redundantAudio, latencyMin, ct, spf, using_screen);
 
                     if (conn->raop_rtp) {
-		      raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport, &audio_format, &using_screen);
+                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport, &audio_format, &using_screen);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");
