@@ -133,8 +133,7 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
 
 raop_rtp_t *
 raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, int remotelen,
-              const unsigned char *aeskey, const unsigned char *aesiv, const unsigned char *ecdh_secret,
-              unsigned short control_lport, unsigned short data_lport)
+              const unsigned char *aeskey, const unsigned char *aesiv, const unsigned char *ecdh_secret)
 {
     raop_rtp_t *raop_rtp;
 
@@ -145,8 +144,6 @@ raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, co
     if (!raop_rtp) {
         return NULL;
     }
-    raop_rtp->control_lport = control_lport;
-    raop_rtp->data_lport = data_lport;
     raop_rtp->logger = logger;
     raop_rtp->ntp = ntp;
 
@@ -543,6 +540,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
     }
 
     /* Initialize ports and sockets */
+    raop_rtp->control_lport = *control_lport;
+    raop_rtp->data_lport = *data_lport;
     raop_rtp->control_rport = control_rport;
     if (raop_rtp->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
