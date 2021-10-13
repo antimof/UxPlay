@@ -41,7 +41,8 @@ raop_rtp_t *raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_nt
                           const unsigned char *aeskey, const unsigned char *aesiv, const unsigned char *ecdh_secret);
 
 void raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_rport,
-                          unsigned short *control_lport, unsigned short *data_lport);
+                          unsigned short *control_lport, unsigned short *data_lport,
+                          audio_format_t *audio_format, bool *using_screen);
 
 void raop_rtp_set_volume(raop_rtp_t *raop_rtp, float volume);
 void raop_rtp_set_metadata(raop_rtp_t *raop_rtp, const char *data, int datalen);
