@@ -464,6 +464,28 @@ extern "C" void audio_set_volume (void *cls, float volume) {
     }
 }
 
+extern "C" void audio_get_format (void *cls, unsigned int audioFormat) {
+    const char * audio_format;
+    switch (audioFormat) {
+    case 0x1000000:
+        audio_format = "AAC_ELD";
+        break;
+    case 0x40000:
+        audio_format = "ALAC";
+        break;
+    case 0x400000:
+        audio_format = "AAC";
+        break;
+    case 0x0:
+        audio_format = "PCM";
+        break;
+    default:
+        audio_format = "UNKNOWN";
+        break;
+    }
+    printf("new audio connection with audio format 0x%X %s\n", audioFormat, audio_format);
+}
+
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {
@@ -500,7 +522,8 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
     raop_cbs.audio_set_volume = audio_set_volume;
-
+    raop_cbs.audio_get_format = audio_get_format;
+    
     raop = raop_init(10, &raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");

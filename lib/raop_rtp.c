@@ -526,14 +526,12 @@ raop_rtp_thread_udp(void *arg)
 // Start rtp service, three udp ports
 void
 raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_rport,
-                     unsigned short *control_lport, unsigned short *data_lport,
-                     audio_format_t *audio_format, bool *using_screen)
+                     unsigned short *control_lport, unsigned short *data_lport)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
     int use_ipv6 = 0;
 
     assert(raop_rtp);
-    raop_buffer_set_audio_parameters(raop_rtp->buffer, audio_format, using_screen);
     
     MUTEX_LOCK(raop_rtp->run_mutex);
     if (raop_rtp->running || !raop_rtp->joined) {
@@ -703,55 +701,4 @@ raop_rtp_is_running(raop_rtp_t *raop_rtp)
     int running = raop_rtp->running;
     MUTEX_UNLOCK(raop_rtp->run_mutex);
     return running;
-}
-
-const char* audio_format_name(audio_format_t audio_format) {
-    const char * aac_eld = "AAC_ELD";
-    const char * alac = "ALAC";
-    const char * aac = "AAC";
-    const char * pcm = "PCM";
-    const char * unknown = "UNKNOWN";
-    const char * invalid = "";
-    
-    switch (audio_format) {
-    case AAC_ELD:
-        return aac_eld;
-        break;
-    case ALAC:
-        return alac;
-        break;
-    case AAC:
-        return aac;
-        break;
-    case PCM:
-        return pcm;
-        break;
-    case UNKNOWN:
-        return unknown;
-        break;
-    default:
-        break;
-    }
-    return invalid;
-}
-
-
-audio_format_t get_audio_format(int format) {
-    switch (format) {
-    case (AAC_ELD):
-        return AAC_ELD;
-        break;
-    case (ALAC):
-        return ALAC;
-        break;
-    case (AAC):
-        return AAC;
-        break;
-    case (PCM):
-        return PCM;
-        break;
-    default:
-        return UNKNOWN;
-        break;
-    }
 }

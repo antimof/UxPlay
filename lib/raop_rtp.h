@@ -26,23 +26,11 @@
 
 typedef struct raop_rtp_s raop_rtp_t;
 
-typedef enum audio_format_e {
-  AAC_ELD = 0x1000000,
-  ALAC = 0x400000,
-  AAC = 0x40000,
-  PCM = 0x0,
-  UNKNOWN
-} audio_format_t ;
-const char * audio_format_name(audio_format_t  audio_format);
-audio_format_t get_audio_format(int format);
-
-
 raop_rtp_t *raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, int remotelen,
                           const unsigned char *aeskey, const unsigned char *aesiv, const unsigned char *ecdh_secret);
 
 void raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_rport,
-                          unsigned short *control_lport, unsigned short *data_lport,
-                          audio_format_t *audio_format, bool *using_screen);
+                          unsigned short *control_lport, unsigned short *data_lport);
 
 void raop_rtp_set_volume(raop_rtp_t *raop_rtp, float volume);
 void raop_rtp_set_metadata(raop_rtp_t *raop_rtp, const char *data, int datalen);
