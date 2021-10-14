@@ -34,5 +34,6 @@ void raop_buffer_flush(raop_buffer_t *raop_buffer, int next_seq);
 int raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned char* output,
                         unsigned int datalen, unsigned int *outputlen);
 void raop_buffer_destroy(raop_buffer_t *raop_buffer);
+void raop_buffer_set_audio_parameters(raop_buffer_t *raop_buffer, audio_format_t *audio_format, bool *using_screen);
 
 #endif

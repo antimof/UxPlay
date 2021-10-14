@@ -431,45 +431,70 @@ raop_handler_setup(raop_conn_t *conn,
                     break;
                 } case 96: {
                     // Audio
-
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
-                    audio_format_t audio_format = AAC_ELD;
-                    bool using_screen = true;
+                    audio_format_t audioFormat = UNKNOWN;
+                    bool usingScreen = false;
+                    unsigned short spf = 0, ct = 0, redundantAudio = 0;
+                    unsigned int latencyMax, latencyMin;
+		    
+                    plist_type ptype;
+                    uint64_t uint_val;
+		    uint8_t bool_val;
 
 		    /* get audio parameter of connection */
-                    uint64_t audioFormat;
                     plist_t audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
-                    plist_get_uint_val(audio_format_node, &audioFormat);
-                    audio_format = get_audio_format( (int) audioFormat);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "audioFormat = 0X%X %s",  audioFormat, audio_format_name(audio_format));
+                    plist_get_uint_val(audio_format_node, &uint_val);
+                    audioFormat = get_audio_format( (int) uint_val);
+                    logger_log(conn->raop->logger, LOGGER_INFO, "audioFormat = 0X%X %s",  audioFormat, audio_format_name(audioFormat));
 
-                    if (audio_format == UNKNOWN) {
-                        logger_log(conn->raop->logger, LOGGER_ERR, "RAOP cannot play UNKNOWN audio format 0X%X\n", (int) audioFormat);
+                    if (audioFormat == UNKNOWN) {
+                        logger_log(conn->raop->logger, LOGGER_ERR, "RAOP cannot play UNKNOWN audio format 0X%X\n", (int) uint_val);
                         http_response_set_disconnect(response, 1);
                     }
 
-                    uint8_t  usingScreen; 		    
-                    plist_t using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
-                    plist_get_bool_val(using_screen_node, &usingScreen);
-                    using_screen = (usingScreen == 0) ? false : true;
 		    
-		    uint64_t latencyMax, redundantAudio, latencyMin, ct, spf;
-		    plist_t latency_max_node = plist_dict_get_item(req_stream_node, "latencyMax");
-                    plist_get_uint_val(latency_max_node, &latencyMax);
-                    plist_t redundant_audio_node = plist_dict_get_item(req_stream_node, "redundantAudio");
-                    plist_get_uint_val(redundant_audio_node, &redundantAudio);
-                    plist_t latency_min_node = plist_dict_get_item(req_stream_node, "latencyMin");
-                    plist_get_uint_val(latency_min_node, &latencyMin);
-                    plist_t ct_node = plist_dict_get_item(req_stream_node, "ct");
-                    plist_get_uint_val(ct_node, &ct);
+                    plist_t using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
+                    ptype = plist_get_node_type(using_screen_node); 
+                    if (ptype == PLIST_BOOLEAN){
+                        plist_get_bool_val(using_screen_node, &bool_val);
+                        if (bool_val) {
+                         usingScreen = true;
+			 }
+		     }
+
                     plist_t spf_node = plist_dict_get_item(req_stream_node, "spf");
-                    plist_get_uint_val(spf_node, &spf);
+                    ptype = plist_get_node_type(spf_node);
+                    if(ptype == PLIST_UINT) {
+                        plist_get_uint_val(spf_node, &uint_val);
+                        spf = (unsigned short) uint_val;
+		    }
 
+                    plist_t ct_node = plist_dict_get_item(req_stream_node, "ct");
+                    ptype = plist_get_node_type(ct_node);
+                    if(ptype == PLIST_UINT) {
+                        plist_get_uint_val(ct_node, &uint_val);
+                        ct = (unsigned short) uint_val;
+		    }
 
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "%d %d %d %d %d %d %d", latencyMax, redundantAudio, latencyMin, ct, spf, using_screen);
+                    plist_t redundant_audio_node = plist_dict_get_item(req_stream_node, "redundantAudio");
+                    ptype = plist_get_node_type(redundant_audio_node);
+                    if(ptype == PLIST_UINT) {
+                        plist_get_uint_val(redundant_audio_node, &uint_val);
+                        redundantAudio = (unsigned short) uint_val;
+		    }
+
+		    plist_t latency_max_node = plist_dict_get_item(req_stream_node, "latencyMax");
+                    plist_get_uint_val(latency_max_node, &uint_val);
+                    latencyMax = (unsigned int) uint_val;
+
+		    plist_t latency_min_node = plist_dict_get_item(req_stream_node, "latencyMin");
+                    plist_get_uint_val(latency_min_node, &uint_val);
+                    latencyMin = (unsigned int) uint_val;
+
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "audio stream properties: %d %d %d %d %d %d", latencyMax, redundantAudio, latencyMin, ct, spf, usingScreen);
 
                     if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport, &audio_format, &using_screen);
+                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport, &audioFormat, &usingScreen);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");

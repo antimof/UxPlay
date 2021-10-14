@@ -98,10 +98,6 @@ struct raop_rtp_s {
     unsigned short control_lport;
     unsigned short data_lport;
 
-    /* connection-time audio parameters from client */
-    audio_format_t audio_format;
-    bool using_screen;
-
     /* Initialized after the first control packet */
     struct sockaddr_storage control_saddr;
     socklen_t control_saddr_len;
@@ -537,15 +533,13 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
     int use_ipv6 = 0;
 
     assert(raop_rtp);
-
+    raop_buffer_set_audio_parameters(raop_rtp->buffer, audio_format, using_screen);
+    
     MUTEX_LOCK(raop_rtp->run_mutex);
     if (raop_rtp->running || !raop_rtp->joined) {
         MUTEX_UNLOCK(raop_rtp->run_mutex);
         return;
     }
-
-    raop_rtp->audio_format = *audio_format;
-    raop_rtp->using_screen = *using_screen;
 
     /* Initialize ports and sockets */
     raop_rtp->control_lport = *control_lport;

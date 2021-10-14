@@ -53,10 +53,19 @@ struct raop_buffer_s {
     unsigned short first_seqnum;
     unsigned short last_seqnum;
 
+    /* audio parameters */
+    audio_format_t audio_format;
+    bool using_screen;
+
     /* RTP buffer entries */
     raop_buffer_entry_t entries[RAOP_BUFFER_LENGTH];
 };
 
+void raop_buffer_set_audio_parameters(raop_buffer_t  *raop_buffer, audio_format_t  *audio_format, bool *using_screen) {
+    assert(raop_buffer);
+    raop_buffer->audio_format = *audio_format;
+    raop_buffer->using_screen  = *using_screen;
+}
 void
 raop_buffer_init_key_iv(raop_buffer_t *raop_buffer,
                         const unsigned char *aeskey,
