@@ -7,7 +7,9 @@ audio) of iOS/macOS clients (iPads, iPhones, MacBooks) in a window on
 the server display (with the possibility of sharing that window on
 screen-sharing applications such as Zoom) on a host running Linux,
 macOS, or other unix, using Apple's AirPlay Mirror protocol first
-available in iOS 5.
+available in iOS 5. (Details of what is known about the AirPlay2
+protocol can be found
+[here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)).
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running (only
@@ -21,7 +23,7 @@ by macOS, iOS or Windows servers).
 *Note: UxPlay currently only works using the AirPlay screen-mirroring
 protocol (which streams audio in **AAC** format) (not the AirPlay
 audio-only streaming protocol which uses lossless **ALAC** format) but
-the **uxplay -vs 0** option streams AAC audio using screen-mirroring
+the **uxplay -vs 0** option streams AAC-ELD audio using screen-mirroring
 without displaying the client's screen. If the client streams audio
 using AirPlay as opposed to AirPlay screen-mirroring, non-AAC data can
 be seen to be received and processed by UxPlay, and then input into the
