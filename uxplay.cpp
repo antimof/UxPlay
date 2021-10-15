@@ -249,17 +249,17 @@ static bool get_ports (int nports, std::string option, const char * value, unsig
 static bool get_videoflip (const char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
-    case 'I':
-        *videoflip = INVERT;
-        break;
-    case 'H':
-        *videoflip = HFLIP;
-        break;
-    case 'V':
-        *videoflip = VFLIP;
-        break;
-    default:
-        return false;
+        case 'I':
+            *videoflip = INVERT;
+            break;
+        case 'H':
+            *videoflip = HFLIP;
+            break;
+        case 'V':
+            *videoflip = VFLIP;
+            break;
+        default:
+            return false;
     }
     return true;
 }
@@ -267,14 +267,14 @@ static bool get_videoflip (const char *str, videoflip_t *videoflip) {
 static bool get_videorotate (const char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
-    case 'L':
-        *videoflip = LEFT;
-        break;
-    case 'R':
-        *videoflip = RIGHT;
-        break;
-    default:
-        return false;
+        case 'L':
+            *videoflip = LEFT;
+            break;
+        case 'R':
+            *videoflip = RIGHT;
+            break;
+        default:
+            return false;
     }
     return true;
 }
@@ -467,21 +467,21 @@ extern "C" void audio_set_volume (void *cls, float volume) {
 extern "C" void audio_get_format (void *cls, unsigned int audioFormat) {
     const char * audio_format;
     switch (audioFormat) {
-    case 0x1000000:
-        audio_format = "AAC_ELD";
-        break;
-    case 0x40000:
-        audio_format = "ALAC";
-        break;
-    case 0x400000:
-        audio_format = "AAC";
-        break;
-    case 0x0:
-        audio_format = "PCM";
-        break;
-    default:
-        audio_format = "UNKNOWN";
-        break;
+        case 0x1000000:
+            audio_format = "AAC_ELD";
+            break;
+        case 0x40000:
+            audio_format = "ALAC";
+            break;
+        case 0x400000:
+            audio_format = "AAC";
+            break;
+        case 0x0:
+            audio_format = "PCM";
+            break;
+        default:
+            audio_format = "UNKNOWN";
+            break;
     }
     printf("new audio connection with audio format 0x%X %s\n", audioFormat, audio_format);
 }

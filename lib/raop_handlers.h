@@ -438,12 +438,12 @@ raop_handler_setup(raop_conn_t *conn,
                         uint64_t uint_val;
                         plist_t audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
                         plist_get_uint_val(audio_format_node, &uint_val);
-			conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, (unsigned int) uint_val);
+                        conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, (unsigned int) uint_val);
                     }
 
                     if (conn->raop_rtp) {
-                            raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport);
-                            logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
+                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport);
+                        logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");
                         http_response_set_disconnect(response, 1);
