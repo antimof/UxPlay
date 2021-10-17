@@ -5,7 +5,8 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/
 (iPads, iPhones, MacBooks) in a window on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, macOS, or other unix, using Apple's  AirPlay Mirror protocol first available in iOS 5.
-(Details of what is known about the AirPlay2 protocol can be found [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)).
+(Details of what is known about the AirPlay2 protocol can be found [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
+[here](https://emanuelecozzi.net/docs/airplay2)).
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server**  is also running

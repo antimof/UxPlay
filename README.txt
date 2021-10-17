@@ -9,7 +9,8 @@ screen-sharing applications such as Zoom) on a host running Linux,
 macOS, or other unix, using Apple's AirPlay Mirror protocol first
 available in iOS 5. (Details of what is known about the AirPlay2
 protocol can be found
-[here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)).
+[here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
+and [here](https://emanuelecozzi.net/docs/airplay2)).
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running (only
