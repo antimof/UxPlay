@@ -69,6 +69,7 @@ audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_
     g_string_append(launch, " sync=false");
     renderer->pipeline = gst_parse_launch(launch->str,  &error);
     g_assert (renderer->pipeline);
+    g_string_free(launch, TRUE);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "audio_source");
     renderer->volume = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "volume");
