@@ -133,7 +133,7 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
  
     assert(check_plugins ());
 
-    GString *launch = g_string_new("-e appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
+    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
