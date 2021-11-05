@@ -432,13 +432,12 @@ raop_handler_setup(raop_conn_t *conn,
                 } case 96: {
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
-
- 		    if (conn->raop->callbacks.audio_get_format) {
-		        /* get audio format of connection */
-                        uint64_t uint_val;
-                        plist_t audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
-                        plist_get_uint_val(audio_format_node, &uint_val);
-                        conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, (unsigned int) uint_val);
+                    uint64_t ct;
+ 		    if (conn->raop->callbacks.audio_compression_type) {
+		        /* get audio compression type */
+                        plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
+                        plist_get_uint_val(req_stream_ct_node, &ct);
+                        conn->raop->callbacks.audio_compression_type(conn->raop->callbacks.cls, (unsigned char*) &ct);
                     }
 
                     if (conn->raop_rtp) {

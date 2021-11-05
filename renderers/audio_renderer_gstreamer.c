@@ -66,23 +66,21 @@ static gboolean check_plugins (void)
   return ret;
 }
 
-audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer, const char* audiosink) {
+audio_renderer_t *audio_renderer_init(logger_t *logger, unsigned char *compression_type, const char* audiosink) {
     audio_renderer_t *renderer;
     GError *error = NULL;
     GstCaps *caps = NULL;
 
 
-    //logger_log(logger, LOGGER_INFO , "audio_renderer_init: compression_type ct = %d", *compression_type);
 
-    int ct = 8;
-    int *compression_type = &ct;
-    
+
     switch (*compression_type) {
-    case 1:
-    case 2:
-    case 4:
-    case 8:
-        break;
+    case 1:    /* uncompressed PCM */
+    case 2:    /* Apple lossless ALAC */
+    case 4:    /* AAC-LC */
+    case 8:    /* AAC-ELD */
+      logger_log(logger, LOGGER_INFO , "audio_renderer_init: compression_type ct = %d", *compression_type);
+      break;
     default:
         logger_log(logger, LOGGER_ERR, "audio_renderer_init: unsupported compression_type ct = %d", *compression_type);
       return NULL;

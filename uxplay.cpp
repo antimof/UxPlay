@@ -60,6 +60,8 @@ static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
 static bool use_video = true;
+static unsigned char compression_type = 8;
+
 
 gboolean connection_callback (gpointer loop){
   if (!connections_stopped) {
@@ -464,26 +466,7 @@ extern "C" void audio_set_volume (void *cls, float volume) {
     }
 }
 
-extern "C" void audio_get_format (void *cls, unsigned int audioFormat) {
-    const char * audio_format;
-    switch (audioFormat) {
-        case 0x1000000:
-            audio_format = "AAC_ELD";
-            break;
-        case 0x40000:
-            audio_format = "ALAC";
-            break;
-        case 0x400000:
-            audio_format = "AAC";
-            break;
-        case 0x0:
-            audio_format = "PCM";
-            break;
-        default:
-            audio_format = "UNKNOWN";
-            break;
-    }
-    printf("new audio connection with audio format 0x%X %s\n", audioFormat, audio_format);
+extern "C" void audio_compression_type (void *cls, unsigned char *ct) {
 }
 
 extern "C" void log_callback (void *cls, int level, const char *msg) {
@@ -522,7 +505,7 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
     raop_cbs.audio_set_volume = audio_set_volume;
-    raop_cbs.audio_get_format = audio_get_format;
+    raop_cbs.audio_compression_type = audio_compression_type;
     
     raop = raop_init(10, &raop_cbs);
     if (raop == NULL) {
@@ -567,7 +550,7 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
 
     if (! use_audio) {
         LOGI("Audio disabled");
-    } else if ((audio_renderer = audio_renderer_init(render_logger, video_renderer, audiosink.c_str())) ==
+    } else if ((audio_renderer = audio_renderer_init(render_logger, &compression_type, audiosink.c_str())) ==
                NULL) {
         LOGE("Could not init audio renderer");
         stop_server();
@@ -604,9 +587,11 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
 
 int stop_server () {
     if (raop) raop_destroy(raop);
-    if (dnssd) dnssd_unregister_raop(dnssd);
-    if (dnssd) dnssd_unregister_airplay(dnssd);
-    if (dnssd) dnssd_destroy(dnssd);
+    if (dnssd) {
+        dnssd_unregister_raop(dnssd);
+        dnssd_unregister_airplay(dnssd);
+        dnssd_destroy(dnssd);
+    }
     if (audio_renderer) audio_renderer_destroy(audio_renderer);
     if (video_renderer) video_renderer_destroy(video_renderer);
     if (render_logger) logger_destroy(render_logger);
