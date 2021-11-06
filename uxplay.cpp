@@ -44,7 +44,7 @@
 
 static int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
-			 bool use_audio,  bool debug_log, std::string videosink, std::string audiosink);
+			 bool debug_log, std::string videosink);
 
 static int stop_server ();
 
@@ -60,7 +60,9 @@ static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
 static bool use_video = true;
-static unsigned char compression_type = 8;
+static unsigned char compression_type = 0;
+static std::string audiosink = "autoaudiosink";
+static bool use_audio = true;
 
 
 gboolean connection_callback (gpointer loop){
@@ -294,13 +296,11 @@ static void append_hostname(std::string &server_name) {
 int main (int argc, char *argv[]) {
     std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr;
-    bool use_audio = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
     videoflip_t videoflip[2] = { NONE , NONE };
     std::string videosink = "autovideosink";
-    std::string audiosink = "autoaudiosink";
 
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
     // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
@@ -392,6 +392,12 @@ int main (int argc, char *argv[]) {
         }
     }
 
+    if(audiosink == "0") {
+        use_audio = false;
+    }
+    if(!use_audio) LOGI("audio_disabled");
+
+    
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d\n",
 		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
 
@@ -408,9 +414,10 @@ int main (int argc, char *argv[]) {
     append_hostname(server_name);
     
     relaunch:
+    compression_type = 0;
     connections_stopped = false;
     if (start_server(server_hw_addr, server_name, display, tcp, udp,
-                     videoflip,use_audio, debug_log, videosink, audiosink)) {
+                     videoflip, debug_log, videosink)) {
         return 1;
     }
 
@@ -466,7 +473,23 @@ extern "C" void audio_set_volume (void *cls, float volume) {
     }
 }
 
-extern "C" void audio_compression_type (void *cls, unsigned char *ct) {
+extern "C" void audio_setup (void *cls, unsigned char *ct) {
+    if(use_audio) {
+        LOGI("new audio compression type %d (was %d)",*ct, compression_type); 
+        if (*ct != compression_type) {
+            if (compression_type && audio_renderer) {
+                audio_renderer_destroy(audio_renderer);
+                LOGD("previous audio_renderer destroyed");
+            }
+	    compression_type = *ct;
+            audio_renderer = audio_renderer_init(render_logger, &compression_type, audiosink.c_str());
+            if (audio_renderer) {
+                audio_renderer_start(audio_renderer);
+            } else {
+                LOGW("could not init audio_renderer");
+            }
+        }
+    }
 }
 
 extern "C" void log_callback (void *cls, int level, const char *msg) {
@@ -494,8 +517,8 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 }
 
 int start_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                 unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
-		  bool use_audio, bool debug_log, std::string videosink, std::string audiosink) {
+                  unsigned short tcp[3], unsigned short udp[3], videoflip_t videoflip[2],
+                  bool debug_log, std::string videosink) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -505,7 +528,7 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
     raop_cbs.audio_set_volume = audio_set_volume;
-    raop_cbs.audio_compression_type = audio_compression_type;
+    raop_cbs.audio_setup = audio_setup;
     
     raop = raop_init(10, &raop_cbs);
     if (raop == NULL) {
@@ -519,9 +542,6 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
     if(videosink == "0") {
         use_video = false;
         display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
-    }
-    if(audiosink == "0") {
-        use_audio = false;
     }
 
     raop_set_display(raop, display[0], display[1], display[2], display[3], display[4]);
@@ -548,17 +568,7 @@ int start_server (std::vector<char> hw_addr, std::string name, unsigned short di
         return -1;
     }
 
-    if (! use_audio) {
-        LOGI("Audio disabled");
-    } else if ((audio_renderer = audio_renderer_init(render_logger, &compression_type, audiosink.c_str())) ==
-               NULL) {
-        LOGE("Could not init audio renderer");
-        stop_server();
-        return -1;
-    }
-
     if (use_video && video_renderer) video_renderer_start(video_renderer);
-    if (audio_renderer) audio_renderer_start(audio_renderer);
 
     unsigned short port = raop_get_port(raop);
     raop_start(raop, &port);
@@ -594,6 +604,7 @@ int stop_server () {
     }
     if (audio_renderer) audio_renderer_destroy(audio_renderer);
     if (video_renderer) video_renderer_destroy(video_renderer);
+    compression_type = 0;
     if (render_logger) logger_destroy(render_logger);
     return 0;
 }

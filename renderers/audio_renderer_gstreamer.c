@@ -34,7 +34,7 @@ static const char alac[] = "audio/x-alac,mpegversion=(int)4,channnels=(int)2,rat
 /* ct = 4; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1:  AAC-LC 44100/2 spf = 1024 */
 static const char aac_lc[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)1210";
 
-/* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 460 */
+/* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 480 */
 static const char aac_eld[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
 
 struct audio_renderer_s {
@@ -70,9 +70,6 @@ audio_renderer_t *audio_renderer_init(logger_t *logger, unsigned char *compressi
     audio_renderer_t *renderer;
     GError *error = NULL;
     GstCaps *caps = NULL;
-
-
-
 
     switch (*compression_type) {
     case 1:    /* uncompressed PCM */
@@ -127,7 +124,7 @@ audio_renderer_t *audio_renderer_init(logger_t *logger, unsigned char *compressi
 
     g_object_set(renderer->appsrc, "caps", caps, NULL);
     gst_caps_unref(caps);
-    
+
     return renderer;
 }
 
@@ -142,6 +139,12 @@ void audio_renderer_render_buffer(audio_renderer_t *renderer, raop_ntp_t *ntp, u
 
     if (data_len == 0) return;
 
+    /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol */
+    /* or ct = 2 (ALAC 44100/16/2 spf 352) AirPlay protocol */
+    /* first byte data[0] of ALAC frame is 0x20, first byte of AAC_ELD is 0x8d or 0x8e, AAC_LC is 0xff (ADTS) */
+    /* GStreamer caps_filter could be used here to switch the appsrc caps between aac_eld and alac */
+    /* depending on the initial byte of the  buffer, with a pipeline using decodebin */
+    
     buffer = gst_buffer_new_and_alloc(data_len);
     assert(buffer != NULL);
     GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
@@ -162,14 +165,18 @@ void audio_renderer_flush(audio_renderer_t *renderer) {
 }
 
 void audio_renderer_destroy(audio_renderer_t *renderer) {
-
-    gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
-    gst_object_unref (renderer->appsrc);
-    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-    gst_object_unref (renderer->pipeline);
-
-    gst_object_unref (renderer->volume);
-    if (renderer) {
+    if(renderer) {
+        if(renderer->appsrc) {
+            gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+            gst_object_unref (renderer->appsrc);
+        }
+        if (renderer->pipeline) {
+            gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+            gst_object_unref (renderer->pipeline);
+        }
+        if(renderer->volume) {
+            gst_object_unref (renderer->volume);
+        }
         free(renderer);
     }
 }

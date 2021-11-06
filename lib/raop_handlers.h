@@ -433,12 +433,10 @@ raop_handler_setup(raop_conn_t *conn,
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
                     uint64_t ct;
- 		    if (conn->raop->callbacks.audio_compression_type) {
-		        /* get audio compression type */
-                        plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
-                        plist_get_uint_val(req_stream_ct_node, &ct);
-                        conn->raop->callbacks.audio_compression_type(conn->raop->callbacks.cls, (unsigned char*) &ct);
-                    }
+		    /* get audio compression type */
+                    plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
+                    plist_get_uint_val(req_stream_ct_node, &ct);
+                    conn->raop->callbacks.audio_setup(conn->raop->callbacks.cls, (unsigned char*) &ct);
 
                     if (conn->raop_rtp) {
                         raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport);
@@ -550,14 +548,14 @@ raop_handler_set_parameter(raop_conn_t *conn,
         }
         free(datastr);
     } else if (!strcmp(content_type, "image/jpeg") || !strcmp(content_type, "image/png")) {
-        logger_log(conn->raop->logger, LOGGER_INFO, "Got image data of %d bytes", datalen);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "Got image data of %d bytes", datalen);
         if (conn->raop_rtp) {
             raop_rtp_set_coverart(conn->raop_rtp, data, datalen);
         } else {
             logger_log(conn->raop->logger, LOGGER_WARNING, "RAOP not initialized at SET_PARAMETER coverart");
         }
     } else if (!strcmp(content_type, "application/x-dmap-tagged")) {
-        logger_log(conn->raop->logger, LOGGER_INFO, "Got metadata of %d bytes", datalen);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "Got metadata of %d bytes", datalen);
         if (conn->raop_rtp) {
             raop_rtp_set_metadata(conn->raop_rtp, data, datalen);
         } else {
