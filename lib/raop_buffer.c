@@ -180,10 +180,11 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
     /* Adding 15 to encryptedlen in the call to aes_cbc_decrypt is a fix (hack) to ensure that  */
     /* all encryptedlen encrypted bytes are decrypted .*/
     /* The implementation of aes_cbc_decrypt in crypto.c calls OpenSSL function EVP_EncryptUpdate */
-    /* but does not call EVP_EncryptFinal_ex to finalize the decryption of the packet.  */
-    /* Without the fix, the last 16 encrypted bytes are lost; */
-    /* with the fix all (encryptedlen + 15) /16 * 16 = encryptedlen  encrypted bytes are written into output,*/
-    /* with no risk of buffer overflow  */
+    /* but does not call EVP_EncryptFinal to finalize the decryption of the packet.  */
+    /* Instead the finalization of the < 16  remaining (unencrypted) bytes is done here. */
+    /* Without the fix, the last 16 encrypted bytes are lost by EVP_EncryptUpdate; */
+    /* with the fix all (encryptedlen + 15) /16 * 16 = encryptedlen  decrypted encrypted-bytes are */
+    /* written into output, with no risk of buffer overflow  */
 
     aes_cbc_decrypt(aes_ctx_audio, &data[12], output, encryptedlen + 15);
 
