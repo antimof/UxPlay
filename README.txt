@@ -1,4 +1,4 @@
-UxPlay 1.38
+UxPlay 1.39
 ===========
 
 This project is a GPLv3 unix AirPlay server which now also works on
@@ -21,19 +21,13 @@ Linux and BSD Unix servers, this is usually provided by
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-*Note: UxPlay currently only works using the AirPlay screen-mirroring
-protocol (which streams audio in **AAC** format) (not the AirPlay
-audio-only streaming protocol which uses lossless **ALAC** format) but
-the **uxplay -vs 0** option streams AAC-ELD audio using screen-mirroring
-without displaying the client's screen. If the client streams audio
-using AirPlay as opposed to AirPlay screen-mirroring, non-AAC data can
-be seen to be received and processed by UxPlay, and then input into the
-GStreamer audio-rendering pipeline, but does not get rendered into audio
-output. If someone can adapt the GStreamer audio pipeline to also render
-these Airplay audio streams, such an enhancement of UxPlay would be
-welcome as a Pull Request!*
+*New: UxPlay 1.39 now also supports the Airplay audio-only protocol as
+well as AirPlay Mirror protocol, and can play Apple Lossless (ALAC)
+44100/16/2 audio streamed from Apple Music on the client in 2-channel
+stereo without video (the accompanying cover-art and metadata is
+received by the server, but not displayed).*
 
-UxPlay 1.38 is based on https://github.com/FD-/RPiPlay, with GStreamer
+UxPlay 1.39 is based on https://github.com/FD-/RPiPlay, with GStreamer
 integration from https://github.com/antimof/UxPlay. (UxPlay only uses
 GStreamer, and does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.) Tested on Ubuntu
@@ -387,6 +381,8 @@ still open when the GStreamer pipeline is closed.*
 
 ChangeLog
 =========
+
+1.39 2021-11-06 Added support for Apple Lossless (ALAC) audio streams.
 
 1.38 2021-10-8 Add -as *audiosink* option to allow user to choose the
 GStreamer audiosink.
