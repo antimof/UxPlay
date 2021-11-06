@@ -16,16 +16,9 @@ On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.a
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
 
-_New: UxPlay 1.39 now also supports the Airplay audio-only protocol as well as AirPlay Mirror protocal, and can play Apple Lossless (ALAC)
-44100/16/2 audio streamed from Apple Music on the client in  2-channel stereo without video (the accompanying coverart and metadata is received by the server,
+_New: UxPlay 1.39 now also supports the Airplay audio-only protocol as well as AirPlay Mirror protocol, and can play Apple Lossless (ALAC)
+44100/16/2 audio streamed from Apple Music on the client in  2-channel stereo without video (the accompanying cover-art and metadata is received by the server,
 but not displayed)._
-
-currently only works using the AirPlay screen-mirroring protocol (which streams audio in **AAC** format)
-(not the AirPlay audio-only  streaming protocol which uses lossless **ALAC** format)
-but the **uxplay -vs 0** option streams AAC-ELD audio using screen-mirroring without displaying the client's screen.
-If the client streams audio using  AirPlay as opposed to AirPlay screen-mirroring, non-AAC data can be seen to be received and processed by UxPlay, and then
-input into the GStreamer audio-rendering pipeline, but does not get rendered into audio output.   If someone can adapt the GStreamer audio
-pipeline to also render these Airplay audio streams, such an enhancement of UxPlay  would be welcome as a Pull Request!_
 
 UxPlay 1.39 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
