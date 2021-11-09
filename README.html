@@ -69,6 +69,7 @@
 <p><strong>-as 0</strong> or <strong>-a</strong> suppresses playing of streamed audio, but displays streamed video.</p>
 <p><strong>-t <em>timeout</em></strong> will cause the server to relaunch (without stopping uxplay) if no connections have been present during the previous <em>timeout</em> seconds. (You may wish to use this because the Server may not be visible to new Clients that were inactive when the Server was launched, and an idle Bonjour registration also eventually becomes unavailable for new connections.) The timer only starts once a Client has first made a mirror connection and then has disconnected with “Stop Mirrroring”. <em>This option should <strong>not</strong> be used if the display window is an OpenGL window on macOS, as such an OpenGL window created by GStreamer does not terminate correctly (it causes a segfault) if it is still open when the GStreamer pipeline is closed.</em></p>
 <h1 id="changelog">ChangeLog</h1>
+<p>1.40 2021-11-09 Cleanup segfault in ALAC support, manpage location fix, show request Plists in debug mode.</p>
 <p>1.39 2021-11-06 Added support for Apple Lossless (ALAC) audio streams.</p>
 <p>1.38 2021-10-8 Add -as <em>audiosink</em> option to allow user to choose the GStreamer audiosink.</p>
 <p>1.37 2021-09-29 Append “<span class="citation" data-cites="hostname">@hostname</span>” to AirPlay Server name, where “hostname” is the name of the server running uxplay (reworked change in 1.36).</p>

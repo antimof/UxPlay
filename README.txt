@@ -387,6 +387,9 @@ still open when the GStreamer pipeline is closed.*
 ChangeLog
 =========
 
+1.40 2021-11-09 Cleanup segfault in ALAC support, manpage location fix,
+show request Plists in debug mode.
+
 1.39 2021-11-06 Added support for Apple Lossless (ALAC) audio streams.
 
 1.38 2021-10-8 Add -as *audiosink* option to allow user to choose the
