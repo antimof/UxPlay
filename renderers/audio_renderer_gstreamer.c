@@ -166,17 +166,12 @@ void audio_renderer_flush(audio_renderer_t *renderer) {
 
 void audio_renderer_destroy(audio_renderer_t *renderer) {
     if(renderer) {
-        if(renderer->appsrc) {
-            gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
-            gst_object_unref (renderer->appsrc);
-        }
-        if (renderer->pipeline) {
-            gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-            gst_object_unref (renderer->pipeline);
-        }
-        if(renderer->volume) {
-            gst_object_unref (renderer->volume);
-        }
-        free(renderer);
+        gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+        gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+        gst_object_unref (renderer->appsrc);
+        gst_object_unref (renderer->pipeline);
+        gst_object_unref (renderer->volume);
+        free (renderer);
+        renderer = NULL;
     }
 }

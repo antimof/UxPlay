@@ -339,6 +339,11 @@ raop_handler_setup(raop_conn_t *conn,
     // Parsing bplist
     plist_t req_root_node = NULL;
     plist_from_bin(data, data_len, &req_root_node);
+    char * plist_xml;
+    uint32_t plist_len;
+    plist_to_xml(req_root_node, &plist_xml, &plist_len);
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+    free(plist_xml);
     plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
     plist_t req_eiv_node = plist_dict_get_item(req_root_node, "eiv");
     plist_t req_ekey_node = plist_dict_get_item(req_root_node, "ekey");

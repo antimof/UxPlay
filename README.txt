@@ -1,4 +1,4 @@
-UxPlay 1.39
+UxPlay 1.40
 ===========
 
 This project is a GPLv3 unix AirPlay server which now also works on
@@ -21,13 +21,13 @@ Linux and BSD Unix servers, this is usually provided by
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-*New: UxPlay 1.39 now also supports the Airplay audio-only protocol as
-well as AirPlay Mirror protocol, and can play Apple Lossless (ALAC)
-44100/16/2 audio streamed from Apple Music on the client in 2-channel
-stereo without video (the accompanying cover-art and metadata is
-received by the server, but not displayed).*
+*New: UxPlay 1.40 now also supports the Airplay audio-only protocol as
+well as AirPlay Mirror protocol, and (when the client screen is not
+being mirrored) can play Apple Lossless (ALAC) 44100/16/2 audio streamed
+from the client in 2-channel stereo without video (the accompanying
+cover-art and metadata is received by the server, but not displayed).*
 
-UxPlay 1.39 is based on https://github.com/FD-/RPiPlay, with GStreamer
+UxPlay 1.40 is based on https://github.com/FD-/RPiPlay, with GStreamer
 integration from https://github.com/antimof/UxPlay. (UxPlay only uses
 GStreamer, and does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.) Tested on Ubuntu
@@ -58,11 +58,16 @@ Building this version:
 below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development
-libraries installed. Make sure that cmake\>=3.4.1 and pkg-config are
-also installed: "sudo apt-get install cmake pkg-config". In a terminal
-window, change directories to the source directory of the downloaded
-source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git
-clone" downloads), then do
+libraries installed. (For recent glibc (or libc6) 2.32 or later, an
+obsolete RPC header file netdb.h (needed by UxPlay) has been removed;
+install libtirpc-dev which now provides a compatible implementation, if
+the compiler reports that it is missing.)
+
+Make sure that cmake\>=3.4.1 and pkg-config are also installed: "sudo
+apt-get install cmake pkg-config". In a terminal window, change
+directories to the source directory of the downloaded source code
+("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone"
+downloads), then do
 
 1.  `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`
 2.  `sudo apt-get install gstreamer1.0-vaapi` (For Intel graphics, but

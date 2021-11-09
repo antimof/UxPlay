@@ -188,15 +188,18 @@ void video_renderer_flush(video_renderer_t *renderer) {
 }
 
 void video_renderer_destroy(video_renderer_t *renderer) {
-    gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
-    if(renderer->bus) gst_object_unref(renderer->bus);
-    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-    if(renderer->pipeline) gst_object_unref (renderer->pipeline);
-#ifdef X_DISPLAY_FIX
-    if(renderer->gst_window) free(renderer->gst_window);
-#endif    
     if (renderer) {
-        free(renderer);
+        gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+	gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+        gst_object_unref (renderer->appsrc);
+        gst_object_unref (renderer->bus);
+        gst_object_unref (renderer->pipeline);
+        gst_object_unref (renderer->sink);
+#ifdef X_DISPLAY_FIX
+        if(renderer->gst_window) free(renderer->gst_window);
+#endif    
+        free (renderer);
+        renderer = NULL;
     }
 }
 
