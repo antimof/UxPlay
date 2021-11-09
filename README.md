@@ -19,7 +19,7 @@ service can also be provided by macOS, iOS or Windows servers).
 _New: UxPlay 1.40 now also supports the Airplay audio-only protocol as well as AirPlay Mirror protocol, and (when the client screen is not being mirrored)
 can play Apple Lossless (ALAC)
 44100/16/2 audio streamed from the client in  2-channel stereo without video (the accompanying cover-art and metadata is received by the server,
-but not displayed)._
+but not displayed). The initial connection to the client can be in AirPlay audio mode, or an initial Airplay Mirror connection can be changed to Airplay audio by closing the Mirror window and reconnecting in audio-only mode (this changes back to AAC audio if screen mirroring is restarted)._
 
 UxPlay 1.40 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
