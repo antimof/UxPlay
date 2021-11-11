@@ -1,9 +1,9 @@
-.TH UXPLAY "1" "October 2021" "1.38" "User Commands"
+.TH UXPLAY "1" "November 2021" "1.41" "User Commands"
 .SH NAME
-uxplay \- uxplay
+uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
-[\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]]
+[\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
 UxPlay 1.38: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
@@ -28,7 +28,7 @@ UxPlay 1.38: An open\-source AirPlay mirroring server based on RPiPlay
 .IP
    use "\-p n1,n2,n3" to set each port, "n1,n2" for n3 = n2+1
 .IP
-   "\-p tcp n" or "\-p udp n" sets TCP or UDP ports only
+   "\-p tcp n" or "\-p udp n" sets TCP or UDP ports separately.
 .PP
 .TP
 \fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
@@ -37,17 +37,19 @@ UxPlay 1.38: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vs\fI sink\fR  Choose the  GStreamer videosink; default "autovideosink"
 .IP
-   choices: ximagesink,xvimagesink,vaapisink,fpsdisplaysink, etc.
+   some choices: ximagesink,xvimagesink,vaapisink,glimagesink,
+.IP
+   gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.
 .PP
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window..
-.TP
+w.TP
 \fB\-as\fI sink\fR  Choose the  GStreamer audiosink; default "autoaudiosink"
 .IP
    choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink etc.
 .PP
 .TP
-\fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, video output only.
+\fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
 .TP
 \fB\-d\fR        Enable debug logging
 .TP
