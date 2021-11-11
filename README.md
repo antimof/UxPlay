@@ -50,9 +50,7 @@ If the pull request ever gets committed, replace "FDH2" by "antimof" in the abov
 
 (Instructions for Ubuntu; adapt these for other Linuxes; for macOS, see below).
 
-You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.  (For recent glibc (or libc6) 2.32 or later,
-an obsolete RPC header file netdb.h (needed by UxPlay) has been removed; install libtirpc-dev which now provides a compatible implementation, 
-if the compiler reports that it is missing.)
+You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.
 
 Make sure that cmake>=3.4.1 and pkg-config are also installed: "sudo apt-get install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
