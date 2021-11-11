@@ -44,15 +44,16 @@ typedef enum videoflip_e {
 
 typedef struct video_renderer_s video_renderer_t;
 
-video_renderer_t *video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *videosink);
-void video_renderer_start (video_renderer_t *renderer);
-void video_renderer_render_buffer (video_renderer_t *renderer, raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type);
-void video_renderer_flush (video_renderer_t *renderer);
-unsigned int video_renderer_listen(void *loop, video_renderer_t *renderer);
-void video_renderer_destroy (video_renderer_t *renderer);
+void video_renderer_init (const char *server_name, videoflip_t videoflip[2], const char *videosink);
+void video_renderer_start ();
+void video_renderer_stop ();
+void video_renderer_render_buffer (raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type);
+void video_renderer_flush ();
+unsigned int video_renderer_listen(void *loop);
+void video_renderer_destroy ();
 
   /* not implemented for gstreamer */
-void video_renderer_update_background (video_renderer_t *renderer, int type); 
+void video_renderer_update_background (int type); 
 
 #ifdef __cplusplus
 }

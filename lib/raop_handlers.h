@@ -437,11 +437,47 @@ raop_handler_setup(raop_conn_t *conn,
                 } case 96: {
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
-                    uint64_t ct;
-		    /* get audio compression type */
-                    plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
-                    plist_get_uint_val(req_stream_ct_node, &ct);
-                    conn->raop->callbacks.audio_setup(conn->raop->callbacks.cls, (unsigned char*) &ct);
+
+                    uint64_t audioFormat;
+		    unsigned char ct;
+	            unsigned short spf;
+                    bool isMedia; 
+                    bool usingScreen;
+
+                    if (conn->raop->callbacks.audio_get_format) {
+		        /* get audio compression type */
+		        uint64_t uint_val;
+                        uint8_t bool_val;
+			
+                        plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
+                        plist_get_uint_val(req_stream_ct_node, &uint_val);
+                        ct = (unsigned char) uint_val;
+
+                        plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
+                        plist_get_uint_val(req_stream_spf_node, &uint_val);
+                        spf = (unsigned short) uint_val;
+		    
+                        plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
+                        plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
+			
+                        plist_t req_stream_ismedia_node = plist_dict_get_item(req_stream_node, "isMedia");
+		        if (req_stream_ismedia_node) {
+		            plist_get_bool_val(req_stream_ismedia_node, &bool_val);
+			    isMedia = (bool) bool_val;
+                        } else {
+                            isMedia = false;
+                        }
+
+                        plist_t req_stream_usingscreen_node = plist_dict_get_item(req_stream_node, "usingScreen");
+                        if (req_stream_usingscreen_node) {
+                            plist_get_bool_val(req_stream_usingscreen_node, &bool_val);
+                            usingScreen = (bool) bool_val;
+                        } else {
+                            usingScreen = false;
+                        }
+
+                        conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, &ct, &spf, &usingScreen, &isMedia, &audioFormat);
+                    }
 
                     if (conn->raop_rtp) {
                         raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport);

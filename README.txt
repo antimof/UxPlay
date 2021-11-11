@@ -1,4 +1,4 @@
-UxPlay 1.40
+UxPlay 1.41
 ===========
 
 This project is a GPLv3 unix AirPlay server which now also works on
@@ -21,8 +21,8 @@ Linux and BSD Unix servers, this is usually provided by
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-*New: UxPlay 1.40 now also supports the Airplay audio-only protocol as
-well as AirPlay Mirror protocol, and (when the client screen is not
+*New: UxPlay \> 1.38 now also supports the Airplay audio-only protocol
+as well as AirPlay Mirror protocol, and (when the client screen is not
 being mirrored) can play Apple Lossless (ALAC) 44100/16/2 audio streamed
 from the client in 2-channel stereo without video (the accompanying
 cover-art and metadata is received by the server, but not displayed).
@@ -31,7 +31,7 @@ initial Airplay Mirror connection can be changed to Airplay audio by
 closing the Mirror window and reconnecting in audio-only mode (this
 changes back to AAC audio if screen mirroring is restarted).*
 
-UxPlay 1.40 is based on https://github.com/FD-/RPiPlay, with GStreamer
+UxPlay 1.41 is based on https://github.com/FD-/RPiPlay, with GStreamer
 integration from https://github.com/antimof/UxPlay. (UxPlay only uses
 GStreamer, and does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.) Tested on Ubuntu
@@ -391,6 +391,9 @@ still open when the GStreamer pipeline is closed.*
 ChangeLog
 =========
 
+1.41 2021-11-11 Further cleanups of multiple audio format support
+(internal changes, separated RAOP and GStreamer audio/video startup)
+
 1.40 2021-11-09 Cleanup segfault in ALAC support, manpage location fix,
 show request Plists in debug mode.
 
@@ -500,6 +503,9 @@ Improvements since the original UxPlay by antimof:
     AirPlay server name, which is now displayed as *name*\@hostname,
     where *name* is "UxPlay", (or whatever is set with the **-n**
     option).
+
+12. Added support for audio-only streaming with original (non-Mirror)
+    AirPlay protocal, with Apple Lossless (ALAC) audio.
 
 Disclaimer
 ==========

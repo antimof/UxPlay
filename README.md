@@ -1,5 +1,5 @@
 
-# UxPlay 1.40
+# UxPlay 1.41
 
 This project is a GPLv3  unix AirPlay server which  now also works on macOS.
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
@@ -16,12 +16,13 @@ On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.a
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
 
-_New: UxPlay 1.40 now also supports the Airplay audio-only protocol as well as AirPlay Mirror protocol, and (when the client screen is not being mirrored)
+_New: UxPlay > 1.38  now also supports the Airplay audio-only protocol as well as AirPlay Mirror protocol, and (when the client screen is not being mirrored)
 can play Apple Lossless (ALAC)
 44100/16/2 audio streamed from the client in  2-channel stereo without video (the accompanying cover-art and metadata is received by the server,
-but not displayed). The initial connection to the client can be in AirPlay audio mode, or an initial Airplay Mirror connection can be changed to Airplay audio by closing the Mirror window and reconnecting in audio-only mode (this changes back to AAC audio if screen mirroring is restarted)._
+but not displayed). The initial connection to the client can be in AirPlay audio mode, or an initial Airplay Mirror connection can be changed to
+Airplay audio by closing the Mirror window and reconnecting in audio-only mode (this changes back to AAC audio if screen mirroring is restarted)._
 
-UxPlay 1.40 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
+UxPlay 1.41 is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
@@ -320,6 +321,9 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
+1.41 2021-11-11    Further cleanups of multiple audio format support (internal changes, 
+                   separated RAOP and GStreamer audio/video startup)
+
 1.40 2021-11-09    Cleanup segfault in ALAC support, manpage location fix, show request Plists in debug mode.
 
 1.39 2021-11-06    Added support for Apple Lossless (ALAC) audio streams.
@@ -413,6 +417,8 @@ is compiled.) On macOS, Avahi is not used.
 
 11. The hostname of the server running uxplay is now appended to the AirPlay server name,
     which is now displayed as _name_@hostname, where _name_ is "UxPlay", (or whatever is set with the **-n** option).
+
+12. Added support for audio-only streaming with original (non-Mirror) AirPlay protocal, with Apple Lossless (ALAC) audio.
 
 # Disclaimer
 

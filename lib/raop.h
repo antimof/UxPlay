@@ -36,7 +36,7 @@ struct raop_callbacks_s {
 
     void  (*audio_process)(void *cls, raop_ntp_t *ntp, aac_decode_struct *data);
     void  (*video_process)(void *cls, raop_ntp_t *ntp, h264_decode_struct *data);
-    void  (*audio_setup)(void *cls, unsigned char *compression_type);
+
 
     /* Optional but recommended callback functions */
     void  (*conn_init)(void *cls);
@@ -48,6 +48,7 @@ struct raop_callbacks_s {
     void  (*audio_set_coverart)(void *cls, const void *buffer, int buflen);
     void  (*audio_remote_control_id)(void *cls, const char *dacp_id, const char *active_remote_header);
     void  (*audio_set_progress)(void *cls, unsigned int start, unsigned int curr, unsigned int end);
+    void  (*audio_get_format)(void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat);
 };
 typedef struct raop_callbacks_s raop_callbacks_t;
 

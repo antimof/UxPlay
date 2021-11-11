@@ -27,7 +27,6 @@
 #endif
 
 struct video_renderer_s {
-    logger_t *logger;
     GstElement *appsrc, *pipeline, *sink;
     GstBus *bus;
 #ifdef  X_DISPLAY_FIX
@@ -36,27 +35,6 @@ struct video_renderer_s {
 #endif
 };
 
-static gboolean check_plugins (void)
-{
-    int i;
-    gboolean ret;
-    GstRegistry *registry;
-    const gchar *needed[] = { "app", "libav", "playback", "autodetect", NULL};
-
-    registry = gst_registry_get ();
-    ret = TRUE;
-    for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
-        GstPlugin *plugin;
-        plugin = gst_registry_find_plugin (registry, needed[i]);
-        if (!plugin) {
-            g_print ("Required gstreamer plugin '%s' not found\n", needed[i]);
-            ret = FALSE;
-            continue;
-        }
-        gst_object_unref (plugin);
-    }
-    return ret;
-}
 
 static void append_videoflip (GString *launch, const videoflip_t *flip, const videoflip_t *rot) {
     /* videoflip image transform */
@@ -115,10 +93,12 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
     }
 }	
 
-video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
-    video_renderer_t *renderer;
-    GError *error = NULL;
+static video_renderer_t *renderer = NULL;
 
+void  video_renderer_init(const char *server_name, videoflip_t videoflip[2], const char *videosink) {
+ 
+    GError *error = NULL;
+    
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
 
@@ -127,12 +107,8 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
 
-    gst_init(NULL, NULL);
-
-    renderer->logger = logger;
- 
-    assert(check_plugins ());
-
+    gst_init(NULL,NULL);
+    
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
@@ -143,30 +119,33 @@ video_renderer_t *video_renderer_init(logger_t *logger, const char *server_name,
     g_string_free(launch, TRUE);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
+    assert(renderer->appsrc);
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
-
+    assert(renderer->sink);
+    
 #ifdef X_DISPLAY_FIX
     renderer->server_name = server_name;
+    renderer->gst_window = NULL;
     bool x_display_fix = false;
-    if (strcmp(videosink,"autovideosink") == 0) x_display_fix = true;
-    if (strcmp(videosink,"ximagesink") == 0) x_display_fix = true;
-    if (strcmp(videosink,"xvimagesink") == 0) x_display_fix = true;
+    if (strcmp(videosink,"autovideosink") == 0 ||
+        strcmp(videosink,"ximagesink") ==  0 ||
+        strcmp(videosink,"xvimagesink") == 0) {
+        x_display_fix = true;
+    }
     if (x_display_fix) {
         renderer->gst_window = calloc(1, sizeof(X11_Window_t));
         assert(renderer->gst_window);
         get_X11_Display(renderer->gst_window);
     }
 #endif
-    return renderer;
 }
 
-void video_renderer_start(video_renderer_t *renderer) {
-    //g_signal_connect( renderer->pipeline, "deep-notify", G_CALLBACK(gst_object_default_deep_notify ), NULL );
+void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
 }
 
-void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
+void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
     GstBuffer *buffer;
 
     assert(data_len != 0);
@@ -187,16 +166,30 @@ void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, u
 void video_renderer_flush(video_renderer_t *renderer) {
 }
 
-void video_renderer_destroy(video_renderer_t *renderer) {
+void video_renderer_stop() {
+  if (renderer) {
+            gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+	    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+  }   
+}
+
+void video_renderer_destroy() {
     if (renderer) {
-        gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
-	gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+        GstState state;
+        gst_element_get_state(renderer->pipeline, &state, NULL, 0);
+        if (state != GST_STATE_NULL) {
+            gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+	    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+        }
+        gst_object_unref(renderer->bus);
+        gst_object_unref(renderer->sink);
         gst_object_unref (renderer->appsrc);
-        gst_object_unref (renderer->bus);
         gst_object_unref (renderer->pipeline);
-        gst_object_unref (renderer->sink);
 #ifdef X_DISPLAY_FIX
-        if(renderer->gst_window) free(renderer->gst_window);
+        if (renderer->gst_window) {
+            free(renderer->gst_window);
+            renderer->gst_window = NULL;
+        }
 #endif    
         free (renderer);
         renderer = NULL;
@@ -204,7 +197,7 @@ void video_renderer_destroy(video_renderer_t *renderer) {
 }
 
 /* not implemented for gstreamer */
-void video_renderer_update_background(video_renderer_t *renderer, int type) {
+void video_renderer_update_background(int type) {
 }
 
 gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpointer loop) {
@@ -212,17 +205,22 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
     case GST_MESSAGE_ERROR: {
         GError *err;
         gchar *debug;
+	gboolean flushing;
         gst_message_parse_error (message, &err, &debug);
         g_print ("GStreamer error: %s\n", err->message);
         g_error_free (err);
         g_free (debug);
-        g_main_loop_quit( (GMainLoop *) loop);
+	gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+	flushing = TRUE;
+        gst_bus_set_flushing(bus, flushing);
+ 	gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+	g_main_loop_quit( (GMainLoop *) loop);
         break;
     }
     case GST_MESSAGE_EOS:
       /* end-of-stream */
         g_print("GStreamer: End-Of-Stream\n");
-        g_main_loop_quit( (GMainLoop *) loop);
+	//   g_main_loop_quit( (GMainLoop *) loop);
         break;
     default:
       /* unhandled message */
@@ -231,8 +229,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
     return TRUE;
 }
 
-unsigned int video_renderer_listen(void *loop, video_renderer_t *renderer) {
+unsigned int video_renderer_listen(void *loop) {
     return (unsigned int) gst_bus_add_watch(renderer->bus, (GstBusFunc)
                                             gstreamer_pipeline_bus_callback, (gpointer) loop);    
 }  
-
