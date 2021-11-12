@@ -193,7 +193,7 @@ pairing_session_get_signature(pairing_session_t *session, unsigned char signatur
     derive_key_internal(session, (const unsigned char *) SALT_KEY, strlen(SALT_KEY), key, sizeof(key));
     derive_key_internal(session, (const unsigned char *) SALT_IV, strlen(SALT_IV), iv, sizeof(iv));
 
-    aes_ctx = aes_ctr_encrypt_init(key, iv);
+    aes_ctx = aes_ctr_init(key, iv);
     aes_ctr_encrypt(aes_ctx, signature, signature, PAIRING_SIG_SIZE);
     aes_ctr_destroy(aes_ctx);
 
@@ -219,7 +219,7 @@ pairing_session_finish(pairing_session_t *session, const unsigned char signature
     derive_key_internal(session, (const unsigned char *) SALT_KEY, strlen(SALT_KEY), key, sizeof(key));
     derive_key_internal(session, (const unsigned char *) SALT_IV, strlen(SALT_IV), iv, sizeof(iv));
 
-    aes_ctx = aes_ctr_encrypt_init(key, iv);
+    aes_ctx = aes_ctr_init(key, iv);
     /* One fake round for the initial handshake encryption */
     aes_ctr_encrypt(aes_ctx, sig_buffer, sig_buffer, PAIRING_SIG_SIZE);
     aes_ctr_encrypt(aes_ctx, signature, sig_buffer, PAIRING_SIG_SIZE);

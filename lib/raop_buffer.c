@@ -170,24 +170,12 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
         fwrite(&data[12], payloadsize, 1, file_source);
     }
 #endif
- 
-    /* Need to be initialized externally */
-    aes_ctx_t *aes_ctx_audio = aes_cbc_init(raop_buffer->aeskey, raop_buffer->aesiv, AES_DECRYPT);
 
-    encryptedlen = (payload_size / 16) * 16;
+    encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);
-
-    /* Adding 15 to encryptedlen in the call to aes_cbc_decrypt is a fix (hack) to ensure that  */
-    /* all encryptedlen encrypted bytes are decrypted .*/
-    /* The implementation of aes_cbc_decrypt in crypto.c calls OpenSSL function EVP_EncryptUpdate */
-    /* but does not call EVP_EncryptFinal to finalize the decryption of the packet.  */
-    /* Instead the finalization of the < 16  remaining (unencrypted) bytes is done here. */
-    /* Without the fix, the last 16 encrypted bytes are lost by EVP_EncryptUpdate; */
-    /* with the fix all (encryptedlen + 15) /16 * 16 = encryptedlen  decrypted encrypted-bytes are */
-    /* written into output, with no risk of buffer overflow  */
-
-    aes_cbc_decrypt(aes_ctx_audio, &data[12], output, encryptedlen + 15);
-
+    // Need to be initialized internally
+    aes_ctx_t *aes_ctx_audio = aes_cbc_init(raop_buffer->aeskey, raop_buffer->aesiv, AES_DECRYPT);
+    aes_cbc_decrypt(aes_ctx_audio, &data[12], output, encryptedlen);
     aes_cbc_destroy(aes_ctx_audio);
 
     memcpy(output + encryptedlen, &data[12 + encryptedlen], payload_size - encryptedlen);

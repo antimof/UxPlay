@@ -77,7 +77,7 @@ mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t streamConnection
     fclose(keyfile);
 #endif
     // Need to be initialized externally
-    mirror_buffer->aes_ctx = aes_ctr_decrypt_init(decrypt_aeskey, decrypt_aesiv);
+    mirror_buffer->aes_ctx = aes_ctr_init(decrypt_aeskey, decrypt_aesiv);
     mirror_buffer->nextDecryptCount = 0;
 }
 
@@ -97,6 +97,7 @@ mirror_buffer_init(logger_t *logger,
     memcpy(mirror_buffer->ecdh_secret, ecdh_secret, 32);
     mirror_buffer->logger = logger;
     mirror_buffer->nextDecryptCount = 0;
+    //mirror_buffer_init_aes(mirror_buffer, aeskey, ecdh_secret, streamConnectionID);
     return mirror_buffer;
 }
 
