@@ -75,10 +75,10 @@ raop_buffer_init_key_iv(raop_buffer_t *raop_buffer,
 
     raop_buffer->aes_ctx_audio = aes_cbc_init(eaeskey, aesiv, AES_DECRYPT);
     assert (raop_buffer->aes_ctx_audio);
-    
+
 #ifdef DUMP_AUDIO
     if (file_keyiv != NULL) {
-        fwrite(easkey->aeskey, RAOP_AESKEY_LEN, 1, file_keyiv);
+        fwrite(eaeskey, RAOP_AESKEY_LEN, 1, file_keyiv);
         fwrite(aesiv, RAOP_AESIV_LEN, 1, file_keyiv);
         fclose(file_keyiv);
     }
