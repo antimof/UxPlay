@@ -44,8 +44,9 @@ typedef struct {
 
 struct raop_buffer_s {
     logger_t *logger;
-    /* context derived from Key and IV used for audio decryption */
-    aes_ctx_t *aes_ctx_audio;
+    /* Key and IV used for decryption */
+    unsigned char aeskey[RAOP_AESKEY_LEN];
+    unsigned char aesiv[RAOP_AESIV_LEN];
 
     /* First and last seqnum */
     int is_empty;
@@ -73,13 +74,13 @@ raop_buffer_init_key_iv(raop_buffer_t *raop_buffer,
     sha_final(ctx, eaeskey, NULL);
     sha_destroy(ctx);
 
-    raop_buffer->aes_ctx_audio = aes_cbc_init(eaeskey, aesiv, AES_DECRYPT);
-    assert (raop_buffer->aes_ctx_audio);
+    memcpy(raop_buffer->aeskey, eaeskey, 16);
+    memcpy(raop_buffer->aesiv, aesiv, RAOP_AESIV_LEN);
 
 #ifdef DUMP_AUDIO
     if (file_keyiv != NULL) {
-        fwrite(eaeskey, RAOP_AESKEY_LEN, 1, file_keyiv);
-        fwrite(aesiv, RAOP_AESIV_LEN, 1, file_keyiv);
+        fwrite(raop_buffer->aeskey, 16, 1, file_keyiv);
+        fwrite(raop_buffer->aesiv, 16, 1, file_keyiv);
         fclose(file_keyiv);
     }
 #endif
@@ -124,7 +125,6 @@ raop_buffer_destroy(raop_buffer_t *raop_buffer)
     }
 
     if (raop_buffer) {
-        aes_cbc_destroy(raop_buffer->aes_ctx_audio);
         free(raop_buffer);
     }
 
@@ -158,7 +158,6 @@ int
 raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned char* output, unsigned int payload_size, unsigned int *outputlen)
 {
     assert(raop_buffer);
-
     int encryptedlen;
 #ifdef DUMP_AUDIO
     if (file_aac == NULL) {
@@ -174,7 +173,11 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 
     encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);
-    aes_cbc_decrypt(raop_buffer->aes_ctx_audio, &data[12], output, encryptedlen);
+    // Need to be initialized internally
+    aes_ctx_t *aes_ctx_audio = aes_cbc_init(raop_buffer->aeskey, raop_buffer->aesiv, AES_DECRYPT);
+    aes_cbc_decrypt(aes_ctx_audio, &data[12], output, encryptedlen);
+    aes_cbc_destroy(aes_ctx_audio);
+
     memcpy(output + encryptedlen, &data[12 + encryptedlen], payload_size - encryptedlen);
     *outputlen = payload_size;
 
