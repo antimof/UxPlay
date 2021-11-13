@@ -210,9 +210,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         /* get the teardown request type(s):  (type 96, 110, or none) */
         const char *data;
         int data_len;
-	bool teardown_96 = false, teardown_110 = false;
+        bool teardown_96 = false, teardown_110 = false;
         data = http_request_get_data(request, &data_len);
-	plist_t req_root_node = NULL;
+        plist_t req_root_node = NULL;
         plist_from_bin(data, data_len, &req_root_node);
         char * plist_xml;
         uint32_t plist_len;
@@ -229,26 +229,28 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 plist_t req_stream_type_node = plist_dict_get_item(req_stream_node, "type");
                 plist_get_uint_val(req_stream_type_node, &val);
                 teardown_96 = (val == 96);
-		teardown_110 = (val == 110);
+                teardown_110 = (val == 110);
 	    }
         }
         if (conn->raop->callbacks.teardown_request) {
-	  conn->raop->callbacks.teardown_request(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
+             conn->raop->callbacks.teardown_request(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
         }
         logger_log(conn->raop->logger, LOGGER_DEBUG, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
 
         //http_response_add_header(*response, "Connection", "close");
 
         if (conn->raop_rtp != NULL && raop_rtp_is_running(conn->raop_rtp)) {
+	    /* Stop our RTP sessions */
             raop_rtp_stop(conn->raop_rtp);
         } else if (conn->raop_rtp_mirror) {
-           /* Destroy our sessions */
+            /* Destroy our sessions */
             raop_rtp_destroy(conn->raop_rtp);
             conn->raop_rtp = NULL;
             raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
             conn->raop_rtp_mirror = NULL;
         }
-    }   if (handler != NULL) {
+    }
+    if (handler != NULL) {
         handler(conn, request, *response, &response_data, &response_datalen);
     }
     http_response_finish(*response, response_data, response_datalen);
