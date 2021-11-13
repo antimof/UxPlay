@@ -157,7 +157,7 @@ void  audio_renderer_start(unsigned char *ct) {
         if(compression_type != renderer->ct) {
             gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
             gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-            g_message ("changed audio connection, format %s\n", format[id]);
+            g_message ("changed audio connection, format %s", format[id]);
             renderer = renderer_type[id];
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
         }
@@ -166,7 +166,7 @@ void  audio_renderer_start(unsigned char *ct) {
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     } else {
-        g_error( "unknown audio compression type ct = %d\n", *ct);
+        g_error("unknown audio compression type ct = %d", *ct);
     }
     
 }

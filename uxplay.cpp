@@ -506,12 +506,16 @@ extern "C" void audio_set_volume (void *cls, float volume) {
 }
 
 extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat) {
-  LOGI("ct=%d spf=%d usingScreen=%d isMedia=%d  audioFormat=0x%lx",*ct, *spf, *usingScreen, *isMedia, (unsigned long) *audioFormat);
+    LOGI("ct=%d spf=%d usingScreen=%d isMedia=%d  audioFormat=0x%lx",*ct, *spf, *usingScreen, *isMedia, (unsigned long) *audioFormat);
     if (use_audio) {
         audio_renderer_start(ct);
     }
 }
 
+extern "C" void teardown(void *cls, bool *teardown_96, bool *teardown_110) {
+  LOGI("received TEARDOWN request from client, 96=%d 110 =%d", *teardown_96, *teardown_110);
+}
+  
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {

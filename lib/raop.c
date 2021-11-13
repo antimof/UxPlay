@@ -207,19 +207,48 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
             logger_log(conn->raop->logger, LOGGER_WARNING, "RAOP not initialized at FLUSH");
         }
     } else if (!strcmp(method, "TEARDOWN")) {
+        /* get the teardown request type(s):  (type 96, 110, or none) */
+        const char *data;
+        int data_len;
+	bool teardown_96 = false, teardown_110 = false;
+        data = http_request_get_data(request, &data_len);
+	plist_t req_root_node = NULL;
+        plist_from_bin(data, data_len, &req_root_node);
+        char * plist_xml;
+        uint32_t plist_len;
+        plist_to_xml(req_root_node, &plist_xml, &plist_len);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+        free(plist_xml);
+        plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
+        /* Process stream teardown requests */
+        if (PLIST_IS_ARRAY(req_streams_node)) {
+            uint64_t val;
+            int count = plist_array_get_size(req_streams_node);
+            for (int i = 0; i < count; i++) {
+                plist_t req_stream_node = plist_array_get_item(req_streams_node,0);
+                plist_t req_stream_type_node = plist_dict_get_item(req_stream_node, "type");
+                plist_get_uint_val(req_stream_type_node, &val);
+                teardown_96 = (val == 96);
+		teardown_110 = (val == 110);
+	    }
+        }
+        if (conn->raop->callbacks.teardown_request) {
+	  conn->raop->callbacks.teardown_request(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
+        }
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
+
         //http_response_add_header(*response, "Connection", "close");
+
         if (conn->raop_rtp != NULL && raop_rtp_is_running(conn->raop_rtp)) {
-            /* Destroy our RTP session */
             raop_rtp_stop(conn->raop_rtp);
         } else if (conn->raop_rtp_mirror) {
-            /* Destroy our sessions */
+           /* Destroy our sessions */
             raop_rtp_destroy(conn->raop_rtp);
             conn->raop_rtp = NULL;
             raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
             conn->raop_rtp_mirror = NULL;
         }
-    }
-    if (handler != NULL) {
+    }   if (handler != NULL) {
         handler(conn, request, *response, &response_data, &response_datalen);
     }
     http_response_finish(*response, response_data, response_datalen);
