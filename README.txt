@@ -533,8 +533,8 @@ closed-source) available for purchase, it is my understanding that an
 open source implementation of the same functionality wouldn't violate
 any of Apple's rights either.
 
-RPiPlay Authors (Notes by fdraschbacher, RPiPlay creator.)
-==========================================================
+RPiPlay Authors (Notes by Florian Draschbacher, RPiPlay creator.)
+=================================================================
 
 (From the https://github.com/FD-/RPiPlay.git repository.)
 
@@ -565,26 +565,6 @@ the components they created:
     library for manipulation h264 streams. Used for reducing delay in
     the Raspberry Pi video pipeline. Located in the
     `renderers/h264-bitstream` folder. License: GNU LGPLv2.1
-
-RPiPlay Changelog
-=================
-
-### Version 1.2
-
--   Blank screen after connection stopped
-
-### Version 1.1
-
--   Now audio and video work on Raspberry Pi Zero. I don't know what
-    exactly did the trick, but static compilation seems to have helped.
--   Smoother video due to clock syncing
--   Correct lip-sync due to clock syncing
--   Lower latency due to injecting max\_dec\_frame\_buffering into SPS
-    NAL
--   Disabled debug logging by default
--   Added command line flag for debug logging
--   Added command line flag for unsynchronized low-latency mode
--   Bug fixes
 
 AirPlay protocol versions
 =========================

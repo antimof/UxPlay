@@ -99,7 +99,7 @@
 <p>All the resources in this repository are written using only freely available information from the internet. The code and related resources are meant for educational purposes only. It is the responsibility of the user to make sure all local laws are adhered to.</p>
 <p>This project makes use of a third-party GPL library for handling FairPlay. The legal status of that library is unclear. Should you be a representative of Apple and have any objections against the legality of the library and its use in this project, please contact me and I’ll take the appropriate steps.</p>
 <p>Given the large number of third-party AirPlay receivers (mostly closed-source) available for purchase, it is my understanding that an open source implementation of the same functionality wouldn’t violate any of Apple’s rights either.</p>
-<h1 id="rpiplay-authors-notes-by-fdraschbacher-rpiplay-creator.">RPiPlay Authors (Notes by fdraschbacher, RPiPlay creator.)</h1>
+<h1 id="rpiplay-authors-notes-by-florian-draschbacher-rpiplay-creator.">RPiPlay Authors (Notes by Florian Draschbacher, RPiPlay creator.)</h1>
 <p>(From the https://github.com/FD-/RPiPlay.git repository.)</p>
 <p>The code in this repository accumulated from various sources over time. Here is my (<strong>fdrachbacher</strong>) attempt at listing the various authors and the components they created:</p>
 <ul>
@@ -109,22 +109,6 @@
 <li><strong>Joyent, Inc and contributors</strong>: Created an http library called <a href="https://github.com/nodejs/llhttp">llhttp</a>. Located at <code>lib/llhttp/</code>. License: MIT</li>
 <li><strong>Team XBMC</strong>: Managed to show a black background for OpenMAX video rendering. This code is used in the video renderer. License: GNU GPL</li>
 <li><strong>Alex Izvorski and contributors</strong>: Wrote <a href="https://github.com/aizvorski/h264bitstream">h264bitstream</a>, a library for manipulation h264 streams. Used for reducing delay in the Raspberry Pi video pipeline. Located in the <code>renderers/h264-bitstream</code> folder. License: GNU LGPLv2.1</li>
-</ul>
-<h1 id="rpiplay-changelog">RPiPlay Changelog</h1>
-<h3 id="version-1.2">Version 1.2</h3>
-<ul>
-<li>Blank screen after connection stopped</li>
-</ul>
-<h3 id="version-1.1">Version 1.1</h3>
-<ul>
-<li>Now audio and video work on Raspberry Pi Zero. I don’t know what exactly did the trick, but static compilation seems to have helped.</li>
-<li>Smoother video due to clock syncing</li>
-<li>Correct lip-sync due to clock syncing</li>
-<li>Lower latency due to injecting max_dec_frame_buffering into SPS NAL</li>
-<li>Disabled debug logging by default</li>
-<li>Added command line flag for debug logging</li>
-<li>Added command line flag for unsynchronized low-latency mode</li>
-<li>Bug fixes</li>
 </ul>
 <h1 id="airplay-protocol-versions">AirPlay protocol versions</h1>
 <p>For multiple reasons, it’s very difficult to clearly define the protocol names and versions of the components that make up the AirPlay streaming system. In fact, it seems like the AirPlay version number used for marketing differs from that used in the actual implementation. In order to tidy up this whole mess a bit, I did a little research that I’d like to summarize here:</p>
