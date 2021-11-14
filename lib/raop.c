@@ -228,8 +228,11 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 plist_t req_stream_node = plist_array_get_item(req_streams_node,0);
                 plist_t req_stream_type_node = plist_dict_get_item(req_stream_node, "type");
                 plist_get_uint_val(req_stream_type_node, &val);
-                teardown_96 = (val == 96);
-                teardown_110 = (val == 110);
+                if (val == 96) {
+                    teardown_96 = true;
+                } else if (val == 110) { 
+                    teardown_110 = true;
+                }
 	    }
         }
         if (conn->raop->callbacks.teardown_request) {
