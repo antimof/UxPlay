@@ -1,5 +1,5 @@
-UxPlay 1.41
-===========
+UxPlay 1.41: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+======================================================================
 
 This project is a GPLv3 unix AirPlay server which now also works on
 macOS. Its main use is to act like an AppleTV for screen-mirroring (with
@@ -7,8 +7,10 @@ audio) of iOS/macOS clients (iPads, iPhones, MacBooks) in a window on
 the server display (with the possibility of sharing that window on
 screen-sharing applications such as Zoom) on a host running Linux,
 macOS, or other unix, using Apple's AirPlay Mirror protocol first
-available in iOS 5. (Details of what is known about the AirPlay2
-protocol can be found
+available in iOS 5. As well as screen mirroring, when not mirroring the
+screen it can also play Apple Lossless (ALAC) streamed from the client
+using the audio-only Airplay protocal. (Details of what is known about
+the AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)).
 
@@ -21,15 +23,15 @@ Linux and BSD Unix servers, this is usually provided by
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-*New: UxPlay \> 1.38 now also supports the Airplay audio-only protocol
-as well as AirPlay Mirror protocol, and (when the client screen is not
-being mirrored) can play Apple Lossless (ALAC) 44100/16/2 audio streamed
-from the client in 2-channel stereo without video (the accompanying
-cover-art and metadata is received by the server, but not displayed).
-The initial connection to the client can be in AirPlay audio mode, or an
-initial Airplay Mirror connection can be changed to Airplay audio by
-closing the Mirror window and reconnecting in audio-only mode (this
-changes back to AAC audio if screen mirroring is restarted).*
+***New:** UxPlay \> 1.38 now also supports the Airplay audio-only
+protocol as well as AirPlay Mirror protocol, and (when the client screen
+is not being mirrored) can play Apple Lossless (ALAC) 44100/16/2 audio
+streamed from the client in 2-channel stereo without video (the
+accompanying cover-art and metadata is received by the server, but not
+displayed). The initial connection to the client can be in AirPlay audio
+mode, or an initial Airplay Mirror connection can be switched to Airplay
+audio by closing the Mirror window and reconnecting in audio-only mode
+(this changes back to AAC audio if screen mirroring is (re)started).*
 
 UxPlay 1.41 is based on https://github.com/FD-/RPiPlay, with GStreamer
 integration from https://github.com/antimof/UxPlay. (UxPlay only uses
@@ -55,11 +57,11 @@ into the codebase on the antimof site, as that project appears to no
 longer be active. If the pull request ever gets committed, replace
 "FDH2" by "antimof" in the above.*
 
-Building this version:
-======================
+Building this version (Linux):
+==============================
 
-(Instructions for Ubuntu; adapt these for other Linuxes; for macOS, see
-below).
+(Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
+macOS, see below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development
 libraries installed.
@@ -127,7 +129,10 @@ required GStreamer packages are: gstreamer-devel
 gstreamer-plugins-base-devel gstreamer-plugins-libav
 gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
-**macOS** (Intel X86\_64 Macs only):
+Building this version (macOS):
+==============================
+
+**(Only tested on ntel X86\_64 Macs)**
 
 *Note: A native AirPlay Server feature is included in upcoming macOS 12
 Monterey, but UxPlay can run on older macOS systems that will not be
@@ -340,7 +345,9 @@ If the -p option is not used, the ports are chosen dynamically
 hardware MAC number of the computer's network card. (Different
 server\_name, MAC addresses, and network ports are needed for each
 running uxplay if you attempt to run two instances of uxplay on the same
-computer.) On macOS, random MAC addresses are always used.
+computer.) If UxPlay fails to fing the true MAC address of the network
+card (as happens on macOS) a random MAC addresses will be used even if
+option **-m** was not specifed.
 
 Also: image transforms that had been added to RPiPlay have been ported
 to UxPlay:
@@ -362,7 +369,10 @@ videosink might not work on your system.)
 
 **-vs 0** suppresses display of streamed video, but plays streamed
 audio. (The client's screen is still mirrored at a reduced rate of 1
-frame per second, but is not rendered or displayed.)
+frame per second, but is not rendered or displayed.) This feature (which
+streams audio in AAC audio format) is now probably unneeded, as UxPlay
+can now stream superior-quality Apple Lossless audio without video in
+Airplay non-mirror mode.
 
 **-as *audiosink*** chooses the GStreamer audiosink, instead of letting
 autoaudiosink pick it for you. Some audiosink choices are: pulsesink,
@@ -370,8 +380,8 @@ alsasink, osssink, oss4sink, and osxaudiosink (for macOS). Using quotes
 "..." might allow some parameters to be included with the audiosink
 name. (Some choices of audiosink might not work on your system.)
 
-**-as 0** or **-a** suppresses playing of streamed audio, but displays
-streamed video.
+**-as 0** (or just **-a**) suppresses playing of streamed audio, but
+displays streamed video.
 
 **-t *timeout*** will cause the server to relaunch (without stopping
 uxplay) if no connections have been present during the previous
@@ -502,7 +512,7 @@ Improvements since the original UxPlay by antimof:
     option).
 
 12. Added support for audio-only streaming with original (non-Mirror)
-    AirPlay protocal, with Apple Lossless (ALAC) audio.
+    AirPlay protocol, with Apple Lossless (ALAC) audio.
 
 Disclaimer
 ==========
