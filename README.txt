@@ -9,7 +9,7 @@ screen-sharing applications such as Zoom) on a host running Linux,
 macOS, or other unix, using Apple's AirPlay Mirror protocol first
 available in iOS 5. As well as screen mirroring, when not mirroring the
 screen it can also play Apple Lossless (ALAC) audio streamed from the
-client using the audio-only Airplay protocal. (Details of what is known
+client using the audio-only Airplay protocol. (Details of what is known
 about the AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)).
