@@ -26,7 +26,7 @@
 <p><strong>Red Hat, Fedora, CentOS:</strong> (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (+libX11-devel for ZOOMFIX). The required GStreamer packages are: gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).</p>
 <p><strong>OpenSUSE:</strong> (sudo zypper install) libopenssl-devel libplist-devel avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The required GStreamer packages are: gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).</p>
 <h1 id="building-this-version-macos">Building this version (macOS):</h1>
-<p><strong>(Only tested on ntel X86_64 Macs)</strong></p>
+<p><strong>(Only tested on Intel X86_64 Macs)</strong></p>
 <p><em>Note: A native AirPlay Server feature is included in upcoming macOS 12 Monterey, but UxPlay can run on older macOS systems that will not be able to run Monterey.</em></p>
 <p>These instructions for macOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type “sudo xcode-select –install” and accept the conditions).</p>
 <p>It is also assumed that CMake &gt;= 3.13 is installed: this can be done with package managers <a href="http://www.macports.org">MacPorts</a>, <a href="http://finkproject.org">Fink</a> or <a href="http://brew.sh">Homebrew</a>, or by a download from <a href="https://cmake.org/download/">https://cmake.org/download/</a>.</p>

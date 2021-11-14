@@ -132,7 +132,7 @@ gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 Building this version (macOS):
 ==============================
 
-**(Only tested on ntel X86\_64 Macs)**
+**(Only tested on Intel X86\_64 Macs)**
 
 *Note: A native AirPlay Server feature is included in upcoming macOS 12
 Monterey, but UxPlay can run on older macOS systems that will not be

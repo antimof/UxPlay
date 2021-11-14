@@ -101,7 +101,7 @@ gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-p
 
 # Building this version (macOS):
 
-**(Only tested on ntel X86_64 Macs)**
+**(Only tested on Intel X86_64 Macs)**
 
 _Note: A native AirPlay Server feature is  included in upcoming macOS 12 Monterey,
 but UxPlay can run  on older macOS systems that will not be able to run Monterey._
