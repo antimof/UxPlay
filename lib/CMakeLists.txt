@@ -3,10 +3,10 @@ include_directories( playfair llhttp )
 
 INCLUDE (CheckIncludeFiles)
 # for BSD Unix (e.g. FreeBSD)
-CHECK_INCLUDE_FILES ("sys/endian.h" HAVE_SYS_ENDIAN_H )
-if (HAVE_SYS_ENDIAN_H)
+CHECK_INCLUDE_FILES ("sys/endian.h" BSD )
+if ( BSD )
 add_definitions( -DSYS_ENDIAN_H )
-endif (HAVE_SYS_ENDIAN_H)
+endif ( BSD )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -march=native -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall -g")
 
@@ -18,6 +18,7 @@ if( APPLE )
   find_program( PKG_CONFIG_EXECUTABLE  pkg-config  PATHS /Library/FrameWorks/GStreamer.framework/Commands )
   message( "PKG_CONFIG_EXECUTABLE " ${PKG_CONFIG_EXECUTABLE} )
 endif()
+find_package(PkgConfig REQUIRED)
 
 aux_source_directory(. play_src)
 set(DIR_SRCS ${play_src})
@@ -26,41 +27,43 @@ add_library( airplay
         STATIC
         ${DIR_SRCS}
         )
+target_link_libraries( airplay
+        pthread
+        playfair
+        llhttp )
 
-find_package(PkgConfig REQUIRED)
+# libplist
 
-if( UNIX AND NOT APPLE )
-   find_library( LIBPLIST NAMES plist3 plist  plist-2.0 )
+if( BSD )
+     pkg_check_modules( PLIST REQUIRED libplist-2.0 )
+     target_include_directories( airplay PUBLIC ${PLIST_INCLUDE_DIRS} )
+     link_directories( ${PLIST_LIBRARY_DIRS} )
+     message( STATUS "LIBPLIST " ${PLIST_LIBRARIES} )
+     target_link_libraries ( airplay ${PLIST_LBRARIES} )
+elseif( UNIX AND NOT APPLE )
+     find_library( LIBPLIST NAMES plist3 plist  plist-2.0  libplist-2.0 )
+     message( STATUS "LIBPLIST " ${LIBPLIST} )
+     target_link_libraries ( airplay ${LIBPLIST} )
 elseif( APPLE )
+   # use static linking
    pkg_check_modules( PLIST REQUIRED libplist-2.0 )
    find_library( LIBPLIST libplist-2.0.a REQUIRED )
    target_include_directories( airplay PRIVATE
                             /usr/local/include  # standard and Brew
-			    /opt/local/include  # MacPorts
+                            /opt/local/include  # MacPorts
                             )
+   message( STATUS "LIBPLIST " ${LIBPLIST} )
+   target_link_libraries ( airplay ${LIBPLIST} )
 endif()
-message( STATUS "LIBPLIST " ${LIBPLIST} )
 
-target_link_libraries( airplay
-        pthread
-        playfair
-        llhttp
-        ${LIBPLIST} )
-
+#libcrypto
 if( UNIX AND NOT APPLE )
   find_package(OpenSSL 1.1.1 REQUIRED)
   message( "OpenSSL " ${OpenSSL} )
   target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
   target_link_libraries( airplay OpenSSL::Crypto )
-  find_file( DNS_SD_H dns_sd.h PATHS /usr/include/* /usr/local/include/* )
-  if( NOT DNS_SD_H )
-    message( FATAL_ERROR "(avahi_compat) did not find dns_sd.h" )
-  endif()
-  string( REPLACE "dns_sd.h" "" DNS_SD ${DNS_SD_H} )
-  message( STATUS "found dns_sd.h in " ${DNS_SD} )
-  target_include_directories( airplay PRIVATE ${DNS_SD} )
-  target_link_libraries( airplay dns_sd )
 elseif( APPLE )
+  # use static linking
   # can either compile Openssl 1.1.1 from source (install_dev  to /usr/local) or use Macports or Brew
   # MacPorts needs zlib with it, Brew has a strange "keg-only" installation in usr/local/opt/openssl@1.1
   pkg_check_modules( OPENSSL REQUIRED Openssl>=1.1.1)
@@ -79,3 +82,20 @@ elseif( APPLE )
 			     )
 endif()
 
+#dns_sd
+if( BSD )
+  pkg_check_modules( DNSSD REQUIRED avahi-compat-libdns_sd )
+  message( STATUS "found dns_sd.h in " ${DNSSD_INCLUDE_DIRS} )
+  target_include_directories( airplay PUBLIC ${DNSSD_INCLUDE_DIRS} )
+  link_directories( ${DNS_SD_LIBRARY_DIRS} )
+  target_link_libraries( airplay ${DNSSD_LIBRARIES})
+elseif( UNIX AND NOT APPLE )
+  find_file( DNS_SD_H dns_sd.h PATHS /usr/include/* /usr/local/include/* )
+  if( NOT DNS_SD_H )
+    message( FATAL_ERROR "(avahi_compat) did not find dns_sd.h" )
+  endif()
+  string( REPLACE "dns_sd.h" "" DNS_SD ${DNS_SD_H} )
+  message( STATUS "found dns_sd.h in " ${DNS_SD} )
+  target_include_directories( airplay PRIVATE ${DNS_SD} )
+  target_link_libraries( airplay dns_sd )
+endif()
