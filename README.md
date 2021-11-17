@@ -281,9 +281,10 @@ which will not work if a firewall is running.
    number of the computer's network card.   (Different server_name,  MAC
    addresses,  and network ports are needed for each running uxplay  if you
    attempt to  run two instances of uxplay on the same computer.)
-   If UxPlay fails to fing the true MAC address of the network card (as happens on macOS)
-   a random MAC addresses will be used even if option **-m** was not specifed.
-
+   If UxPlay fails to find the true MAC address of a  network card, (more
+   specifically, the MAC address used by the first active network interface detected)
+   a random MAC address will be used even if option **-m** was not specifed.
+   (Note that a random MAC address will be different each time UxPlay is started).
 
 
 Also: image transforms that had been added to RPiPlay have been ported to UxPlay:
@@ -327,6 +328,8 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
+1.42 (pending)     Fix MAC detection to work with modern Linux interface naming practices, MacOS and *BSD.
+
 1.41 2021-11-11    Further cleanups of multiple audio format support (internal changes, 
                    separated RAOP and GStreamer audio/video startup)
 
