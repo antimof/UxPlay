@@ -130,7 +130,7 @@ void audio_renderer_init(const char* audiosink) {
             format[i] = "PCM 44100/16/2 S16LE";
             break;
 	}
-	g_message ("supported audio format %d: %s",i+1,format[i]);
+	g_debug ("supported audio format %d: %s",i+1,format[i]);
 	g_object_set(renderer_type[i]->appsrc, "caps", caps, NULL);
         gst_caps_unref(caps);
     }
