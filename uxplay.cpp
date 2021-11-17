@@ -28,6 +28,18 @@
 #include <glib-unix.h>
 #include <assert.h>
 
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#ifdef __linux__
+#include <netpacket/packet.h>
+#else
+#include <net/if_dl.h>
+#endif
+
+
+
+
+
 #include "log.h"
 #include "lib/raop.h"
 #include "lib/stream.h"
@@ -115,17 +127,45 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
 }
 
 static std::string find_mac () {
-    std::ifstream iface_stream("/sys/class/net/eth0/address");
-    if (!iface_stream) {
-        iface_stream.open("/sys/class/net/wlan0/address");
+/*  finds the MAC address of a network interface *
+ *  in a Linux, *BSD or macOS system.            */
+    std::string mac = "";
+    struct ifaddrs *ifap, *ifaptr;
+    int non_null_octets = 0;
+    unsigned char octet[6], *ptr;
+    if (getifaddrs(&ifap) == 0) {
+        for(ifaptr = ifap; ifaptr != NULL; ifaptr = ifaptr->ifa_next) {
+            if(ifaptr->ifa_addr == NULL) continue;
+#ifdef __linux__
+            if (ifaptr->ifa_addr->sa_family != AF_PACKET) continue;
+            struct sockaddr_ll *s = (struct sockaddr_ll*) ifaptr->ifa_addr;
+            for (int i = 0; i < 6; i++) {
+                if ((octet[i] = s->sll_addr[i]) != 0) non_null_octets++;
+            }
+#else    /* macOS and *BSD */
+            if (ifaptr->ifa_addr->sa_family != AF_LINK) continue;
+            ptr = (unsigned char *) LLADDR((struct sockaddr_dl *) ifaptr->ifa_addr);
+            for (int i= 0; i < 6 ; i++) {
+                if ((octet[i] = *ptr) != 0) non_null_octets++;
+                ptr++;
+            }
+#endif
+            if (non_null_octets) {
+                mac.erase();
+                char str[3];
+                for (int i = 0; i < 6 ; i++) {
+                    sprintf(str,"%02x", octet[i]);
+                    mac = mac + str;
+                    if (i < 5) mac = mac + ":";
+                }
+                break;
+            }
+        }
     }
-    if (!iface_stream) return "";
-
-    std::string mac_address;
-    iface_stream >> mac_address;
-    iface_stream.close();
-    return mac_address;
+    freeifaddrs(ifap);
+    return mac;
 }
+
 
 #define MULTICAST 0
 #define LOCAL 1
@@ -415,7 +455,7 @@ int main (int argc, char *argv[]) {
 	video_renderer_start();
     }
     
-    if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d\n",
+    if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
 		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
 
     std::string mac_address;
@@ -423,7 +463,9 @@ int main (int argc, char *argv[]) {
     if (mac_address.empty()) {
         srand(time(NULL) * getpid());
         mac_address = random_mac();
-        LOGI("using randomly-generated MAC address %s\n",mac_address.c_str());
+        LOGI("using randomly-generated MAC address %s",mac_address.c_str());
+    } else {
+        LOGI("using system MAC address %s",mac_address.c_str());
     }
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();
