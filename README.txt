@@ -1,4 +1,4 @@
-UxPlay 1.41: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.42: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 This project is a GPLv3 unix AirPlay server which now also works on
@@ -33,7 +33,7 @@ mode, or an initial Airplay Mirror connection can be switched to Airplay
 audio by closing the Mirror window and reconnecting in audio-only mode
 (this changes back to AAC audio if screen mirroring is (re)started).*
 
-UxPlay 1.41 is based on https://github.com/FD-/RPiPlay, with GStreamer
+UxPlay is based on https://github.com/FD-/RPiPlay, with GStreamer
 integration from https://github.com/antimof/UxPlay. (UxPlay only uses
 GStreamer, and does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.) Tested on Ubuntu
@@ -400,7 +400,7 @@ still open when the GStreamer pipeline is closed.*
 ChangeLog
 =========
 
-1.42 (pending) Fix MAC detection to work with modern Linux interface
+1.42 2021-11-20 Fix MAC detection to work with modern Linux interface
 naming practices, MacOS and \*BSD.
 
 1.41 2021-11-11 Further cleanups of multiple audio format support
