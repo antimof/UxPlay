@@ -40,6 +40,11 @@ else()
                   )
 endif()
 
+if (BSD )
+  target_link_directories( uxplay PUBLIC /usr/local/lib )
+  target_link_libraries( uxplay ${PLIST_LIBRARIES})
+endif() 
+
 target_link_libraries( uxplay
                    renderers
                    airplay
