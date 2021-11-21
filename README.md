@@ -37,19 +37,36 @@ Features:
 available. VAAPI is preferable, (but don't use VAAPI with nVidia).
 4. Automatic screen orientation.
 
-**Note for packagers:  UxPlay can be built to use the "libcrypto" shared library
+
+
+### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
+
+UxPlay can be built to use the "libcrypto" shared library
 from the recently-released OpenSSL- 3.0.0,
 which has a new Apache v2 license that is explicitly compatible with GPL v3
 (see [this announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/) and 
-[this](https://www.openssl.org/blog/blog/2017/03/22/license/)).   The new license resolves a
-long-standing controversy over whether OpenSSL is a "System Library" to which GPL code can be
-freely linked, or not, in which case an explicit "GPL exception" must added to the GPL license
+[this](https://www.openssl.org/blog/blog/2017/03/22/license/)).
+
+The new license resolves a long-standing controversy over whether OpenSSL is a
+"System Library" to which GPL code can be freely linked, or not, in which case
+an explicit "GPL exception" must be added to the GPL license
 by all the authors (the historical origins of the UxPlay code make this impossible).
+**The license issue only involves distribution of compiled code, not source code.**
+
 Packagers for distributions such as Debian that do not allow exception-free linking
 of GPL v3 code to OpenSSL-1.1.1 under its old "dual OpenSSL/SSLeay" license should use the
-"Apache v2" backwards-compatible OpenSSL-3.x (or replace the AES decryption code in
-lib/crypto.[c,h], that is a wrapper for  OpenSSL, with a GPL implementation).
-The license issue only involves distribution of compiled code, not source code.**
+"Apache v2" OpenSSL-3.x, which is backwards-compatible with UxPlay.
+
+As a possible help for packaging the uxplay binary for distributions that do not allow
+linking GPL v3 code to OpenSSL-1.1.1, and have not yet provided OpenSSL-3.0.0 packages,
+"cmake -DSTATIC_OPENSSL3=ON ...." will build uxplay that is statically
+linked to libcrypto.a that has been built from OpenSSL-3.x source, and installed in the default
+location (/usr/local/...); this can be uninstalled after UxPlay is compiled.
+
+An alternative is to replace the AES decryption code in
+lib/crypto.[c,h] (which is a wrapper for calls to OpenSSL's libcrypto)
+with a GPL implementation).
+
 
 # Getting UxPlay:
 
