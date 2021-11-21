@@ -44,6 +44,21 @@ the box. 3. Gstreamer decoding is plugin agnostic. Uses accelerated
 decoders if available. VAAPI is preferable, (but don't use VAAPI with
 nVidia). 4. Automatic screen orientation.
 
+**Note for packagers: UxPlay can be built to use the recently-released
+OpenSSL- 3.x shared libraries, which have the Apache license which is
+generally viewed as compatible with GPL v3 (see [this
+announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/)
+and [this](https://www.openssl.org/blog/blog/2017/03/22/license/)). The
+older license of OpenSSL-1.1.1 is viewed by some distributions
+(e.g. Debian) as incompatible with GPLv3 code unless the authors have
+granted a permissive "exception" to allow this. The historical origins
+of the UxPlay code make it impossible to obtain such a permission from
+all previous authors. However there are other distributions which have
+viewed OpenSSL with the older license as a "System library" which would
+make it GPL-permissible to distribute binary compiled packages of GPLv3
+applications that are linked to it, without an explicit GPL exception
+having been granted by the application's authors.**
+
 Getting UxPlay:
 ===============
 
