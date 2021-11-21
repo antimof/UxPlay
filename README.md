@@ -45,7 +45,7 @@ which has a new Apache v2 license that is explicitly compatible with GPL v3
 long-standing controversy over whether OpenSSL is a "System Library" to which GPL code can be
 freely linked, or not, in which case an explicit "GPL exception" must added to the GPL license
 by all the authors (the historical origins of the UxPlay code make this impossible).
-Packagers for GPL-purist distributions such as Debian that do not allow exception-free linking
+Packagers for distributions such as Debian that do not allow exception-free linking
 of GPL v3 code to OpenSSL-1.1.1 under its old "dual OpenSSL/SSLeay" license should use the
 "Apache v2" backwards-compatible OpenSSL-3.x (or replace the AES decryption code in
 lib/crypto.[c,h], that is a wrapper for  OpenSSL, with a GPL implementation).
