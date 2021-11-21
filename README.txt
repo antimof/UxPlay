@@ -44,20 +44,22 @@ the box. 3. Gstreamer decoding is plugin agnostic. Uses accelerated
 decoders if available. VAAPI is preferable, (but don't use VAAPI with
 nVidia). 4. Automatic screen orientation.
 
-**Note for packagers: UxPlay can be built to use the recently-released
-OpenSSL- 3.x shared "libcrypto" library, which has the Apache license
-which is generally viewed as compatible with GPL v3 (see [this
+**Note for packagers: UxPlay can be built to use the "libcrypto" shared
+library from the recently-released OpenSSL- 3.0.0, which has a new
+Apache v2 license that is explicitly compatible with GPL v3 (see [this
 announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/)
 and [this](https://www.openssl.org/blog/blog/2017/03/22/license/)). The
-older license of OpenSSL-1.1.1 is viewed by some distributions
-(e.g. Debian) as incompatible with GPLv3 code unless the authors have
-granted a permissive "exception" to allow this. The historical origins
-of the UxPlay code make it impossible to obtain such a permission from
-all previous authors. However there are other distributions which have
-viewed OpenSSL with the older license as a "System library" which would
-make it GPL-permissible to distribute binary compiled packages of GPLv3
-applications that are linked to it, without an explicit GPL exception
-having been granted by the application's authors.**
+new license resolves a long-standing controversy over whether OpenSSL is
+a "System Library" to which GPL code can be freely linked, or not, in
+which case an explicit "GPL exception" must added to the GPL license by
+all the authors (the historical origins of the UxPlay code make this
+impossible). Packagers for GPL-purist distributions such as Debian that
+do not allow exception-free linking of GPL v3 code to OpenSSL-1.1.1
+under its old "dual OpenSSL/SSLeay" license should use the "Apache v2"
+backwards-compatible OpenSSL-3.x (or replace the AES decryption code in
+lib/crypto.\[c,h\], that is a wrapper for OpenSSL, with a GPL
+implementation). The license issue only involves distribution of
+compiled code, not source code.**
 
 Getting UxPlay:
 ===============
