@@ -37,7 +37,7 @@ Features:
 available. VAAPI is preferable, (but don't use VAAPI with nVidia).
 4. Automatic screen orientation.
 
-**Note for packagers:  UxPlay can be built to use the recently-released OpenSSL- 3.x shared libraries, which have
+**Note for packagers:  UxPlay can be built to use the recently-released OpenSSL- 3.x shared "libcrypto" library, which has
 the Apache license which is generally viewed as compatible with GPL v3 (see
 [this announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/) and 
 [this](https://www.openssl.org/blog/blog/2017/03/22/license/)).
