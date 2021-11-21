@@ -65,7 +65,7 @@ location (/usr/local/...); this can be uninstalled after UxPlay is compiled.
 
 An alternative is to replace the AES decryption code in
 lib/crypto.[c,h] (which is a wrapper for calls to OpenSSL's libcrypto)
-with a GPL implementation).
+with a GPL implementation.
 
 
 # Getting UxPlay:

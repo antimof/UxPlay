@@ -73,7 +73,7 @@ built from OpenSSL-3.x source, and installed in the default location
 
 An alternative is to replace the AES decryption code in
 lib/crypto.\[c,h\] (which is a wrapper for calls to OpenSSL's libcrypto)
-with a GPL implementation).
+with a GPL implementation.
 
 Getting UxPlay:
 ===============
