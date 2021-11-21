@@ -28,7 +28,7 @@ UxPlay is based on https://github.com/FD-/RPiPlay, with GStreamer integration fr
 https://github.com/antimof/UxPlay.
 (UxPlay only uses GStreamer, and  does not contain the alternative Raspberry-Pi-specific
 audio and video renderers also found in RPiPlay.)
-Tested on Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15.
+Tested on Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15, FreeBSD 13.0.
 
 Features:
 1. Based on Gstreamer.
@@ -48,7 +48,7 @@ get committed into the codebase  on the antimof site, as that
 project appears to no longer be active.
 If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.*
 
-# Building this version (Linux):
+# Building this version (Linux/ *BSD):
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS, see below).
 
@@ -98,6 +98,9 @@ avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
 GStreamer packages are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
+**FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
+(\* = core, good,  bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics).
+OpenSSL is already installed.   "ZOOMFIX" is untested; don't try to use it unless you need it.
 
 # Building this version (macOS):
 
@@ -195,6 +198,9 @@ probably means that your network **does not have a running Bonjour/zeroconf DNS-
 On Linux, make sure Avahi is installed,
 and start the avahi-daemon service (your distribution will document how to do  this).
 Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.
+(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps needed for
+getting Avahi running on this system is to edit /usr/local/etc/avahi/avahi-daemon.conf to
+uncomment a line for airplay support.)
 
 For other problems after a connection is made, use "uxplay -d " (debug log option)  to see what is happening.
 **Such problems are usually due to a GStreamer plugin that doesn't work on your system**: (by default,
@@ -225,6 +231,13 @@ Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sh
 
 The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
+
+__GStreamer issues:__  To troubleshoot GStreamer execute  "export GST_DEBUG=2"
+to set the GStreamer debug-level environment-variable in the terminal
+where you will run uxplay, so that you see warning and error messages;
+(replace "2" by "4" to see much (much) more of what is happening inside
+GStreamer).   Run "gst-inspect-1.0" to see which GStreamer plugins are
+installed on your system.
 
 #  **Usage:**
 
