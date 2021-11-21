@@ -58,10 +58,25 @@ endif()
 
 #libcrypto
 if( UNIX AND NOT APPLE )
-  find_package(OpenSSL 1.1.1 REQUIRED)
-  message( "OpenSSL " ${OpenSSL} )
-  target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
-  target_link_libraries( airplay OpenSSL::Crypto )
+  if (STATIC_OPENSSL3 )
+     set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig/" )
+     set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib64/pkgconfig/" )
+     pkg_check_modules( OPENSSL  REQUIRED openssl>=3.0.0 )
+     message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
+     message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
+     find_library( LIBCRYPTO libcrypto.a PATHS ${OPENSSL_LIBRARY_DIRS} REQUIRED )
+     message( "LIBCRYPTO "  ${LIBCRYPTO}  )
+     target_link_libraries( airplay ${LIBCRYPTO} ${CMAKE_DL_LIBS})
+     target_include_directories( airplay PRIVATE
+                               ${OPENSSL_INCLUDE_DIRS}
+			       )
+  else ()
+    find_package(OpenSSL 1.1.1 REQUIRED)
+    message( "OpenSSL " ${OpenSSL} )
+    target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
+    target_link_libraries( airplay OpenSSL::Crypto )
+  endif()
+  
 elseif( APPLE )
   # use static linking
   # can either compile Openssl 1.1.1 from source (install_dev  to /usr/local) or use Macports or Brew
