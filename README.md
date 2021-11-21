@@ -48,7 +48,7 @@ get committed into the codebase  on the antimof site, as that
 project appears to no longer be active.
 If the pull request ever gets committed, replace "FDH2" by "antimof" in the above.*
 
-# Building this version (Linux/ *BSD):
+# Building this version (Linux and  \*BSD):
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS, see below).
 
