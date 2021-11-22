@@ -33,17 +33,10 @@ target_link_libraries( airplay
         llhttp )
 
 # libplist
-
-if( BSD )
-     pkg_check_modules( PLIST REQUIRED libplist-2.0 )
+if( UNIX AND NOT APPLE )
      target_include_directories( airplay PUBLIC ${PLIST_INCLUDE_DIRS} )
      link_directories( ${PLIST_LIBRARY_DIRS} )
-     message( STATUS "LIBPLIST " ${PLIST_LIBRARIES} )
      target_link_libraries ( airplay ${PLIST_LBRARIES} )
-elseif( UNIX AND NOT APPLE )
-     find_library( LIBPLIST NAMES plist3 plist  plist-2.0  libplist-2.0 )
-     message( STATUS "LIBPLIST " ${LIBPLIST} )
-     target_link_libraries ( airplay ${LIBPLIST} )
 elseif( APPLE )
    # use static linking
    pkg_check_modules( PLIST REQUIRED libplist-2.0 )
@@ -58,30 +51,14 @@ endif()
 
 #libcrypto
 if( UNIX AND NOT APPLE )
-  if (STATIC_OPENSSL3 )
-     set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig/" )
-     set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib64/pkgconfig/" )
-     pkg_check_modules( OPENSSL  REQUIRED openssl>=3.0.0 )
-     message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
-     message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
-     find_library( LIBCRYPTO libcrypto.a PATHS ${OPENSSL_LIBRARY_DIRS} REQUIRED )
-     message( "LIBCRYPTO "  ${LIBCRYPTO}  )
-     target_link_libraries( airplay ${LIBCRYPTO} ${CMAKE_DL_LIBS})
-     target_include_directories( airplay PRIVATE
-                               ${OPENSSL_INCLUDE_DIRS}
-			       )
-  else ()
-    find_package(OpenSSL 1.1.1 REQUIRED)
-    message( "OpenSSL " ${OpenSSL} )
-    target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
-    target_link_libraries( airplay OpenSSL::Crypto )
-  endif()
-  
+  find_package(OpenSSL 1.1.1 REQUIRED)
+  target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
+  target_link_libraries( airplay OpenSSL::Crypto )
 elseif( APPLE )
   # use static linking
   # can either compile Openssl 1.1.1 from source (install_dev  to /usr/local) or use Macports or Brew
   # MacPorts needs zlib with it, Brew has a strange "keg-only" installation in usr/local/opt/openssl@1.1
-  pkg_check_modules( OPENSSL REQUIRED Openssl>=1.1.1)
+  pkg_check_modules( OPENSSL REQUIRED openssl>=1.1.1)
   message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
   message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
   find_library( LIBCRYPTO libcrypto.a PATHS ${OPENSSL_LIBRARY_DIRS} REQUIRED )
@@ -98,18 +75,8 @@ elseif( APPLE )
 endif()
 
 #dns_sd
-if( BSD )
-  pkg_check_modules( DNSSD REQUIRED avahi-compat-libdns_sd )
+if ( UNIX AND NOT APPLE )
   target_include_directories( airplay PUBLIC ${DNSSD_INCLUDE_DIRS} )
   link_directories( ${DNSSD_LIBRARY_DIRS} )
   target_link_libraries( airplay ${DNSSD_LIBRARIES})
-elseif( UNIX AND NOT APPLE )
-  find_file( DNS_SD_H dns_sd.h PATHS /usr/include/* /usr/local/include/* )
-  if( NOT DNS_SD_H )
-    message( FATAL_ERROR "(avahi_compat) did not find dns_sd.h" )
-  endif()
-  string( REPLACE "dns_sd.h" "" DNS_SD ${DNS_SD_H} )
-  message( STATUS "found dns_sd.h in " ${DNS_SD} )
-  target_include_directories( airplay PRIVATE ${DNS_SD} )
-  target_link_libraries( airplay dns_sd )
 endif()
