@@ -64,13 +64,6 @@ exception-free linking of GPL v3 code to OpenSSL-1.1.1 under its old
 "dual OpenSSL/SSLeay" license should use the "Apache v2" OpenSSL-3.x,
 which is backwards-compatible with UxPlay.
 
-As a possible help for packaging the uxplay binary for distributions
-that do not allow linking GPL v3 code to OpenSSL-1.1.1, and have not yet
-provided OpenSSL-3.0.0 packages, "cmake -DSTATIC\_OPENSSL3=ON ...." will
-build uxplay that is statically linked to libcrypto.a that has been
-built from OpenSSL-3.x source, and installed in the default location
-(/usr/local/...); this can be uninstalled after UxPlay is compiled.
-
 An alternative is to replace the AES decryption code in
 lib/crypto.\[c,h\] (which is a wrapper for calls to OpenSSL's libcrypto)
 with a GPL implementation.
