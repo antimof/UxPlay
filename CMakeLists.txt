@@ -22,7 +22,6 @@ endif()
 
 if( UNIX AND NOT APPLE )
   find_package(PkgConfig REQUIRED)
-  pkg_check_modules(DNSSD REQUIRED avahi-compat-libdns_sd)
   pkg_check_modules(PLIST libplist>=2.0)
   if(NOT PLIST_FOUND)
     pkg_check_modules(PLIST REQUIRED libplist-2.0)
@@ -58,7 +57,6 @@ target_link_libraries( uxplay
 if ( UNIX AND NOT APPLE )
   target_link_directories( uxplay PUBLIC
                            ${GST_LIBRARY_DIRS}
-                           ${DNSSD_LIBRARY_DIRS}
                            ${PLIST_LIBRARY_DIRS}
                          )
   target_link_libraries( uxplay ${PLIST_LIBRARIES} )
