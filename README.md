@@ -47,7 +47,7 @@ which has a new Apache v2 license that is explicitly compatible with GPL v3
 (see [this announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/) and 
 [this](https://www.openssl.org/blog/blog/2017/03/22/license/)).
 
-The new license resolves a long-standing controversy over whether OpenSSL is a
+The new license resolves (or rather, makes irrelevant) a long-standing controversy over whether OpenSSL is a
 "System Library" to which GPL code can be freely linked, or not, in which case
 an explicit "GPL exception" must be added to the GPL license
 by all the authors (the historical origins of the UxPlay code make this impossible).

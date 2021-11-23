@@ -52,12 +52,12 @@ is explicitly compatible with GPL v3 (see [this
 announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/)
 and [this](https://www.openssl.org/blog/blog/2017/03/22/license/)).
 
-The new license resolves a long-standing controversy over whether
-OpenSSL is a "System Library" to which GPL code can be freely linked, or
-not, in which case an explicit "GPL exception" must be added to the GPL
-license by all the authors (the historical origins of the UxPlay code
-make this impossible). **The license issue only involves distribution of
-compiled code, not source code.**
+The new license resolves (or rather, makes irrelevant) a long-standing
+controversy over whether OpenSSL is a "System Library" to which GPL code
+can be freely linked, or not, in which case an explicit "GPL exception"
+must be added to the GPL license by all the authors (the historical
+origins of the UxPlay code make this impossible). **The license issue
+only involves distribution of compiled code, not source code.**
 
 Packagers for distributions such as Debian that do not allow
 exception-free linking of GPL v3 code to OpenSSL-1.1.1 under its old
