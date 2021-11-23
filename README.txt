@@ -155,9 +155,14 @@ gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
 **FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav,
 gstreamer1-plugins, gstreamer1-plugins-\* (\* = core, good, bad, x, gtk,
-gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics). OpenSSL
-is already installed. "ZOOMFIX" is untested; don't try to use it unless
-you need it.
+gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics). Also
+install avahi-libdns unless you are using an alternative such as
+mDNSResponder for mdns-dnssd service (in that case, if dns\_sd.h is not
+found, you may need to specify its location (e.g "export
+CPATH=/usr/local/include" if that is where it is) before running cmake.
+
+OpenSSL is already installed. "ZOOMFIX" is untested; don't try to use it
+unless you need it.
 
 Building this version (macOS):
 ==============================
