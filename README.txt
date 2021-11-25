@@ -41,8 +41,8 @@ audio and video renderers also found in RPiPlay.) Tested on Ubuntu
 
 Features: 1. Based on Gstreamer. 2. Video and audio are supported out of
 the box. 3. Gstreamer decoding is plugin agnostic. Uses accelerated
-decoders if available. VAAPI is preferable, (but don't use VAAPI with
-nVidia). 4. Automatic screen orientation.
+decoders if available. For Intel graphics, VAAPI is preferable, (but
+don't use VAAPI with nVidia). 4. Automatic screen orientation.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -75,11 +75,10 @@ Either download and unzip
 [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip),
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".
 
-*This is a pull request on the original site
+\*This is a pull request on the original site
 https://github.com/antimof/UxPlay ; it may or may not ever get committed
 into the codebase on the antimof site, as that project appears to no
-longer be active. If the pull request ever gets committed, replace
-"FDH2" by "antimof" in the above.*
+longer be active.
 
 Building this version (Linux and \*BSD):
 ========================================
@@ -122,24 +121,19 @@ the build directory after the build processs. Run uxplay in a terminal
 window.
 
 **Note libplist-dev (which must be for libplist version 2.0 or greater)
-and (for ZOOMFIX) libx11-dev are new dependencies. Older distributions
-may only supply libplist 1.x, which is too old. \[Installing
-libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on
-ubuntu 16.04.\]**
-
+and (for ZOOMFIX) libx11-dev are new dependencies since the original
+antimof version UxPlay-1.2. Older Linux distributionsmay only supply
+libplist 1.x, which is too old. \[Installing libplist-dev (with
+libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.\]**
 \_If you cannot find a libplist-2.x package that installs on your older
-distribution, and you don't wish to upgrade, see the instructions below
-(in the macOS section) on building libplist from source (you need
-autoconf, automake, libtool, and may need to also install some
-libpython\*-dev package) but (unlike the statically-linked macOS case)
-do not uninstall the libplist library after building uxplay; it must
-remain installed. It is in /usr/local/lib. If uxplay fails to find
-libplist when you run it, this is probably because /usr/local/lib is not
-in the library path (by default, this is the case in ubuntu). To fix
-this, run "sudo ldconfig" (you might also need to create a file
-/etc/ld.so.conf.d/libplist.conf containing the text "/usr/local/lib"
-before running ldconfig) to permanently add /usr/local/lib to the
-library path.\_
+distribution, you can get it at
+<https://github.com/libimobiledevice/libplist> and build it from source
+(you need build tools autoconf, automake, libtool, and may need to also
+install some libpython\*-dev package). By default, libplist installs in
+/usr/local/lib. If this is not in the library path (as in ubuntu),
+create a file /etc/ld.so.conf.d/libplist.conf containing the text
+"/usr/local/lib", and run "sudo ldconfig" to permanently add
+/usr/local/lib to the library path.\_
 
 **Red Hat, Fedora, CentOS:** (sudo yum install) openssl-devel
 libplist-devel avahi-compat-libdns\_sd-devel (+libX11-devel for
@@ -188,17 +182,17 @@ install to /Library/FrameWorks/GStreamer.framework). It is recommended
 you use GStreamer.framework rather than install Gstreamer with Homebrew
 or MacPorts (see later).
 
-Next install OpenSSL-1.1.1 and libplist: these can be built from source
-(see below) but it's easier to get them using MacPorts "sudo port
-install openssl libplist-devel" or Homebrew "brew install openssl
-libplist". Only the static forms of the two libraries will used for the
-macOS build, so they do not need to remain installed after you have
-built uxplay: if you don't have MacPorts or Homebrew installed, you can
-just install one of these package-managers before building uxplay, and
-uninstall it afterwards if you don't want to keep it. Unfortunately,
+Next install OpenSSL and libplist: these can be built from source (see
+below) but it is easier to get them using MacPorts "sudo port install
+openssl libplist-devel" or Homebrew "brew install openssl libplist".
+Only the static forms of the two libraries will used for the macOS
+build, so they do not need to remain installed after you have built
+uxplay: if you don't have MacPorts or Homebrew installed, you can just
+install one of these package-managers before building uxplay, and
+uninstall it afterwards if you do not want to keep it. Unfortunately,
 Fink's openssl11-dev package currently doesn't supply the static
-(libcrypto.a) form of the needed library libcrypto, and its libplist1
-package is too old.
+(libcrypto.a) form of the needed OpenSLL library libcrypto, and its
+libplist1 package is too old.
 
 Finally, build and install uxplay (without ZOOMFIX): open a terminal and
 change into the UxPlay source directory ("UxPlay-master" for zipfile
@@ -215,16 +209,15 @@ glimagesink GStreamer OpenGL plugin, not UxPlay). Also, the resolution
 settings "-s wxh" do not affect the (small) initial mirror window size,
 but the window can be expanded using the mouse or trackpad.
 
-***Building OpenSSL-1.1.1 and libplist from source on macOS***
+***Building OpenSSL and libplist from source on macOS***
 
 If you have have the standard GNU toolset (autoconf, automake, libtool,
 etc.) installed, you can also download and compile the source code for
 these libraries from <https://www.openssl.org/source/>,
 <https://github.com/libimobiledevice/libplist>. Install the downloaded
-openssl-1.1.1 by opening a terminal in your Downloads directory, and
-unpacking the source distribution openssl-1.1.1x.tar.gz (where "x" is a
-"patch" label, currently given by "x" = "l"): ("tar -xvzf
-openssl-1.1.1x.tar.gz ; cd openssl-1.1.1x"). Then build/install with
+openssl by opening a terminal in your Downloads directory, and unpacking
+the source distribution openssl-3.0.0.tar.gz , ("tar -xvzf
+openssl-3.0.0.tar.gz ; cd openssl-3.0.0"). Then build/install with
 "./config ; make ; sudo make install\_dev" and clean up after building
 uxplay with "sudo make uninstall" in the same directory. Similarly, for
 libplist, download the source as a zipfile from github as
@@ -239,25 +232,26 @@ recommended):***
 First make sure that pkgconfig is installed (Homebrew: "brew install
 pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 
-(a) with Homebrew: "brew install gst-plugins-good gst-plugins-bad
-    gst-libav". This appears to be functionally equivalent to using
-    GStreamer.framework, but causes a large number of extra packages to
-    be installed by Homebrew as dependencies.
+(a) with Homebrew: "brew install gst-plugins-base gst-plugins-good
+    gst-plugins-bad gst-libav". This appears to be functionally
+    equivalent to using GStreamer.framework, but causes a large number
+    of extra packages to be installed by Homebrew as dependencies.
 
-(b) with MacPorts: "sudo port install gstreamer1-gst-plugins-good
-    gstreamer1-gst-plugins-bad gstreamer1-gst-libav". The MacPorts
-    GStreamer is built to use X11, so must be run from an XQuartz
-    terminal, can use ZOOMFIX, and needs option "-vs ximagesink". On an
-    older unibody MacBook Pro, the default resolution wxh = 1920x1080
-    was too large for the non-retina display, but using option "-s
-    800x600" worked; However, the GStreamer pipeline is fragile against
-    attempts to change the X11 window size, or to rotations that switch
-    a connected client between portrait and landscape mode while uxplay
-    is running. Using the MacPorts X11 GStreamer is only viable if the
-    image size is left unchanged from the initial "-s wxh" setting (also
-    use the iPad/iPhone setting that locks the screen orientation
-    against switching between portrait and landscape mode as the device
-    is rotated).
+(b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
+    gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
+    gstreamer1-gst-libav". The MacPorts GStreamer is built to use X11,
+    so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
+    option "-vs ximagesink". On an older unibody MacBook Pro, the
+    default resolution wxh = 1920x1080 was too large for the non-retina
+    display, but using option "-s 800x600" worked; However, the
+    GStreamer pipeline is fragile against attempts to change the X11
+    window size, or to rotations that switch a connected client between
+    portrait and landscape mode while uxplay is running. Using the
+    MacPorts X11 GStreamer is only viable if the image size is left
+    unchanged from the initial "-s wxh" setting (also use the
+    iPad/iPhone setting that locks the screen orientation against
+    switching between portrait and landscape mode as the device is
+    rotated).
 
 **Troubleshooting:**
 ====================
