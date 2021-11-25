@@ -13,7 +13,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -march=native -DSTANDALONE -D__STDC_C
 if( APPLE )
   set( ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig" ) # standard location, and Brew
   set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig/" ) # MacPorts
-  set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/opt/openssl@1.1/lib/pkgconfig" ) # Brew openssl
+  set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/opt/openssl@3/lib/pkgconfig" ) # Brew openssl
   message( "PKG_CONFIG_PATH (Apple, lib) = " $ENV{PKG_CONFIG_PATH} )
   find_program( PKG_CONFIG_EXECUTABLE  pkg-config  PATHS /Library/FrameWorks/GStreamer.framework/Commands )
   message( "PKG_CONFIG_EXECUTABLE " ${PKG_CONFIG_EXECUTABLE} )
@@ -23,20 +23,32 @@ find_package(PkgConfig REQUIRED)
 aux_source_directory(. play_src)
 set(DIR_SRCS ${play_src})
 
-add_library( airplay
-        STATIC
-        ${DIR_SRCS}
-        )
-target_link_libraries( airplay
-        pthread
-        playfair
-        llhttp )
+add_library( airplay  STATIC
+             ${DIR_SRCS}
+           )
+
+if ( APPLE )
+  target_link_libraries( airplay 
+                         pthread
+                         playfair
+                         llhttp )
+else()
+  target_link_libraries( airplay PUBLIC 
+                         pthread
+                         playfair
+                         llhttp )
+endif()
+
 
 # libplist
 if( UNIX AND NOT APPLE )
-     target_include_directories( airplay PUBLIC ${PLIST_INCLUDE_DIRS} )
-     link_directories( ${PLIST_LIBRARY_DIRS} )
-     target_link_libraries ( airplay ${PLIST_LBRARIES} )
+  pkg_search_module(PLIST libplist>=2.0)
+  if(NOT PLIST_FOUND)
+    pkg_search_module(PLIST REQUIRED libplist-2.0)
+  endif()
+  target_include_directories( airplay PRIVATE ${PLIST_INCLUDE_DIRS} )
+  find_library( LIBPLIST ${PLIST_LIBRARIES} PATH ${PLIST_LIBDIR} )
+  target_link_libraries ( airplay PUBLIC ${LIBPLIST} )
 elseif( APPLE )
    # use static linking
    pkg_check_modules( PLIST REQUIRED libplist-2.0 )
@@ -46,14 +58,14 @@ elseif( APPLE )
                             /opt/local/include  # MacPorts
                             )
    message( STATUS "LIBPLIST " ${LIBPLIST} )
-   target_link_libraries ( airplay ${LIBPLIST} )
+   target_link_libraries ( airplay  ${LIBPLIST} )
 endif()
 
 #libcrypto
 if( UNIX AND NOT APPLE )
   find_package(OpenSSL 1.1.1 REQUIRED)
   target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
-  target_link_libraries( airplay OpenSSL::Crypto )
+  target_link_libraries( airplay PUBLIC OpenSSL::Crypto )
 elseif( APPLE )
   # use static linking
   # can either compile Openssl 1.1.1 from source (install_dev  to /usr/local) or use Macports or Brew
@@ -67,7 +79,7 @@ elseif( APPLE )
   if( LIBCRYPTO MATCHES "/opt/local/lib/libcrypto.a" ) #MacPorts openssl
     find_library( LIBZ libz.a)  # needed by MacPorts openssl
     message("(MacPorts) LIBZ= " ${LIBZ} )
-    target_link_libraries( airplay ${LIBZ} )
+    target_link_libraries( airplay  ${LIBZ} )
   endif()
   target_include_directories( airplay PRIVATE
                              ${OPENSSL_INCLUDE_DIRS}
@@ -76,10 +88,10 @@ endif()
 
 #dns_sd 
 if ( UNIX AND NOT APPLE )
-  pkg_check_modules(AVAHI_DNSSD avahi-compat-libdns_sd)
+  pkg_search_module(AVAHI_DNSSD avahi-compat-libdns_sd)
   if (AVAHI_DNSSD_FOUND)
-     target_include_directories( airplay PUBLIC ${AVAHI_DNSSD_INCLUDE_DIRS} )
-     target_link_libraries( airplay ${AVAHI_DNSSD_LIBRARIES} )
+     target_include_directories( airplay PRIVATE ${AVAHI_DNSSD_INCLUDE_DIRS} )
+     find_library( DNSSD ${AVAHI_DNSSD_LIBRARIES} PATH ${AVAHI_DNSSD_LIBDIR})
   else()  # UxPlay can also build if mDNSResponder or another implementation of dns_sd is present instead of Avahi
      find_library( DNSSD dns_sd )
      if( NOT DNSSD )
@@ -93,7 +105,7 @@ if ( UNIX AND NOT APPLE )
       else()
         message( STATUS "found dns_sd.h in " ${DNSSD_INCLUDE_DIR} )
       endif()
-     target_include_directories( airplay PUBLIC ${DNSSD_INCLUDE_DIR} )
-     target_link_libraries(airplay  dns_sd )
+     target_include_directories( airplay PRIVATE ${DNSSD_INCLUDE_DIR} )
    endif()
+target_link_libraries(airplay PUBLIC ${DNSSD} )
 endif()

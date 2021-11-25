@@ -15,44 +15,34 @@ pkg_check_modules(GST REQUIRED    gstreamer-1.0>=1.4
                                   gstreamer-sdp-1.0>=1.4
                                   gstreamer-video-1.0>=1.4
                                   gstreamer-app-1.0>=1.4
-                                  )
-message( "GST_LIBRARIES" ${GST_LIBRARIES} )
-# hack to fix cmake confusion due to links in path
-if( GST_LIBRARY_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/lib" )
-   set( GST_LIBRARY_DIRS "/Library/FrameWorks/GStreamer.framework/Libraries")
-endif()
-
-message( "GST_LIBRARY_DIRS " ${GST_LIBRARY_DIRS} )
-message( "GST_CFLAGS " ${GST_CFLAGS} )
-message( "GST_LDFLAGS " ${GST_LDFLAGS} )
-message( "GST_INCLUDE_DIRS " ${GST_INCLUDE_DIRS} )
+)
 
 add_library( renderers
              STATIC
              audio_renderer_gstreamer.c
 	     video_renderer_gstreamer.c )
-if( UNIX AND NOT APPLE )
-  include_directories ( renderers ${GST_INCLUDE_DIRS} )
+
+target_link_libraries ( renderers PUBLIC airplay )
+
+# hack to fix cmake confusion due to links in path with macOS FrameWorks
+if( GST_LIBRARY_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/lib" )
+  set( GST_INCLUDE_DIRS "/Library/FrameWorks/GStreamer.framework/Headers")
+  message( "GST_INCLUDE_DIRS" ${GST_INCLUDE_DIRS} )
+  target_include_directories ( renderers PRIVATE ${GST_INCLUDE_DIRS} )
+  if( CMAKE_VERSION VERSION_LESS "3.13.5" )
+    message( FATAL_ERROR "This macOS build needs cmake >= 3.13.5" )
+  endif()
+  set( GST_LIBRARY_DIRS "/Library/FrameWorks/GStreamer.framework/Libraries")
+  message( "GST_LIBRARY_DIRS" ${GST_LIBRARY_DIRS} )
+  target_link_libraries( renderers PUBLIC ${GST_LIBRARIES} )
+  target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )  
 else()
-  include_directories (renderers
-                    /Library/FrameWorks/GStreamer.framework/Headers
-                    /usr/local/include
-                    /usr/local/include/gstreamer-1.0
-		    /usr/local/include/glib-2.0
-		    /usr/local/lib/glib-2.0/include
-                    /opt/local/include/gstreamer-1.0
-		    /opt/local/include/glib-2.0
-		    /opt/local/lib/glib-2.0/include
-                    )
+  target_include_directories ( renderers PRIVATE ${GST_INCLUDE_DIRS} )
+  if( CMAKE_VERSION VERSION_LESS "3.12.4" )
+    target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )  
+  else()		  
+    target_link_libraries( renderers PUBLIC ${GST_LINK_LIBRARIES} )
+  endif()
 endif()
 
-target_link_libraries ( renderers PUBLIC
-                     ${GST_LIBRARIES}
-                     airplay
-                     )
-
-if( APPLE )
-  message( "APPLE ONLY: \"target_link_directories\" used here requires CMake >= 3.13 ")
-  target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )
-endif()
 
