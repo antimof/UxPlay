@@ -25,7 +25,6 @@ add_subdirectory( lib )
 add_subdirectory( renderers )
 
 add_executable( uxplay uxplay.cpp )
-include_directories( uxplay ${GST_INCLUDE_DIRS} )
 target_link_libraries( uxplay
                    renderers
                    airplay

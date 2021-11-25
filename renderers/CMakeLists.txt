@@ -24,25 +24,26 @@ add_library( renderers
 
 target_link_libraries ( renderers PUBLIC airplay )
 
-# hack to fix cmake confusion due to links in path with macOS FrameWorks
-if( GST_LIBRARY_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/lib" )
+# hacks to fix cmake confusion due to links in path with macOS FrameWorks
+
+if( GST_INCLUDE_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/include" )
   set( GST_INCLUDE_DIRS "/Library/FrameWorks/GStreamer.framework/Headers")
-  message( "GST_INCLUDE_DIRS" ${GST_INCLUDE_DIRS} )
-  target_include_directories ( renderers PRIVATE ${GST_INCLUDE_DIRS} )
-  if( CMAKE_VERSION VERSION_LESS "3.13.5" )
-    message( FATAL_ERROR "This macOS build needs cmake >= 3.13.5" )
-  endif()
+  message( STATUS  "GST_INCLUDE_DIRS" ${GST_INCLUDE_DIRS} )
+endif()
+target_include_directories ( renderers PUBLIC ${GST_INCLUDE_DIRS} )
+
+if( GST_LIBRARY_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/lib" )
   set( GST_LIBRARY_DIRS "/Library/FrameWorks/GStreamer.framework/Libraries")
-  message( "GST_LIBRARY_DIRS" ${GST_LIBRARY_DIRS} )
+  message( STATUS  "GST_LIBRARY_DIRS" ${GST_LIBRARY_DIRS} )
   target_link_libraries( renderers PUBLIC ${GST_LIBRARIES} )
-  target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )  
-else()
-  target_include_directories ( renderers PRIVATE ${GST_INCLUDE_DIRS} )
-  if( CMAKE_VERSION VERSION_LESS "3.12.4" )
-    target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )  
-  else()		  
-    target_link_libraries( renderers PUBLIC ${GST_LINK_LIBRARIES} )
+  if( CMAKE_VERSION VERSION_LESS "3.13" )
+    message( FATAL_ERROR "This macOS build needs cmake >= 3.13" )
   endif()
+  target_link_directories ( renderers  PUBLIC ${GST_LIBRARY_DIRS} )  
+elseif( CMAKE_VERSION VERSION_LESS "3.12" )
+  target_link_libraries ( renderers  PUBLIC ${GST_LIBRARIES} )  
+else()		  
+  target_link_libraries( renderers PUBLIC ${GST_LINK_LIBRARIES} )
 endif()
 
 
