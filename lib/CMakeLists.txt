@@ -46,20 +46,16 @@ if( UNIX AND NOT APPLE )
   if(NOT PLIST_FOUND)
     pkg_search_module(PLIST REQUIRED libplist-2.0)
   endif()
-  target_include_directories( airplay PRIVATE ${PLIST_INCLUDE_DIRS} )
   find_library( LIBPLIST ${PLIST_LIBRARIES} PATH ${PLIST_LIBDIR} )
   target_link_libraries ( airplay PUBLIC ${LIBPLIST} )
 elseif( APPLE )
    # use static linking
-   pkg_check_modules( PLIST REQUIRED libplist-2.0 )
+   pkg_search_module( PLIST REQUIRED libplist-2.0 )
    find_library( LIBPLIST libplist-2.0.a REQUIRED )
-   target_include_directories( airplay PRIVATE
-                            /usr/local/include  # standard and Brew
-                            /opt/local/include  # MacPorts
-                            )
    message( STATUS "LIBPLIST " ${LIBPLIST} )
    target_link_libraries ( airplay  ${LIBPLIST} )
 endif()
+target_include_directories( airplay PRIVATE ${PLIST_INCLUDE_DIRS} )
 
 #libcrypto
 if( UNIX AND NOT APPLE )
@@ -68,8 +64,8 @@ if( UNIX AND NOT APPLE )
   target_link_libraries( airplay PUBLIC OpenSSL::Crypto )
 elseif( APPLE )
   # use static linking
-  # can either compile Openssl 1.1.1 from source (install_dev  to /usr/local) or use Macports or Brew
-  # MacPorts needs zlib with it, Brew has a strange "keg-only" installation in usr/local/opt/openssl@1.1
+  # can either compile Openssl 1.1.1 or 3.0.0  from source (install_dev  to /usr/local) or use Macports or Brew
+  # MacPorts needs zlib with it, Brew has a strange "keg-only" installation in usr/local/opt/openssl@3
   pkg_check_modules( OPENSSL REQUIRED openssl>=1.1.1)
   message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
   message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
@@ -81,9 +77,7 @@ elseif( APPLE )
     message("(MacPorts) LIBZ= " ${LIBZ} )
     target_link_libraries( airplay  ${LIBZ} )
   endif()
-  target_include_directories( airplay PRIVATE
-                             ${OPENSSL_INCLUDE_DIRS}
-			     )
+  target_include_directories( airplay PRIVATE ${OPENSSL_INCLUDE_DIRS} )
 endif()
 
 #dns_sd 
