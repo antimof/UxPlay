@@ -442,6 +442,8 @@ int main (int argc, char *argv[]) {
 	LOGI("video_disabled");
         display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
     }
+
+    append_hostname(server_name);
     
     if (use_audio) {
         audio_renderer_init(audiosink.c_str());
@@ -469,8 +471,6 @@ int main (int argc, char *argv[]) {
     }
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();
-
-    append_hostname(server_name);
     
     relaunch:
     compression_type = 0;

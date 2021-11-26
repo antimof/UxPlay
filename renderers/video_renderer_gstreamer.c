@@ -102,8 +102,10 @@ void  video_renderer_init(const char *server_name, videoflip_t videoflip[2], con
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
 
-    if (!g_get_application_name()) g_set_application_name(server_name);
-
+    const gchar *appname = g_get_application_name();
+    if (!appname || strcmp(appname,server_name))  g_set_application_name(server_name);
+    appname = NULL;
+    
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
 
