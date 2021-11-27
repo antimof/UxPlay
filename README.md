@@ -188,7 +188,8 @@ unpack ("unzip libplist-master.zip ; cd libplist-master"), build/install
 First make sure that pkgconfig is installed  (Homebrew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
-to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.
+to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.  (However, as of November 2021,
+Homebrew offers a build of GStreamer for Apple Silicon, which then was not yet available on the offical GStreamer site.)
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 The MacPorts GStreamer is built to use X11, so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
@@ -257,6 +258,11 @@ where you will run uxplay, so that you see warning and error messages;
 (replace "2" by "4" to see much (much) more of what is happening inside
 GStreamer).   Run "gst-inspect-1.0" to see which GStreamer plugins are
 installed on your system.
+
+Some extra GStreamer packages for special plugins may need to be installed (or reinstalled: a user using a Wayland display system as an alternative to X11
+reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstreamer1.0-x was installed, presumably for Wayland's X11-compatibility mode).
+Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
+other required GStreamer packages as dependencies, but will not install all possible plugins.
 
 #  **Usage:**
 
@@ -470,9 +476,10 @@ This project makes use of a third-party GPL library for handling FairPlay. The l
 Given the large number of third-party AirPlay receivers (mostly closed-source) available for purchase, it is my understanding that an open source implementation of the same functionality wouldn't violate any of Apple's rights either.
 
 
-# RPiPlay Authors (Notes by Florian Draschbacher, RPiPlay creator.)
-
+# Notes by Florian Draschbacher, RPiPlay creator
 (From the  https://github.com/FD-/RPiPlay.git repository.)
+
+## RPiPlay authors
 
 The code in this repository accumulated from various sources over time. Here
 is my (__fdrachbacher__) attempt at listing the various authors and the components they created:
@@ -484,7 +491,7 @@ is my (__fdrachbacher__) attempt at listing the various authors and the componen
 * **Team XBMC**: Managed to show a black background for OpenMAX video rendering. This code is used in the video renderer. License: GNU GPL
 * **Alex Izvorski and contributors**: Wrote [h264bitstream](https://github.com/aizvorski/h264bitstream), a library for manipulation h264 streams. Used for reducing delay in the Raspberry Pi video pipeline. Located in the `renderers/h264-bitstream` folder. License: GNU LGPLv2.1
 
-# AirPlay protocol versions
+## AirPlay protocol versions
 
 For multiple reasons, it's very difficult to clearly define the protocol names and versions of the components that make up the AirPlay streaming system. In fact, it seems like the AirPlay version number used for marketing differs from that used in the actual implementation. In order to tidy up this whole mess a bit, I did a little research that I'd like to summarize here:
 
