@@ -296,6 +296,12 @@ explicitly choosing the GStreamer videosink with option "-vs ximagesink"
 or "-vs xvimagesink", to see if this fixes the problem, or "-vs
 vaapisink" to see if this reproduces the problem.)
 
+There are some reports of GStreamer problems with Intel graphics. One
+user (on Debian) solved this with "sudo install
+intel-media-va-driver-non-free". This is a driver for 8'th (or later)
+generation \"\*-lake\" Intel chips, that seems to be related to VAAPI
+accelerated graphics.
+
 You can try to fix audio problems by using the "-as *audiosink*" option
 to choose the GStreamer audiosink , rather than have autoaudiosink pick
 one for you. The command "gst\_inspect-1.0 \| grep Sink \| grep Audio"

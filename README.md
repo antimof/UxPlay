@@ -233,6 +233,10 @@ plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installe
 "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
 reproduces the problem.)
 
+There are some reports of GStreamer problems with Intel graphics.  One user
+(on Debian) solved this with "sudo install intel-media-va-driver-non-free".  This is a driver for 8'th (or later) generation
+"*-lake" Intel chips, that seems to be related to VAAPI accelerated graphics.
+
 You can try to fix audio problems by using the "-as _audiosink_"  option to choose the GStreamer audiosink , rather than
 have autoaudiosink pick one for you.    The command "gst_inspect-1.0 | grep Sink | grep Audio" " will show you which audiosinks are 
 available on your system.  (Replace  "Audio" by "Video" to see videosinks).   Some possible audiosinks are pulsesink, alsasink, osssink, oss4sink,
