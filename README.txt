@@ -297,7 +297,7 @@ or "-vs xvimagesink", to see if this fixes the problem, or "-vs
 vaapisink" to see if this reproduces the problem.)
 
 There are some reports of GStreamer problems with Intel graphics. One
-user (on Debian) solved this with "sudo install
+user (on Debian) solved this with "sudo apt install
 intel-media-va-driver-non-free". This is a driver for 8'th (or later)
 generation \"\*-lake\" Intel chips, that seems to be related to VAAPI
 accelerated graphics.
