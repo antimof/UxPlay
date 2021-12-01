@@ -161,7 +161,7 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(r_node, "displays", displays_node);
 
     plist_to_bin(r_node, response_data, (uint32_t *) response_datalen);
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "INFO len = %d", response_datalen);
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "INFO len = %d", *response_datalen);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
     free(pk);
     free(hw_addr);
