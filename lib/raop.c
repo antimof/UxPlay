@@ -172,7 +172,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     raop_handler_t handler = NULL;
     if (!strcmp(method, "GET") && !strcmp(url, "/info")) {
         handler = &raop_handler_info;
-    } else if (!strcmp(method, "POST") && !strcmp(url, "/opair-setup")) {
+    } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-setup")) {
         handler = &raop_handler_pairsetup;
     } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-verify")) {
         handler = &raop_handler_pairverify;
