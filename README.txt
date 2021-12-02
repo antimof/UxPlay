@@ -608,11 +608,13 @@ Here is my (**fdrachbacher**) attempt at listing the various authors and
 the components they created:
 
 -   **dsafa22**: Created an [AirPlay 2 mirroring
-    server](https://github.com/dsafa22/AirplayServer)(seems gone now)
-    for Android based on ShairPlay. This project is basically a port of
-    dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL
-    for better performance on the Pi. All code in `lib/` concerning
-    mirroring is dsafa22's work. License: GNU LGPLv2.1+
+    server](https://github.com/dsafa22/AirplayServer)(seems gone now,
+    but [see here](https://www.programmersought.com/article/2084789418/)
+    for a description) for Android based on ShairPlay. This project is
+    basically a port of dsafa22's code to the Raspberry Pi, utilizing
+    OpenMAX and OpenSSL for better performance on the Pi. All code in
+    `lib/` concerning mirroring is dsafa22's work. License: GNU
+    LGPLv2.1+
 -   **Juho Vähä-Herttua** and contributors: Created an AirPlay audio
     server called [ShairPlay](https://github.com/juhovh/shairplay),
     including support for Fairplay based on PlayFair. Most of the code
