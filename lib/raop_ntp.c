@@ -350,6 +350,8 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
     int use_ipv6 = 0;
 
     assert(raop_ntp);
+    assert(timing_lport);
+
     raop_ntp->timing_lport = *timing_lport;
 
     MUTEX_LOCK(raop_ntp->run_mutex);
@@ -368,7 +370,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
         MUTEX_UNLOCK(raop_ntp->run_mutex);
         return;
     }
-    if (timing_lport) *timing_lport = raop_ntp->timing_lport;
+    *timing_lport = raop_ntp->timing_lport;
 
     /* Create the thread and initialize running values */
     raop_ntp->running = 1;
