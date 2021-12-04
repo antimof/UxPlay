@@ -51,12 +51,12 @@ struct raop_s {
     unsigned short data_lport;
     unsigned short mirror_data_lport;  
 
-    /* plist display items: width, height, refreshRate, maxFPS, overscanned */
-    uint16_t display_width;
-    uint16_t display_height;
-    uint8_t display_refresh_rate;
-    uint8_t display_max_fps;
-    uint8_t display_overscanned;
+    /* configurable plist items: width, height, refreshRate, maxFPS, overscanned */
+    uint16_t width;
+    uint16_t height;
+    uint8_t refreshRate;
+    uint8_t maxFPS;
+    uint8_t overscanned;
 };
 
 struct raop_conn_s {
@@ -363,12 +363,12 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     raop->data_lport = 0;
     raop->mirror_data_lport = 0;
 
-    /* initialize display plist parameters */
-    raop->display_width = 1920;
-    raop->display_height = 1080;
-    raop->display_refresh_rate = 60;
-    raop->display_max_fps = 30;
-    raop->display_overscanned = 0;
+    /* initialize configurable plist parameters */
+    raop->width = 1920;
+    raop->height = 1080;
+    raop->refreshRate = 60;
+    raop->maxFPS = 30;
+    raop->overscanned = 0;
     
     return raop;
 }
@@ -402,14 +402,14 @@ raop_set_log_level(raop_t *raop, int level) {
 }
 
 void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
-                      unsigned short refresh_rate, unsigned short max_fps, unsigned short overscanned){
+                      unsigned short refreshRate, unsigned short maxFPS, unsigned short overscanned){
     assert(raop);
 
-    if (width) raop->display_width = (uint16_t) width;
-    if (height) raop->display_height = (uint16_t) height;
-    if (refresh_rate && refresh_rate < 256) raop->display_refresh_rate = (uint8_t) refresh_rate;
-    if (max_fps && max_fps < 256) raop->display_max_fps = (uint8_t) max_fps;
-    if (overscanned) raop->display_overscanned = 1;
+    if (width) raop->width = (uint16_t) width;
+    if (height) raop->height = (uint16_t) height;
+    if (refreshRate && refreshRate < 256) raop->refreshRate = (uint8_t) refreshRate;
+    if (maxFPS && maxFPS < 256) raop->maxFPS = (uint8_t) maxFPS;
+    if (overscanned) raop->overscanned = 1;
 }
 
 void

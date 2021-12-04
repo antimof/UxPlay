@@ -58,7 +58,7 @@ RAOP_API raop_t *raop_init(int max_clients, raop_callbacks_t *callbacks);
 RAOP_API void raop_set_log_level(raop_t *raop, int level);
 RAOP_API void raop_set_log_callback(raop_t *raop, raop_log_callback_t callback, void *cls);
 RAOP_API void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
-                               unsigned short refresh_rate, unsigned short max_fps, unsigned short overscanned);
+                               unsigned short refreshRate, unsigned short maxFPS, unsigned short overscanned);
 RAOP_API void raop_set_port(raop_t *raop, unsigned short port);
 RAOP_API void raop_set_udp_ports(raop_t *raop, unsigned short port[3]);
 RAOP_API void raop_set_tcp_ports(raop_t *raop, unsigned short port[2]);
