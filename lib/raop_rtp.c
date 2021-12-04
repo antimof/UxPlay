@@ -227,15 +227,12 @@ raop_rtp_resend_callback(void *opaque, unsigned short seqnum, unsigned short cou
 static int
 raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6, int use_udp)
 {
-    int csock = -1, dsock = -1;
-    unsigned short cport = 0, dport = 0;
-
     assert(raop_rtp);
 
-    cport = raop_rtp->control_lport;
-    dport = raop_rtp->data_lport;
-    csock = netutils_init_socket(&cport, use_ipv6, 1);
-    dsock = netutils_init_socket(&dport, use_ipv6, 1);
+    unsigned short cport = raop_rtp->control_lport;
+    unsigned short dport = raop_rtp->data_lport;
+    int csock = netutils_init_socket(&cport, use_ipv6, 1);
+    int dsock = netutils_init_socket(&dport, use_ipv6, 1);
 
     if (csock == -1 || dsock == -1) {
         goto sockets_cleanup;
