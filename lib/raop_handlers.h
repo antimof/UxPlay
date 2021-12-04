@@ -237,6 +237,7 @@ raop_handler_pairverify(raop_conn_t *conn,
             }
             break;
         case 0:
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "2nd pair-verify step: checking signature");
             if (datalen != 4 + PAIRING_SIG_SIZE) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
                 return;
