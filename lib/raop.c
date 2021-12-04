@@ -412,7 +412,7 @@ int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
     } else if (strcmp(plist_item,"height") == 0) {
         raop->height = (uint16_t) value;
         if ((int) raop->height != value) retval = 1;
-    } else  if (strcmp(plist_item,"refreshRate") == 0) {
+    } else if (strcmp(plist_item,"refreshRate") == 0) {
         raop->refreshRate = (uint8_t) value;
         if ((int) raop->refreshRate != value) retval = 1;
     } else if (strcmp(plist_item,"maxFPS") == 0) {
