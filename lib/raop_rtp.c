@@ -532,7 +532,9 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
     int use_ipv6 = 0;
 
     assert(raop_rtp);
-    
+    assert(control_lport);
+    assert(data_lport);
+
     MUTEX_LOCK(raop_rtp->run_mutex);
     if (raop_rtp->running || !raop_rtp->joined) {
         MUTEX_UNLOCK(raop_rtp->run_mutex);
@@ -552,8 +554,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
         MUTEX_UNLOCK(raop_rtp->run_mutex);
         return;
     }
-    if (control_lport) *control_lport = raop_rtp->control_lport;
-    if (data_lport) *data_lport = raop_rtp->data_lport;
+    *control_lport = raop_rtp->control_lport;
+    *data_lport = raop_rtp->data_lport;
     /* Create the thread and initialize running values */
     raop_rtp->running = 1;
     raop_rtp->joined = 0;

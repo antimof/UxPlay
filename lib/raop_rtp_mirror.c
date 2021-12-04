@@ -446,6 +446,7 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
     int use_ipv6 = 0;
 
     assert(raop_rtp_mirror);
+    assert(mirror_data_lport);
 
     MUTEX_LOCK(raop_rtp_mirror->run_mutex);
     if (raop_rtp_mirror->running || !raop_rtp_mirror->joined) {
@@ -464,7 +465,7 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
         MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
         return;
     }
-    if (mirror_data_lport) *mirror_data_lport = raop_rtp_mirror->mirror_data_lport;
+    *mirror_data_lport = raop_rtp_mirror->mirror_data_lport;
 
     /* Create the thread and initialize running values */
     raop_rtp_mirror->running = 1;
