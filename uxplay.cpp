@@ -603,8 +603,12 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
 
     /* write desired display pixel width, pixel height, refresh_rate, max_fps, overscanned.  */
     /* use 0 for default values 1920,1080,60,30,0; these are sent to the Airplay client      */
-    
-    raop_set_display(raop, display[0], display[1], display[2], display[3], display[4]);
+
+    if (display[0]) raop_set_plist(raop, "width", (int) display[0]);
+    if (display[1]) raop_set_plist(raop, "height", (int) display[1]);
+    if (display[2]) raop_set_plist(raop, "refreshRate", (int) display[2]);
+    if (display[3]) raop_set_plist(raop, "maxFPS", (int) display[3]);
+    if (display[4]) raop_set_plist(raop, "overscanned", (int) display[4]);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);

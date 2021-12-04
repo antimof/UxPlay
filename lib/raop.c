@@ -401,15 +401,30 @@ raop_set_log_level(raop_t *raop, int level) {
     logger_set_level(raop->logger, level);
 }
 
-void raop_set_display(raop_t *raop, unsigned short width, unsigned short height,
-                      unsigned short refreshRate, unsigned short maxFPS, unsigned short overscanned){
+int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
+    int retval = 0;
     assert(raop);
-
-    if (width) raop->width = (uint16_t) width;
-    if (height) raop->height = (uint16_t) height;
-    if (refreshRate && refreshRate < 256) raop->refreshRate = (uint8_t) refreshRate;
-    if (maxFPS && maxFPS < 256) raop->maxFPS = (uint8_t) maxFPS;
-    if (overscanned) raop->overscanned = 1;
+    assert(plist_item);
+    
+    if (strcmp(plist_item,"width") == 0) {
+        raop->width = (uint16_t) value;
+        if ((int) raop->width != value) retval = 1;
+    } else if (strcmp(plist_item,"height") == 0) {
+        raop->height = (uint16_t) value;
+        if ((int) raop->height != value) retval = 1;
+    } else  if (strcmp(plist_item,"refreshRate") == 0) {
+        raop->refreshRate = (uint8_t) value;
+        if ((int) raop->refreshRate != value) retval = 1;
+    } else if (strcmp(plist_item,"maxFPS") == 0) {
+        raop->maxFPS = (uint8_t) value;
+        if ((int) raop->maxFPS != value) retval = 1;
+    } else if (strcmp(plist_item,"overscanned") == 0) {
+      raop->overscanned = (uint8_t) (value ? 1 : 0);
+      if ((int) raop->overscanned  != value) retval = 1;
+    }  else {
+        retval = -1;
+    }	  
+    return retval;
 }
 
 void
