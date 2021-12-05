@@ -324,14 +324,16 @@ raop_rtp_mirror_thread(void *arg)
                 while (nalu_size < payload_size) {
                     int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
                                  (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
-                    assert(nc_len > 0);
-
                     payload_decrypted[nalu_size + 0] = 0;
                     payload_decrypted[nalu_size + 1] = 0;
                     payload_decrypted[nalu_size + 2] = 0;
                     payload_decrypted[nalu_size + 3] = 1;
                     nalu_size += nc_len + 4;
                     nalus_count++;
+                    if (nc_len < 0 || nalu_size > payload_size) {
+                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "*** ERROR decrypted video is not valid");
+                        assert(nc_len > 0 && nalu_size <= payload_size);
+                    }
                 }
 
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalutype = %d", nalu_type);
