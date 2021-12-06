@@ -112,7 +112,7 @@ downloads), then do
 replace* "`cmake  [ ] .`" *by*
 "`mkdir build ; cd build ; cmake [ ] ..`"; *you can then clean out the
 build directory with* "`rm -rf *`" *(run from within the build
-directory, of course!) without out affecting the source directory which
+directory, of course!) without affecting the source directory which
 contains your modifications*.
 
 The above script installs the executable file "`uxplay`" to
