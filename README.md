@@ -127,7 +127,7 @@ OpenSSL is already installed as a System Library.   "ZOOMFIX" is untested; don't
 **(Only tested on Intel X86_64 Macs)**
 
 _Note: A native AirPlay Server feature is included in  macOS 12 Monterey, but is restricted to recent hardware.
-UxPlay can run  on older macOS systems that will not be able to run Monterey, or can Monterey  but not AirPlay._
+UxPlay can run  on older macOS systems that will not be able to run Monterey, or can run Monterey  but not AirPlay._
 
 These instructions for macOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
