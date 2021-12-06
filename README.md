@@ -268,7 +268,13 @@ reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstr
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
 
-#  **Usage:**
+**Use with non-Apple clients**:  one user tried to use UxPlay with  an *airmypc* client (a non-free commercial 
+Windows application that can mirror a Windows screen on an Apple TV using AirPlay mirror protocol).   While *airmypc* 
+can mirror to a true AppleTV and some other AirPlay receivers, UxPlay appears to correctly pair with this client, but 
+then fails to decrypt both the audio and video streams. Possibly an older version of the AirPlay encryption/decryption 
+protocol not supported by UxPlay is used by this client.  Without further information, there is no obvious fix.
+
+# **Usage:**
 
 Options:
 
