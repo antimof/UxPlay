@@ -19,11 +19,9 @@ through the avahi-daemon service, and is included in  most Linux distributions (
 service can also be provided by macOS, iOS or Windows servers).
 
 _**New:** UxPlay > 1.38  now also supports the Airplay audio-only protocol as well as AirPlay Mirror protocol, and (when the client screen is not being mirrored)
-can play Apple Lossless (ALAC)
-44100/16/2 audio streamed from the client in  2-channel stereo without video (the accompanying cover-art and metadata is received by the server,
-but not displayed). The initial connection to the client can be in AirPlay audio mode, or an initial Airplay Mirror connection can be switched to
-Airplay audio by selecting "Stop Mirroring" in the Screen Mirroring setting (or closing the mirror window) and reconnecting in audio-only AirPlay mode
-(the audio stream changes back to "Advanced Audio Coding" (AAC-ELD) compressed (lossy) format if screen mirroring is (re)started)._
+can play Apple Lossless (ALAC) audio streamed from the client without video (the accompanying cover-art and metadata is  not displayed).
+The initial connection to the client can be either AirPlay audio or Airplay Mirror mode.   An initial Airplay Mirror connection (with "Advanced Audio Coding" (AAC-ELD) (lossy) audio
+switches to ALAC if the mirrow window is closed and an AiPlay audio connection is started, and back again to AAC if an Airplay Mirror connection is (re)started_.
 
 UxPlay is based on https://github.com/FD-/RPiPlay, with GStreamer integration from
 https://github.com/antimof/UxPlay.
@@ -65,12 +63,12 @@ with a GPL implementation.
 Either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".   
 
-*This is a pull request on the
-original site https://github.com/antimof/UxPlay ; it may or may not ever
-get committed into the codebase  on the antimof site, as that
-project appears to no longer be active.
+*This is also a pull request on the
+original site https://github.com/antimof/UxPlay ; but is unlikely to ever
+get committed into the codebase there, as that
+project appears to be inactive.
 
-# Building this version (Linux and  \*BSD):
+## Building UxPlay on  Linux or   \*BSD):
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS, see below).
 
@@ -89,8 +87,7 @@ Zoom, see below).
 5. `make`
 6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
 
-_Note that older cmake does not require the final "`.`" to specify the current directory as the source directory,
-but newer cmake requires it. If you intend to modify the code, use a separate "build" directory: replace "cmake  [ ] ." by "mkdir build ; cd build ; cmake [ ] .."; you can then get back to the clean source (with any changes you made) with "cd .. ; rm -rf build"._
+_If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean out the build directory with_ "```rm -rf * ```" _(run from within the build directory, of course!) without out affecting the source directory which contains your modifications_.
 
 The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and README
 files to `/usr/local/share/doc/uxplay`).
@@ -99,7 +96,7 @@ processs. Run uxplay in a terminal window.
 
 
 **Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies since the original antimof version UxPlay-1.2.  Older Linux
-distributionsmay only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.]**
+distributions may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.]**
 _If you  cannot find a libplist-2.x package that installs on your older distribution, you can get it at
 [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist) and build it from source
 (you need build tools  autoconf, automake, libtool, and may need to also install some libpython*-dev package).
@@ -122,9 +119,7 @@ gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-p
 Either avahi-libdns or mDNSResponder must also be installed to provide the dns_sd library.
 OpenSSL is already installed as a System Library.   "ZOOMFIX" is untested; don't try to use it on FreeBSD unless you need it.
 
-# Building this version (macOS):
-
-**(Only tested on Intel X86_64 Macs)**
+## Building UxPlay on macOS:  **(Only tested on Intel X86_64 Macs)**
 
 _Note: A native AirPlay Server feature is included in  macOS 12 Monterey, but is restricted to recent hardware.
 UxPlay can run  on older macOS systems that will not be able to run Monterey, or can run Monterey  but not AirPlay._
@@ -271,7 +266,7 @@ other required GStreamer packages as dependencies, but will not install all poss
 **Use with non-Apple clients**:  one user tried to use UxPlay with  an *airmypc* client (a non-free commercial 
 Windows application that can mirror a Windows screen on an Apple TV using AirPlay mirror protocol).   While *airmypc* 
 can mirror to a true AppleTV and some other AirPlay receivers, UxPlay appears to correctly pair with this client, but 
-then fails to decrypt both the audio and video streams. Possibly an older version of the AirPlay encryption/decryption 
+then fails to decrypt both the audio and video streams. Possibly a different variant of the AirPlay encryption/decryption 
 protocol not supported by UxPlay is used by this client.  Without further information, there is no obvious fix.
 
 # **Usage:**
