@@ -81,8 +81,8 @@ https://github.com/antimof/UxPlay ; but is unlikely to ever get
 committed into the codebase there, as that project appears to be
 inactive.
 
-Building UxPlay on Linux or \*BSD):
------------------------------------
+Building UxPlay on Linux (or \*BSD):
+------------------------------------
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
 macOS, see below).
