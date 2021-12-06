@@ -95,11 +95,11 @@ It can also be found in the build directory after the build
 processs. Run uxplay in a terminal window.
 
 
-**Note libplist-dev (which must be for libplist version 2.0 or greater) and (for ZOOMFIX) libx11-dev are new dependencies since the original antimof version UxPlay-1.2.  Older Linux
+**Note libplist-dev (version 2.0 or greater) is a  new dependency (the original antimof version UxPlay-1.2 supplied it).  Older Linux
 distributions may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.]**
-_If you  cannot find a libplist-2.x package that installs on your older distribution, you can get it at
-[https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist) and build it from source
-(you need build tools  autoconf, automake, libtool, and may need to also install some libpython*-dev package).
+If you  cannot find a libplist-2.x package that installs on your older distribution, you can get it at
+[https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist) and build it from source.
+_(You will need build tools  autoconf, automake, libtool, and may need to also install some libpython*-dev package).
 By default, libplist installs in /usr/local/lib. If this is not in the library path (as in ubuntu), create a
 file /etc/ld.so.conf.d/libplist.conf containing  the text "/usr/local/lib", and run "sudo ldconfig" to permanently add /usr/local/lib  to the library path._
 
