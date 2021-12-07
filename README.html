@@ -78,7 +78,7 @@
 <p><strong>-as 0</strong> (or just <strong>-a</strong>) suppresses playing of streamed audio, but displays streamed video.</p>
 <p><strong>-t <em>timeout</em></strong> will cause the server to relaunch (without stopping uxplay) if no connections have been present during the previous <em>timeout</em> seconds. (You may wish to use this because the Server may not be visible to new Clients that were inactive when the Server was launched, and an idle Bonjour registration also eventually becomes unavailable for new connections.) The timer only starts once a Client has first made a mirror connection and then has disconnected with “Stop Mirrroring”. <em>This option should <strong>not</strong> be used if the display window is an OpenGL window on macOS, as such an OpenGL window created by GStreamer does not terminate correctly (it causes a segfault) if it is still open when the GStreamer pipeline is closed.</em></p>
 <h1 id="changelog">ChangeLog</h1>
-<p>1.43 2021-12-07 Various internal changes, such as tests for successful decription, uniform treatment of informational/debug messages, etc., updated README.</p>
+<p>1.43 2021-12-07 Various internal changes, such as tests for successful decryption, uniform treatment of informational/debug messages, etc., updated README.</p>
 <p>1.42 2021-11-20 Fix MAC detection to work with modern Linux interface naming practices, MacOS and *BSD.</p>
 <p>1.41 2021-11-11 Further cleanups of multiple audio format support (internal changes, separated RAOP and GStreamer audio/video startup)</p>
 <p>1.40 2021-11-09 Cleanup segfault in ALAC support, manpage location fix, show request Plists in debug mode.</p>

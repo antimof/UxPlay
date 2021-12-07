@@ -466,7 +466,7 @@ ChangeLog
 =========
 
 1.43 2021-12-07 Various internal changes, such as tests for successful
-decription, uniform treatment of informational/debug messages, etc.,
+decryption, uniform treatment of informational/debug messages, etc.,
 updated README.
 
 1.42 2021-11-20 Fix MAC detection to work with modern Linux interface

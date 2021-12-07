@@ -371,7 +371,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
-1.43 2021-12-07   Various internal changes, such as tests for successful decription, uniform treatment 
+1.43 2021-12-07   Various internal changes, such as tests for successful decryption, uniform treatment 
                   of informational/debug messages, etc., updated README.
 
 1.42 2021-11-20   Fix MAC detection to work with modern Linux interface naming practices, MacOS and *BSD.
