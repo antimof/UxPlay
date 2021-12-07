@@ -57,8 +57,8 @@
 
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], bool debug_log);
-
 static int stop_raop_server ();
+extern "C" void log_callback (void *cls, int level, const char *msg) ;
 
 static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
@@ -445,20 +445,25 @@ int main (int argc, char *argv[]) {
 
     append_hostname(server_name);
     
+    render_logger = logger_init();
+    logger_set_callback(render_logger, log_callback, NULL);
+    logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
+
+    
     if (use_audio) {
-        audio_renderer_init(audiosink.c_str());
+        audio_renderer_init(render_logger, audiosink.c_str());
     } else {
         LOGI("audio_disabled");
     }
     
 
     if (use_video) {
-        video_renderer_init(server_name.c_str(), videoflip, videosink.c_str());
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
 	video_renderer_start();
     }
     
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
-		     udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
+                      udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
 
     std::string mac_address;
     if (!use_random_hw_addr) mac_address = find_mac();
@@ -485,7 +490,7 @@ int main (int argc, char *argv[]) {
             LOGI("Re-launching server...");
             stop_raop_server();
             video_renderer_destroy();
-            video_renderer_init(server_name.c_str(), videoflip, videosink.c_str());
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
             video_renderer_start();
             goto relaunch;
     } else {
@@ -498,6 +503,7 @@ int main (int argc, char *argv[]) {
     if (use_video)  {
         video_renderer_destroy();
     }
+    logger_destroy(render_logger);
 }
 
 // Server callbacks

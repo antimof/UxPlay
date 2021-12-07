@@ -94,10 +94,12 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 }	
 
 static video_renderer_t *renderer = NULL;
+static logger_t *logger = NULL;
 
-void  video_renderer_init(const char *server_name, videoflip_t videoflip[2], const char *videosink) {
+void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
  
     GError *error = NULL;
+    logger = render_logger;
     
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
@@ -209,7 +211,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
         gchar *debug;
 	gboolean flushing;
         gst_message_parse_error (message, &err, &debug);
-        g_print ("GStreamer error: %s\n", err->message);
+        logger_log(logger, LOGGER_INFO, "GStreamer error: %s", err->message);
         g_error_free (err);
         g_free (debug);
 	gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
@@ -221,7 +223,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
     }
     case GST_MESSAGE_EOS:
       /* end-of-stream */
-        g_print("GStreamer: End-Of-Stream\n");
+         logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream");
 	//   g_main_loop_quit( (GMainLoop *) loop);
         break;
     default:

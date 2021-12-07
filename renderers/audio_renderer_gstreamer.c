@@ -73,17 +73,20 @@ static gboolean check_plugins (void)
 #define NFORMATS 4
 static audio_renderer_t *renderer_type[NFORMATS];
 static audio_renderer_t *renderer = NULL;
+static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
-void audio_renderer_init(const char* audiosink) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
     GError *error = NULL;
     GstCaps *caps = NULL;
-
+    logger = render_logger;
+    
      gst_init(NULL,NULL);
      assert(check_plugins ());
 
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
+        assert(renderer_type[i]);
         GString *launch = g_string_new("appsrc name=audio_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! ");
         switch (i) {
         case 0:    /* AAC-ELD */
@@ -130,7 +133,7 @@ void audio_renderer_init(const char* audiosink) {
             format[i] = "PCM 44100/16/2 S16LE";
             break;
 	}
-	g_debug ("supported audio format %d: %s",i+1,format[i]);
+	logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
 	g_object_set(renderer_type[i]->appsrc, "caps", caps, NULL);
         gst_caps_unref(caps);
     }
@@ -157,16 +160,16 @@ void  audio_renderer_start(unsigned char *ct) {
         if(compression_type != renderer->ct) {
             gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
             gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-            g_message ("changed audio connection, format %s", format[id]);
+            logger_log(logger, LOGGER_INFO, "changed audio connection, format %s", format[id]);
             renderer = renderer_type[id];
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
         }
     } else if (compression_type) {
-        g_message ("start audio connection, format %s", format[id]);
+        logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     } else {
-        g_error("unknown audio compression type ct = %d", *ct);
+        logger_log(logger, LOGGER_ERR, "unknown audio compression type ct = %d", *ct);
     }
     
 }
@@ -174,6 +177,7 @@ void  audio_renderer_start(unsigned char *ct) {
 
 void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts) {
     GstBuffer *buffer;
+    bool valid;
     if (data_len == 0 || renderer == NULL) return;
 
     /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol */
@@ -184,7 +188,25 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     assert(buffer != NULL);
     GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
     gst_buffer_fill(buffer, 0, data, data_len);
-    gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
+    switch (renderer->ct) {
+    case 8: /*AAC-ELD*/
+        valid = (data[0] == 0x8d || data[0] == 0x8e);
+        break;
+    case 2: /*ALAC*/
+        valid = (data[0] == 0x20);
+        break;
+    case 4:  /*AAC_LC */
+        valid = (data[0] == 0xff );
+ 	break;
+    default:
+        valid = true;
+        break;
+    }
+    if (valid) {
+        gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
+    } else {
+        logger_log(logger, LOGGER_ERR, "*** ERROR decrypted audio frame (compression_type %d) was not valid", renderer->ct);
+    } 
 }
 
 void audio_renderer_set_volume(float volume) {
