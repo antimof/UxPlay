@@ -12,7 +12,8 @@ screen it can also play Apple Lossless (ALAC) audio streamed from the
 client using the audio-only Airplay protocol. (Details of what is known
 about the AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
-and [here](https://emanuelecozzi.net/docs/airplay2)).
+and [here](https://emanuelecozzi.net/docs/airplay2)). **Note that Apple
+DRM (as in Apple TV app content) cannot be decrypted by UxPlay.**
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running (only
