@@ -253,6 +253,7 @@ raop_handler_pairverify(raop_conn_t *conn,
                 http_response_set_disconnect(response, 1);
                 return;
             }
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-verify: signature is verified");	    
             http_response_add_header(response, "Content-Type", "application/octet-stream");
             break;
     }
