@@ -23,6 +23,8 @@
 #include <gst/app/gstappsrc.h>
 #include "audio_renderer.h"
 
+static bool broken_audio;
+static int counter;
 
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
@@ -80,9 +82,8 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     logger = render_logger;
-    
-     gst_init(NULL,NULL);
-     assert(check_plugins ());
+    gst_init(NULL,NULL);
+    assert(check_plugins ());
 
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
@@ -149,6 +150,8 @@ void audio_renderer_stop() {
 
 void  audio_renderer_start(unsigned char *ct) {
     unsigned char compression_type = 0, id;
+    broken_audio = false;
+    counter = 0;
     for (int i = 0; i < NFORMATS; i++) {
         if(renderer_type[i]->ct == *ct) {
             compression_type = *ct;
@@ -202,9 +205,13 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         break;
     }
     if (valid) {
-        gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
+        if (broken_audio) counter++;
+	if (counter == 2) broken_audio = false;  
+        if (!broken_audio) gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
     } else {
-        logger_log(logger, LOGGER_ERR, "*** ERROR decrypted audio frame (compression_type %d) was not valid", renderer->ct);
+        if(!broken_audio) logger_log(logger, LOGGER_ERR, "*** ERROR decryption of audio (compression_type %d) failed ", renderer->ct);
+        broken_audio = true;
+        counter = 0;
     } 
 }
 
