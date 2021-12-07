@@ -317,7 +317,6 @@ raop_rtp_mirror_thread(void *arg)
                 unsigned char* payload_decrypted = malloc(payload_size);
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
-
                 int nalu_size = 0;
                 int nalus_count = 0;
 
