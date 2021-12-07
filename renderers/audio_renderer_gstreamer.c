@@ -174,7 +174,6 @@ void  audio_renderer_start(unsigned char *ct) {
     
 }
 
-
 void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts) {
     GstBuffer *buffer;
     bool valid;

@@ -449,13 +449,11 @@ int main (int argc, char *argv[]) {
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
-    
     if (use_audio) {
         audio_renderer_init(render_logger, audiosink.c_str());
     } else {
         LOGI("audio_disabled");
     }
-    
 
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());

@@ -35,7 +35,6 @@ struct video_renderer_s {
 #endif
 };
 
-
 static void append_videoflip (GString *launch, const videoflip_t *flip, const videoflip_t *rot) {
     /* videoflip image transform */
     switch (*flip) {
@@ -97,22 +96,21 @@ static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
- 
     GError *error = NULL;
     logger = render_logger;
-    
+
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
 
     const gchar *appname = g_get_application_name();
     if (!appname || strcmp(appname,server_name))  g_set_application_name(server_name);
     appname = NULL;
-    
+
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
 
     gst_init(NULL,NULL);
-    
+
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
                      "queue ! decodebin ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
@@ -126,7 +124,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     assert(renderer->appsrc);
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
     assert(renderer->sink);
-    
+
 #ifdef X_DISPLAY_FIX
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
@@ -209,12 +207,12 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
     case GST_MESSAGE_ERROR: {
         GError *err;
         gchar *debug;
-	gboolean flushing;
+        gboolean flushing;
         gst_message_parse_error (message, &err, &debug);
         logger_log(logger, LOGGER_INFO, "GStreamer error: %s", err->message);
         g_error_free (err);
         g_free (debug);
-	gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+        gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
 	flushing = TRUE;
         gst_bus_set_flushing(bus, flushing);
  	gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
