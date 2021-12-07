@@ -351,7 +351,8 @@ receivers, UxPlay appears to correctly pair with this client, but then
 fails to decrypt both the audio and video streams. Possibly a different
 variant of the AirPlay encryption/decryption protocol not supported by
 UxPlay is used by this client. Without further information, there is no
-obvious fix.
+obvious fix. UxPlay reports itself to clients as "model appleTV2,1,
+sourceVersion 220.68".
 
 **Usage:**
 ==========
