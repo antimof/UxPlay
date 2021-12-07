@@ -77,6 +77,8 @@ struct raop_rtp_mirror_s {
     int mirror_data_sock;
 
     unsigned short mirror_data_lport;
+
+    bool broken_video;
 };
 
 static int
@@ -315,12 +317,13 @@ raop_rtp_mirror_thread(void *arg)
                 unsigned char* payload_decrypted = malloc(payload_size);
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
-                //int nalu_type = payload[4] & 0x1f;
+
                 int nalu_size = 0;
                 int nalus_count = 0;
 
                 // It seems the AirPlay protocol prepends NALs with their size, which we're replacing with the 4-byte
                 // start code for the NAL Byte-Stream Format.
+                bool valid = true;
                 while (nalu_size < payload_size) {
                     int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
                                  (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
@@ -329,13 +332,15 @@ raop_rtp_mirror_thread(void *arg)
                     payload_decrypted[nalu_size + 2] = 0;
                     payload_decrypted[nalu_size + 3] = 1;
                     nalu_size += nc_len + 4;
-                    nalus_count++;
+                    nalus_count++;		    
                     if (nc_len < 0 || nalu_size > payload_size) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "*** ERROR decrypted video is not valid");
-                        assert(nc_len > 0 && nalu_size <= payload_size);
-                    }
+		         valid = false;
+                         break;
+		    }
                 }
-
+                if (nalu_size != payload_size) valid = false;
+	 
+                // int nalu_type = payload[4] & 0x1f;
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalutype = %d", nalu_type);
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_size = %d, payloadsize = %d nalus_count = %d",
                 //        nalu_size, payload_size, nalus_count);
@@ -343,16 +348,21 @@ raop_rtp_mirror_thread(void *arg)
 #ifdef DUMP_H264
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
-
-                h264_decode_struct h264_data;
-                h264_data.data_len = payload_size;
-                h264_data.data = payload_decrypted;
-                h264_data.frame_type = 1;
-                h264_data.pts = ntp_timestamp;
-
-                raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
-                free(payload_decrypted);
-
+                if (valid) {
+                    raop_rtp_mirror->broken_video = false;
+                    h264_decode_struct h264_data;
+                    h264_data.data_len = payload_size;
+                    h264_data.data = payload_decrypted;
+                    h264_data.frame_type = 1;
+                    h264_data.pts = ntp_timestamp;
+                    raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
+                } else {
+		    if (!raop_rtp_mirror->broken_video) {
+		        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "*** ERROR decryption of video failed");
+                    }
+                    raop_rtp_mirror->broken_video = true;
+		}
+		free(payload_decrypted);
             } else if ((payload_type & 255) == 1) {
                 // The information in the payload contains an SPS and a PPS NAL
 
@@ -473,6 +483,7 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
     /* Create the thread and initialize running values */
     raop_rtp_mirror->running = 1;
     raop_rtp_mirror->joined = 0;
+    raop_rtp_mirror->broken_video = false;
 
     THREAD_CREATE(raop_rtp_mirror->thread_mirror, raop_rtp_mirror_thread, raop_rtp_mirror);
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
