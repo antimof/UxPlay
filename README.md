@@ -1,5 +1,5 @@
 
-# UxPlay 1.42:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.43:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 This project is a GPLv3  unix AirPlay server which  now also works on macOS.
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
@@ -371,6 +371,9 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 
 # ChangeLog
+1.43 2021-12-07   Various internal changes, such as tests for successful decription, uniform treatment 
+                  of informational/debug messages, etc., updated README.
+
 1.42 2021-11-20   Fix MAC detection to work with modern Linux interface naming practices, MacOS and *BSD.
 
 1.41 2021-11-11    Further cleanups of multiple audio format support (internal changes, 
