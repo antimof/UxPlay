@@ -161,8 +161,13 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(r_node, "displays", displays_node);
 
     plist_to_bin(r_node, response_data, (uint32_t *) response_datalen);
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "INFO len = %d", *response_datalen);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "UxPlay server info  sent in response to client \"GET /info\" request, len = %d:", *response_datalen);
+    char * plist_xml;
+    uint32_t plist_len;
+    plist_to_xml(r_node, &plist_xml, &plist_len);
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+    free(plist_xml);
     free(pk);
     free(hw_addr);
 }
