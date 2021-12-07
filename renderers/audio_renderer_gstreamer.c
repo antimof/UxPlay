@@ -206,7 +206,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     }
     if (valid) {
         if (broken_audio) counter++;
-	if (counter == 2) broken_audio = false;  
+        if (counter == 2) broken_audio = false;
         if (!broken_audio) gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
     } else {
         if(!broken_audio) logger_log(logger, LOGGER_ERR, "*** ERROR decryption of audio (compression_type %d) failed ", renderer->ct);

@@ -332,14 +332,14 @@ raop_rtp_mirror_thread(void *arg)
                     payload_decrypted[nalu_size + 2] = 0;
                     payload_decrypted[nalu_size + 3] = 1;
                     nalu_size += nc_len + 4;
-                    nalus_count++;		    
+                    nalus_count++;
                     if (nc_len < 0 || nalu_size > payload_size) {
-		         valid = false;
+                         valid = false;
                          break;
-		    }
+                    }
                 }
                 if (nalu_size != payload_size) valid = false;
-	 
+
                 // int nalu_type = payload[4] & 0x1f;
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalutype = %d", nalu_type);
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_size = %d, payloadsize = %d nalus_count = %d",
@@ -357,12 +357,12 @@ raop_rtp_mirror_thread(void *arg)
                     h264_data.pts = ntp_timestamp;
                     raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 } else {
-		    if (!raop_rtp_mirror->broken_video) {
-		        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "*** ERROR decryption of video failed");
+                    if (!raop_rtp_mirror->broken_video) {
+                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "*** ERROR decryption of video failed");
                     }
                     raop_rtp_mirror->broken_video = true;
-		}
-		free(payload_decrypted);
+                }
+                free(payload_decrypted);
             } else if ((payload_type & 255) == 1) {
                 // The information in the payload contains an SPS and a PPS NAL
 
