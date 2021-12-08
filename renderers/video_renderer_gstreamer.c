@@ -94,6 +94,7 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 
 static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
+static bool broken_video;
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
     GError *error = NULL;
@@ -143,28 +144,33 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 }
 
 void video_renderer_start() {
+    broken_video = false;
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
     GstBuffer *buffer;
-
     assert(data_len != 0);
-
-    buffer = gst_buffer_new_and_alloc(data_len);
-    assert(buffer != NULL);
-    GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
-    gst_buffer_fill(buffer, 0, data, data_len);
-    gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
-
+    /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
+    /* first byte of invalid data (decryption failed) is 0x1 */
+    if (data[0]) {
+        if (!broken_video) logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video failed ");
+        broken_video = true;
+    } else {
+        broken_video = false;
+        buffer = gst_buffer_new_and_alloc(data_len);
+        assert(buffer != NULL);
+        GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
+        gst_buffer_fill(buffer, 0, data, data_len);
+        gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
-    if(renderer->gst_window && !(renderer->gst_window->window)) {
-        fix_x_window_name(renderer->gst_window, renderer->server_name);
-    }
+        if (renderer->gst_window && !(renderer->gst_window->window)) {
+            fix_x_window_name(renderer->gst_window, renderer->server_name);
+        }
 #endif
+    }
 }
-
 void video_renderer_flush(video_renderer_t *renderer) {
 }
 

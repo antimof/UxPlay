@@ -78,7 +78,6 @@ struct raop_rtp_mirror_s {
 
     unsigned short mirror_data_lport;
 
-    bool broken_video;
 };
 
 static int
@@ -337,7 +336,6 @@ raop_rtp_mirror_thread(void *arg)
                          break;
                     }
                 }
-                if (nalu_size != payload_size) valid = false;
 
                 // int nalu_type = payload[4] & 0x1f;
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalutype = %d", nalu_type);
@@ -347,20 +345,15 @@ raop_rtp_mirror_thread(void *arg)
 #ifdef DUMP_H264
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
-                if (valid) {
-                    raop_rtp_mirror->broken_video = false;
-                    h264_decode_struct h264_data;
-                    h264_data.data_len = payload_size;
-                    h264_data.data = payload_decrypted;
-                    h264_data.frame_type = 1;
-                    h264_data.pts = ntp_timestamp;
-                    raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
-                } else {
-                    if (!raop_rtp_mirror->broken_video) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "*** ERROR decryption of video failed");
-                    }
-                    raop_rtp_mirror->broken_video = true;
-                }
+                if (!valid || nalu_size != payload_size) payload_decrypted[0] = 1; /* mark as invalid */
+
+                h264_decode_struct h264_data;
+                h264_data.data_len = payload_size;
+                h264_data.data = payload_decrypted;
+                h264_data.frame_type = 1;
+                h264_data.pts = ntp_timestamp;
+                raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
+
                 free(payload_decrypted);
             } else if ((payload_type & 255) == 1) {
                 // The information in the payload contains an SPS and a PPS NAL
@@ -482,7 +475,6 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
     /* Create the thread and initialize running values */
     raop_rtp_mirror->running = 1;
     raop_rtp_mirror->joined = 0;
-    raop_rtp_mirror->broken_video = false;
 
     THREAD_CREATE(raop_rtp_mirror->thread_mirror, raop_rtp_mirror_thread, raop_rtp_mirror);
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
