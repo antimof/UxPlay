@@ -326,7 +326,7 @@ raop_rtp_mirror_thread(void *arg)
                     int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
                                  (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
                     if (nc_len < 0 || nalu_size + 4 > payload_size) {
-		      valid = false;
+                      valid = false;
                       break;
                     }
                     payload_decrypted[nalu_size + 0] = 0;
