@@ -171,6 +171,7 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
 #endif
     }
 }
+
 void video_renderer_flush(video_renderer_t *renderer) {
 }
 
