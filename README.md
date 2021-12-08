@@ -87,7 +87,7 @@ Zoom, see below).
 5. `make`
 6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
 
-_If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean out the build directory with_ "```rm -rf * ```" _(run from within the build directory, of course!) without affecting the source directory which contains your modifications_.
+_If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then remove the build directory and its contents  with_ "```rm -rf build ```" _(run from within the UxPlay source directory) without affecting the source directories which contain your modifications_.
 
 The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and README
 files to `/usr/local/share/doc/uxplay`).
