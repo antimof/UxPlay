@@ -111,10 +111,10 @@ downloads), then do
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
-"`mkdir build ; cd build ; cmake [ ] ..`"; *you can then remove the
-build directory and its contents with* "`rm -rf build`" *(run from
-within the UxPlay source directory) without affecting the source
-directories which contain your modifications*.
+"`mkdir build ; cd build ; cmake [ ] ..`"; *you can then the contents of
+the build directory with* "`rm -rf build/*`" *(run from within the
+UxPlay source directory) without affecting the source directories which
+contain your modifications*.
 
 The above script installs the executable file "`uxplay`" to
 `/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and
