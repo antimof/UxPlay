@@ -325,16 +325,16 @@ raop_rtp_mirror_thread(void *arg)
                 while (nalu_size < payload_size) {
                     int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
                                  (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
+                    if (nc_len < 0 || nalu_size + 4 > payload_size) {
+		      valid = false;
+                      break;
+                    }
                     payload_decrypted[nalu_size + 0] = 0;
                     payload_decrypted[nalu_size + 1] = 0;
                     payload_decrypted[nalu_size + 2] = 0;
                     payload_decrypted[nalu_size + 3] = 1;
                     nalu_size += nc_len + 4;
                     nalus_count++;
-                    if (nc_len < 0 || nalu_size > payload_size) {
-                         valid = false;
-                         break;
-                    }
                 }
 
                 // int nalu_type = payload[4] & 0x1f;
@@ -346,14 +346,12 @@ raop_rtp_mirror_thread(void *arg)
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
                 if (!valid || nalu_size != payload_size) payload_decrypted[0] = 1; /* mark as invalid */
-
                 h264_decode_struct h264_data;
                 h264_data.data_len = payload_size;
                 h264_data.data = payload_decrypted;
                 h264_data.frame_type = 1;
                 h264_data.pts = ntp_timestamp;
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
-
                 free(payload_decrypted);
             } else if ((payload_type & 255) == 1) {
                 // The information in the payload contains an SPS and a PPS NAL
