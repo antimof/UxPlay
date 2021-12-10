@@ -265,6 +265,8 @@ Options:
    AirPlay services to your iPad, iPhone etc, where _hostname_ is the name of the server running uxplay. 
    This will also now be the name shown above the mirror display (X11)  window.
 
+**-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
+
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
    request made to the AirPlay client, and perhaps will not

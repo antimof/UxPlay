@@ -191,6 +191,7 @@ static void print_info (char *name) {
     printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
+    printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set mirror \"overscanned\" mode on (not usually needed)\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
@@ -335,6 +336,7 @@ static void append_hostname(std::string &server_name) {
 int main (int argc, char *argv[]) {
     std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr;
+    bool do_append_hostname = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
@@ -355,6 +357,8 @@ int main (int argc, char *argv[]) {
         if (arg == "-n") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             server_name = std::string(argv[++i]);
+        } else if (arg == "-nh") {
+            do_append_hostname = false;
         } else if (arg == "-s") {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             std::string value(argv[++i]);
@@ -443,7 +447,7 @@ int main (int argc, char *argv[]) {
         display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
     }
 
-    append_hostname(server_name);
+    if (do_append_hostname) append_hostname(server_name);
     
     render_logger = logger_init();
     logger_set_callback(render_logger, log_callback, NULL);
