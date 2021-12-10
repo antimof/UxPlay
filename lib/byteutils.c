@@ -17,7 +17,11 @@
 #include "byteutils.h"
 
 #ifndef htonll
+#ifdef SYS_ENDIAN_H
+#include <sys/endian.h>
+#else
 #include <endian.h>
+#endif
 #define htonll(x) htobe64(x)
 #define ntohll(x) be64toh(x)
 #endif

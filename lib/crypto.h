@@ -1,6 +1,7 @@
 /**
  * RPiPlay - An open-source AirPlay mirroring server for Raspberry Pi
  * Copyright (C) 2019 Florian Draschbacher
+ * Copyright (C) 2020 Jaslo Ziska
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-/* 
+/*
  * Helper methods for various crypto operations.
  * Uses OpenSSL behind the scenes.
 */
@@ -25,6 +26,7 @@
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -51,6 +53,42 @@ void aes_cbc_reset(aes_ctx_t *ctx);
 void aes_cbc_encrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len);
 void aes_cbc_decrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len);
 void aes_cbc_destroy(aes_ctx_t *ctx);
+
+// X25519
+
+#define X25519_KEY_SIZE 32
+
+typedef struct x25519_key_s x25519_key_t;
+
+x25519_key_t *x25519_key_generate(void);
+x25519_key_t *x25519_key_from_raw(const unsigned char data[X25519_KEY_SIZE]);
+void x25519_key_get_raw(unsigned char data[X25519_KEY_SIZE], const x25519_key_t *key);
+void x25519_key_destroy(x25519_key_t *key);
+
+void x25519_derive_secret(unsigned char secret[X25519_KEY_SIZE], const x25519_key_t *ours, const x25519_key_t *theirs);
+
+// ED25519
+
+#define ED25519_KEY_SIZE 32
+
+typedef struct ed25519_key_s ed25519_key_t;
+
+ed25519_key_t *ed25519_key_generate(void);
+ed25519_key_t *ed25519_key_from_raw(const unsigned char data[ED25519_KEY_SIZE]);
+void ed25519_key_get_raw(unsigned char data[ED25519_KEY_SIZE], const ed25519_key_t *key);
+/*
+ * Note that this function does *not copy* the OpenSSL key but only the wrapper. The internal OpenSSL key is still the
+ * same. Only the reference count is increased so destroying both the original and the copy is allowed.
+ */
+ed25519_key_t *ed25519_key_copy(const ed25519_key_t *key);
+void ed25519_key_destroy(ed25519_key_t *key);
+
+void ed25519_sign(unsigned char *signature, size_t signature_len,
+                  const unsigned char *data, size_t data_len,
+                  const ed25519_key_t *key);
+int ed25519_verify(const unsigned char *signature, size_t signature_len,
+                   const unsigned char *data, size_t data_len,
+                   const ed25519_key_t *key);
 
 // SHA512
 

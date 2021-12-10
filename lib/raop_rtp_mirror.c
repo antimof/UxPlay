@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <netinet/tcp.h>
 
 #include "raop.h"
 #include "netutils.h"
@@ -29,6 +30,13 @@
 #include "mirror_buffer.h"
 #include "stream.h"
 
+/* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
+#if !defined(SOL_TCP) && defined(IPPROTO_TCP)
+#define SOL_TCP IPPROTO_TCP
+#endif
+#if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
 
 struct h264codec_s {
     unsigned char compatibility;
@@ -69,6 +77,7 @@ struct raop_rtp_mirror_s {
     int mirror_data_sock;
 
     unsigned short mirror_data_lport;
+
 };
 
 static int
@@ -218,7 +227,23 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror could not set stream socket timeout %d %s", errno, strerror(errno));
                 break;
             }
-
+            int option;
+            option = 1;
+            if (setsockopt(stream_fd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option)) < 0) {
+                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive %d %s", errno, strerror(errno));
+            }
+            option = 60;
+            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPIDLE, &option, sizeof(option)) < 0) {
+                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive time %d %s", errno, strerror(errno));
+            }
+            option = 10;
+            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPINTVL, &option, sizeof(option)) < 0) {
+                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive interval %d %s", errno, strerror(errno));
+            }
+            option = 6;
+            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPCNT, &option, sizeof(option)) < 0) {
+                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive probes %d %s", errno, strerror(errno));
+            }
             readstart = 0;
         }
 
@@ -244,7 +269,7 @@ raop_rtp_mirror_thread(void *arg)
 
             int payload_size = byteutils_get_int(packet, 0);
             unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
-            unsigned short payload_option = byteutils_get_short(packet, 6);
+            //unsigned short payload_option = byteutils_get_short(packet, 6);
 
             if (payload == NULL) {
                 payload = malloc(payload_size);
@@ -291,17 +316,19 @@ raop_rtp_mirror_thread(void *arg)
                 unsigned char* payload_decrypted = malloc(payload_size);
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
-                int nalu_type = payload[4] & 0x1f;
                 int nalu_size = 0;
                 int nalus_count = 0;
 
                 // It seems the AirPlay protocol prepends NALs with their size, which we're replacing with the 4-byte
                 // start code for the NAL Byte-Stream Format.
+                bool valid = true;
                 while (nalu_size < payload_size) {
                     int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
                                  (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
-                    assert(nc_len > 0);
-
+                    if (nc_len < 0 || nalu_size + 4 > payload_size) {
+                        valid = false;
+                        break;
+                    }
                     payload_decrypted[nalu_size + 0] = 0;
                     payload_decrypted[nalu_size + 1] = 0;
                     payload_decrypted[nalu_size + 2] = 0;
@@ -310,6 +337,7 @@ raop_rtp_mirror_thread(void *arg)
                     nalus_count++;
                 }
 
+                // int nalu_type = payload[4] & 0x1f;
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalutype = %d", nalu_type);
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_size = %d, payloadsize = %d nalus_count = %d",
                 //        nalu_size, payload_size, nalus_count);
@@ -317,16 +345,14 @@ raop_rtp_mirror_thread(void *arg)
 #ifdef DUMP_H264
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
-
+                if (!valid || nalu_size != payload_size) payload_decrypted[0] = 1; /* mark as invalid */
                 h264_decode_struct h264_data;
                 h264_data.data_len = payload_size;
                 h264_data.data = payload_decrypted;
                 h264_data.frame_type = 1;
                 h264_data.pts = ntp_timestamp;
-
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 free(payload_decrypted);
-
             } else if ((payload_type & 255) == 1) {
                 // The information in the payload contains an SPS and a PPS NAL
 
@@ -413,6 +439,9 @@ raop_rtp_mirror_thread(void *arg)
     return 0;
 }
 
+static int
+raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
+
 void
 raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport)
 {
@@ -420,6 +449,7 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
     int use_ipv6 = 0;
 
     assert(raop_rtp_mirror);
+    assert(mirror_data_lport);
 
     MUTEX_LOCK(raop_rtp_mirror->run_mutex);
     if (raop_rtp_mirror->running || !raop_rtp_mirror->joined) {
@@ -431,12 +461,14 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
         use_ipv6 = 1;
     }
     use_ipv6 = 0;
+     
+    raop_rtp_mirror->mirror_data_lport = *mirror_data_lport;
     if (raop_rtp_init_mirror_sockets(raop_rtp_mirror, use_ipv6) < 0) {
         logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror initializing sockets failed");
         MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
         return;
     }
-    if (mirror_data_lport) *mirror_data_lport = raop_rtp_mirror->mirror_data_lport;
+    *mirror_data_lport = raop_rtp_mirror->mirror_data_lport;
 
     /* Create the thread and initialize running values */
     raop_rtp_mirror->running = 1;
@@ -485,12 +517,10 @@ void raop_rtp_mirror_destroy(raop_rtp_mirror_t *raop_rtp_mirror) {
 static int
 raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 {
-    int dsock = -1;
-    unsigned short dport = 0;
-
     assert(raop_rtp_mirror);
 
-    dsock = netutils_init_socket(&dport, use_ipv6, 0);
+    unsigned short dport = raop_rtp_mirror->mirror_data_lport;
+    int dsock = netutils_init_socket(&dport, use_ipv6, 0);
     if (dsock == -1) {
         goto sockets_cleanup;
     }
@@ -505,6 +535,7 @@ raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 
     /* Set port values */
     raop_rtp_mirror->mirror_data_lport = dport;
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror local data port socket %d port TCP %d", dsock, dport);
     return 0;
 
     sockets_cleanup:

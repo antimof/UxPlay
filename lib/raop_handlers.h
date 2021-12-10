@@ -15,11 +15,11 @@
 /* This file should be only included from raop.c as it defines static handler
  * functions and depends on raop internals */
 
-#include "plist/plist/plist.h"
 #include "dnssdint.h"
 #include "utils.h"
 #include <ctype.h>
 #include <stdlib.h>
+#include <plist/plist.h>
 
 typedef void (*raop_handler_t)(raop_conn_t *, http_request_t *,
                                http_response_t *, char **, int *);
@@ -41,7 +41,8 @@ raop_handler_info(raop_conn_t *conn,
     const char *hw_addr_raw = dnssd_get_hw_addr(conn->raop->dnssd, &hw_addr_raw_len);
 
     char *hw_addr = calloc(1, 3 * hw_addr_raw_len);
-    int hw_addr_len = utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
+    //int hw_addr_len =
+    utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
 
     int pk_len = 0;
     char *pk = utils_parse_hex(AIRPLAY_PK, strlen(AIRPLAY_PK), &pk_len);
@@ -60,16 +61,16 @@ raop_handler_info(raop_conn_t *conn,
     plist_t audio_formats_node = plist_new_array();
     plist_t audio_format_0_node = plist_new_dict();
     plist_t audio_format_0_type_node = plist_new_uint(100);
-    plist_t audio_format_0_audio_input_formats_node = plist_new_uint(67108860);
-    plist_t audio_format_0_audio_output_formats_node = plist_new_uint(67108860);
+    plist_t audio_format_0_audio_input_formats_node = plist_new_uint(0x3fffffc);
+    plist_t audio_format_0_audio_output_formats_node = plist_new_uint(0x3fffffc);
     plist_dict_set_item(audio_format_0_node, "type", audio_format_0_type_node);
     plist_dict_set_item(audio_format_0_node, "audioInputFormats", audio_format_0_audio_input_formats_node);
     plist_dict_set_item(audio_format_0_node, "audioOutputFormats", audio_format_0_audio_output_formats_node);
     plist_array_append_item(audio_formats_node, audio_format_0_node);
     plist_t audio_format_1_node = plist_new_dict();
     plist_t audio_format_1_type_node = plist_new_uint(101);
-    plist_t audio_format_1_audio_input_formats_node = plist_new_uint(67108860);
-    plist_t audio_format_1_audio_output_formats_node = plist_new_uint(67108860);
+    plist_t audio_format_1_audio_input_formats_node = plist_new_uint(0x3fffffc);
+    plist_t audio_format_1_audio_output_formats_node = plist_new_uint(0x3fffffc);
     plist_dict_set_item(audio_format_1_node, "type", audio_format_1_type_node);
     plist_dict_set_item(audio_format_1_node, "audioInputFormats", audio_format_1_audio_input_formats_node);
     plist_dict_set_item(audio_format_1_node, "audioOutputFormats", audio_format_1_audio_output_formats_node);
@@ -85,7 +86,7 @@ raop_handler_info(raop_conn_t *conn,
     plist_t status_flags_node = plist_new_uint(68);
     plist_dict_set_item(r_node, "statusFlags", status_flags_node);
 
-    plist_t keep_alive_low_power_node = plist_new_bool(1);
+    plist_t keep_alive_low_power_node = plist_new_uint(1);
     plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
 
     plist_t source_version_node = plist_new_string(AIRPLAY_SRCVERS);
@@ -94,7 +95,7 @@ raop_handler_info(raop_conn_t *conn,
     plist_t pk_node = plist_new_data(pk, pk_len);
     plist_dict_set_item(r_node, "pk", pk_node);
 
-    plist_t keep_alive_send_stats_as_body_node = plist_new_bool(1);
+    plist_t keep_alive_send_stats_as_body_node = plist_new_uint(1);
     plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
 
     plist_t device_id_node = plist_new_string(hw_addr);
@@ -102,20 +103,20 @@ raop_handler_info(raop_conn_t *conn,
 
     plist_t audio_latencies_node = plist_new_array();
     plist_t audio_latencies_0_node = plist_new_dict();
-    plist_t audio_latencies_0_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_output_latency_micros_node = plist_new_bool(0);
     plist_t audio_latencies_0_type_node = plist_new_uint(100);
     plist_t audio_latencies_0_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_0_input_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_input_latency_micros_node = plist_new_bool(0);
     plist_dict_set_item(audio_latencies_0_node, "outputLatencyMicros", audio_latencies_0_output_latency_micros_node);
     plist_dict_set_item(audio_latencies_0_node, "type", audio_latencies_0_type_node);
     plist_dict_set_item(audio_latencies_0_node, "audioType", audio_latencies_0_audio_type_node);
     plist_dict_set_item(audio_latencies_0_node, "inputLatencyMicros", audio_latencies_0_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_0_node);
     plist_t audio_latencies_1_node = plist_new_dict();
-    plist_t audio_latencies_1_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_output_latency_micros_node = plist_new_bool(0);
     plist_t audio_latencies_1_type_node = plist_new_uint(101);
     plist_t audio_latencies_1_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_1_input_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_input_latency_micros_node = plist_new_bool(0);
     plist_dict_set_item(audio_latencies_1_node, "outputLatencyMicros", audio_latencies_1_output_latency_micros_node);
     plist_dict_set_item(audio_latencies_1_node, "type", audio_latencies_1_type_node);
     plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node);
@@ -132,15 +133,16 @@ raop_handler_info(raop_conn_t *conn,
     plist_t displays_node = plist_new_array();
     plist_t displays_0_node = plist_new_dict();
     plist_t displays_0_uuid_node = plist_new_string("e0ff8a27-6738-3d56-8a16-cc53aacee925");
-    plist_t displays_0_width_physical_node = plist_new_uint(0);
-    plist_t displays_0_height_physical_node = plist_new_uint(0);
-    plist_t displays_0_width_node = plist_new_uint(1920);
-    plist_t displays_0_height_node = plist_new_uint(1080);
-    plist_t displays_0_width_pixels_node = plist_new_uint(1920);
-    plist_t displays_0_height_pixels_node = plist_new_uint(1080);
+    plist_t displays_0_width_physical_node = plist_new_bool(0);
+    plist_t displays_0_height_physical_node = plist_new_bool(0);
+    plist_t displays_0_width_node = plist_new_uint(conn->raop->width);
+    plist_t displays_0_height_node = plist_new_uint(conn->raop->height);
+    plist_t displays_0_width_pixels_node = plist_new_uint(conn->raop->width);
+    plist_t displays_0_height_pixels_node = plist_new_uint(conn->raop->height);
     plist_t displays_0_rotation_node = plist_new_bool(0);
-    plist_t displays_0_refresh_rate_node = plist_new_real(1.0 / 60.0);
-    plist_t displays_0_overscanned_node = plist_new_bool(1);
+    plist_t displays_0_refresh_rate_node = plist_new_uint(conn->raop->refreshRate);
+    plist_t displays_0_max_fps_node = plist_new_uint(conn->raop->maxFPS);
+    plist_t displays_0_overscanned_node = plist_new_bool(conn->raop->overscanned);
     plist_t displays_0_features = plist_new_uint(14);
 
     plist_dict_set_item(displays_0_node, "uuid", displays_0_uuid_node);
@@ -152,14 +154,20 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(displays_0_node, "heightPixels", displays_0_height_pixels_node);
     plist_dict_set_item(displays_0_node, "rotation", displays_0_rotation_node);
     plist_dict_set_item(displays_0_node, "refreshRate", displays_0_refresh_rate_node);
+    plist_dict_set_item(displays_0_node, "maxFPS", displays_0_max_fps_node);
     plist_dict_set_item(displays_0_node, "overscanned", displays_0_overscanned_node);
     plist_dict_set_item(displays_0_node, "features", displays_0_features);
     plist_array_append_item(displays_node, displays_0_node);
     plist_dict_set_item(r_node, "displays", displays_node);
 
     plist_to_bin(r_node, response_data, (uint32_t *) response_datalen);
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "INFO len = %d", response_datalen);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "UxPlay server info  sent in response to client \"GET /info\" request, len = %d:", *response_datalen);
+    char * plist_xml;
+    uint32_t plist_len;
+    plist_to_xml(r_node, &plist_xml, &plist_len);
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+    free(plist_xml);
     free(pk);
     free(hw_addr);
 }
@@ -169,11 +177,12 @@ raop_handler_pairsetup(raop_conn_t *conn,
                        http_request_t *request, http_response_t *response,
                        char **response_data, int *response_datalen)
 {
-    unsigned char public_key[32];
-    const char *data;
+    unsigned char public_key[ED25519_KEY_SIZE];
+    //const char *data;
     int datalen;
 
-    data = http_request_get_data(request, &datalen);
+    //data =
+    http_request_get_data(request, &datalen);
     if (datalen != 32) {
         logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-setup data");
         return;
@@ -198,8 +207,8 @@ raop_handler_pairverify(raop_conn_t *conn,
     if (pairing_session_check_handshake_status(conn->pairing)) {
         return;
     }
-    unsigned char public_key[32];
-    unsigned char signature[64];
+    unsigned char public_key[X25519_KEY_SIZE];
+    unsigned char signature[PAIRING_SIG_SIZE];
     const unsigned char *data;
     int datalen;
 
@@ -210,12 +219,12 @@ raop_handler_pairverify(raop_conn_t *conn,
     }
     switch (data[0]) {
         case 1:
-            if (datalen != 4 + 32 + 32) {
+            if (datalen != 4 + X25519_KEY_SIZE + X25519_KEY_SIZE) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
                 return;
             }
             /* We can fall through these errors, the result will just be garbage... */
-            if (pairing_session_handshake(conn->pairing, data + 4, data + 4 + 32)) {
+            if (pairing_session_handshake(conn->pairing, data + 4, data + 4 + X25519_KEY_SIZE)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error initializing pair-verify handshake");
             }
             if (pairing_session_get_public_key(conn->pairing, public_key)) {
@@ -233,7 +242,8 @@ raop_handler_pairverify(raop_conn_t *conn,
             }
             break;
         case 0:
-            if (datalen != 4 + 64) {
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "2nd pair-verify step: checking signature");
+            if (datalen != 4 + PAIRING_SIG_SIZE) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
                 return;
             }
@@ -243,6 +253,7 @@ raop_handler_pairverify(raop_conn_t *conn,
                 http_response_set_disconnect(response, 1);
                 return;
             }
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-verify: signature is verified");	    
             http_response_add_header(response, "Content-Type", "application/octet-stream");
             break;
     }
@@ -335,6 +346,11 @@ raop_handler_setup(raop_conn_t *conn,
     // Parsing bplist
     plist_t req_root_node = NULL;
     plist_from_bin(data, data_len, &req_root_node);
+    char * plist_xml;
+    uint32_t plist_len;
+    plist_to_xml(req_root_node, &plist_xml, &plist_len);
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+    free(plist_xml);
     plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
     plist_t req_eiv_node = plist_dict_get_item(req_root_node, "eiv");
     plist_t req_ekey_node = plist_dict_get_item(req_root_node, "ekey");
@@ -363,7 +379,7 @@ raop_handler_setup(raop_conn_t *conn,
         // ekey is 72 bytes, aeskey is 16 bytes
         int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
-        unsigned char ecdh_secret[32];
+        unsigned char ecdh_secret[X25519_KEY_SIZE];
         pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret);
 
         // Time port
@@ -372,7 +388,7 @@ raop_handler_setup(raop_conn_t *conn,
         plist_get_uint_val(time_note, &timing_rport);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "timing_rport = %llu", timing_rport);
 
-        unsigned short timing_lport;
+        unsigned short timing_lport = conn->raop->timing_lport;
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, conn->remote, conn->remotelen, timing_rport);
         raop_ntp_start(conn->raop_ntp, &timing_lport);
 
@@ -402,7 +418,7 @@ raop_handler_setup(raop_conn_t *conn,
             switch (type) {
                 case 110: {
                     // Mirroring
-                    unsigned short dport = 0;
+                    unsigned short dport = conn->raop->mirror_data_lport;
                     plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
                     uint64_t stream_connection_id;
                     plist_get_uint_val(stream_id_node, &stream_connection_id);
@@ -427,8 +443,48 @@ raop_handler_setup(raop_conn_t *conn,
                     break;
                 } case 96: {
                     // Audio
+                    unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
 
-                    unsigned short cport = 0, dport = 0;
+                    uint64_t audioFormat;
+		    unsigned char ct;
+	            unsigned short spf;
+                    bool isMedia; 
+                    bool usingScreen;
+
+                    if (conn->raop->callbacks.audio_get_format) {
+		        /* get audio compression type */
+		        uint64_t uint_val;
+                        uint8_t bool_val;
+			
+                        plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
+                        plist_get_uint_val(req_stream_ct_node, &uint_val);
+                        ct = (unsigned char) uint_val;
+
+                        plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
+                        plist_get_uint_val(req_stream_spf_node, &uint_val);
+                        spf = (unsigned short) uint_val;
+		    
+                        plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
+                        plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
+			
+                        plist_t req_stream_ismedia_node = plist_dict_get_item(req_stream_node, "isMedia");
+		        if (req_stream_ismedia_node) {
+		            plist_get_bool_val(req_stream_ismedia_node, &bool_val);
+			    isMedia = (bool) bool_val;
+                        } else {
+                            isMedia = false;
+                        }
+
+                        plist_t req_stream_usingscreen_node = plist_dict_get_item(req_stream_node, "usingScreen");
+                        if (req_stream_usingscreen_node) {
+                            plist_get_bool_val(req_stream_usingscreen_node, &bool_val);
+                            usingScreen = (bool) bool_val;
+                        } else {
+                            usingScreen = false;
+                        }
+
+                        conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, &ct, &spf, &usingScreen, &isMedia, &audioFormat);
+                    }
 
                     if (conn->raop_rtp) {
                         raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport);
@@ -478,12 +534,11 @@ raop_handler_get_parameter(raop_conn_t *conn,
     if (!strcmp(content_type, "text/parameters")) {
         const char *current = data;
 
-        while (current) {
+        while (current && (datalen - (current - data) > 0)) {
             const char *next;
-            int handled = 0;
 
             /* This is a bit ugly, but seems to be how airport works too */
-            if (!strncmp(current, "volume\r\n", 8)) {
+            if ((datalen - (current - data) >= 8) && !strncmp(current, "volume\r\n", 8)) {
                 const char volume[] = "volume: 0.0\r\n";
 
                 http_response_add_header(response, "Content-Type", "text/parameters");
@@ -491,15 +546,18 @@ raop_handler_get_parameter(raop_conn_t *conn,
                 if (*response_data) {
                     *response_datalen = strlen(*response_data);
                 }
-                handled = 1;
+                return;
             }
 
-            next = strstr(current, "\r\n");
-            if (next && !handled) {
-                logger_log(conn->raop->logger, LOGGER_WARNING,
-                           "Found an unknown parameter: %.*s", (next - current), current);
-                current = next + 2;
-            } else if (next) {
+            for (next = current ; (datalen - (next - data) > 0) ; ++next)
+                if (*next == '\r')
+                    break;
+
+            if ((datalen - (next - data) >= 2) && !strncmp(next, "\r\n", 2)) {
+                if ((next - current) > 0) {
+                    logger_log(conn->raop->logger, LOGGER_WARNING,
+                               "Found an unknown parameter: %.*s", (next - current), current);
+                }
                 current = next + 2;
             } else {
                 current = NULL;
@@ -524,11 +582,11 @@ raop_handler_set_parameter(raop_conn_t *conn,
         datastr = calloc(1, datalen+1);
         if (data && datastr && conn->raop_rtp) {
             memcpy(datastr, data, datalen);
-            if (!strncmp(datastr, "volume: ", 8)) {
+            if ((datalen >= 8) && !strncmp(datastr, "volume: ", 8)) {
                 float vol = 0.0;
                 sscanf(datastr+8, "%f", &vol);
                 raop_rtp_set_volume(conn->raop_rtp, vol);
-            } else if (!strncmp(datastr, "progress: ", 10)) {
+            } else if ((datalen >= 10) && !strncmp(datastr, "progress: ", 10)) {
                 unsigned int start, curr, end;
                 sscanf(datastr+10, "%u/%u/%u", &start, &curr, &end);
                 raop_rtp_set_progress(conn->raop_rtp, start, curr, end);
@@ -538,14 +596,14 @@ raop_handler_set_parameter(raop_conn_t *conn,
         }
         free(datastr);
     } else if (!strcmp(content_type, "image/jpeg") || !strcmp(content_type, "image/png")) {
-        logger_log(conn->raop->logger, LOGGER_INFO, "Got image data of %d bytes", datalen);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "Got image data of %d bytes", datalen);
         if (conn->raop_rtp) {
             raop_rtp_set_coverart(conn->raop_rtp, data, datalen);
         } else {
             logger_log(conn->raop->logger, LOGGER_WARNING, "RAOP not initialized at SET_PARAMETER coverart");
         }
     } else if (!strcmp(content_type, "application/x-dmap-tagged")) {
-        logger_log(conn->raop->logger, LOGGER_INFO, "Got metadata of %d bytes", datalen);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "Got metadata of %d bytes", datalen);
         if (conn->raop_rtp) {
             raop_rtp_set_metadata(conn->raop_rtp, data, datalen);
         } else {

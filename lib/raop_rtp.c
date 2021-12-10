@@ -227,13 +227,12 @@ raop_rtp_resend_callback(void *opaque, unsigned short seqnum, unsigned short cou
 static int
 raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6, int use_udp)
 {
-    int csock = -1, dsock = -1;
-    unsigned short cport = 0, dport = 0;
-
     assert(raop_rtp);
 
-    csock = netutils_init_socket(&cport, use_ipv6, 1);
-    dsock = netutils_init_socket(&dport, use_ipv6, 1);
+    unsigned short cport = raop_rtp->control_lport;
+    unsigned short dport = raop_rtp->data_lport;
+    int csock = netutils_init_socket(&cport, use_ipv6, 1);
+    int dsock = netutils_init_socket(&dport, use_ipv6, 1);
 
     if (csock == -1 || dsock == -1) {
         goto sockets_cleanup;
@@ -246,6 +245,8 @@ raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6, int use_udp)
     /* Set port values */
     raop_rtp->control_lport = cport;
     raop_rtp->data_lport = dport;
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp local control port socket %d port UDP %d", csock, cport);
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp local data port    socket %d port UDP %d", dsock, dport);
     return 0;
 
     sockets_cleanup:
@@ -471,7 +472,7 @@ raop_rtp_thread_udp(void *arg)
             packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0,
                                  (struct sockaddr *)&saddr, &saddrlen);
             // rtp payload type
-            int type_d = packet[1] & ~0x80;
+            //int type_d = packet[1] & ~0x80;
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
 
             // Len = 16 appears if there is no time
@@ -528,6 +529,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
     int use_ipv6 = 0;
 
     assert(raop_rtp);
+    assert(control_lport);
+    assert(data_lport);
 
     MUTEX_LOCK(raop_rtp->run_mutex);
     if (raop_rtp->running || !raop_rtp->joined) {
@@ -536,6 +539,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
     }
 
     /* Initialize ports and sockets */
+    raop_rtp->control_lport = *control_lport;
+    raop_rtp->data_lport = *data_lport;
     raop_rtp->control_rport = control_rport;
     if (raop_rtp->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
@@ -546,8 +551,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
         MUTEX_UNLOCK(raop_rtp->run_mutex);
         return;
     }
-    if (control_lport) *control_lport = raop_rtp->control_lport;
-    if (data_lport) *data_lport = raop_rtp->data_lport;
+    *control_lport = raop_rtp->control_lport;
+    *data_lport = raop_rtp->data_lport;
     /* Create the thread and initialize running values */
     raop_rtp->running = 1;
     raop_rtp->joined = 0;
@@ -696,4 +701,3 @@ raop_rtp_is_running(raop_rtp_t *raop_rtp)
     MUTEX_UNLOCK(raop_rtp->run_mutex);
     return running;
 }
-

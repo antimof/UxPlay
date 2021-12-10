@@ -1,0 +1,58 @@
+.TH UXPLAY "1" "December 2021" "1.43" "User Commands"
+.SH NAME
+uxplay \- start AirPlay server
+.SH SYNOPSIS
+.B uxplay
+[\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
+.SH DESCRIPTION
+UxPlay 1.43: An open\-source AirPlay mirroring server based on RPiPlay
+.SH OPTIONS
+.TP
+.B
+\fB\-n\fR name   Specify the network name of the AirPlay server
+.TP
+\fB\-nh\fR       Do \fBNOT\fR append "@\fIhostname\fR" at end of the AirPlay server name
+.TP
+.B
+\fB\-s\fR wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]
+.TP
+\fB\-o\fR        Set mirror "overscanned" mode on (not usually needed)
+.TP
+\fB\-fps\fR n    Set maximum allowed streaming framerate, default 30
+.TP
+\fB\-f\fR {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg
+.TP
+\fB\-r\fR {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)
+.TP
+\fB\-p\fR        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100
+.TP
+\fB\-p\fR n      Use TCP and UDP ports n,n+1,n+2. range 1024\-65535
+.IP
+   use "\-p n1,n2,n3" to set each port, "n1,n2" for n3 = n2+1
+.IP
+   "\-p tcp n" or "\-p udp n" sets TCP or UDP ports separately.
+.PP
+.TP
+\fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
+.TP
+\fB\-t\fR n      Relaunch server if no connection existed in last n seconds
+.TP
+\fB\-vs\fI sink\fR  Choose the  GStreamer videosink; default "autovideosink"
+.IP
+   some choices: ximagesink,xvimagesink,vaapisink,glimagesink,
+.IP
+   gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.
+.PP
+.TP
+\fB\-vs\fR 0     Streamed audio only, with no video display window.
+.TP
+\fB\-as\fI sink\fR  Choose the  GStreamer audiosink; default "autoaudiosink"
+.IP
+   choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink etc.
+.PP
+.TP
+\fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
+.TP
+\fB\-d\fR        Enable debug logging
+.TP
+\fB\-v\fR or \fB\-h\fR  Displays this help and version information

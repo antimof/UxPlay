@@ -18,9 +18,7 @@
  */
 
 /* 
- * H264 renderer using OpenMAX for hardware accelerated decoding
- * on the Raspberry Pi. 
- * Based on the hello_video sample from the Raspberry Pi project.
+ * H264 renderer using gstreamer
 */
 
 #ifndef VIDEO_RENDERER_H
@@ -35,32 +33,31 @@ extern "C" {
 #include "../lib/logger.h"
 #include "../lib/raop_ntp.h"
 
-typedef enum background_mode_e {
-    BACKGROUND_MODE_ON,   // Always show background
-    BACKGROUND_MODE_AUTO, // Only show background while there's an active connection
-    BACKGROUND_MODE_OFF   // Never show background
-} background_mode_t;
+typedef enum videoflip_e {
+    NONE,
+    LEFT,
+    RIGHT,
+    INVERT,
+    VFLIP,
+    HFLIP,
+} videoflip_t;
 
 typedef struct video_renderer_s video_renderer_t;
 
-video_renderer_t *video_renderer_init(logger_t *logger, background_mode_t background_mode, bool low_latency);
-void video_renderer_start(video_renderer_t *renderer);
-void video_renderer_render_buffer(video_renderer_t *renderer, raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type);
-void video_renderer_flush(video_renderer_t *renderer);
-void video_renderer_destroy(video_renderer_t *renderer);
+void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *videosink);
+void video_renderer_start ();
+void video_renderer_stop ();
+void video_renderer_render_buffer (raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type);
+void video_renderer_flush ();
+unsigned int video_renderer_listen(void *loop);
+void video_renderer_destroy ();
 
-/**
- * Update background according to background mode and connection activity
- * @param renderer
- * @param type visit type.
- *        0: ignore connections
- *        1: a new connection come
- *       -1: a connection lost
- */
-void video_renderer_update_background(video_renderer_t *renderer, int type);
+  /* not implemented for gstreamer */
+void video_renderer_update_background (int type); 
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //VIDEO_RENDERER_H
+

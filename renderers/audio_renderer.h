@@ -25,21 +25,15 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stdbool.h>
-#include "../lib/logger.h"
 #include "../lib/raop_ntp.h"
-#include "video_renderer.h"
 
-typedef enum audio_device_e { AUDIO_DEVICE_HDMI, AUDIO_DEVICE_ANALOG, AUDIO_DEVICE_NONE } audio_device_t;
-
-typedef struct audio_renderer_s audio_renderer_t;
-
-audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer, audio_device_t device, bool low_latency);
-void audio_renderer_start(audio_renderer_t *renderer);
-void audio_renderer_render_buffer(audio_renderer_t *renderer, raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts);
-void audio_renderer_set_volume(audio_renderer_t *renderer, float volume);
-void audio_renderer_flush(audio_renderer_t *renderer);
-void audio_renderer_destroy(audio_renderer_t *renderer);
+void audio_renderer_init(logger_t *logger, const char* audiosink);
+void audio_renderer_start(unsigned char* compression_type);
+void audio_renderer_stop();
+void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts);
+void audio_renderer_set_volume(float volume);
+void audio_renderer_flush();
+void audio_renderer_destroy();
 
 #ifdef __cplusplus
 }

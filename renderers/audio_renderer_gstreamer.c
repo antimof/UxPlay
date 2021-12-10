@@ -17,123 +17,225 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include "audio_renderer.h"
 #include <assert.h>
 #include <math.h>
+#include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
+#include "audio_renderer.h"
 
-struct audio_renderer_s {
-    logger_t *logger;
+static bool broken_audio;
+static int counter;
+
+/* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
+
+/* ct = 1; linear PCM (uncompressed): 44100/16/2, S16LE */
+static const char lpcm[]="audio/x-raw,rate=(int)44100,channels=(int)2,format=S16LE,layout=interleaved";
+
+/* ct = 2; codec_data is ALAC magic cookie:  44100/16/2 spf = 352 */    
+static const char alac[] = "audio/x-alac,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)"
+                           "00000024""616c6163""00000000""00000160""0010280a""0e0200ff""00000000""00000000""0000ac44";
+
+/* ct = 4; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1:  AAC-LC 44100/2 spf = 1024 */
+static const char aac_lc[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)1210";
+
+/* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 480 */
+static const char aac_eld[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
+
+typedef struct audio_renderer_s {
     GstElement *appsrc; 
     GstElement *pipeline;
     GstElement *volume;
-};
+    unsigned char ct;
+} audio_renderer_t ;
+
 
 static gboolean check_plugins (void)
 {
-  int i;
-  gboolean ret;
-  GstRegistry *registry;
-  const gchar *needed[] = {"app", "libav", "playback", "autodetect", NULL};
+    int i;
+    gboolean ret;
+    GstRegistry *registry;
+    const gchar *needed[] = { "app", "libav", "playback", "autodetect", NULL};
 
-  registry = gst_registry_get ();
-  ret = TRUE;
-  for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
-    GstPlugin *plugin;
-    plugin = gst_registry_find_plugin (registry, needed[i]);
-    if (!plugin) {
-      g_print ("Required gstreamer plugin '%s' not found\n", needed[i]);
-      ret = FALSE;
-      continue;
+    registry = gst_registry_get ();
+    ret = TRUE;
+    for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
+        GstPlugin *plugin;
+        plugin = gst_registry_find_plugin (registry, needed[i]);
+        if (!plugin) {
+            g_print ("Required gstreamer plugin '%s' not found\n", needed[i]);
+            ret = FALSE;
+            continue;
+        }
+        gst_object_unref (plugin);
+        plugin = NULL;
     }
-    gst_object_unref (plugin);
-  }
-  return ret;
+    return ret;
 }
 
-audio_renderer_t *audio_renderer_init(logger_t *logger, video_renderer_t *video_renderer, audio_device_t device, bool low_latency) {
-    audio_renderer_t *renderer;
+#define NFORMATS 4
+static audio_renderer_t *renderer_type[NFORMATS];
+static audio_renderer_t *renderer = NULL;
+static logger_t *logger = NULL;
+const char * format[NFORMATS];
+
+void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
     GError *error = NULL;
-
-    renderer = calloc(1, sizeof(audio_renderer_t));
-    if (!renderer) {
-        return NULL;
-    }
-    renderer->logger = logger;
-
+    GstCaps *caps = NULL;
+    logger = render_logger;
+    gst_init(NULL,NULL);
     assert(check_plugins ());
 
-    renderer->pipeline = gst_parse_launch("appsrc name=audio_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! decodebin !"
-    "audioconvert ! volume name=volume ! level ! autoaudiosink sync=false", &error);
-    g_assert (renderer->pipeline);
+    for (int i = 0; i < NFORMATS ; i++) {
+        renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
+        assert(renderer_type[i]);
+        GString *launch = g_string_new("appsrc name=audio_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! ");
+        switch (i) {
+        case 0:    /* AAC-ELD */
+        case 2:    /* AAC-LC */
+            g_string_append(launch, "avdec_aac ! ");
+            break;
+        case 1:    /* ALAC */
+            g_string_append(launch, "avdec_alac ! ");
+            break;
+        case 3:   /*PCM*/
+	    break;
+        }
+        g_string_append (launch, "audioconvert ! volume name=volume ! level ! ");
+        g_string_append (launch, audiosink);
+        g_string_append (launch, " sync=false");
+        renderer_type[i]->pipeline  = gst_parse_launch(launch->str,  &error);
+	if (error) {
+	  g_error ("get_parse_launch error:\n %s\n",error->message);
+	  g_clear_error (&error);
+	}
+        g_assert (renderer_type[i]->pipeline);
+        g_string_free(launch, TRUE);
+        renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
+        renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
+	switch (i) {
+	case 0:			 
+	    caps =  gst_caps_from_string(aac_eld);
+            renderer_type[i]->ct = 8;
+	    format[i] = "AAC-ELD 44100/2";
+            break;
+	case 1:			 
+	    caps =  gst_caps_from_string(alac);
+            renderer_type[i]->ct = 2;
+            format[i] = "ALAC 44100/16/2";
+            break;
+	case 2:			 
+	    caps =  gst_caps_from_string(aac_lc);
+            renderer_type[i]->ct = 4;
+            format[i] = "AAC-LC 44100/2";
+            break;
+	case 3:			 
+	    caps =  gst_caps_from_string(lpcm);
+            renderer_type[i]->ct = 1;
+            format[i] = "PCM 44100/16/2 S16LE";
+            break;
+	}
+	logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
+	g_object_set(renderer_type[i]->appsrc, "caps", caps, NULL);
+        gst_caps_unref(caps);
+    }
+}
 
-    renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "audio_source");
-    renderer->volume = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "volume");
+void audio_renderer_stop() {
+    if (renderer) {
+        gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
+        gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+        renderer = NULL;
+    }
+}
+
+void  audio_renderer_start(unsigned char *ct) {
+    unsigned char compression_type = 0, id;
+    broken_audio = false;
+    counter = 0;
+    for (int i = 0; i < NFORMATS; i++) {
+        if(renderer_type[i]->ct == *ct) {
+            compression_type = *ct;
+	    id = i;
+            break;
+        }
+    }
+    if (compression_type && renderer) {
+        if(compression_type != renderer->ct) {
+            gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
+            gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+            logger_log(logger, LOGGER_INFO, "changed audio connection, format %s", format[id]);
+            renderer = renderer_type[id];
+            gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+        }
+    } else if (compression_type) {
+        logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
+        renderer = renderer_type[id];
+        gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+    } else {
+        logger_log(logger, LOGGER_ERR, "unknown audio compression type ct = %d", *ct);
+    }
     
-    gchar eld_conf[] = { 0xF8, 0xE8, 0x50, 0x00 };
-    GstBuffer *codec_data = gst_buffer_new_and_alloc(sizeof(eld_conf));
-    GstMapInfo map;
-
-    gst_buffer_map (codec_data, &map, GST_MAP_WRITE); 
-    memset (map.data, eld_conf[0], map.size);
-    memset (map.data+1, eld_conf[1], map.size);
-    memset (map.data+2, eld_conf[2], map.size);
-    memset (map.data+3, eld_conf[3], map.size);
-
-    GstCaps *caps = gst_caps_new_simple ("audio/mpeg",
-    "rate", G_TYPE_INT, 44100,
-    "channels", G_TYPE_INT, 2,
-    "mpegversion", G_TYPE_INT, 4,
-    "stream-format", G_TYPE_STRING, "raw",
-    "codec_data", GST_TYPE_BUFFER, codec_data,
-    NULL);
-    g_object_set(renderer->appsrc, "caps", caps, NULL);
-
-    gst_caps_unref(caps);
-    gst_buffer_unmap (codec_data, &map);
-    gst_buffer_unref (codec_data);
-
-    return renderer;
 }
 
-void audio_renderer_start(audio_renderer_t *renderer) {
-    //g_signal_connect( renderer->pipeline, "deep-notify", G_CALLBACK(gst_object_default_deep_notify ), NULL );
-    gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
-}
-
-void audio_renderer_render_buffer(audio_renderer_t *renderer, raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts) {
-
+void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts) {
     GstBuffer *buffer;
+    bool valid;
+    if (data_len == 0 || renderer == NULL) return;
 
-    if (data_len == 0) return;
-
+    /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol */
+    /* or ct = 2 (ALAC 44100/16/2 spf 352) AirPlay protocol */
+    /* first byte data[0] of ALAC frame is 0x20, first byte of AAC_ELD is 0x8d or 0x8e, AAC_LC is 0xff (ADTS) */
+    
     buffer = gst_buffer_new_and_alloc(data_len);
     assert(buffer != NULL);
     GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
     gst_buffer_fill(buffer, 0, data, data_len);
-    gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
-
+    switch (renderer->ct) {
+    case 8: /*AAC-ELD*/
+        valid = (data[0] == 0x8d || data[0] == 0x8e);
+        break;
+    case 2: /*ALAC*/
+        valid = (data[0] == 0x20);
+        break;
+    case 4:  /*AAC_LC */
+        valid = (data[0] == 0xff );
+ 	break;
+    default:
+        valid = true;
+        break;
+    }
+    if (valid) {
+        if (broken_audio) counter++;
+        if (counter == 2) broken_audio = false;
+        if (!broken_audio) gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
+    } else {
+        if (!broken_audio) logger_log(logger, LOGGER_ERR, "*** ERROR decryption of audio (compression_type %d) failed ", renderer->ct);
+        broken_audio = true;
+        counter = 0;
+    } 
 }
 
-void audio_renderer_set_volume(audio_renderer_t *renderer, float volume) {
+void audio_renderer_set_volume(float volume) {
     float avol;
         if (fabs(volume) < 28) {
-	        avol=floorf(((28-fabs(volume))/28)*10)/10;
+	    avol=floorf(((28-fabs(volume))/28)*10)/10;
     	    g_object_set(renderer->volume, "volume", avol, NULL);
         }
 }
 
-void audio_renderer_flush(audio_renderer_t *renderer) {
+void audio_renderer_flush() {
 }
 
-void audio_renderer_destroy(audio_renderer_t *renderer) {
-
-    gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
-    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-    gst_object_unref (renderer->pipeline);
-    gst_object_unref (renderer->appsrc);
-    gst_object_unref (renderer->volume);
-    if (renderer) {
-        free(renderer);
+void audio_renderer_destroy() {
+    audio_renderer_stop();
+    for (int i = 0; i < NFORMATS ; i++ ) {
+        gst_object_unref (renderer_type[i]->volume);
+	renderer_type[i]->volume = NULL;
+        gst_object_unref (renderer_type[i]->appsrc);
+        renderer_type[i]->appsrc = NULL;
+	gst_object_unref (renderer_type[i]->pipeline);
+        renderer_type[i]->pipeline = NULL;
+        free(renderer_type[i]);
     }
 }
+

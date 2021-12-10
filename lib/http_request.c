@@ -17,11 +17,11 @@
 #include <assert.h>
 
 #include "http_request.h"
-#include "http_parser.h"
+#include "llhttp/llhttp.h"
 
 struct http_request_s {
-    http_parser parser;
-    http_parser_settings parser_settings;
+    llhttp_t parser;
+    llhttp_settings_t parser_settings;
 
     const char *method;
     char *url;
@@ -37,7 +37,7 @@ struct http_request_s {
 };
 
 static int
-on_url(http_parser *parser, const char *at, size_t length)
+on_url(llhttp_t *parser, const char *at, size_t length)
 {
     http_request_t *request = parser->data;
     int urllen = request->url ? strlen(request->url) : 0;
@@ -51,7 +51,7 @@ on_url(http_parser *parser, const char *at, size_t length)
 }
 
 static int
-on_header_field(http_parser *parser, const char *at, size_t length)
+on_header_field(llhttp_t *parser, const char *at, size_t length)
 {
     http_request_t *request = parser->data;
 
@@ -86,7 +86,7 @@ on_header_field(http_parser *parser, const char *at, size_t length)
 }
 
 static int
-on_header_value(http_parser *parser, const char *at, size_t length)
+on_header_value(llhttp_t *parser, const char *at, size_t length)
 {
     http_request_t *request = parser->data;
 
@@ -111,7 +111,7 @@ on_header_value(http_parser *parser, const char *at, size_t length)
 }
 
 static int
-on_body(http_parser *parser, const char *at, size_t length)
+on_body(llhttp_t *parser, const char *at, size_t length)
 {
     http_request_t *request = parser->data;
 
@@ -124,11 +124,11 @@ on_body(http_parser *parser, const char *at, size_t length)
 }
 
 static int
-on_message_complete(http_parser *parser)
+on_message_complete(llhttp_t *parser)
 {
     http_request_t *request = parser->data;
 
-    request->method = http_method_str(request->parser.method);
+    request->method = llhttp_method_name(request->parser.method);
     request->complete = 1;
     return 0;
 }
@@ -142,14 +142,16 @@ http_request_init(void)
     if (!request) {
         return NULL;
     }
-    http_parser_init(&request->parser, HTTP_REQUEST);
-    request->parser.data = request;
 
+    llhttp_settings_init(&request->parser_settings);
     request->parser_settings.on_url = &on_url;
     request->parser_settings.on_header_field = &on_header_field;
     request->parser_settings.on_header_value = &on_header_value;
     request->parser_settings.on_body = &on_body;
     request->parser_settings.on_message_complete = &on_message_complete;
+
+    llhttp_init(&request->parser, HTTP_REQUEST, &request->parser_settings);
+    request->parser.data = request;
 
     return request;
 }
@@ -177,8 +179,7 @@ http_request_add_data(http_request_t *request, const char *data, int datalen)
 
     assert(request);
 
-    ret = http_parser_execute(&request->parser,
-                              &request->parser_settings,
+    ret = llhttp_execute(&request->parser,
                               data, datalen);
     return ret;
 }
@@ -194,21 +195,21 @@ int
 http_request_has_error(http_request_t *request)
 {
     assert(request);
-    return (HTTP_PARSER_ERRNO(&request->parser) != HPE_OK);
+    return (llhttp_get_errno(&request->parser) != HPE_OK);
 }
 
 const char *
 http_request_get_error_name(http_request_t *request)
 {
     assert(request);
-    return http_errno_name(HTTP_PARSER_ERRNO(&request->parser));
+    return llhttp_errno_name(llhttp_get_errno(&request->parser));
 }
 
 const char *
 http_request_get_error_description(http_request_t *request)
 {
     assert(request);
-    return http_errno_description(HTTP_PARSER_ERRNO(&request->parser));
+    return llhttp_get_error_reason(&request->parser);
 }
 
 const char *
