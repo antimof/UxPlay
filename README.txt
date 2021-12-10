@@ -1,16 +1,14 @@
 UxPlay 1.43: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
-This project is a GPLv3 unix AirPlay server which now also works on
+This project is a GPLv3 unix AirPlay2 server which now also works on
 macOS. Its main use is to act like an AppleTV for screen-mirroring (with
 audio) of iOS/macOS clients (iPads, iPhones, MacBooks) in a window on
 the server display (with the possibility of sharing that window on
 screen-sharing applications such as Zoom) on a host running Linux,
 macOS, or other unix, using Apple's AirPlay Mirror protocol first
-available in iOS 5. As well as screen mirroring, when not mirroring the
-screen it can also play Apple Lossless (ALAC) audio streamed from the
-client using the audio-only Airplay protocol. (Details of what is known
-about the AirPlay2 protocol can be found
+available in iOS 5. (Details of what is known about the AirPlay2
+protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)). **Note that Apple
 DRM (as in Apple TV app content) cannot be decrypted by UxPlay.**
@@ -24,51 +22,43 @@ Linux and BSD Unix servers, this is usually provided by
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-***New:** UxPlay \> 1.38 now also supports the Airplay audio-only
-protocol as well as AirPlay Mirror protocol, and (when the client screen
-is not being mirrored) can play Apple Lossless (ALAC) audio streamed
-from the client without video (the accompanying cover-art and metadata
-is not displayed). The initial connection to the client can be either
-AirPlay audio or Airplay Mirror mode. An initial Airplay Mirror
-connection (with "Advanced Audio Coding" (AAC-ELD) (lossy) audio)
-switches to ALAC if the mirrow window is closed and an AirPlay audio
-connection is started, and back again to AAC if an Airplay Mirror
-connection is (re)started*.
+*Since v1.38, UxPlay now also supports the Airplay audio-only protocol
+as well as AirPlay Mirror protocol, and (when the client screen is not
+being mirrored) can play Apple Lossless (ALAC) audio streamed from the
+client without video (the accompanying cover-art and metadata is not
+displayed). The initial connection to the client can be either AirPlay
+audio or Airplay Mirror mode. An Airplay Mirror connection (with
+"Advanced Audio Coding" AAC-ELD lossy-compression audio) switches to
+ALAC if the mirrow window is closed and an AirPlay audio connection is
+started, and back again to AAC if a new Airplay Mirror connection is
+made*.
 
 UxPlay is based on https://github.com/FD-/RPiPlay, with GStreamer
 integration from https://github.com/antimof/UxPlay. (UxPlay only uses
 GStreamer, and does not contain the alternative Raspberry-Pi-specific
-audio and video renderers also found in RPiPlay.) Tested on Ubuntu
-20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15, FreeBSD 13.0.
+audio and video renderers also found in RPiPlay.) Tested on a number of
+systems, including Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS
+10.15, FreeBSD 13.0.
 
-Features: 1. Based on Gstreamer. 2. Video and audio are supported out of
-the box. 3. Gstreamer decoding is plugin agnostic. Uses accelerated
-decoders if available. For Intel graphics, VAAPI is preferable, (but
-don't use VAAPI with nVidia). 4. Automatic screen orientation.
+Using Gstreamer means that video and audio are supported "out of the
+box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
+and uses accelerated decoders if available. For Intel integrated
+graphics, the VAAPI plugin is preferable, (but don't use it with
+nVidia).
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
-UxPlay can be built to use the "libcrypto" shared library from the
-recently-released OpenSSL- 3.0.0, which has a new Apache v2 license that
-is explicitly compatible with GPL v3 (see [this
-announcement](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/)
-and [this](https://www.openssl.org/blog/blog/2017/03/22/license/)).
+Some Linux distributions such as Debian do not allow distribution of
+compiled GPL code linked to OpenSLL-1.1.1 because its "dual
+OpenSSL/SSLeay" license has some incompatibilites with GPL, unless all
+code authors have explicitly given an "exception" to allow such linking
+(the historical origins of UxPlay make this impossible to obtain). Other
+distributions treat OpenSSL as a "System Library" which the GPL allows
+linking to.
 
-The new license resolves (or rather, makes irrelevant) a long-standing
-controversy over whether OpenSSL is a "System Library" to which GPL code
-can be freely linked, or not, in which case an explicit "GPL exception"
-must be added to the GPL license by all the authors (the historical
-origins of the UxPlay code make this impossible). **The license issue
-only involves distribution of compiled code, not source code.**
-
-Packagers for distributions such as Debian that do not allow
-exception-free linking of GPL v3 code to OpenSSL-1.1.1 under its old
-"dual OpenSSL/SSLeay" license should use the "Apache v2" OpenSSL-3.x,
-which is backwards-compatible with UxPlay.
-
-An alternative is to replace the AES decryption code in
-lib/crypto.\[c,h\] (which is a wrapper for calls to OpenSSL's libcrypto)
-with a GPL implementation.
+For "GPL-strict" distributions, UxPlay can be built using OpenSSL-
+3.0.0, which has a new [GPLv3-compatible
+license](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/).
 
 Getting UxPlay:
 ===============
