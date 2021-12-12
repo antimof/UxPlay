@@ -179,3 +179,35 @@ char *utils_parse_hex(const char *str, int str_len, int *data_len) {
     *data_len = (str_len / 2);
     return data;
 }
+
+char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per_line) {
+    int len = 3*datalen + ((datalen-1)/chars_per_line ) + 1;
+    char *str = (char *) calloc(len + 1, sizeof(char));
+    assert(str);
+    char *p = str;
+    for (int i = 0; i < datalen; i++) {
+        if (i > 0 && i % chars_per_line == 0) {
+            sprintf(p,"\n");
+            p++;
+        }
+        sprintf(p,"%2.2x ", (unsigned int) data[i]);
+        p += 3;
+    }
+    sprintf(p,"\n");
+    p++;
+    assert(p == &(str[len]));
+    return str;
+}
+
+char *utils_data_to_text(const char *data, int datalen) {
+    char *ptr = (char *) calloc(datalen + 1, sizeof(char));
+    assert(ptr);
+    strncpy(ptr, data, datalen);
+    char *p = ptr;
+    while (p) {
+        p  = strchr(p, '\r');  /* replace occurences of '\r' by ' ' */
+	if (p) *p = ' ';
+    }
+    return ptr;
+}
+  
