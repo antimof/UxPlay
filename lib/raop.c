@@ -305,15 +305,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     } else {
         len -= 2;
     }
-    header_str = (char *) calloc(len+1,sizeof(char));
-    assert(header_str);
-    strncpy(header_str, data, len);
-    char *p = header_str;
-    while (p) {
-        p  = strchr(p, '\r');  /* replace occurences of '\r' by ' ' */
-	if (p) *p = ' ';
-    }
-     
+    header_str =  utils_data_to_text(data, len);
     logger_log(conn->raop->logger, LOGGER_DEBUG, "\n%s", header_str);
     bool data_is_plist = (strstr(header_str,"apple-binary-plist") != NULL);
     bool data_is_text = (strstr(header_str,"text/parameters") != NULL);
