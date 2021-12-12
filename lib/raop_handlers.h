@@ -364,14 +364,14 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
         free(str);
 
-	char* ekey = NULL;
+        char* ekey = NULL;
         uint64_t ekey_len = 0;
         plist_get_data_val(req_ekey_node, &ekey, &ekey_len);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey_len = %llu", ekey_len);
         // ekey is 72 bytes, aeskey is 16 bytes
         str = utils_data_to_string((unsigned char *) ekey, ekey_len, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
-	free (str);
+        free (str);
 
         int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
@@ -379,11 +379,11 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
         free(str);
 
-	unsigned char ecdh_secret[X25519_KEY_SIZE];
+        unsigned char ecdh_secret[X25519_KEY_SIZE];
         pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret);
         str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
-	free(str);
+        free(str);
 
         // Time port
         uint64_t timing_rport;

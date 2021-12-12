@@ -337,7 +337,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", data_str);
                 free(data_str);
             }
-	}
+        }
         free(response_data);
         response_data = NULL;
         response_datalen = 0;
