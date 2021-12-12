@@ -51,9 +51,9 @@ or (if git is installed): "git clone https://github.com/FDH2/UxPlay".
 
 *This is also a pull request on the
 original site https://github.com/antimof/UxPlay ; that original 
-project appears to be inactive, but the pull request with
-changes  up to 2021-12-10
-were recently merged whith the antimof tree (thank you antimof!).
+project is  inactive, but the pull request with
+changes up to 2021-12-10
+were recently merged with the antimof tree (thank you antimof!).
 
 ## Building UxPlay on  Linux (or \*BSD):
 
