@@ -255,7 +255,7 @@ Windows application that can mirror a Windows screen on an Apple TV using AirPla
 can mirror to a true AppleTV and some other AirPlay receivers, UxPlay appears to correctly pair with this client, but 
 then fails to decrypt both the audio and video streams. Possibly a different variant of the AirPlay encryption/decryption 
 protocol not supported by UxPlay is used by this client.  Without further information, there is no obvious fix.
-UxPlay reports itself to clients as "model appleTV2,1, sourceVersion 220.68".
+UxPlay reports itself to clients as an "AirTunes/220.68" server.
 
 # **Usage:**
 
