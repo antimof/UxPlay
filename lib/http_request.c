@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "http_request.h"
 #include "llhttp/llhttp.h"
@@ -250,4 +251,39 @@ http_request_get_data(http_request_t *request, int *datalen)
         *datalen = request->datalen;
     }
     return request->data;
+}
+
+int 
+http_request_get_header_string(http_request_t *request, char **header_str)
+{
+    if(!request || request->headers_size == 0) {
+        *header_str = NULL;
+        return 0;
+    }
+    int len = 0;
+    for (int i = 0; i < request->headers_size; i++) {
+        len += strlen(request->headers[i]);
+        if (i%2 == 0) {
+            len += 2;
+        } else {
+            len++;
+        }
+    }
+    char *str = calloc(len+1, sizeof(char));
+    assert(str);
+    *header_str = str;
+    char *p = str;
+    for (int i = 0; i < request->headers_size; i++) {
+        sprintf(p,"%s", request->headers[i]);
+        p += strlen(request->headers[i]);
+        if (i%2 == 0) {
+            sprintf(p, ": ");
+            p +=2;
+        } else {
+            sprintf(p, "\n");
+            p++;
+        }
+    }
+    assert(p == &(str[len]));
+    return len;
 }

@@ -162,12 +162,6 @@ raop_handler_info(raop_conn_t *conn,
 
     plist_to_bin(r_node, response_data, (uint32_t *) response_datalen);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "UxPlay server info  sent in response to client \"GET /info\" request, len = %d:", *response_datalen);
-    char * plist_xml;
-    uint32_t plist_len;
-    plist_to_xml(r_node, &plist_xml, &plist_len);
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
-    free(plist_xml);
     free(pk);
     free(hw_addr);
 }
@@ -346,11 +340,6 @@ raop_handler_setup(raop_conn_t *conn,
     // Parsing bplist
     plist_t req_root_node = NULL;
     plist_from_bin(data, data_len, &req_root_node);
-    char * plist_xml;
-    uint32_t plist_len;
-    plist_to_xml(req_root_node, &plist_xml, &plist_len);
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
-    free(plist_xml);
     plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
     plist_t req_eiv_node = plist_dict_get_item(req_root_node, "eiv");
     plist_t req_ekey_node = plist_dict_get_item(req_root_node, "ekey");
@@ -371,16 +360,30 @@ raop_handler_setup(raop_conn_t *conn,
         plist_get_data_val(req_eiv_node, &eiv, &eiv_len);
         memcpy(aesiv, eiv, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "eiv_len = %llu", eiv_len);
-        char* ekey = NULL;
+        char *str = utils_data_to_string(aesiv, 16, 16);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
+        free(str);
+
+	char* ekey = NULL;
         uint64_t ekey_len = 0;
         plist_get_data_val(req_ekey_node, &ekey, &ekey_len);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey_len = %llu", ekey_len);
-
         // ekey is 72 bytes, aeskey is 16 bytes
+        str = utils_data_to_string((unsigned char *) ekey, ekey_len, 16);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
+	free (str);
+
         int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
-        unsigned char ecdh_secret[X25519_KEY_SIZE];
+        str = utils_data_to_string(aeskey, 16, 16);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
+        free(str);
+
+	unsigned char ecdh_secret[X25519_KEY_SIZE];
         pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret);
+        str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
+	free(str);
 
         // Time port
         uint64_t timing_rport;
@@ -422,7 +425,7 @@ raop_handler_setup(raop_conn_t *conn,
                     plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
                     uint64_t stream_connection_id;
                     plist_get_uint_val(stream_id_node, &stream_connection_id);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID = %llu", stream_connection_id);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption iv): %llu", stream_connection_id);
 
                     if (conn->raop_rtp_mirror) {
                         raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, stream_connection_id);
