@@ -36,10 +36,6 @@
 #include <net/if_dl.h>
 #endif
 
-
-
-
-
 #include "log.h"
 #include "lib/raop.h"
 #include "lib/stream.h"
@@ -48,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.43"
+#define VERSION "1.44"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -73,7 +69,6 @@ static bool use_video = true;
 static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
-
 
 gboolean connection_callback (gpointer loop){
   if (!connections_stopped) {

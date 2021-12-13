@@ -34,19 +34,13 @@ struct mirror_buffer_s {
     /* AES key and IV */
     // Need secondary processing to use
     unsigned char aeskey[RAOP_AESKEY_LEN];
-    unsigned char ecdh_secret[32];
 };
 
 void
 mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t streamConnectionID)
 {
-    sha_ctx_t *ctx = sha_init();
-    unsigned char eaeskey[64] = {};
+    unsigned char eaeskey[16];
     memcpy(eaeskey, mirror_buffer->aeskey, 16);
-    sha_update(ctx, eaeskey, 16);
-    sha_update(ctx, mirror_buffer->ecdh_secret, 32);
-    sha_final(ctx, eaeskey, NULL);
-
     unsigned char hash1[64];
     unsigned char hash2[64];
     char* skey = "AirPlayStreamKey";
@@ -55,7 +49,8 @@ mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t streamConnection
     unsigned char sivall[255];
     sprintf((char*) skeyall, "%s%" PRIu64, skey, streamConnectionID);
     sprintf((char*) sivall, "%s%" PRIu64, siv, streamConnectionID);
-    sha_reset(ctx);
+
+    sha_ctx_t *ctx = sha_init();
     sha_update(ctx, skeyall, strlen((char*) skeyall));
     sha_update(ctx, eaeskey, 16);
     sha_final(ctx, hash1, NULL);
@@ -82,22 +77,18 @@ mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t streamConnection
 }
 
 mirror_buffer_t *
-mirror_buffer_init(logger_t *logger,
-                   const unsigned char *aeskey,
-                   const unsigned char *ecdh_secret)
+mirror_buffer_init(logger_t *logger, const unsigned char *aeskey)
 {
     mirror_buffer_t *mirror_buffer;
     assert(aeskey);
-    assert(ecdh_secret);
     mirror_buffer = calloc(1, sizeof(mirror_buffer_t));
     if (!mirror_buffer) {
         return NULL;
     }
     memcpy(mirror_buffer->aeskey, aeskey, RAOP_AESKEY_LEN);
-    memcpy(mirror_buffer->ecdh_secret, ecdh_secret, 32);
     mirror_buffer->logger = logger;
     mirror_buffer->nextDecryptCount = 0;
-    //mirror_buffer_init_aes(mirror_buffer, aeskey, ecdh_secret, streamConnectionID);
+    //mirror_buffer_init_aes(mirror_buffer, aeskey, streamConnectionID);
     return mirror_buffer;
 }
 

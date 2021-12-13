@@ -340,10 +340,9 @@ raop_handler_setup(raop_conn_t *conn,
     // Parsing bplist
     plist_t req_root_node = NULL;
     plist_from_bin(data, data_len, &req_root_node);
-    plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
-    plist_t req_eiv_node = plist_dict_get_item(req_root_node, "eiv");
     plist_t req_ekey_node = plist_dict_get_item(req_root_node, "ekey");
-
+    plist_t req_eiv_node = plist_dict_get_item(req_root_node, "eiv");
+	
     // For the response
     plist_t res_root_node = plist_new_dict();
 
@@ -360,7 +359,7 @@ raop_handler_setup(raop_conn_t *conn,
         plist_get_data_val(req_eiv_node, &eiv, &eiv_len);
         memcpy(aesiv, eiv, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "eiv_len = %llu", eiv_len);
-        char *str = utils_data_to_string(aesiv, 16, 16);
+        char* str = utils_data_to_string(aesiv, 16, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
         free(str);
 
@@ -384,6 +383,24 @@ raop_handler_setup(raop_conn_t *conn,
         str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
         free(str);
+	
+        /* sha-512 hashing of aeskey is skipped where the client has sourceVersion <= OLD_PROTOCOL_CLIENT (defined in  global.h) */
+        plist_t req_source_version_node = plist_dict_get_item(req_root_node, "sourceVersion");
+        char* sourceVersion;
+        plist_get_string_val(req_source_version_node, &sourceVersion);
+        logger_log(conn->raop->logger, LOGGER_INFO, "client sourceVersion %s (no hash of aeskey if <= %s)", sourceVersion, OLD_PROTOCOL_CLIENT);
+
+	char *end_ptr;
+        if (strtoul(sourceVersion, &end_ptr, 10) > strtoul(OLD_PROTOCOL_CLIENT , &end_ptr, 10)) {
+            unsigned char eaeskey[64] = {0};
+            memcpy(eaeskey, aeskey, 16);
+            sha_ctx_t *ctx = sha_init();
+            sha_update(ctx, eaeskey, 16);
+            sha_update(ctx, ecdh_secret, 32);
+            sha_final(ctx, eaeskey, NULL);
+            sha_destroy(ctx);
+            memcpy(aeskey, eaeskey, 16);
+       }
 
         // Time port
         uint64_t timing_rport;
@@ -395,8 +412,8 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, conn->remote, conn->remotelen, timing_rport);
         raop_ntp_start(conn->raop_ntp, &timing_lport);
 
-        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, aesiv, ecdh_secret);
-        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, ecdh_secret);
+        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, aesiv);
+        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey);
 
         plist_t res_event_port_node = plist_new_uint(conn->raop->port);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);
@@ -407,6 +424,7 @@ raop_handler_setup(raop_conn_t *conn,
     }
 
     // Process stream setup requests
+    plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
     if (PLIST_IS_ARRAY(req_streams_node)) {
         plist_t res_streams_node = plist_new_array();
 

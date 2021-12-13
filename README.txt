@@ -1,4 +1,4 @@
-UxPlay 1.43: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.44: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 This project is a GPLv3 unix AirPlay2 server which now also works on
@@ -333,16 +333,18 @@ GStreamer 1.x into packages in different ways; the packages listed above
 in the build instructions should bring in other required GStreamer
 packages as dependencies, but will not install all possible plugins.
 
-**Use with non-Apple clients**: one user tried to use UxPlay with an
-*airmypc* client (a non-free commercial Windows application that can
-mirror a Windows screen on an Apple TV using AirPlay mirror protocol).
-While *airmypc* can mirror to a true AppleTV and some other AirPlay
-receivers, UxPlay appears to correctly pair with this client, but then
-fails to decrypt both the audio and video streams. Possibly a different
-variant of the AirPlay encryption/decryption protocol not supported by
-UxPlay is used by this client. Without further information, there is no
-obvious fix. UxPlay reports itself to clients as an "AirTunes/220.68"
-server.
+**Use with non-Apple clients**: third-party Windows-bases AirPlay
+clients such as AirMyPC typically use an older protocol that omits the
+hashing of the audio AES key with the "shared secret" `ecdh_secret`
+created during the initial pairing-handshake between client and server.
+Omission of this step was necessary for successful decryption of audio
+and video streams from the AirMyPC client, which emulates an old version
+of iOS, and reports its `sourceVersion` as `280.33`. The line
+`#define OLD_PROTOCOL_CLIENT "280.33"` in `lib/global.h` makes UxPlay
+skip the aeskey hashing step when the client reports this or an older
+value as its sourceVersion. If both audio and video decryption fail when
+using another third-party client, and `uxplay -d` output shows that it
+reports a later sourceVersion, try increasing the value in global.h.
 
 **Usage:**
 ==========
@@ -458,6 +460,9 @@ still open when the GStreamer pipeline is closed.*
 
 ChangeLog
 =========
+
+1.44 2021-12-13 no hash of aeskey with ecdh\_secret if sourceVersion \<=
+280.33 (now supports AirMyPC)
 
 1.43 2021-12-07 Various internal changes, such as tests for successful
 decryption, uniform treatment of informational/debug messages, etc.,
@@ -581,6 +586,9 @@ Improvements since the original UxPlay by antimof:
 
 12. Added support for audio-only streaming with original (non-Mirror)
     AirPlay protocol, with Apple Lossless (ALAC) audio.
+
+13. Added suppport for the older AirPlay protocol used by third-party
+    Windows-based AirPlay mirror emulators such as AirMyPC.
 
 Disclaimer
 ==========

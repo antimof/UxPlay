@@ -57,24 +57,20 @@ struct raop_buffer_s {
     raop_buffer_entry_t entries[RAOP_BUFFER_LENGTH];
 };
 
-void
-raop_buffer_init_key_iv(raop_buffer_t *raop_buffer,
-                        const unsigned char *aeskey,
-                        const unsigned char *aesiv,
-                        const unsigned char *ecdh_secret)
+raop_buffer_t *
+raop_buffer_init(logger_t *logger,
+                 const unsigned char *aeskey,
+                 const unsigned char *aesiv)
 {
-
-    // Initialization key
-    unsigned char eaeskey[64];
-    memcpy(eaeskey, aeskey, 16);
-
-    sha_ctx_t *ctx = sha_init();
-    sha_update(ctx, eaeskey, 16);
-    sha_update(ctx, ecdh_secret, 32);
-    sha_final(ctx, eaeskey, NULL);
-    sha_destroy(ctx);
-
-    memcpy(raop_buffer->aeskey, eaeskey, 16);
+    raop_buffer_t *raop_buffer;
+    assert(aeskey);
+    assert(aesiv);
+    raop_buffer = calloc(1, sizeof(raop_buffer_t));
+    if (!raop_buffer) {
+        return NULL;
+    }
+    raop_buffer->logger = logger;
+    memcpy(raop_buffer->aeskey, aeskey, RAOP_AESKEY_LEN);
     memcpy(raop_buffer->aesiv, aesiv, RAOP_AESIV_LEN);
 
 #ifdef DUMP_AUDIO
@@ -84,24 +80,6 @@ raop_buffer_init_key_iv(raop_buffer_t *raop_buffer,
         fclose(file_keyiv);
     }
 #endif
-}
-
-raop_buffer_t *
-raop_buffer_init(logger_t *logger,
-                 const unsigned char *aeskey,
-                 const unsigned char *aesiv,
-                 const unsigned char *ecdh_secret)
-{
-    raop_buffer_t *raop_buffer;
-    assert(aeskey);
-    assert(aesiv);
-    assert(ecdh_secret);
-    raop_buffer = calloc(1, sizeof(raop_buffer_t));
-    if (!raop_buffer) {
-        return NULL;
-    }
-    raop_buffer->logger = logger;
-    raop_buffer_init_key_iv(raop_buffer, aeskey, aesiv, ecdh_secret);
 
     for (int i = 0; i < RAOP_BUFFER_LENGTH; i++) {
         raop_buffer_entry_t *entry = &raop_buffer->entries[i];
