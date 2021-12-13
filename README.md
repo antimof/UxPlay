@@ -251,9 +251,9 @@ reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstr
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
 
-**Use with non-Apple clients**: third-party Windows-bases AirPlay clients such as AirMyPC typically use an older protocol
+**Use with non-Apple clients**: third-party Windows-based AirPlay clients such as AirMyPC typically use an older protocol
 that omits the hashing of the audio AES key with the "shared secret" ```ecdh_secret``` created during the initial
-pairing-handshake between client and server.   Omission of this step was necessary for successful decryption of audio and video
+pairing-handshake between client and server.   Omission of this step is necessary for successful decryption of audio and video
 streams from the AirMyPC  client, which emulates an old version of iOS, and reports its ```sourceVersion``` as ```280.33```. 
  The line ```#define OLD_PROTOCOL_CLIENT "280.33"``` in ```lib/global.h``` makes UxPlay skip the aeskey hashing step when the client
 reports this or an older value as its sourceVersion.   If both audio and video decryption fail when  using  another third-party client, and
