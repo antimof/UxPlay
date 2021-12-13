@@ -155,7 +155,11 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
     /* first byte of invalid data (decryption failed) is 0x1 */
     if (data[0]) {
-        if (!broken_video) logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video failed ");
+        if (!broken_video) {
+            logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
+        } else {
+            logger_log(logger, LOGGER_DEBUG, "*** ERROR decryption of video packet failed ");
+        }
         broken_video = true;
     } else {
         broken_video = false;
