@@ -113,7 +113,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     gst_init(NULL,NULL);
 
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
-                     "queue ! decodebin ! videoconvert ! ");
+                     "queue ! h264parse ! avdec_h264 ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink sync=false");
