@@ -276,6 +276,7 @@ other required GStreamer packages as dependencies, but will not install all poss
 ### 5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
 
 This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
+
 Modern Apple clients use a more-encrypted protocol than older ones.
 Which protocol is used by UxPlay depends on the client  _sourceVersion_ (reported by the client and now shown in the terminal output).   Since UxPlay 1.45,
 to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as having  sourceVersion  280.33, 

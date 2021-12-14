@@ -362,7 +362,8 @@ packages as dependencies, but will not install all possible plugins.
 ### 5. Failure to decrypt ALL video and audio streams from a particular (older) client:
 
 This triggers an error message, and will be due to use of an incorrect
-protocol for getting the AES decryption key from the client.\
+protocol for getting the AES decryption key from the client.
+
 Modern Apple clients use a more-encrypted protocol than older ones.
 Which protocol is used by UxPlay depends on the client *sourceVersion*
 (reported by the client and now shown in the terminal output). Since
