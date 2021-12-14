@@ -202,7 +202,7 @@ as the device is rotated).
 
 Note: ```uxplay```  is run from a terminal command line, and informational messages are written to the terminal.
 
-###1. uxplay starts, but stalls after "Initialized server socket(s)" appears, without any server name showing on the client.
+### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, without any server name showing on the client.
 
 Stalling this way, with _no_  server name showing  _on  the client_ as available,
 probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
@@ -213,7 +213,7 @@ _(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps 
 getting Avahi running on a FreeBSD system is to edit ```/usr/local/etc/avahi/avahi-daemon.conf```  to
 uncomment a line for airplay support._)
 
-###2. uxplay stalls, with the expected server name showing on the client, but fails to connect to the client when this is selected.
+### 2. uxplay stalls, with the expected server name showing on the client, but fails to connect to the client when this is selected.
 
 This shows that a *dns_sd* service  is working, but a firewall on the server is probably blocking the connection request from the client.
 (One user who insisted that the firewall had been turned off turned out to have had _two_ active firewalls (*firewalld* and *ufw*)
@@ -222,7 +222,7 @@ to see if that is the problem, or get three consecutive network ports,
 starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
 (or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
 
-###3. Problems _after_ the client-server connection has been made:
+### 3. Problems _after_ the client-server connection has been made:
 
 For such  problems, use "uxplay -d " (debug log option)  to see what is happening.
 **Most such problems are  due to a GStreamer plugin that doesn't work on your system**: (by default,
@@ -259,7 +259,7 @@ Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sh
 The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
 
-###4. GStreamer issues (missing plugins, etc.): 
+### 4. GStreamer issues (missing plugins, etc.): 
 
 To troubleshoot GStreamer execute  "export GST_DEBUG=2"
 to set the GStreamer debug-level environment-variable in the terminal
@@ -273,7 +273,7 @@ reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstr
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
 
-###5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
+### 5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
 
 This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
 Modern Apple clients use a more-encrypted protocol than older ones.
