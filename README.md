@@ -200,30 +200,35 @@ as the device is rotated).
 
 # **Troubleshooting:**
 
-If uxplay starts, but stalls after "Initialized server socket(s)" appears,
-it is probably because a firewall is blocking
-access to the server on which it is running.  If possible, either turn off the firewall
+Note: ```uxplay```  is run from a terminal command line, and informational messages are written to the terminal.
+
+###1. uxplay starts, but stalls after "Initialized server socket(s)" appears, without any server name showing on the client.
+
+Stalling this way, with _no_  server name showing  _on  the client_ as available,
+probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
+On Linux, make sure Avahi is installed,
+and start the avahi-daemon service on the system running uxplay (your distribution will document how to do  this).
+Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.
+_(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps needed for
+getting Avahi running on a FreeBSD system is to edit ```/usr/local/etc/avahi/avahi-daemon.conf```  to
+uncomment a line for airplay support._)
+
+###2. uxplay stalls, with the expected server name showing on the client, but fails to connect to the client when this is selected.
+
+This shows that a *dns_sd* service  is working, but a firewall on the server is probably blocking the connection request from the client.
+(One user who insisted that the firewall had been turned off turned out to have had _two_ active firewalls (*firewalld* and *ufw*)
+_both_ running on the server!)  If possible, either turn off the firewall
 to see if that is the problem, or get three consecutive network ports,
 starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
 (or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
 
-Stalling after "Initialize server socket(s)", with the server showing as available on the client iPad/iPhone,
-is almost certainly a firewall problem: one user was unaware that
-_two_ firewalls (ufw and firewalld) were both active  on their system.
+###3. Problems _after_ the client-server connection has been made:
 
-Stalling this way, but _without_ the server showing as available on the client,
-probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
-On Linux, make sure Avahi is installed,
-and start the avahi-daemon service (your distribution will document how to do  this).
-Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.
-(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps needed for
-getting Avahi running on this system is to edit /usr/local/etc/avahi/avahi-daemon.conf to
-uncomment a line for airplay support.)
-
-For other problems after a connection is made, use "uxplay -d " (debug log option)  to see what is happening.
-**Such problems are usually due to a GStreamer plugin that doesn't work on your system**: (by default,
+For such  problems, use "uxplay -d " (debug log option)  to see what is happening.
+**Most such problems are  due to a GStreamer plugin that doesn't work on your system**: (by default,
 GStreamer uses an algorithm to guess what is the "best"
-plugin to use on your system).
+plugin to use on your system).   A common case is that the GStreamer VAAPI plugin
+(for hardware-accelerated intel graphics) is being used on a system with nVidia graphics,
 If you use an
 nVidia graphics card, make sure that the gstreamer1.0-vaapi
 plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installed!).
@@ -231,7 +236,7 @@ plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installe
 "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
 reproduces the problem.)
 
-There are some reports of GStreamer problems with Intel graphics.  One user
+There are some reports of other GStreamer problems with hardware-accelerated Intel graphics.  One user
 (on Debian) solved this with "sudo apt install intel-media-va-driver-non-free".  This is a driver for 8'th (or later) generation
 "*-lake" Intel chips, that seems to be related to VAAPI accelerated graphics.
 
@@ -254,7 +259,9 @@ Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sh
 The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
 
-__GStreamer issues:__  To troubleshoot GStreamer execute  "export GST_DEBUG=2"
+###4. GStreamer issues (missing plugins, etc.): 
+
+To troubleshoot GStreamer execute  "export GST_DEBUG=2"
 to set the GStreamer debug-level environment-variable in the terminal
 where you will run uxplay, so that you see warning and error messages;
 (replace "2" by "4" to see much (much) more of what is happening inside
@@ -266,13 +273,14 @@ reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstr
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
 
-**Use with non-Apple clients**: third-party Windows-based AirPlay clients such as AirMyPC typically use an older protocol
-that omits the hashing of the audio AES key with the "shared secret" ```ecdh_secret``` created during the initial
-pairing-handshake between client and server.   Omission of this step is necessary for successful decryption of audio and video
-streams from the AirMyPC  client, which emulates an old version of iOS, and reports its ```sourceVersion``` as ```280.33```. 
- The line ```#define OLD_PROTOCOL_CLIENT "280.33"``` in ```lib/global.h``` makes UxPlay skip the aeskey hashing step when the client
-reports this or an older value as its sourceVersion.   If both audio and video decryption fail when  using  another third-party client, and
-```uxplay -d``` output shows that it reports a later sourceVersion, try  increasing the value in global.h.
+###5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
+
+This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
+Modern Apple clients use a more-encrypted protocol than older ones.
+Which protocol is used by UxPlay depends on the client  _sourceVersion_ (reported by the client and now shown in the terminal output).   Since UxPlay 1.45,
+to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as having  sourceVersion  280.33, 
+the legacy protocol is used for clients reporting sourceVersion 280.x.x or older.    This cutoff is set as ```OLD_PROTOCOL_CLIENT "280.33"```
+in ```lib/global.h```; change it there if necessary.
 
 # **Usage:**
 
@@ -370,7 +378,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    have been present during the previous _timeout_ seconds.  You may wish to use this if the Server
    is not visible to new Clients that were inactive when the Server was launched, and an idle Bonjour
    registration  eventually becomes unavailable for new connections (this is a workaround for what
-   may be due to a problem with your mdn-sd or Avahi setup).   
+   may be due to a problem with your dns-sd or Avahi setup).   
    _This option should **not** be used on  macOS, as a window created
    by GStreamer does not terminate correctly (it causes a segfault)
    if it is still open when the  GStreamer pipeline is closed._
