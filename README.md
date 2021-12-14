@@ -367,12 +367,11 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-as 0**  (or just **-a**) suppresses playing of streamed audio, but displays streamed video.
 
 **-t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
-   have been present during the previous _timeout_ seconds.  (You may wish to use this  because the Server may not be
-   visible to  new Clients that were inactive when the Server was launched, and an idle Bonjour
-   registration also eventually becomes unavailable for new connections.)  The timer only starts once a
-   Client has first made a mirror connection and then has disconnected with "Stop Mirrroring".
-   _This option should **not** be
-   used if the display window is an OpenGL window on macOS, as such an  OpenGL window created
+   have been present during the previous _timeout_ seconds.  You may wish to use this if the Server
+   is not visible to new Clients that were inactive when the Server was launched, and an idle Bonjour
+   registration  eventually becomes unavailable for new connections (this is a workaround for what
+   may be due to a problem with your mdn-sd or Avahi setup).   
+   _This option should **not** be used on  macOS, as a window created
    by GStreamer does not terminate correctly (it causes a segfault)
    if it is still open when the  GStreamer pipeline is closed._
 

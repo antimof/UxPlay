@@ -75,7 +75,7 @@ gboolean connection_callback (gpointer loop){
         counter = 0;
     } else {
         if (++counter == server_timeout) {
-	    LOGI("no connections for %d seconds: relaunch server\n",server_timeout);
+	    LOGD("no connections for %d seconds: relaunch server",server_timeout);
 	    g_main_loop_quit((GMainLoop *) loop);
         }
     }
@@ -473,10 +473,11 @@ int main (int argc, char *argv[]) {
     }
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();
-    
+
+    connections_stopped = true;
     relaunch:
+    counter = 0;
     compression_type = 0;
-    connections_stopped = false;
     if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
         return 1;
     }
