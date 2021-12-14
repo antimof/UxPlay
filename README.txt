@@ -1,44 +1,56 @@
 UxPlay 1.44: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
-This project is a GPLv3 unix AirPlay2 server which now also works on
-macOS. Its main use is to act like an AppleTV for screen-mirroring (with
-audio) of iOS/macOS clients (iPads, iPhones, MacBooks) in a window on
-the server display (with the possibility of sharing that window on
-screen-sharing applications such as Zoom) on a host running Linux,
-macOS, or other unix, using Apple's AirPlay Mirror protocol first
-available in iOS 5. (Details of what is known about the AirPlay2
-protocol can be found
+This project is a GPLv3 open source unix AirPlay2 Mirror server for
+Linux, macOS, and \*BSD. It is now hosted at the github site
+<https://github.com/FDH2/UxPlay> (where development and user-assistance
+now takes place), although it initially was developed by
+[antimof](http://github.com/antimof/Uxplay) using code from
+[RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
+[AirplayServer](https://github.com/KqsMea8/AirplayServer),
+[shairplay](https://github.com/juhovh/shairplay), and
+[playfair](https://github.com/EstebanKubata/playfair). (The antimof site
+is mainly inactive, but periodically posts updates pulled from the [main
+UxPlay site](https://github.com/FDH2/UxPlay)).
+
+Its main use is to act like an AppleTV for screen-mirroring (with audio)
+of iOS/macOS clients (iPads, iPhones, MacBooks, as well as certain
+third-party AirPlay-emulator clients on Windows, such as *AirMyPC*) in a
+window on the server display (with the possibility of sharing that
+window on screen-sharing applications such as Zoom) on a host running
+Linux, macOS, or other unix, using Apple's AirPlay Mirror protocol first
+available in iOS 5. (Details of what is publically known about Apple's
+AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
-and [here](https://emanuelecozzi.net/docs/airplay2)). **Note that Apple
-DRM (as in Apple TV app content) cannot be decrypted by UxPlay.**
+and [here](https://emanuelecozzi.net/docs/airplay2)).
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running (only
-DNS-SD "Service Discovery" service is necessary, it is not necessary
-that the local network also be of the ".local" mDNS-based type). On
-Linux and BSD Unix servers, this is usually provided by
+DNS-SD "Service Discovery" service is strictly necessary, it is not
+necessary that the local network also be of the ".local" mDNS-based
+type). On Linux and BSD Unix servers, this is usually provided by
 [Avahi](https://www.avahi.org), through the avahi-daemon service, and is
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-*Since v1.38, UxPlay now also supports the Airplay audio-only protocol
-as well as AirPlay Mirror protocol, and (when the client screen is not
-being mirrored) can play Apple Lossless (ALAC) audio streamed from the
-client without video (the accompanying cover-art and metadata is not
-displayed). The initial connection to the client can be either AirPlay
-audio or Airplay Mirror mode. An Airplay Mirror connection (with
-"Advanced Audio Coding" AAC-ELD lossy-compression audio) switches to
-ALAC if the mirrow window is closed and an AirPlay audio connection is
-started, and back again to AAC if a new Airplay Mirror connection is
-made*.
+Connections to the UxPlay server by iOS/MacOS clients can be initiated
+both in AirPlay Mirror mode (which streams lossily-compressed AAC audio
+while mirroring the client screen, or in the alternative AirPlay Audio
+mode which streams Apple Lossless (ALAC) audio without screen mirroring
+(the accompanying metadata and cover art in this mode is not displayed).
+*Switching between these two modes during an active connection is
+possible: in Mirror mode, close the mirror window and start an Audio
+mode connection, switch back by initiating a Mirror mode connection.*
+**Note that Apple DRM (as in Apple TV app content on the client) cannot
+be decrypted by UxPlay, and (unlike with a true AppleTV), the client
+cannot run a http connection on the server instead of streaming content
+from one on the client.**
 
-UxPlay is based on https://github.com/FD-/RPiPlay, with GStreamer
-integration from https://github.com/antimof/UxPlay. (UxPlay only uses
-GStreamer, and does not contain the alternative Raspberry-Pi-specific
-audio and video renderers also found in RPiPlay.) Tested on a number of
-systems, including Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS
-10.15, FreeBSD 13.0.
+UxPlay uses GStreamer Plugins for rendering audio and video, and does
+not offer the alternative Raspberry-Pi-specific audio and video
+renderers available in [RPiPlay](https://github.com/FD-/RPiPlay). It is
+tested on a number of systems, including (among others) Ubuntu 20.04,
+Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the
 box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
@@ -88,8 +100,8 @@ directories to the source directory of the downloaded source code
 downloads), then do
 
 1.  `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`
-2.  `sudo apt-get install gstreamer1.0-vaapi` (For Intel graphics, but
-    not nVidia graphics)
+2.  `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated
+    Intel graphics, but not nVidia graphics)
 3.  `sudo apt-get install libx11-dev` (for the "ZOOMFIX" X11\_display
     name fix for screen-sharing with e.g., ZOOM)
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
@@ -107,10 +119,10 @@ directory) without affecting the source directories which contain your
 modifications*.
 
 The above script installs the executable file "`uxplay`" to
-`/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and
-README files to `/usr/local/share/doc/uxplay`). It can also be found in
-the build directory after the build processs. Run uxplay in a terminal
-window.
+`/usr/local/bin`, (and installs a manpage to somewhere like
+`/usr/local/share/man/man1` and README files to somewhere like
+`/usr/local/share/doc/uxplay`). It can also be found in the build
+directory after the build processs. Run uxplay in a terminal window.
 
 **Note libplist-dev (version 2.0 or greater) is a new dependency (the
 original antimof version UxPlay-1.2 supplied it). Older Linux
@@ -461,8 +473,11 @@ still open when the GStreamer pipeline is closed.*
 ChangeLog
 =========
 
-1.44 2021-12-13 no hash of aeskey with ecdh\_secret if sourceVersion \<=
-280.33 (now supports AirMyPC)
+1.44 2021-12-13 Omit hash of aeskey with ecdh\_secret if sourceVersion
+\<= 280.33 (this supports AirMyPC); internal rearrangement of where this
+hash is done. Replace decodebin by h264-specific elements in the
+GStreamer video pipeline. Fully report initial communications between
+client and server in -d debug mode.
 
 1.43 2021-12-07 Various internal changes, such as tests for successful
 decryption, uniform treatment of informational/debug messages, etc.,
