@@ -201,15 +201,19 @@ change into the UxPlay source directory ("UxPlay-master" for zipfile
 downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install" (same as for Linux).
 
-The macOS build uses OpenGL, not X11, to create the mirror display
-window. This has some "quirks": the window title is "OpenGL renderer"
-instead of the Airplay server name, but it is visible to screen-sharing
-apps (e.g., Zoom). The option -t *timeout* cannot be used because if the
-GStreamer pipeline is destroyed while the OpenGL window is still open,
-and uxplay is left running, a segfault occurs (this is an issue with the
-glimagesink GStreamer OpenGL plugin, not UxPlay). Also, the resolution
-settings "-s wxh" do not affect the (small) initial mirror window size,
-but the window can be expanded using the mouse or trackpad.
+On the macOS build, autovideosink uses OpenGL, not X11, to create the
+mirror display window (equivalent to "-vs glimagesink"; "-vs
+osxvideosink" can also be used). The window title does not show the
+Airplay server name, but it is visible to screen-sharing apps (e.g.,
+Zoom). On macOS, The option -t *timeout* cannot be used because if the
+GStreamer pipeline is destroyed while the mirror window is still open, a
+segfault occurs (this is an issue with the GStreamer plugins, not
+UxPlay). Also, the resolution settings "-s wxh" do not affect the
+(small) initial OpenGL mirror window size, but the window can be
+expanded using the mouse or trackpad. In contrast, a window created with
+"-vs osxvideosink" is initially big, but has the wrong aspect ratio
+(stretched image); in this case the aspect ratio changes when the window
+width is changed by dragging its side.
 
 ***Building OpenSSL and libplist from source on macOS***
 
