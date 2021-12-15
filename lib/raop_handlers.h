@@ -350,7 +350,9 @@ raop_handler_setup(raop_conn_t *conn,
         // The first SETUP call that initializes keys and timing
 
         unsigned char aesiv[16];
+        unsigned char aeskey_old[16];
         unsigned char aeskey[16];
+
         logger_log(conn->raop->logger, LOGGER_DEBUG, "SETUP 1");
 
         // First setup
@@ -372,9 +374,9 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
         free (str);
 
-        int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
+        int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey_old);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
-        str = utils_data_to_string(aeskey, 16, 16);
+        str = utils_data_to_string(aeskey_old, 16, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
         free(str);
 
@@ -383,25 +385,42 @@ raop_handler_setup(raop_conn_t *conn,
         str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
         free(str);
+
+        unsigned char eaeskey[64] = {};
+        memcpy(eaeskey, aeskey_old, 16);
+        sha_ctx_t *ctx = sha_init();
+        sha_update(ctx, eaeskey, 16);
+        sha_update(ctx, ecdh_secret, 32);
+        sha_final(ctx, eaeskey, NULL);
+        sha_destroy(ctx);
+        memcpy(aeskey, eaeskey, 16);
+
+        str = utils_data_to_string(aeskey, 16, 16);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
+        free(str);
 	
-        /* sha-512 hashing of aeskey is skipped where the client has sourceVersion <= OLD_PROTOCOL_CLIENT (defined in  global.h) */
-        plist_t req_source_version_node = plist_dict_get_item(req_root_node, "sourceVersion");
-        char* sourceVersion;
-        plist_get_string_val(req_source_version_node, &sourceVersion);
-        logger_log(conn->raop->logger, LOGGER_INFO, "client sourceVersion %s (no hash of aeskey if <= %s)", sourceVersion, OLD_PROTOCOL_CLIENT);
-
-	char *end_ptr;
-        if (strtoul(sourceVersion, &end_ptr, 10) > strtoul(OLD_PROTOCOL_CLIENT , &end_ptr, 10)) {
-            unsigned char eaeskey[64] = {0};
-            memcpy(eaeskey, aeskey, 16);
-            sha_ctx_t *ctx = sha_init();
-            sha_update(ctx, eaeskey, 16);
-            sha_update(ctx, ecdh_secret, 32);
-            sha_final(ctx, eaeskey, NULL);
-            sha_destroy(ctx);
-            memcpy(aeskey, eaeskey, 16);
-       }
-
+	/* old-protocol clients such as AirMyPC use the unhashed key eaeskey for both audio and video */
+	/* it appears iOS9 uses the hashed key for video, not clear about audio */
+	/* leave open the possibility of unhashed key for audio, hashed for video */
+	/* need to establish when Apple started using the modern protocol */
+        /* OLD_PROTOCOL_AUDIO_CLIENT_LIST, OLD_PROTOCOL_VIDEO_CLIENT_LIST are defined in global.h */
+	
+	const char * user_agent = http_request_get_header(request, "User-Agent");
+        logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s", user_agent);	
+	unsigned char *aeskey_audio, *aeskey_video;
+            if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_LIST,user_agent)) {   /* old-protocol clients use the unhashed AES key */
+            logger_log(conn->raop->logger, LOGGER_INFO, "This identifies client as using old protocol for AES audio key)");
+            aeskey_audio = aeskey_old;
+        } else {
+            aeskey_audio = aeskey;
+        }
+            if (strstr(OLD_PROTOCOL_VIDEO_CLIENT_LIST, user_agent)) {   /* old-protocol clients use the unhashed AES key */
+            logger_log(conn->raop->logger, LOGGER_INFO, "This identifies client as using old protocol for AES video key)");
+            aeskey_video = aeskey_old;
+        } else {
+            aeskey_video = aeskey;
+        }
+	  
         // Time port
         uint64_t timing_rport;
         plist_t time_note = plist_dict_get_item(req_root_node, "timingPort");
@@ -412,8 +431,8 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, conn->remote, conn->remotelen, timing_rport);
         raop_ntp_start(conn->raop_ntp, &timing_lport);
 
-        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, aesiv);
-        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey);
+        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey_audio, aesiv);
+        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey_video);
 
         plist_t res_event_port_node = plist_new_uint(conn->raop->port);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);

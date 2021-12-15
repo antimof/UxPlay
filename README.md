@@ -1,6 +1,4 @@
-
 # UxPlay 1.44:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
-
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It is now hosted at the
@@ -11,9 +9,8 @@ from [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [shairplay](https://github.com/juhovh/shairplay), and [playfair](https://github.com/EstebanKubata/playfair).   (The antimof site is
 mainly inactive, but periodically posts updates pulled from the [main UxPlay site](https://github.com/FDH2/UxPlay)). 
 
-
-Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/macOS clients
-(iPads, iPhones, MacBooks, as well as certain third-party AirPlay-emulator clients on Windows, such as _AirMyPC_) in a window on the server display (with the possibility of
+Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
+(iPhones, iPads, MacBooks, as well as certain third-party AirPlay-emulator clients on Windows, such as _AirMyPC_) in a window on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, macOS, or other unix, using Apple's AirPlay Mirror protocol first available in iOS 5.
 (Details of what is publically known about Apple's AirPlay2 protocol can be found [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
@@ -278,10 +275,11 @@ other required GStreamer packages as dependencies, but will not install all poss
 This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
 
 Modern Apple clients use a more-encrypted protocol than older ones.
-Which protocol is used by UxPlay depends on the client  _sourceVersion_ (reported by the client and now shown in the terminal output).   Since UxPlay 1.45,
-to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as having  sourceVersion  280.33, 
-the legacy protocol is used for clients reporting sourceVersion 280.x.x or older.    This cutoff is set as ```OLD_PROTOCOL_CLIENT "280.33"```
-in ```lib/global.h```; change it there if necessary.
+Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output).   Since UxPlay 1.45,
+to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as User-Agent: "AirMyPC/2.0". 
+The legacy protocol is used for clients reporting a User-Agent string contained in OLD_PROTOCOL_AUDIO_CLIENT_LIST (for the audio AES key) and
+OLD_PROTOCOL_VIDEO_CLIENT_LIST (for the video AES key), defined in```lib/global.h```.  You might need to add User-Agent strings for iOS clients 
+running very old versions of iOS or iPadOS to one or both of these lists for them to work with UxPlay.
 
 # **Usage:**
 
