@@ -399,7 +399,7 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
         free(str);
 	
-        /* old-protocol clients such as AirMyPC use the unhashed key eaeskey for both audio and video */
+        /* old-protocol clients such as AirMyPC use the unhashed key aeskey_old for both audio and video */
         /* OLD_PROTOCOL_AUDIO_CLIENT_LIST, OLD_PROTOCOL_VIDEO_CLIENT_LIST are defined in global.h */
 	
         const char * user_agent = http_request_get_header(request, "User-Agent");
