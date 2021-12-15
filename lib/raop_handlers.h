@@ -399,15 +399,12 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
         free(str);
 	
-	/* old-protocol clients such as AirMyPC use the unhashed key eaeskey for both audio and video */
-	/* it appears iOS9 uses the hashed key for video, not clear about audio */
-	/* leave open the possibility of unhashed key for audio, hashed for video */
-	/* need to establish when Apple started using the modern protocol */
+        /* old-protocol clients such as AirMyPC use the unhashed key eaeskey for both audio and video */
         /* OLD_PROTOCOL_AUDIO_CLIENT_LIST, OLD_PROTOCOL_VIDEO_CLIENT_LIST are defined in global.h */
 	
-	const char * user_agent = http_request_get_header(request, "User-Agent");
+        const char * user_agent = http_request_get_header(request, "User-Agent");
         logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s", user_agent);	
-	unsigned char *aeskey_audio, *aeskey_video;
+        unsigned char *aeskey_audio, *aeskey_video;
             if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_LIST,user_agent)) {   /* old-protocol clients use the unhashed AES key */
             logger_log(conn->raop->logger, LOGGER_INFO, "This identifies client as using old protocol for AES audio key)");
             aeskey_audio = aeskey_old;

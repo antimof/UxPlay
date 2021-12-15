@@ -371,11 +371,11 @@ Since UxPlay 1.45, to support the third-party Windows AirPlay-client
 emulator *AirMyPC*, which uses the old protocol and reports itself as
 User-Agent: "AirMyPC/2.0". The legacy protocol is used for clients
 reporting a User-Agent string contained in
-OLD\_PROTOCOL\_AUDIO\_CLIENT\_LIST (for the audio AES key) and
-OLD\_PROTOCOL\_VIDEO\_CLIENT\_LIST (for the video AES key), defined
-in`lib/global.h`. You might need to add User-Agent strings for iOS
-clients running very old versions of iOS or iPadOS to one or both of
-these lists for them to work with UxPlay.
+`OLD_PROTOCOL_AUDIO_CLIENT_LIST` (for the audio AES key) and
+`OLD_PROTOCOL_VIDEO_CLIENT_LIST` (for the video AES key), defined
+in`lib/global.h`. If they fail one of the decryption tests, you might be
+able to get very old versions of iOS or iPadOS to work with UxPlay by
+adding their User\_Agent strings to the appropriate list.
 
 **Usage:**
 ==========

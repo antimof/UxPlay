@@ -277,9 +277,9 @@ This triggers an error message, and will be due to use of an incorrect protocol 
 Modern Apple clients use a more-encrypted protocol than older ones.
 Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output).   Since UxPlay 1.45,
 to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as User-Agent: "AirMyPC/2.0". 
-The legacy protocol is used for clients reporting a User-Agent string contained in OLD_PROTOCOL_AUDIO_CLIENT_LIST (for the audio AES key) and
-OLD_PROTOCOL_VIDEO_CLIENT_LIST (for the video AES key), defined in```lib/global.h```.  You might need to add User-Agent strings for iOS clients 
-running very old versions of iOS or iPadOS to one or both of these lists for them to work with UxPlay.
+The legacy protocol is used for clients reporting a User-Agent string contained in ```OLD_PROTOCOL_AUDIO_CLIENT_LIST``` (for the audio AES key) and
+```OLD_PROTOCOL_VIDEO_CLIENT_LIST``` (for the video AES key), defined in```lib/global.h```.  If they fail one of the decryption tests, you might be able to get very old
+versions of iOS or iPadOS to work with UxPlay by adding their User_Agent strings to the appropriate list.
 
 # **Usage:**
 
