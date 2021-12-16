@@ -10,10 +10,13 @@ from [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 mainly inactive, but periodically posts updates pulled from the [main UxPlay site](https://github.com/FDH2/UxPlay)). 
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
-(iPhones, iPads, MacBooks, as well as certain third-party AirPlay-emulator clients on Windows, such as _AirMyPC_) in a window on the server display (with the possibility of
+(iPhones, iPads, MacBooks, as well as certain third-party AirPlay-emulator clients on Windows, such as _AirMyPC_) in a window
+on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
-on a host running Linux, macOS, or other unix, using Apple's AirPlay Mirror protocol first available in iOS 5.
-(Details of what is publically known about Apple's AirPlay2 protocol can be found [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
+on a host running Linux, macOS, or other unix.  UxPlay supports a "legacy" form of Apple's AirPlay Mirror protocol introduced
+in iOS 12, and supports current iPads (5th generation or later) and iPhones (iPhone6 or later).
+(Details of what is publically known about Apple's AirPlay2 protocol can be found
+[here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
 [here](https://emanuelecozzi.net/docs/airplay2)).
 
 The UxPlay server and its client must be on the same local area network,
@@ -275,11 +278,11 @@ other required GStreamer packages as dependencies, but will not install all poss
 This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
 
 Modern Apple clients use a more-encrypted protocol than older ones.
-Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output).   Since UxPlay 1.45,
-to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as User-Agent: "AirMyPC/2.0". 
-The legacy protocol is used for clients reporting a User-Agent string contained in ```OLD_PROTOCOL_AUDIO_CLIENT_LIST``` (for the audio AES key) and
+Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output).   Since UxPlay 1.45 
+(to support the third-party Windows AirPlay-client emulator _AirMyPC_, which uses the old protocol and  reports itself as User-Agent: "AirMyPC/2.0"),
+a modified protocol is used for clients reporting a User-Agent string contained in ```OLD_PROTOCOL_AUDIO_CLIENT_LIST``` (for the audio AES key) and
 ```OLD_PROTOCOL_VIDEO_CLIENT_LIST``` (for the video AES key), defined in```lib/global.h```.  If they fail one of the decryption tests, you might be able to get very old
-versions of iOS or iPadOS to work with UxPlay by adding their User_Agent strings to the appropriate list.
+versions of iOS or iPadOS to work with UxPlay by adding their User_Agent strings to the appropriate list.  _It has now been reported that iOS 9 and iOS 10 video work with UxPlay, but not the audio, and the suggested fix here did not fix the audio, and was not needed for video._
 
 # **Usage:**
 
