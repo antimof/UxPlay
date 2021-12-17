@@ -14,15 +14,18 @@ is mainly inactive, but periodically posts updates pulled from the [main
 UxPlay site](https://github.com/FDH2/UxPlay)).
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
-of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks, as well as
-certain third-party AirPlay-emulator clients on Windows, such as
-*AirMyPC*) in a window on the server display (with the possibility of
-sharing that window on screen-sharing applications such as Zoom) on a
-host running Linux, macOS, or other unix. UxPlay supports a "legacy"
-form of Apple's AirPlay Mirror protocol introduced in iOS 12, and
-supports current iPads (5th generation or later) and iPhones (iPhone6 or
-later). (Details of what is publically known about Apple's AirPlay2
-protocol can be found
+of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
+the server display (with the possibility of sharing that window on
+screen-sharing applications such as Zoom) on a host running Linux,
+macOS, or other unix. UxPlay supports a "legacy" form of Apple's AirPlay
+Mirror protocol introduced in iOS 12; client devices running iOS/iPadOS
+12 or later are supported, as is a (nonfree) Windows-based
+AirPlay-client software emulator, AirMyPC. Older (32-bit) client devices
+that can only run iOS 9.3 or iOS 10.3 are currently only partially
+supported by UxPlay: reports indicate that screen-mirroring video works,
+but a so-far not-understood protocol difference means the audio stream
+is not correctly decrypted. (Details of what is publically known about
+Apple's AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)).
 
