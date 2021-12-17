@@ -10,6 +10,8 @@
 #define OLD_PROTOCOL_AUDIO_CLIENT_LIST "AirMyPC/2.0;xxx"
 #define OLD_PROTOCOL_VIDEO_CLIENT_LIST "AirMyPC/2.0;xxx"
 
+#define DECRYPTION_TEST 0
+
 #define MAX_HWADDR_LEN 6
 
 #endif
