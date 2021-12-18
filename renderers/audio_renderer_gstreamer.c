@@ -193,6 +193,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     switch (renderer->ct) {
     case 8: /*AAC-ELD*/
         valid = (data[0] == 0x8d || data[0] == 0x8e);
+        valid = valid || (data[0] == 0x81 || data[0] == 0x82);     /* old protocol iOS 8, iOS 9 */
         break;
     case 2: /*ALAC*/
         valid = (data[0] == 0x20);

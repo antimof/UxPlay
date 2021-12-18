@@ -352,7 +352,10 @@ raop_handler_setup(raop_conn_t *conn,
         unsigned char aesiv[16];
         unsigned char aeskey_old[16];
         unsigned char aeskey[16];
+        unsigned char *aeskey_audio = aeskey;
+        unsigned char *aeskey_video = aeskey;
 
+	
         logger_log(conn->raop->logger, LOGGER_DEBUG, "SETUP 1");
 
         // First setup
@@ -399,25 +402,38 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
         free(str);
 	
-        /* old-protocol clients such as AirMyPC use the unhashed key aeskey_old for both audio and video */
-        /* OLD_PROTOCOL_AUDIO_CLIENT_LIST, OLD_PROTOCOL_VIDEO_CLIENT_LIST are defined in global.h */
-	
-        const char * user_agent = http_request_get_header(request, "User-Agent");
-        logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s", user_agent);	
-        unsigned char *aeskey_audio, *aeskey_video;
-            if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_LIST,user_agent)) {   /* old-protocol clients use the unhashed AES key */
-            logger_log(conn->raop->logger, LOGGER_INFO, "This identifies client as using old protocol for AES audio key)");
-            aeskey_audio = aeskey_old;
-        } else {
-            aeskey_audio = aeskey;
+        /* old-protocol clients such as AirMyPC use the unhashed key aeskey_old for both audio and video   (ios9, ios10 support)*/
+        /* clients with sourceVersion <= OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION use unhashed aeskey_old for audio decryption */
+        /* this is also done for audio or video if clients User-Agent string is included in OLD_PROTOCOL_[AUDIO,VIDEO]_CLIENT_LIST  (AirMyPC support)*/
+        /* OLD_PROTOCOL_AUDIO_CLIENT_LIST, OLD_PROTOCOL_VIDEO_CLIENT_LIST, OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION are defined in global.h */
+
+        plist_t req_source_version_node = plist_dict_get_item(req_root_node, "sourceVersion");
+        char *sourceVersion;
+        plist_get_string_val(req_source_version_node, &sourceVersion);
+        const char *user_agent = http_request_get_header(request, "User-Agent");
+        logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s, sourceVersion: %s", user_agent, sourceVersion);	
+
+#ifdef OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION
+        char *end_ptr;
+        if (strtoul(sourceVersion, &end_ptr, 10) <= strtoul(OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION , &end_ptr, 10)) aeskey_audio = aeskey_old;
+#endif
+
+#ifdef OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST
+        if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST, user_agent)) aeskey_audio = aeskey_old;
+#endif
+
+#ifdef OLD_PROTOCOL_VIDEO_CLIENT_USER_AGENT_LIST
+        if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST, user_agent)) aeskey_video = aeskey_old;
+#endif
+
+        if (aeskey_audio == aeskey_old) {
+            logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
         }
-            if (strstr(OLD_PROTOCOL_VIDEO_CLIENT_LIST, user_agent)) {   /* old-protocol clients use the unhashed AES key */
-            logger_log(conn->raop->logger, LOGGER_INFO, "This identifies client as using old protocol for AES video key)");
-            aeskey_video = aeskey_old;
-        } else {
-            aeskey_video = aeskey;
+
+        if (aeskey_video == aeskey_old) {
+            logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES video key)");
         }
-	  
+
         // Time port
         uint64_t timing_rport;
         plist_t time_note = plist_dict_get_item(req_root_node, "timingPort");

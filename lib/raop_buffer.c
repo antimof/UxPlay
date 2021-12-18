@@ -152,8 +152,8 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 #endif
 
     if (DECRYPTION_TEST) {
-      printf("%s\n", OLD_PROTOCOL_AUDIO_CLIENT_LIST);
-      printf("%d before %s", payload_size, utils_data_to_string(&data[12],16,16 ));
+        printf("encrypted header %s", utils_data_to_string(data,12,12));
+        if (payload_size) printf("%d before %s", payload_size, utils_data_to_string(&data[12],16,16 ));
     }
     encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);
@@ -164,9 +164,17 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 
     memcpy(output + encryptedlen, &data[12 + encryptedlen], payload_size - encryptedlen);
     *outputlen = payload_size;
-    if (DECRYPTION_TEST){
-      if ( !(output[0] == 0x8d || output[0] == 0x8e || output[0] == 0x20)) printf("***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC\n"); 
-      printf("%d after  %s\n", payload_size, utils_data_to_string(output,16,16 ));
+    if (payload_size &&  DECRYPTION_TEST){
+        if ( !(output[0] == 0x8d || output[0] == 0x8e || output[0] == 0x81 || output[0] == 0x82 || output[0] == 0x20)) {
+            printf("***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC\n");
+        }
+        if (DECRYPTION_TEST == 2) {
+          printf("decrypted audio frame, len = %d\n", *outputlen);
+	  printf("%s",utils_data_to_string(output,payload_size,16));
+          printf("\n");
+        } else {
+            printf("%d after  %s\n", payload_size, utils_data_to_string(output,16,16 ));
+        }
     }
 #ifdef DUMP_AUDIO
     // Decrypted file

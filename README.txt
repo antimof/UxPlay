@@ -21,11 +21,10 @@ macOS, or other unix. UxPlay supports a "legacy" form of Apple's AirPlay
 Mirror protocol introduced in iOS 12; client devices running iOS/iPadOS
 12 or later are supported, as is a (nonfree) Windows-based
 AirPlay-client software emulator, AirMyPC. Older (32-bit) client devices
-that can only run iOS 9.3 or iOS 10.3 are currently only partially
-supported by UxPlay: reports indicate that screen-mirroring video works,
-but a so-far not-understood protocol difference means the audio stream
-is not correctly decrypted. (Details of what is publically known about
-Apple's AirPlay2 protocol can be found
+that can only run iOS 9.3 or iOS 10.3 are currently partially supported
+by UxPlay: reports indicate that screen-mirroring video works, audio is
+a work in progess. (Details of what is publically known about Apple's
+AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)).
 
@@ -746,11 +745,12 @@ found this new protocol used encryption in order to protect the
 transferred video data.
 
 By 2012, most of AirPlay's protocols had been reverse-engineered and
-[documented](https://nto.github.io/AirPlay.html). At this point, audio
-still used the AirTunes 2 protocol from around 2008, video, photos and
-mirroring still used their respective protocols in an unmodified form,
-so you could still speak of AirPlay 1 (building upon AirTunes 2). The
-Airplay server running on the Apple TV reported as version 130. The
+[documented](https://nto.github.io/AirPlay.html) (see also [updated
+version](https://openairplay.github.io/airplay-spec)). At this point,
+audio still used the AirTunes 2 protocol from around 2008, video, photos
+and mirroring still used their respective protocols in an unmodified
+form, so you could still speak of AirPlay 1 (building upon AirTunes 2).
+The Airplay server running on the Apple TV reported as version 130. The
 setup of AirPlay mirroring used the xml format, in particular a
 stream.xml file. Additionally, it seems like the actual audio data is
 using the ALAC codec for audio-only (AirTunes 2) streaming and AAC for
