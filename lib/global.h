@@ -13,7 +13,7 @@
 #define OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST "AirMyPC/2.0;xxx"
 #define OLD_PROTOCOL_VIDEO_CLIENT_USER_AGENT_LIST "AirMyPC/2.0;xxx"
 
-#define DECRYPTION_TEST 2
+#define DECRYPTION_TEST 0    /* set to 1 or 2 to examine audio decryption */
 
 #define MAX_HWADDR_LEN 6
 
