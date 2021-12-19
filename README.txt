@@ -272,7 +272,7 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 Note: `uxplay` is run from a terminal command line, and informational
 messages are written to the terminal.
 
-### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, without any server name showing on the client.
+### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
 
 Stalling this way, with *no* server name showing *on the client* as
 available, probably means that your network **does not have a running
@@ -285,7 +285,7 @@ one of the steps needed for getting Avahi running on a FreeBSD system is
 to edit `/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for
 airplay support.*)
 
-### 2. uxplay stalls, with the expected server name showing on the client, but fails to connect to the client when this is selected.
+### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
 This shows that a *dns\_sd* service is working, but a firewall on the
 server is probably blocking the connection request from the client. (One
@@ -300,17 +300,19 @@ use "uxplay -p").
 ### 3. Problems *after* the client-server connection has been made:
 
 For such problems, use "uxplay -d" (debug log option) to see what is
-happening. **Most such problems are due to a GStreamer plugin that
-doesn't work on your system**: (by default, GStreamer uses an algorithm
-to guess what is the "best" plugin to use on your system). A common case
-is that the GStreamer VAAPI plugin (for hardware-accelerated intel
-graphics) is being used on a system with nVidia graphics, If you use an
-nVidia graphics card, make sure that the gstreamer1.0-vaapi plugin for
-Intel graphics is *NOT* installed (**uninstall it** if it is
-installed!). (You can test for this by explicitly choosing the GStreamer
-videosink with option "-vs ximagesink" or "-vs xvimagesink", to see if
-this fixes the problem, or "-vs vaapisink" to see if this reproduces the
-problem.)
+happening: it will show how far the connection process gets before the
+failure occurs.
+
+**Most such problems are due to a GStreamer plugin that doesn't work on
+your system**: (by default, GStreamer uses an algorithm to guess what is
+the "best" plugin to use on your system). A common case is that the
+GStreamer VAAPI plugin (for hardware-accelerated intel graphics) is
+being used on a system with nVidia graphics, If you use an nVidia
+graphics card, make sure that the gstreamer1.0-vaapi plugin for Intel
+graphics is *NOT* installed (**uninstall it** if it is installed!). (You
+can test for this by explicitly choosing the GStreamer videosink with
+option "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the
+problem, or "-vs vaapisink" to see if this reproduces the problem.)
 
 There are some reports of other GStreamer problems with
 hardware-accelerated Intel graphics. One user (on Debian) solved this
@@ -371,18 +373,23 @@ protocol for getting the AES decryption key from the client.
 Modern Apple clients use a more-encrypted protocol than older ones.
 Which protocol is used by UxPlay depends on the client *User-Agent*
 string (reported by the client and now shown in the terminal output).
-Since UxPlay 1.45 (to support the third-party Windows AirPlay-client
-emulator *AirMyPC*, which uses the old protocol and reports itself as
-User-Agent: "AirMyPC/2.0"), a modified protocol is used for clients
-reporting a User-Agent string contained in
-`OLD_PROTOCOL_AUDIO_CLIENT_LIST` (for the audio AES key) and
-`OLD_PROTOCOL_VIDEO_CLIENT_LIST` (for the video AES key), defined
-in`lib/global.h`. If they fail one of the decryption tests, you might be
-able to get very old versions of iOS or iPadOS to work with UxPlay by
-adding their User\_Agent strings to the appropriate list. *It has now
-been reported that iOS 9 and iOS 10 video work with UxPlay, but not the
-audio, and the suggested fix here did not fix the audio, and was not
-needed for video.*
+iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES
+decryption key they send to the server. Somewhere around iOS
+sourceVersion 330 (part of the User-Agent string) Apple started to
+further encrypt it by a sha-512 hash with a "shared secret" created
+during the Server-Client pairing process. The sourceVersion 330 above
+which the extra decryption step is carried out is set in lib/global.h if
+you need to change it. (This applies only to audio decryption; the AES
+key used for video decryption has had this extra encryption since iOS
+9).
+
+The third-party non-free Windows software *AirMyPC* (a commercial
+AirPlay emulator) uses an unhashed AES key for both audio and video
+encryption. *AirMyPC* has a distinctive *User-Agent* string, which is
+detected using two other settings in lib/global.h that can be adjusted
+if necessary. These settings might be useful if other AirPlay-emulators
+need support. Uxplay declares itself to be an AppleTV2,1 with
+sourceVersion 220.68; this can also be changed in global.h.
 
 **Usage:**
 ==========
