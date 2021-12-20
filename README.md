@@ -97,16 +97,25 @@ the build directory with_ "```rm -rf build/* ```" _(run from within the UxPlay s
 The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to somewhere like `/usr/local/share/man/man1` and README
 files to somewhere like `/usr/local/share/doc/uxplay`).
 It can also be found in the build directory after the build
-processs. Run uxplay in a terminal window.
+processs.
+
+**Finally, run uxplay in a terminal window**.   If it is not seen by the iOS client's drop-down "Screen Mirroring" panel,
+check that your DNS-SD server (usually avahi-daemon) is running: do this in a terminal window with ```systemctl status avahi-daemon```.
+(If this shows the avahi-daemon is not running, control it with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or avahi-daemon.service). 
+If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
+UxPlay from receiving client connection requests unless some network ports are opened. See  **Troubleshooting** below for
+help with this or other problems.
 
 
-**Note libplist-dev (version 2.0 or greater) is a  new dependency (the original antimof version UxPlay-1.2 supplied it).  Older Linux
+**Note libplist-dev (version 2.0 or greater) is a  new dependency (originally, libplist was bundled with UxPlay-1.2).  Older Linux
 distributions may only supply libplist 1.x, which is too old.  [Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this problem on ubuntu 16.04.]**
-If you  cannot find a libplist-2.x package that installs on your older distribution, you can get it at
+If you  cannot find a libplist-2.x package that installs on your distribution, you can get it at
 [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist) and build it from source.
 _(You will need build tools  autoconf, automake, libtool, and may need to also install some libpython*-dev package).
 By default, libplist installs in /usr/local/lib. If this is not in the library path (as in ubuntu), create a
 file /etc/ld.so.conf.d/libplist.conf containing  the text "/usr/local/lib", and run "sudo ldconfig" to permanently add /usr/local/lib  to the library path._
+
+### Modified build instructions for Non-Debian-based distributions:
 
 **Red Hat, Fedora, CentOS:** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (+libX11-devel for ZOOMFIX).   The required
@@ -200,98 +209,6 @@ the X11 window size, or to rotations that switch a connected client between port
 Using the MacPorts X11 GStreamer is only viable if the image size is left unchanged from the initial "-s wxh" setting 
 (also use the iPad/iPhone setting that locks the screen orientation against switching  between portrait and landscape mode
 as the device is rotated).
-
-# **Troubleshooting:**
-
-Note: ```uxplay```  is run from a terminal command line, and informational messages are written to the terminal.
-
-### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
-
-Stalling this way, with _no_  server name showing  _on  the client_ as available,
-probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
-On Linux, make sure Avahi is installed,
-and start the avahi-daemon service on the system running uxplay (your distribution will document how to do  this).
-Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.
-_(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps needed for
-getting Avahi running on a FreeBSD system is to edit ```/usr/local/etc/avahi/avahi-daemon.conf```  to
-uncomment a line for airplay support._)
-
-### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
-
-This shows that a *dns_sd* service  is working, but a firewall on the server is probably blocking the connection request from the client.
-(One user who insisted that the firewall had been turned off turned out to have had _two_ active firewalls (*firewalld* and *ufw*)
-_both_ running on the server!)  If possible, either turn off the firewall
-to see if that is the problem, or get three consecutive network ports,
-starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
-(or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
-
-### 3. Problems _after_ the client-server connection has been made:
-
-For such  problems, use "uxplay -d " (debug log option)  to see what is happening: it will show how far the connection process gets before
-the failure occurs.
-
-**Most such problems are  due to a GStreamer plugin that doesn't work on your system**: (by default,
-GStreamer uses an algorithm to guess what is the "best"
-plugin to use on your system).   A common case is that the GStreamer VAAPI plugin
-(for hardware-accelerated intel graphics) is being used on a system with nVidia graphics,
-If you use an
-nVidia graphics card, make sure that the gstreamer1.0-vaapi
-plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installed!).
-(You can test for this  by explicitly choosing the GStreamer videosink with option
-"-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
-reproduces the problem.)
-
-There are some reports of other GStreamer problems with hardware-accelerated Intel graphics.  One user
-(on Debian) solved this with "sudo apt install intel-media-va-driver-non-free".  This is a driver for 8'th (or later) generation
-"*-lake" Intel chips, that seems to be related to VAAPI accelerated graphics.
-
-You can try to fix audio problems by using the "-as _audiosink_"  option to choose the GStreamer audiosink , rather than
-have autoaudiosink pick one for you.    The command "gst_inspect-1.0 | grep Sink | grep Audio" " will show you which audiosinks are 
-available on your system.  (Replace  "Audio" by "Video" to see videosinks).   Some possible audiosinks are pulsesink, alsasink, osssink, oss4sink,
-and osxaudiosink (macOS).  
- 
-If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
-ZOOMFIX is only applied to the default videosink choice ("autovideosink") and the two X11 videosinks
-"ximagesink" and "xvimagesink".   ZOOMFIX is only designed for these last two; if
-autovideosink chooses a different videosink, ZOOMFIX is now ignored. 
-If you are using the X11 windowing system (standard on Linux), and have trouble with screen-sharing on Zoom, use
-ZOOMFIX and "-vs xvimagesink" (or "-vs ximagesink" if the previous choice doesn't work). 
-
-As other  videosink choices are not affected by ZOOMFIX, they  may or may not be visible to screen-sharing apps.
-Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sharing aps without ZOOMFIX; windows on macOS created by
-"-vs glimagesink" (default choice) and "-vs osximagesink" are also visible.
-
-The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
-(this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
-
-### 4. GStreamer issues (missing plugins, etc.): 
-
-To troubleshoot GStreamer execute  "export GST_DEBUG=2"
-to set the GStreamer debug-level environment-variable in the terminal
-where you will run uxplay, so that you see warning and error messages;
-(replace "2" by "4" to see much (much) more of what is happening inside
-GStreamer).   Run "gst-inspect-1.0" to see which GStreamer plugins are
-installed on your system.
-
-Some extra GStreamer packages for special plugins may need to be installed (or reinstalled: a user using a Wayland display system as an alternative to X11
-reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstreamer1.0-x was installed, presumably for Wayland's X11-compatibility mode).
-Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
-other required GStreamer packages as dependencies, but will not install all possible plugins.
-
-### 5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
-
-This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
-
-Modern Apple clients use a more-encrypted protocol than older ones.
-Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output). 
-iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES decryption key they send to the server.
-Somewhere around iOS sourceVersion 330 (part of the User-Agent string) Apple started to further encrypt it by a sha-512 hash with a "shared secret" created 
-during the Server-Client pairing process.   The sourceVersion 330 above which the extra decryption step is carried out is set in lib/global.h if you need to 
-change it.  (This applies only to audio decryption; the AES key used for video decryption has had this extra encryption since iOS 9).
-
-The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an  unhashed AES key for both audio and video encryption.  _AirMyPC_ has a distinctive
-_User-Agent_ string, which is detected using two other settings in lib/global.h that can be adjusted if necessary. These settings might be useful if 
-other AirPlay-emulators need support.  Uxplay declares itself to be an AppleTV2,1 with sourceVersion 220.68; this can also be changed in global.h.
 
 # **Usage:**
 
@@ -389,11 +306,104 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    have been present during the previous _timeout_ seconds.  You may wish to use this if the Server
    is not visible to new Clients that were inactive when the Server was launched, and an idle Bonjour
    registration  eventually becomes unavailable for new connections (this is a workaround for what
-   may be due to a problem with your dns-sd or Avahi setup).   
+   may be due to a problem with your DNS-SD or Avahi setup).   
    _This option should **not** be used on  macOS, as a window created
    by GStreamer does not terminate correctly (it causes a segfault)
    if it is still open when the  GStreamer pipeline is closed._
 
+# **Troubleshooting:**
+
+Note: ```uxplay```  is run from a terminal command line, and informational messages are written to the terminal.
+
+### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
+
+Stalling this way, with _no_  server name showing  _on  the client_ as available,
+probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
+On Linux, make sure Avahi is installed,
+and start the avahi-daemon service on the system running uxplay (your distribution will document how to do  this).
+Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.
+_(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps needed for
+getting Avahi running on a FreeBSD system is to edit ```/usr/local/etc/avahi/avahi-daemon.conf```  to
+uncomment a line for airplay support._)
+
+Use the utility ```avahi-browse -a -t``` on the server to verify that the UxPlay AirTunes and AirPlay services are corrctly registered (only the AirTunes service is  used in the "Legacy" AirPlay Mirror mode  used by UxPlay).
+
+### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
+
+This shows that a *dns_sd* service  is working, but a firewall on the server is probably blocking the connection request from the client.
+(One user who insisted that the firewall had been turned off turned out to have had _two_ active firewalls (*firewalld* and *ufw*)
+_both_ running on the server!)  If possible, either turn off the firewall
+to see if that is the problem, or get three consecutive network ports,
+starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
+(or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
+
+### 3. Problems _after_ the client-server connection has been made:
+
+For such  problems, use "uxplay -d " (debug log option)  to see what is happening: it will show how far the connection process gets before
+the failure occurs.
+
+**Most such problems are  due to a GStreamer plugin that doesn't work on your system**: (by default,
+GStreamer uses an algorithm to guess what is the "best"
+plugin to use on your system).   A common case is that the GStreamer VAAPI plugin
+(for hardware-accelerated intel graphics) is being used on a system with nVidia graphics,
+If you use an
+nVidia graphics card, make sure that the gstreamer1.0-vaapi
+plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installed!).
+(You can test for this  by explicitly choosing the GStreamer videosink with option
+"-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
+reproduces the problem.)
+
+There are some reports of other GStreamer problems with hardware-accelerated Intel graphics.  One user
+(on Debian) solved this with "sudo apt install intel-media-va-driver-non-free".  This is a driver for 8'th (or later) generation
+"*-lake" Intel chips, that seems to be related to VAAPI accelerated graphics.
+
+You can try to fix audio problems by using the "-as _audiosink_"  option to choose the GStreamer audiosink , rather than
+have autoaudiosink pick one for you.    The command "gst_inspect-1.0 | grep Sink | grep Audio" " will show you which audiosinks are 
+available on your system.  (Replace  "Audio" by "Video" to see videosinks).   Some possible audiosinks are pulsesink, alsasink, osssink, oss4sink,
+and osxaudiosink (macOS).  
+ 
+If you ran cmake with "-DZOOMFIX=ON", check if the problem is still there without ZOOMFIX.
+ZOOMFIX is only applied to the default videosink choice ("autovideosink") and the two X11 videosinks
+"ximagesink" and "xvimagesink".   ZOOMFIX is only designed for these last two; if
+autovideosink chooses a different videosink, ZOOMFIX is now ignored. 
+If you are using the X11 windowing system (standard on Linux), and have trouble with screen-sharing on Zoom, use
+ZOOMFIX and "-vs xvimagesink" (or "-vs ximagesink" if the previous choice doesn't work). 
+
+As other  videosink choices are not affected by ZOOMFIX, they  may or may not be visible to screen-sharing apps.
+Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sharing aps without ZOOMFIX; windows on macOS created by
+"-vs glimagesink" (default choice) and "-vs osximagesink" are also visible.
+
+The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
+(this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
+
+### 4. GStreamer issues (missing plugins, etc.): 
+
+To troubleshoot GStreamer execute  "export GST_DEBUG=2"
+to set the GStreamer debug-level environment-variable in the terminal
+where you will run uxplay, so that you see warning and error messages;
+(replace "2" by "4" to see much (much) more of what is happening inside
+GStreamer).   Run "gst-inspect-1.0" to see which GStreamer plugins are
+installed on your system.
+
+Some extra GStreamer packages for special plugins may need to be installed (or reinstalled: a user using a Wayland display system as an alternative to X11
+reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstreamer1.0-x was installed, presumably for Wayland's X11-compatibility mode).
+Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
+other required GStreamer packages as dependencies, but will not install all possible plugins.
+
+### 5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
+
+This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
+
+Modern Apple clients use a more-encrypted protocol than older ones.
+Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output). 
+iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES decryption key they send to the server.
+Somewhere around iOS sourceVersion 330 (part of the User-Agent string) Apple started to further encrypt it by a sha-512 hash with a "shared secret" created 
+during the Server-Client pairing process.   The sourceVersion 330 above which the extra decryption step is carried out is set in lib/global.h if you need to 
+change it.  (This applies only to audio decryption; the AES key used for video decryption has had this extra encryption since iOS 9).
+
+The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an  unhashed AES key for both audio and video encryption.  _AirMyPC_ has a distinctive
+_User-Agent_ string, which is detected using two other settings in lib/global.h that can be adjusted if necessary. These settings might be useful if 
+other AirPlay-emulators need support.  Uxplay declares itself to be an AppleTV2,1 with sourceVersion 220.68; this can also be changed in global.h.
 
 # ChangeLog
 1.44 2021-12-13   Omit hash of aeskey with ecdh_secret if sourceVersion <= 280.33 (this supports AirMyPC);
