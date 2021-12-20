@@ -113,7 +113,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     gst_init(NULL,NULL);
 
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
-                     "queue ! decodebin ! videoconvert ! ");
+                     "queue ! h264parse ! avdec_h264 ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink sync=false");
@@ -141,6 +141,17 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
         get_X11_Display(renderer->gst_window);
     }
 #endif
+    gst_element_set_state (renderer->pipeline, GST_STATE_READY);
+    GstState state;
+    if (gst_element_get_state (renderer->pipeline, &state, NULL, 0)) {
+        if (state == GST_STATE_READY) {
+            logger_log(logger, LOGGER_DEBUG, "Initialized GStreamer video renderer");
+        } else {
+            logger_log(logger, LOGGER_ERR, "Failed to initialize GStreamer video renderer");
+        }
+    } else {
+        logger_log(logger, LOGGER_ERR, "Failed to initialize GStreamer video renderer");
+    }
 }
 
 void video_renderer_start() {
@@ -155,7 +166,11 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
     /* first byte of invalid data (decryption failed) is 0x1 */
     if (data[0]) {
-        if (!broken_video) logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video failed ");
+        if (!broken_video) {
+            logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
+        } else {
+            logger_log(logger, LOGGER_DEBUG, "*** ERROR decryption of video packet failed ");
+        }
         broken_video = true;
     } else {
         broken_video = false;

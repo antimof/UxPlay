@@ -36,10 +36,6 @@
 #include <net/if_dl.h>
 #endif
 
-
-
-
-
 #include "log.h"
 #include "lib/raop.h"
 #include "lib/stream.h"
@@ -48,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.43"
+#define VERSION "1.44"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -74,13 +70,12 @@ static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 
-
 gboolean connection_callback (gpointer loop){
   if (!connections_stopped) {
         counter = 0;
     } else {
         if (++counter == server_timeout) {
-	    LOGI("no connections for %d seconds: relaunch server\n",server_timeout);
+	    LOGD("no connections for %d seconds: relaunch server",server_timeout);
 	    g_main_loop_quit((GMainLoop *) loop);
         }
     }
@@ -478,10 +473,11 @@ int main (int argc, char *argv[]) {
     }
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();
-    
+
+    connections_stopped = true;
     relaunch:
+    counter = 0;
     compression_type = 0;
-    connections_stopped = false;
     if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
         return 1;
     }

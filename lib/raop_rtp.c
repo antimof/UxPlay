@@ -132,8 +132,8 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
 }
 
 raop_rtp_t *
-raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, int remotelen,
-              const unsigned char *aeskey, const unsigned char *aesiv, const unsigned char *ecdh_secret)
+raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, 
+              int remotelen, const unsigned char *aeskey, const unsigned char *aesiv)
 {
     raop_rtp_t *raop_rtp;
 
@@ -156,7 +156,7 @@ raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, co
     }
 
     memcpy(&raop_rtp->callbacks, callbacks, sizeof(raop_callbacks_t));
-    raop_rtp->buffer = raop_buffer_init(logger, aeskey, aesiv, ecdh_secret);
+    raop_rtp->buffer = raop_buffer_init(logger, aeskey, aesiv);
     if (!raop_rtp->buffer) {
         free(raop_rtp);
         return NULL;

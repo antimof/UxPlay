@@ -24,8 +24,7 @@ typedef int (*raop_resend_cb_t)(void *opaque, unsigned short seqno, unsigned sho
 
 raop_buffer_t *raop_buffer_init(logger_t *logger,
                                 const unsigned char *aeskey,
-                                const unsigned char *aesiv,
-                                const unsigned char *ecdh_secret);
+                                const unsigned char *aesiv);
 int raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint64_t timestamp, int use_seqnum);
 void *raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint64_t *timestamp, int no_resend);
 void raop_buffer_handle_resends(raop_buffer_t *raop_buffer, raop_resend_cb_t resend_cb, void *opaque);

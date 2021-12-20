@@ -1,44 +1,61 @@
-UxPlay 1.43: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.44: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
-This project is a GPLv3 unix AirPlay2 server which now also works on
-macOS. Its main use is to act like an AppleTV for screen-mirroring (with
-audio) of iOS/macOS clients (iPads, iPhones, MacBooks) in a window on
+This project is a GPLv3 open source unix AirPlay2 Mirror server for
+Linux, macOS, and \*BSD. It is now hosted at the github site
+<https://github.com/FDH2/UxPlay> (where development and user-assistance
+now takes place), although it initially was developed by
+[antimof](http://github.com/antimof/Uxplay) using code from
+[RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
+[AirplayServer](https://github.com/KqsMea8/AirplayServer),
+[shairplay](https://github.com/juhovh/shairplay), and
+[playfair](https://github.com/EstebanKubata/playfair). (The antimof site
+is mainly inactive, but periodically posts updates pulled from the [main
+UxPlay site](https://github.com/FDH2/UxPlay)).
+
+Its main use is to act like an AppleTV for screen-mirroring (with audio)
+of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
 the server display (with the possibility of sharing that window on
 screen-sharing applications such as Zoom) on a host running Linux,
-macOS, or other unix, using Apple's AirPlay Mirror protocol first
-available in iOS 5. (Details of what is known about the AirPlay2
-protocol can be found
+macOS, or other unix. UxPlay supports a "legacy" form of Apple's AirPlay
+Mirror protocol introduced in iOS 12; client devices running iOS/iPadOS
+12 or later are supported, as is a (nonfree) Windows-based
+AirPlay-client software emulator, AirMyPC. Older (32-bit) client devices
+that can only run iOS 9.3 or iOS 10.3 are currently partially supported
+by UxPlay: reports indicate that screen-mirroring video works, audio is
+a work in progess. (Details of what is publically known about Apple's
+AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
-and [here](https://emanuelecozzi.net/docs/airplay2)). **Note that Apple
-DRM (as in Apple TV app content) cannot be decrypted by UxPlay.**
+and [here](https://emanuelecozzi.net/docs/airplay2)).
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running (only
-DNS-SD "Service Discovery" service is necessary, it is not necessary
-that the local network also be of the ".local" mDNS-based type). On
-Linux and BSD Unix servers, this is usually provided by
+DNS-SD "Service Discovery" service is strictly necessary, it is not
+necessary that the local network also be of the ".local" mDNS-based
+type). On Linux and BSD Unix servers, this is usually provided by
 [Avahi](https://www.avahi.org), through the avahi-daemon service, and is
 included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
-*Since v1.38, UxPlay now also supports the Airplay audio-only protocol
-as well as AirPlay Mirror protocol, and (when the client screen is not
-being mirrored) can play Apple Lossless (ALAC) audio streamed from the
-client without video (the accompanying cover-art and metadata is not
-displayed). The initial connection to the client can be either AirPlay
-audio or Airplay Mirror mode. An Airplay Mirror connection (with
-"Advanced Audio Coding" AAC-ELD lossy-compression audio) switches to
-ALAC if the mirrow window is closed and an AirPlay audio connection is
-started, and back again to AAC if a new Airplay Mirror connection is
-made*.
+Connections to the UxPlay server by iOS/MacOS clients can be initiated
+both in AirPlay Mirror mode (which streams lossily-compressed AAC audio
+while mirroring the client screen, or in the alternative AirPlay Audio
+mode which streams Apple Lossless (ALAC) audio without screen mirroring
+(the accompanying metadata and cover art in this mode is not displayed).
+*Switching between these two modes during an active connection is
+possible: in Mirror mode, close the mirror window and start an Audio
+mode connection, switch back by initiating a Mirror mode connection.*
+**Note that Apple DRM (as in Apple TV app content on the client) cannot
+be decrypted by UxPlay, and (unlike with a true AppleTV), the client
+cannot run a http connection on the server instead of streaming content
+from one on the client.**
 
-UxPlay is based on https://github.com/FD-/RPiPlay, with GStreamer
-integration from https://github.com/antimof/UxPlay. (UxPlay only uses
-GStreamer, and does not contain the alternative Raspberry-Pi-specific
-audio and video renderers also found in RPiPlay.) Tested on a number of
-systems, including Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS
-10.15, FreeBSD 13.0.
+UxPlay uses GStreamer Plugins for rendering audio and video, and does
+not offer the alternative Raspberry-Pi-specific audio and video
+renderers available in [RPiPlay](https://github.com/FD-/RPiPlay). It is
+tested on a number of systems, including (among others) Debian 11.2,
+Ubuntu 20.04 and 21.10, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15.7,
+FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the
 box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
@@ -49,7 +66,7 @@ nVidia).
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
 Some Linux distributions such as Debian do not allow distribution of
-compiled GPL code linked to OpenSLL-1.1.1 because its "dual
+compiled GPL code linked to OpenSSL-1.1.1 because its "dual
 OpenSSL/SSLeay" license has some incompatibilites with GPL, unless all
 code authors have explicitly given an "exception" to allow such linking
 (the historical origins of UxPlay make this impossible to obtain). Other
@@ -68,9 +85,9 @@ Either download and unzip
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".
 
 \*This is also a pull request on the original site
-https://github.com/antimof/UxPlay ; but is unlikely to ever get
-committed into the codebase there, as that project appears to be
-inactive.
+https://github.com/antimof/UxPlay ; that original project is inactive,
+but the pull request with changes up to 2021-12-10 were recently merged
+with the antimof tree (thank you antimof!).
 
 Building UxPlay on Linux (or \*BSD):
 ------------------------------------
@@ -88,8 +105,8 @@ directories to the source directory of the downloaded source code
 downloads), then do
 
 1.  `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`
-2.  `sudo apt-get install gstreamer1.0-vaapi` (For Intel graphics, but
-    not nVidia graphics)
+2.  `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated
+    Intel graphics, but not nVidia graphics)
 3.  `sudo apt-get install libx11-dev` (for the "ZOOMFIX" X11\_display
     name fix for screen-sharing with e.g., ZOOM)
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
@@ -107,10 +124,10 @@ directory) without affecting the source directories which contain your
 modifications*.
 
 The above script installs the executable file "`uxplay`" to
-`/usr/local/bin`, (and installs a manpage to `/usr/local/man/man1` and
-README files to `/usr/local/share/doc/uxplay`). It can also be found in
-the build directory after the build processs. Run uxplay in a terminal
-window.
+`/usr/local/bin`, (and installs a manpage to somewhere like
+`/usr/local/share/man/man1` and README files to somewhere like
+`/usr/local/share/doc/uxplay`). It can also be found in the build
+directory after the build processs. Run uxplay in a terminal window.
 
 **Note libplist-dev (version 2.0 or greater) is a new dependency (the
 original antimof version UxPlay-1.2 supplied it). Older Linux
@@ -189,15 +206,19 @@ change into the UxPlay source directory ("UxPlay-master" for zipfile
 downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install" (same as for Linux).
 
-The macOS build uses OpenGL, not X11, to create the mirror display
-window. This has some "quirks": the window title is "OpenGL renderer"
-instead of the Airplay server name, but it is visible to screen-sharing
-apps (e.g., Zoom). The option -t *timeout* cannot be used because if the
-GStreamer pipeline is destroyed while the OpenGL window is still open,
-and uxplay is left running, a segfault occurs (this is an issue with the
-glimagesink GStreamer OpenGL plugin, not UxPlay). Also, the resolution
-settings "-s wxh" do not affect the (small) initial mirror window size,
-but the window can be expanded using the mouse or trackpad.
+On the macOS build, autovideosink uses OpenGL, not X11, to create the
+mirror display window (equivalent to "-vs glimagesink"; "-vs
+osxvideosink" can also be used). The window title does not show the
+Airplay server name, but it is visible to screen-sharing apps (e.g.,
+Zoom). On macOS, The option -t *timeout* cannot be used because if the
+GStreamer pipeline is destroyed while the mirror window is still open, a
+segfault occurs (this is an issue with the GStreamer plugins, not
+UxPlay). Also, the resolution settings "-s wxh" do not affect the
+(small) initial OpenGL mirror window size, but the window can be
+expanded using the mouse or trackpad. In contrast, a window created with
+"-vs osxvideosink" is initially big, but has the wrong aspect ratio
+(stretched image); in this case the aspect ratio changes when the window
+width is changed by dragging its side.
 
 ***Building OpenSSL and libplist from source on macOS***
 
@@ -249,46 +270,56 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 **Troubleshooting:**
 ====================
 
-If uxplay starts, but stalls after "Initialized server socket(s)"
-appears, it is probably because a firewall is blocking access to the
-server on which it is running. If possible, either turn off the firewall
-to see if that is the problem, or get three consecutive network ports,
-starting at port n, all three in the range 1024-65535, opened for both
-tcp and udp, and use "uxplay -p n" (or open UDP 6000, 6001, 6011 TCP
-7000,7001,7100 and use "uxplay -p").
+Note: `uxplay` is run from a terminal command line, and informational
+messages are written to the terminal.
 
-Stalling after "Initialize server socket(s)", with the server showing as
-available on the client iPad/iPhone, is almost certainly a firewall
-problem: one user was unaware that *two* firewalls (ufw and firewalld)
-were both active on their system.
+### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
 
-Stalling this way, but *without* the server showing as available on the
-client, probably means that your network **does not have a running
+Stalling this way, with *no* server name showing *on the client* as
+available, probably means that your network **does not have a running
 Bonjour/zeroconf DNS-SD server.** On Linux, make sure Avahi is
-installed, and start the avahi-daemon service (your distribution will
-document how to do this). Some systems may instead use the mdnsd daemon
-as an alternative to provide DNS-SD service. (FreeBSD offers both
-alternatives, but only Avahi was tested: one of the steps needed for
-getting Avahi running on this system is to edit
-/usr/local/etc/avahi/avahi-daemon.conf to uncomment a line for airplay
-support.)
+installed, and start the avahi-daemon service on the system running
+uxplay (your distribution will document how to do this). Some systems
+may instead use the mdnsd daemon as an alternative to provide DNS-SD
+service. *(FreeBSD offers both alternatives, but only Avahi was tested:
+one of the steps needed for getting Avahi running on a FreeBSD system is
+to edit `/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for
+airplay support.*)
 
-For other problems after a connection is made, use "uxplay -d" (debug
-log option) to see what is happening. **Such problems are usually due to
-a GStreamer plugin that doesn't work on your system**: (by default,
-GStreamer uses an algorithm to guess what is the "best" plugin to use on
-your system). If you use an nVidia graphics card, make sure that the
-gstreamer1.0-vaapi plugin for Intel graphics is *NOT* installed
-(**uninstall it** if it is installed!). (You can test for this by
-explicitly choosing the GStreamer videosink with option "-vs ximagesink"
-or "-vs xvimagesink", to see if this fixes the problem, or "-vs
-vaapisink" to see if this reproduces the problem.)
+### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
-There are some reports of GStreamer problems with Intel graphics. One
-user (on Debian) solved this with "sudo apt install
-intel-media-va-driver-non-free". This is a driver for 8'th (or later)
-generation \"\*-lake\" Intel chips, that seems to be related to VAAPI
-accelerated graphics.
+This shows that a *dns\_sd* service is working, but a firewall on the
+server is probably blocking the connection request from the client. (One
+user who insisted that the firewall had been turned off turned out to
+have had *two* active firewalls (*firewalld* and *ufw*) *both* running
+on the server!) If possible, either turn off the firewall to see if that
+is the problem, or get three consecutive network ports, starting at port
+n, all three in the range 1024-65535, opened for both tcp and udp, and
+use "uxplay -p n" (or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and
+use "uxplay -p").
+
+### 3. Problems *after* the client-server connection has been made:
+
+For such problems, use "uxplay -d" (debug log option) to see what is
+happening: it will show how far the connection process gets before the
+failure occurs.
+
+**Most such problems are due to a GStreamer plugin that doesn't work on
+your system**: (by default, GStreamer uses an algorithm to guess what is
+the "best" plugin to use on your system). A common case is that the
+GStreamer VAAPI plugin (for hardware-accelerated intel graphics) is
+being used on a system with nVidia graphics, If you use an nVidia
+graphics card, make sure that the gstreamer1.0-vaapi plugin for Intel
+graphics is *NOT* installed (**uninstall it** if it is installed!). (You
+can test for this by explicitly choosing the GStreamer videosink with
+option "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the
+problem, or "-vs vaapisink" to see if this reproduces the problem.)
+
+There are some reports of other GStreamer problems with
+hardware-accelerated Intel graphics. One user (on Debian) solved this
+with "sudo apt install intel-media-va-driver-non-free". This is a driver
+for 8'th (or later) generation \"\*-lake\" Intel chips, that seems to be
+related to VAAPI accelerated graphics.
 
 You can try to fix audio problems by using the "-as *audiosink*" option
 to choose the GStreamer audiosink , rather than have autoaudiosink pick
@@ -317,12 +348,14 @@ sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue). You may need to terminate uxplay with
 Ctrl-C to close a "zombie" OpenGl window.
 
-**GStreamer issues:** To troubleshoot GStreamer execute "export
-GST\_DEBUG=2" to set the GStreamer debug-level environment-variable in
-the terminal where you will run uxplay, so that you see warning and
-error messages; (replace "2" by "4" to see much (much) more of what is
-happening inside GStreamer). Run "gst-inspect-1.0" to see which
-GStreamer plugins are installed on your system.
+### 4. GStreamer issues (missing plugins, etc.):
+
+To troubleshoot GStreamer execute "export GST\_DEBUG=2" to set the
+GStreamer debug-level environment-variable in the terminal where you
+will run uxplay, so that you see warning and error messages; (replace
+"2" by "4" to see much (much) more of what is happening inside
+GStreamer). Run "gst-inspect-1.0" to see which GStreamer plugins are
+installed on your system.
 
 Some extra GStreamer packages for special plugins may need to be
 installed (or reinstalled: a user using a Wayland display system as an
@@ -333,16 +366,31 @@ GStreamer 1.x into packages in different ways; the packages listed above
 in the build instructions should bring in other required GStreamer
 packages as dependencies, but will not install all possible plugins.
 
-**Use with non-Apple clients**: one user tried to use UxPlay with an
-*airmypc* client (a non-free commercial Windows application that can
-mirror a Windows screen on an Apple TV using AirPlay mirror protocol).
-While *airmypc* can mirror to a true AppleTV and some other AirPlay
-receivers, UxPlay appears to correctly pair with this client, but then
-fails to decrypt both the audio and video streams. Possibly a different
-variant of the AirPlay encryption/decryption protocol not supported by
-UxPlay is used by this client. Without further information, there is no
-obvious fix. UxPlay reports itself to clients as "model appleTV2,1,
-sourceVersion 220.68".
+### 5. Failure to decrypt ALL video and audio streams from a particular (older) client:
+
+This triggers an error message, and will be due to use of an incorrect
+protocol for getting the AES decryption key from the client.
+
+Modern Apple clients use a more-encrypted protocol than older ones.
+Which protocol is used by UxPlay depends on the client *User-Agent*
+string (reported by the client and now shown in the terminal output).
+iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES
+decryption key they send to the server. Somewhere around iOS
+sourceVersion 330 (part of the User-Agent string) Apple started to
+further encrypt it by a sha-512 hash with a "shared secret" created
+during the Server-Client pairing process. The sourceVersion 330 above
+which the extra decryption step is carried out is set in lib/global.h if
+you need to change it. (This applies only to audio decryption; the AES
+key used for video decryption has had this extra encryption since iOS
+9).
+
+The third-party non-free Windows software *AirMyPC* (a commercial
+AirPlay emulator) uses an unhashed AES key for both audio and video
+encryption. *AirMyPC* has a distinctive *User-Agent* string, which is
+detected using two other settings in lib/global.h that can be adjusted
+if necessary. These settings might be useful if other AirPlay-emulators
+need support. Uxplay declares itself to be an AppleTV2,1 with
+sourceVersion 220.68; this can also be changed in global.h.
 
 **Usage:**
 ==========
@@ -446,18 +494,23 @@ displays streamed video.
 
 **-t *timeout*** will cause the server to relaunch (without stopping
 uxplay) if no connections have been present during the previous
-*timeout* seconds. (You may wish to use this because the Server may not
-be visible to new Clients that were inactive when the Server was
-launched, and an idle Bonjour registration also eventually becomes
-unavailable for new connections.) The timer only starts once a Client
-has first made a mirror connection and then has disconnected with "Stop
-Mirrroring". *This option should **not** be used if the display window
-is an OpenGL window on macOS, as such an OpenGL window created by
+*timeout* seconds. You may wish to use this if the Server is not visible
+to new Clients that were inactive when the Server was launched, and an
+idle Bonjour registration eventually becomes unavailable for new
+connections (this is a workaround for what may be due to a problem with
+your dns-sd or Avahi setup).\
+*This option should **not** be used on macOS, as a window created by
 GStreamer does not terminate correctly (it causes a segfault) if it is
 still open when the GStreamer pipeline is closed.*
 
 ChangeLog
 =========
+
+1.44 2021-12-13 Omit hash of aeskey with ecdh\_secret if sourceVersion
+\<= 280.33 (this supports AirMyPC); internal rearrangement of where this
+hash is done. Replace decodebin by h264-specific elements in the
+GStreamer video pipeline. Fully report initial communications between
+client and server in -d debug mode.
 
 1.43 2021-12-07 Various internal changes, such as tests for successful
 decryption, uniform treatment of informational/debug messages, etc.,
@@ -582,6 +635,9 @@ Improvements since the original UxPlay by antimof:
 12. Added support for audio-only streaming with original (non-Mirror)
     AirPlay protocol, with Apple Lossless (ALAC) audio.
 
+13. Added suppport for the older AirPlay protocol used by third-party
+    Windows-based AirPlay mirror emulators such as AirMyPC.
+
 Disclaimer
 ==========
 
@@ -697,11 +753,12 @@ found this new protocol used encryption in order to protect the
 transferred video data.
 
 By 2012, most of AirPlay's protocols had been reverse-engineered and
-[documented](https://nto.github.io/AirPlay.html). At this point, audio
-still used the AirTunes 2 protocol from around 2008, video, photos and
-mirroring still used their respective protocols in an unmodified form,
-so you could still speak of AirPlay 1 (building upon AirTunes 2). The
-Airplay server running on the Apple TV reported as version 130. The
+[documented](https://nto.github.io/AirPlay.html) (see also [updated
+version](https://openairplay.github.io/airplay-spec)). At this point,
+audio still used the AirTunes 2 protocol from around 2008, video, photos
+and mirroring still used their respective protocols in an unmodified
+form, so you could still speak of AirPlay 1 (building upon AirTunes 2).
+The Airplay server running on the Apple TV reported as version 130. The
 setup of AirPlay mirroring used the xml format, in particular a
 stream.xml file. Additionally, it seems like the actual audio data is
 using the ALAC codec for audio-only (AirTunes 2) streaming and AAC for
