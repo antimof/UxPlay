@@ -67,7 +67,7 @@ nVidia).
 
 Some Linux distributions such as Debian do not allow distribution of
 compiled GPL code linked to OpenSSL-1.1.1 because its "dual
-OpenSSL/SSLeay" license has some incompatibilites with GPL, unless all
+OpenSSL/SSLeay" license has some incompatibilities with GPL, unless all
 code authors have explicitly given an "exception" to allow such linking
 (the historical origins of UxPlay make this impossible to obtain). Other
 distributions treat OpenSSL as a "System Library" which the GPL allows
