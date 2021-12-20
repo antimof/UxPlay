@@ -330,7 +330,7 @@ Use the utility ```avahi-browse -a -t``` on the server to verify that the UxPlay
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
-This shows that a *dns_sd* service  is working, but a firewall on the server is probably blocking the connection request from the client.
+This shows that a *DNS-SD* service  is working, but a firewall on the server is probably blocking the connection request from the client.
 (One user who insisted that the firewall had been turned off turned out to have had _two_ active firewalls (*firewalld* and *ufw*)
 _both_ running on the server!)  If possible, either turn off the firewall
 to see if that is the problem, or get three consecutive network ports,
