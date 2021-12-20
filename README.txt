@@ -411,8 +411,9 @@ one of the steps needed for getting Avahi running on a FreeBSD system is
 to edit `/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for
 airplay support.*)
 
-Use the utility `avahi-browse -a -t` on the server to verify that the
-UxPlay AirTunes and AirPlay services are correctly registered (only the
+After starting uxplay, use the utility `avahi-browse -a -t` in a
+different terminal window on the server to verify that the UxPlay
+AirTunes and AirPlay services are correctly registered (only the
 AirTunes service is used in the "Legacy" AirPlay Mirror mode used by
 UxPlay).
 
