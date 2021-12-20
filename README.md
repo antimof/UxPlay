@@ -326,7 +326,7 @@ _(FreeBSD offers both alternatives, but only Avahi was tested: one of the steps 
 getting Avahi running on a FreeBSD system is to edit ```/usr/local/etc/avahi/avahi-daemon.conf```  to
 uncomment a line for airplay support._)
 
-Use the utility ```avahi-browse -a -t``` on the server to verify that the UxPlay AirTunes and AirPlay services are corrctly registered (only the AirTunes service is  used in the "Legacy" AirPlay Mirror mode  used by UxPlay).
+Use the utility ```avahi-browse -a -t``` on the server to verify that the UxPlay AirTunes and AirPlay services are correctly registered (only the AirTunes service is  used in the "Legacy" AirPlay Mirror mode  used by UxPlay).
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
@@ -390,7 +390,7 @@ reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstr
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
 
-### 5.  Failure to decrypt ALL video and audio streams from a particular (older) client:
+### 5.  Failure to decrypt ALL video and/or audio streams from a particular (older) client:
 
 This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
 
@@ -399,10 +399,10 @@ Which protocol is used by UxPlay depends on the client  _User-Agent_ string (rep
 iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES decryption key they send to the server.
 Somewhere around iOS sourceVersion 330 (part of the User-Agent string) Apple started to further encrypt it by a sha-512 hash with a "shared secret" created 
 during the Server-Client pairing process.   The sourceVersion 330 above which the extra decryption step is carried out is set in lib/global.h if you need to 
-change it.  (This applies only to audio decryption; the AES key used for video decryption has had this extra encryption since iOS 9).
+change it.  (This applies only to audio decryption; the AES key used for video decryption has used extra encryption with the "shared-secret" since iOS 9).
 
-The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an  unhashed AES key for both audio and video encryption.  _AirMyPC_ has a distinctive
-_User-Agent_ string, which is detected using two other settings in lib/global.h that can be adjusted if necessary. These settings might be useful if 
+The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an unhashed AES key for both audio and video encryption.  _AirMyPC_ has 
+a distinctive  _User-Agent_ string, which is detected using two other settings in lib/global.h that can be adjusted if necessary. These settings might be useful if 
 other AirPlay-emulators need support.  Uxplay declares itself to be an AppleTV2,1 with sourceVersion 220.68; this can also be changed in global.h.
 
 # ChangeLog

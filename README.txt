@@ -412,7 +412,7 @@ to edit `/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for
 airplay support.*)
 
 Use the utility `avahi-browse -a -t` on the server to verify that the
-UxPlay AirTunes and AirPlay services are corrctly registered (only the
+UxPlay AirTunes and AirPlay services are correctly registered (only the
 AirTunes service is used in the "Legacy" AirPlay Mirror mode used by
 UxPlay).
 
@@ -496,7 +496,7 @@ GStreamer 1.x into packages in different ways; the packages listed above
 in the build instructions should bring in other required GStreamer
 packages as dependencies, but will not install all possible plugins.
 
-### 5. Failure to decrypt ALL video and audio streams from a particular (older) client:
+### 5. Failure to decrypt ALL video and/or audio streams from a particular (older) client:
 
 This triggers an error message, and will be due to use of an incorrect
 protocol for getting the AES decryption key from the client.
@@ -511,8 +511,8 @@ further encrypt it by a sha-512 hash with a "shared secret" created
 during the Server-Client pairing process. The sourceVersion 330 above
 which the extra decryption step is carried out is set in lib/global.h if
 you need to change it. (This applies only to audio decryption; the AES
-key used for video decryption has had this extra encryption since iOS
-9).
+key used for video decryption has used extra encryption with the
+"shared-secret" since iOS 9).
 
 The third-party non-free Windows software *AirMyPC* (a commercial
 AirPlay emulator) uses an unhashed AES key for both audio and video
