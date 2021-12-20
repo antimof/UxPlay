@@ -44,7 +44,7 @@ instead of streaming content from one on the client.**
 UxPlay uses GStreamer Plugins for rendering audio and video,
 and does not offer the  alternative Raspberry-Pi-specific
 audio and video renderers available in [RPiPlay](https://github.com/FD-/RPiPlay).
-It is tested on a number of systems, including  (among others)  Ubuntu 20.04, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15, FreeBSD 13.0.
+It is tested on a number of systems, including (among others) Debian 11.2, Ubuntu 20.04 and 21.10, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
