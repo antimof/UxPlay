@@ -416,8 +416,9 @@ a less-encrypted older "legacy" protocol to make the connection with the UxPlay 
 claim to be such an old AppleTV model.)
 
 # ChangeLog
-1.44 2021-12-13   Omit hash of aeskey with ecdh_secret if sourceVersion <= 280.33 (this supports AirMyPC);
-                  internal rearrangement  of where this hash is done.   Replace decodebin by h264-specific
+1.44 2021-12-13   Omit hash of aeskey with ecdh_secret (his supports AirMyPC), or use unhashed key for audio, hashed key
+                  for video (this supports iO 9 and iOS 10 clients reporting sourceVersion < 330 );
+                  make internal rearrangement of where this hash is done.   Replace decodebin by h264-specific
                   elements in the GStreamer video pipeline.  Fully report initial communications between 
                   client and server in -d debug mode.
 
@@ -525,7 +526,8 @@ is compiled.) On macOS, Avahi is not used.
 
 12. Added support for audio-only streaming with original (non-Mirror) AirPlay protocol, with Apple Lossless (ALAC) audio.
 
-13. Added suppport for the  older AirPlay protocol used by third-party Windows-based AirPlay mirror emulators such as AirMyPC.
+13. Added suppport for the older AirPlay protocol used by third-party Windows-based AirPlay mirror emulators such as AirMyPC, and for
+    the protocol used by older 32-bit devices that can only run iOS 9 or iOS 10.
 
 # Disclaimer
 
