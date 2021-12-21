@@ -14,10 +14,10 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/
 on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, macOS, or other unix.  UxPlay supports a "legacy" form of Apple's AirPlay Mirror protocol introduced
-in iOS 12; client devices running iOS/iPadOS 12 or later are supported, as is a (nonfree) Windows-based
+in iOS 12; client devices running iOS/iPadOS 12 or later are supported, as is a (non-free) Windows-based
 AirPlay-client software emulator, AirMyPC.  Older (32-bit) client devices that can only run iOS 9.3 or iOS 10.3 are
 currently partially supported by UxPlay: reports indicate that
-screen-mirroring video works, audio is a work in progess.
+screen-mirroring video works, audio is a work-in-progress, but is correctly decrypted.
 (Details of what is publically known about Apple's AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
 [here](https://emanuelecozzi.net/docs/airplay2)).
@@ -400,12 +400,20 @@ Modern Apple clients use a more-encrypted protocol than older ones.
 Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output). 
 iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES decryption key they send to the server.
 Somewhere around iOS sourceVersion 330 (part of the User-Agent string) Apple started to further encrypt it by a sha-512 hash with a "shared secret" created 
-during the Server-Client pairing process.   The sourceVersion 330 above which the extra decryption step is carried out is set in lib/global.h if you need to 
-change it.  (This applies only to audio decryption; the AES key used for video decryption has used extra encryption with the "shared-secret" since iOS 9).
+during the Server-Client pairing process.   The sourceVersion 330 above which the extra decryption step is carried out is 
+a guess for a value bigger than 320 and smaller than 380, and is set in lib/global.h if you need to 
+change it.  (This applies only to audio decryption; since at least iOS 9, the AES key used for video decryption
+is derived from a hash of a key formed from the "streamConnectionID" received from the client with the _hashed_ audio AES key.)
 
-The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an unhashed AES key for both audio and video encryption.  _AirMyPC_ has 
-a distinctive  _User-Agent_ string, which is detected using two other settings in lib/global.h that can be adjusted if necessary. These settings might be useful if 
-other AirPlay-emulators need support.  Uxplay declares itself to be an AppleTV2,1 with sourceVersion 220.68; this can also be changed in global.h.
+The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an even older protocol:
+it not only uses the unhashed AES key for audio, but also uses a video AES key derived as above, but using the  _unhashed_ 
+audio AES key. _AirMyPC_ has  a distinctive  _User-Agent_ string, which is detected using two other settings in lib/global.h 
+that can be adjusted if necessary. These settings might be useful if 
+other AirPlay-emulators using this protocol  need support.  Uxplay declares itself to be an AppleTV2,1 with a 
+sourceVersion 220.68 taken from an AppleTV3,1; 
+this can also be changed in global.h.   (It is crucial for UxPlay to declare this old value of sourceVersion, as it prompts the client to use 
+a less-encrypted older "legacy" protocol to make the connection with the UxPlay server; it is probably not necessary for UxPlay to 
+claim to be such an old AppleTV model.)
 
 # ChangeLog
 1.44 2021-12-13   Omit hash of aeskey with ecdh_secret if sourceVersion <= 280.33 (this supports AirMyPC);
