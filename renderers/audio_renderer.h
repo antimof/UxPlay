@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
 #include <stdint.h>
 #include "../lib/raop_ntp.h"
 
