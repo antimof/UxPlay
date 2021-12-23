@@ -176,7 +176,7 @@ text "/usr/local/lib", and run "sudo ldconfig" to permanently add
 Linux):** (sudo yum install) openssl-devel libplist-devel
 avahi-compat-libdns\_sd-devel (some from the "PowerTools" add-on
 repository) (+libX11-devel for ZOOMFIX). The required GStreamer packages
-(some from rpmfusion.org) are: gstreamer1-devel
+(some from [rpmfusion.org](https://rpmfusion.org)) are: gstreamer1-devel
 gstreamer1-plugins-base-devel gstreamer1-libav
 gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).
 

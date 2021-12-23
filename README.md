@@ -128,7 +128,7 @@ file /etc/ld.so.conf.d/libplist.conf containing  the text "/usr/local/lib", and 
 
 **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
-(+libX11-devel for ZOOMFIX). The required GStreamer packages (some from  rpmfusion.org) are:
+(+libX11-devel for ZOOMFIX). The required GStreamer packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
 gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics). 
 
 **OpenSUSE:**
