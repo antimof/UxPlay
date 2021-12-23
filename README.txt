@@ -182,7 +182,7 @@ gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).
 
 **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
 avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
-required GStreamer packages (may need some versions from
+required GStreamer packages (you may need to use versions from
 [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
 gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).

@@ -134,7 +134,7 @@ gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugi
 **OpenSUSE:**
 (sudo zypper install) libopenssl-devel libplist-devel
 avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
-GStreamer packages  (may need some versions from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
+GStreamer packages  (you may need to use versions from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
 **FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
