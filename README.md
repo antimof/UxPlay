@@ -44,11 +44,11 @@ instead of streaming content from one on the client.**
 UxPlay uses GStreamer Plugins for rendering audio and video,
 and does not offer the  alternative Raspberry-Pi-specific
 audio and video renderers available in [RPiPlay](https://github.com/FD-/RPiPlay).
-It is tested on a number of systems, including (among others) Debian 11.2, Ubuntu 20.04 and 21.10, Linux Mint 20.2, OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
+It is tested on a number of systems, including (among others) Debian 11.2, Ubuntu 20.04 and 21.10, Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA edition),  OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
-available. For Intel integrated graphics, the VAAPI plugin is preferable, (but don't use it  with nVidia).
+available. For Intel integrated graphics, the VAAPI plugin is preferable, (but don't use it  with NVIDIA).
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -83,7 +83,7 @@ In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads), then do
 
 1. `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad` 
-2. `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated Intel graphics, but not nVidia graphics)
+2. `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated Intel graphics, but not NVIDIA)
 3. `sudo apt-get install libx11-dev`  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
 4. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
@@ -347,9 +347,9 @@ the failure occurs.
 **Most such problems are  due to a GStreamer plugin that doesn't work on your system**: (by default,
 GStreamer uses an algorithm to guess what is the "best"
 plugin to use on your system).   A common case is that the GStreamer VAAPI plugin
-(for hardware-accelerated intel graphics) is being used on a system with nVidia graphics,
+(for hardware-accelerated intel graphics) is being used on a system with NVIDIA graphics,
 If you use an
-nVidia graphics card, make sure that the gstreamer1.0-vaapi
+NVIDIA graphics card, make sure that the gstreamer1.0-vaapi
 plugin for Intel graphics is *NOT* installed (**uninstall it** if it is installed!).
 (You can test for this  by explicitly choosing the GStreamer videosink with option
 "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the problem, or "-vs vaapisink" to see if this
