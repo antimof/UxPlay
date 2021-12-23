@@ -1,6 +1,18 @@
 UxPlay 1.44: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
+Highlights:
+
+-   GPLv3, open source.
+-   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
+    Lossless ALAC) protocols for current iOS/iPadOS clients (iOS 12
+    through 15).\
+-   Support for older protocol (iOS 9, iOS 10) on older 32-bit clients,
+    and on Windows AirPlay-client emulators such as *AirMyPC*.
+-   Uses GStreamer, with options to select different output "videosinks"
+    and "audiosinks".
+-   Support for server behind a firewall.
+
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
 Linux, macOS, and \*BSD. It is now hosted at the github site
 <https://github.com/FDH2/UxPlay> (where development and user-assistance
@@ -84,11 +96,13 @@ Getting UxPlay:
 Either download and unzip
 [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip),
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".
+You can also download a recent or earlier version listed in
+[Releases](https://github.com/FDH2/UxPlay/releases).
 
-\*This is also a pull request on the original site
+\*Current UxPlay is also a pull request on the original site
 https://github.com/antimof/UxPlay ; that original project is inactive,
-but the pull request with changes up to 2021-12-10 were recently merged
-with the antimof tree (thank you antimof!).
+but the pull requests are now being periodically merged with the antimof
+tree (thank you antimof!).
 
 Building UxPlay on Linux (or \*BSD):
 ------------------------------------
@@ -160,9 +174,10 @@ text "/usr/local/lib", and run "sudo ldconfig" to permanently add
 
 **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
 Linux):** (sudo yum install) openssl-devel libplist-devel
-avahi-compat-libdns\_sd-devel (+libX11-devel for ZOOMFIX). The required
-GStreamer packages (some from PowerTools repository or rpmfusion.org):
-gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
+avahi-compat-libdns\_sd-devel (some from the "PowerTools" add-on
+repository) (+libX11-devel for ZOOMFIX). The required GStreamer packages
+(some from rpmfusion.org) are: gstreamer1-devel
+gstreamer1-plugins-base-devel gstreamer1-libav
 gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).
 
 **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
@@ -417,7 +432,9 @@ After starting uxplay, use the utility `avahi-browse -a -t` in a
 different terminal window on the server to verify that the UxPlay
 AirTunes and AirPlay services are correctly registered (only the
 AirTunes service is used in the "Legacy" AirPlay Mirror mode used by
-UxPlay).
+UxPlay). If the UxPlay service is listed by avahi-browse, but is not
+seen by the client, the problem is likely to be a problem with the local
+network.
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
