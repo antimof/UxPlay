@@ -55,7 +55,8 @@ not offer the alternative Raspberry-Pi-specific audio and video
 renderers available in [RPiPlay](https://github.com/FD-/RPiPlay). It is
 tested on a number of systems, including (among others) Debian 11.2,
 Ubuntu 20.04 and 21.10, Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA
-edition), OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
+edition), Rocky Linux 8.4 (a CentOS successor), OpenSUSE 15.3, macOS
+10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the
 box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
@@ -157,10 +158,11 @@ text "/usr/local/lib", and run "sudo ldconfig" to permanently add
 
 ### Modified build instructions for Non-Debian-based distributions:
 
-**Red Hat, Fedora, CentOS:** (sudo yum install) openssl-devel
-libplist-devel avahi-compat-libdns\_sd-devel (+libX11-devel for
-ZOOMFIX). The required GStreamer packages are: gstreamer1-devel
-gstreamer1-plugins-base-devel gstreamer1-libav
+**Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
+Linux):** (sudo yum install) openssl-devel libplist-devel
+avahi-compat-libdns\_sd-devel (+libX11-devel for ZOOMFIX). The required
+GStreamer packages (some from PowerTools repository or rpmfusion.org):
+gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
 gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).
 
 **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
