@@ -167,7 +167,7 @@ Download the latest source from
 ("./autogen.sh ; make ; sudo make install").   This will probably install libplist-2.0.* in /usr/local/lib.
 _(Ignore the following for builds on MacOS:)_  On some systems like
 Debian or Ubuntu, you may also need to add a missing  entry ```/usr/local/lib```
-in /etc/ld.so.conf (or place a file containing "/usr/local/lib64/libplist-2.0.so" in /etc/ld.so.conf.d)
+in /etc/ld.so.conf (or place a file containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d)
 before running "sudo ldconfig". 
 
 ## Building UxPlay on macOS:  **(Only tested on Intel X86_64 Macs)**
