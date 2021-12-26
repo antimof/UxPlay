@@ -260,17 +260,16 @@ Options:
    format, depending on how an iPad is held, for example). 
 
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
-   refresh rate of the display. Default is r=60 (60 Hz); r is a whole number
-   with three digits or less.   Values greater than 255 are invalid.
+   refresh rate of the display. Default is r=60 (60 Hz); r must be a whole number
+   less than 256.
    
 **-fps n** sets a maximum frame rate (in frames per second) for the AirPlay
-   client to stream video; n must be a whole number with 3 digits or less.
+   client to stream video; n must be a whole number less than 256.
    (The client may choose to serve video at any frame rate lower
-   than this;  default is 30 fps.)  A setting
-   below 30 fps might be useful to reduce latency if you are running more than
-   one instance of uxplay at the same time.   Values greater than 255 are
-   ignored.  This setting is only an advisory to the client device, so setting
-   a high value will not force a high framerate.
+   than this;  default is 30 fps.)  A setting below 30 fps might be useful to
+   reduce latency if you are running more than one instance of uxplay at the same time.
+   _This setting is only an advisory to
+   the client device, so setting a high value will not force a high framerate._
    (You can test using "-vs fpsdisplaysink" to see what framerate is being
    received.)
    
@@ -336,8 +335,8 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    have been present during the previous _timeout_ seconds.  You may wish to use this if the Server
    is not visible to new Clients that were inactive when the Server was launched, and an idle Bonjour
    registration  eventually becomes unavailable for new connections (this is a workaround for what
-   may be due to a problem with your DNS-SD or Avahi setup).   
-   _This option should **not** be used on  macOS, as a window created
+   may be due to a problem with your DNS-SD or Avahi setup).   _This option should **not** be used on
+   macOS, as a window created
    by GStreamer does not terminate correctly (it causes a segfault)
    if it is still open when the  GStreamer pipeline is closed._
 
