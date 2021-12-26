@@ -110,25 +110,30 @@ Building UxPlay on Linux (or \*BSD):
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
 macOS, see below).
 
+Make sure that your distribution provides OpenSSL 1.1.1 or later, and
+libplist 2.0 or later. (This means Debian 10 "Buster", Ubuntu 18.04 or
+later.) If it doesnt, you may need to build and install these from
+source (see below).
+
 You need a C/C++ compiler (e.g. g++) with the standard development
-libraries installed.
+libraries installed. Make sure that cmake\>=3.4.1 and pkg-config are
+also installed: "sudo apt-get install cmake pkg-config". In a terminal
+window, change directories to the source directory of the downloaded
+source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git
+clone" downloads), then do
 
-Make sure that cmake\>=3.4.1 and pkg-config are also installed: "sudo
-apt-get install cmake pkg-config". In a terminal window, change
-directories to the source directory of the downloaded source code
-("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone"
-downloads), then do
-
-1.  `sudo apt-get install libssl-dev libplist-dev libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`
-2.  `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated
+1.  `sudo apt-get install libssl-dev libplist-dev` (unless you need to
+    build OpenSSL and libplist from source).
+2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`
+3.  `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated
     Intel graphics, but not NVIDIA)
-3.  `sudo apt-get install libx11-dev` (for the "ZOOMFIX" X11\_display
+4.  `sudo apt-get install libx11-dev` (for the "ZOOMFIX" X11\_display
     name fix for screen-sharing with e.g., ZOOM)
-4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
+5.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
     applications such as Zoom, see below).
-5.  `make`
-6.  `sudo make install` (you can afterwards uninstall with
+6.  `make`
+7.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
 
 *If you intend to modify the code, use a separate "build" directory:
@@ -156,22 +161,6 @@ prevents UxPlay from receiving client connection requests unless some
 network ports are opened. See **Troubleshooting** below for help with
 this or other problems.
 
-**Note libplist-dev (version 2.0 or greater) is a new dependency
-(originally, libplist was bundled with UxPlay-1.2). Older Linux
-distributions may only supply libplist 1.x, which is too old.
-\[Installing libplist-dev (with libplist3) from ubuntu 18.04 solves this
-problem on ubuntu 16.04.\]** If you cannot find a libplist-2.x package
-that installs on your distribution, you can get it at
-<https://github.com/libimobiledevice/libplist> and build it from source.
-\_(You will need build tools autoconf, automake, libtool, and may need
-to also install some libpython\*-dev package). By default, libplist
-installs in /usr/local/lib. If this is not in the library path (as in
-ubuntu), create a file /etc/ld.so.conf.d/libplist.conf containing the
-text "/usr/local/lib", and run "sudo ldconfig" to permanently add
-/usr/local/lib to the library path.\_
-
-### Modified build instructions for Non-Debian-based distributions:
-
 **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
 Linux):** (sudo yum install) openssl-devel libplist-devel
 avahi-compat-libdns\_sd-devel (some from the "PowerTools" add-on
@@ -194,6 +183,40 @@ avahi-libdns or mDNSResponder must also be installed to provide the
 dns\_sd library. OpenSSL is already installed as a System Library.
 "ZOOMFIX" is untested; don't try to use it on FreeBSD unless you need
 it.
+
+### Building OpenSSL \>= 1.1.1 from source.
+
+If you need to do this, note that you may be able to use a newer version
+(OpenSSL-3.0.1 is known to work). You will need the standard development
+toolset (autoconf, automake, libtool, etc.). Download and compile the
+source code from <https://www.openssl.org/source/>, Install the
+downloaded openssl by opening a terminal in your Downloads directory,
+and unpacking the source distribution: ("tar -xvzf openssl-3.0.1.tar.gz
+; cd openssl-3.0.1"). Then build/install with "./config ; make ; sudo
+make install\_dev". This will typically install the needed library
+`libcrypto.*`, either in /usr/local/lib or /usr/local/lib64. *(Ignore
+the following for builds on MacOS:)* Assuming the library was placed in
+/usr/local/lib64, you must "export OPENSSL\_ROOT\_DIR=/usr/local/lib64"
+before running cmake. On some systems like Debian or Ubuntu, you may
+also need to add a missing entry `/usr/local/lib64` in /etc/ld.so.conf
+(or place a file containing "/usr/local/lib64/libcrypto.so" in
+/etc/ld.so.conf.d) before running "sudo ldconfig".
+
+### Bulding libplist \>= 2.0.0 from source.
+
+*Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can avoid
+this step by installing libplist-dev and libplist3 from Debian 10 or
+Ubuntu 18.04.* (As well as the usual build tools, you may need to also
+install some libpython\*-dev package). Download the latest source from
+<https://github.com/libimobiledevice/libplist>: get
+[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
+then ("unzip libplist-master.zip ; cd libplist-master"), build/install
+("./autogen.sh ; make ; sudo make install"). This will probably install
+libplist-2.0.\* in /usr/local/lib. *(Ignore the following for builds on
+MacOS:)* On some systems like Debian or Ubuntu, you may also need to add
+a missing entry `/usr/local/lib` in /etc/ld.so.conf (or place a file
+containing "/usr/local/lib64/libplist-2.0.so" in /etc/ld.so.conf.d)
+before running "sudo ldconfig".
 
 Building UxPlay on macOS: **(Only tested on Intel X86\_64 Macs)**
 -----------------------------------------------------------------
@@ -222,12 +245,12 @@ you use GStreamer.framework rather than install Gstreamer with Homebrew
 or MacPorts (see later).
 
 Next install OpenSSL and libplist: these can be built from source (see
-below) but it is easier to get them using MacPorts "sudo port install
-openssl libplist-devel" or Homebrew "brew install openssl libplist".
-Only the static forms of the two libraries will used for the macOS
-build, so they do not need to remain installed after you have built
-uxplay: if you don't have MacPorts or Homebrew installed, you can just
-install one of these package-managers before building uxplay, and
+above); only the static forms of the two libraries will used for the
+macOS build, so you can uninstall them ("sudo make uninstall") after you
+have built UxPlay. It may be easier to get them using MacPorts "sudo
+port install openssl libplist-devel" or Homebrew "brew install openssl
+libplist". if you don't have MacPorts or Homebrew installed, you can
+just install one of these package-managers before building uxplay, and
 uninstall it afterwards if you do not want to keep it. Unfortunately,
 Fink's openssl11-dev package currently doesn't supply the static
 (libcrypto.a) form of the needed OpenSLL library libcrypto, and its
@@ -251,23 +274,6 @@ expanded using the mouse or trackpad. In contrast, a window created with
 "-vs osxvideosink" is initially big, but has the wrong aspect ratio
 (stretched image); in this case the aspect ratio changes when the window
 width is changed by dragging its side.
-
-***Building OpenSSL and libplist from source on macOS***
-
-If you have have the standard GNU toolset (autoconf, automake, libtool,
-etc.) installed, you can also download and compile the source code for
-these libraries from <https://www.openssl.org/source/>,
-<https://github.com/libimobiledevice/libplist>. Install the downloaded
-openssl by opening a terminal in your Downloads directory, and unpacking
-the source distribution openssl-3.0.0.tar.gz , ("tar -xvzf
-openssl-3.0.0.tar.gz ; cd openssl-3.0.0"). Then build/install with
-"./config ; make ; sudo make install\_dev" and clean up after building
-uxplay with "sudo make uninstall" in the same directory. Similarly, for
-libplist, download the source as a zipfile from github as
-[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
-then unpack ("unzip libplist-master.zip ; cd libplist-master"),
-build/install ("./autogen.sh ; make ; sudo make install") and clean up
-after uxplay is built with "sudo make uninstall" in the same directory.
 
 ***Other ways (Homebrew, MacPorts) to install GStreamer on macOS (not
 recommended):***
