@@ -140,8 +140,8 @@ OpenSSL is already installed as a System Library.   "ZOOMFIX" is untested; don't
 
 If you need to do this, note that you may be able to use a newer version (OpenSSL-3.0.1 is known to work).
 You will need the standard development toolset (autoconf, automake, libtool, etc.).
-Download and compile the source code from
-[https://www.openssl.org/source/](https://www.openssl.org/source/),
+Download the source code from
+[https://www.openssl.org/source/](https://www.openssl.org/source/).
 Install the downloaded
 openssl by opening a terminal in your Downloads directory, and unpacking the source distribution:
 ("tar -xvzf openssl-3.0.1.tar.gz ; cd openssl-3.0.1"). Then build/install with

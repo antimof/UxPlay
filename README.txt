@@ -188,12 +188,12 @@ it.
 
 If you need to do this, note that you may be able to use a newer version
 (OpenSSL-3.0.1 is known to work). You will need the standard development
-toolset (autoconf, automake, libtool, etc.). Download and compile the
-source code from <https://www.openssl.org/source/>, Install the
-downloaded openssl by opening a terminal in your Downloads directory,
-and unpacking the source distribution: ("tar -xvzf openssl-3.0.1.tar.gz
-; cd openssl-3.0.1"). Then build/install with "./config ; make ; sudo
-make install\_dev". This will typically install the needed library
+toolset (autoconf, automake, libtool, etc.). Download the source code
+from <https://www.openssl.org/source/>. Install the downloaded openssl
+by opening a terminal in your Downloads directory, and unpacking the
+source distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd
+openssl-3.0.1"). Then build/install with "./config ; make ; sudo make
+install\_dev". This will typically install the needed library
 `libcrypto.*`, either in /usr/local/lib or /usr/local/lib64. *(Ignore
 the following for builds on MacOS:)* Assuming the library was placed in
 /usr/local/lib64, you must "export OPENSSL\_ROOT\_DIR=/usr/local/lib64"
