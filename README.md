@@ -223,7 +223,7 @@ to using GStreamer.framework, but causes a large number of extra packages to be 
 Homebrew offers a build of GStreamer for Apple Silicon, which then was not yet available on the offical GStreamer site.)
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
-The MacPorts GStreamer is built to use X11, so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
+The MacPorts GStreamer is built to use X11, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs
 option "-vs ximagesink".  On an older unibody MacBook Pro, the default resolution  wxh = 1920x1080 was too large  for
 the non-retina display, but using option "-s 800x600" worked; However, the GStreamer pipeline is fragile against attempts to change
 the X11 window size, or to rotations that switch a connected client between portrait and landscape mode while uxplay is running. 

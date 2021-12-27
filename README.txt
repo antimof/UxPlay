@@ -289,8 +289,8 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
     gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
     gstreamer1-gst-libav". The MacPorts GStreamer is built to use X11,
-    so must be run from an XQuartz terminal, can use ZOOMFIX, and needs
-    option "-vs ximagesink". On an older unibody MacBook Pro, the
+    so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and
+    needs option "-vs ximagesink". On an older unibody MacBook Pro, the
     default resolution wxh = 1920x1080 was too large for the non-retina
     display, but using option "-s 800x600" worked; However, the
     GStreamer pipeline is fragile against attempts to change the X11
