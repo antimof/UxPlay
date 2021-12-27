@@ -249,12 +249,9 @@ above); only the static forms of the two libraries will used for the
 macOS build, so you can uninstall them ("sudo make uninstall") after you
 have built UxPlay. It may be easier to get them using MacPorts "sudo
 port install openssl libplist-devel" or Homebrew "brew install openssl
-libplist". if you don't have MacPorts or Homebrew installed, you can
-just install one of these package-managers before building uxplay, and
-uninstall it afterwards if you do not want to keep it. Unfortunately,
-Fink's openssl11-dev package currently doesn't supply the static
-(libcrypto.a) form of the needed OpenSLL library libcrypto, and its
-libplist1 package is too old.
+libplist" (but not Fink). if you don't have MacPorts or Homebrew
+installed, you can just install one of them before building uxplay, and
+uninstall afterwards if it is not wanted.
 
 Finally, build and install uxplay (without ZOOMFIX): open a terminal and
 change into the UxPlay source directory ("UxPlay-master" for zipfile
