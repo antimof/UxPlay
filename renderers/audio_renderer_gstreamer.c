@@ -23,9 +23,6 @@
 #include <gst/app/gstappsrc.h>
 #include "audio_renderer.h"
 
-static bool broken_audio;
-static int counter;
-
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
 /* ct = 1; linear PCM (uncompressed): 44100/16/2, S16LE */
@@ -150,8 +147,6 @@ void audio_renderer_stop() {
 
 void  audio_renderer_start(unsigned char *ct) {
     unsigned char compression_type = 0, id;
-    broken_audio = false;
-    counter = 0;
     for (int i = 0; i < NFORMATS; i++) {
         if(renderer_type[i]->ct == *ct) {
             compression_type = *ct;
@@ -193,7 +188,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     switch (renderer->ct) {
     case 8: /*AAC-ELD*/
         valid = (data[0] == 0x8d || data[0] == 0x8e);
-        valid = valid || (data[0] == 0x81 || data[0] == 0x82);     /* old protocol iOS 8, iOS 9 */
+        valid = valid || (data[0] == 0x81 || data[0] == 0x82);     /* from iOS 9, iOS 10 clients (because 32 bit devices?) */
         break;
     case 2: /*ALAC*/
         valid = (data[0] == 0x20);
@@ -206,17 +201,10 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         break;
     }
     if (valid) {
-        if (broken_audio) counter++;
-        if (counter == 2) broken_audio = false;
-        if (!broken_audio) gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
+        gst_app_src_push_buffer(GST_APP_SRC(renderer->appsrc), buffer);
     } else {
-        if (!broken_audio) {
-            logger_log(logger, LOGGER_ERR, "*** ERROR decryption of audio frame (compression_type %d) failed ", renderer->ct);
-        } else {
-            logger_log(logger, LOGGER_DEBUG, "*** ERROR decryption of audio frame (compression_type %d) failed ", renderer->ct);
-        }
-        broken_audio = true;
-        counter = 0;
+        logger_log(logger, LOGGER_ERR, "*** ERROR invalid  audio frame (compression_type %d) skipped ", renderer->ct);
+        logger_log(logger, LOGGER_ERR, "***       first byte of invalid frame was  0x%2.2x ", (unsigned int) data[0]);
     }
 }
 

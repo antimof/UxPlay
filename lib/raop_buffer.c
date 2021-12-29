@@ -152,8 +152,8 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 #endif
 
     if (DECRYPTION_TEST) {
-        printf("encrypted header %s", utils_data_to_string(data,12,12));
-        if (payload_size) printf("%d before %s", payload_size, utils_data_to_string(&data[12],16,16 ));
+        printf("encrypted 12 byte header %s", utils_data_to_string(data,12,12));
+        if (payload_size) printf("len %d before decryption:\n%s", payload_size, utils_data_to_string(&data[12],16,16 ));
     }
     encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);

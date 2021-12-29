@@ -3,8 +3,8 @@
 Highlights:
 
    * GPLv3, open source.
-   * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols for current iOS/iPadOS clients (iOS 12 through 15).  
-   * Support for older protocol (iOS 9, iOS 10) on older 32-bit clients, and on Windows AirPlay-client emulators such as _AirMyPC_.
+   * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols for current iOS/iPadOS 15.2 clients.
+   * Support for older clients (such as iPad 2nd gen, iPhone 4S) when upgraded to iOS 9.3.5 or later, also Windows client AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
    * Support for server behind a firewall.
 
@@ -22,10 +22,8 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/
 on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
 on a host running Linux, macOS, or other unix.  UxPlay supports a "legacy" form of Apple's AirPlay Mirror protocol introduced
-in iOS 12; client devices running iOS/iPadOS 12 or later are supported, as is a (non-free) Windows-based
-AirPlay-client software emulator, AirMyPC.  Older (32-bit) client devices that can only run iOS 9.3 or iOS 10.3 are
-currently partially supported by UxPlay: reports indicate that
-screen-mirroring video works, audio is a work-in-progress, but is correctly decrypted.
+in iOS 12; client devices running iOS/iPadOS 9.3.5 or later are supported, as is a (non-free) Windows-based
+AirPlay-client software emulator, AirMyPC.
 (Details of what is publically known about Apple's AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
 [here](https://emanuelecozzi.net/docs/airplay2)).
@@ -420,35 +418,27 @@ reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstr
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
 
-### 5.  Failure to decrypt ALL video and/or audio streams from a particular (older) client:
+### 5.  Failure to decrypt ALL video and/or audio streams from old or non-Apple clients:
 
-This triggers an error message, and will be due to use of an incorrect protocol for getting the AES decryption key from the client.  
+This triggers an error messages, and will be probably due to use of an incorrect protocol for getting the AES decryption key from the client.  
+This happened when a user tried to use the Windows AirPlay-emulator client _AirMyPC_ with UxPlay.    It turned out that _AirMyPC_ used an older 
+less-encrypted protocol similar to AirPlay1, relying only on  Apple's "FairPlay" encryption of  the AES key used to decrypt the encrypted
+audio stream from the client (and which is also used as part of the video decryption); on top of FairPlay encryption, AirPlay2 adds a hash of the AES key 
+with a "shared secret" created in the initial handshake bewteen client and server.   This hash is omitted in the older protocol used by _AirMyPC_,
+which is detected using the "User Agent" string it reports: "AirMyPC/2.0".  The client User Agent string is shown in uxplay's terminal output; if it is suspected that
+some other old or non-Apple client is also using this modified protocol, you can add its "User Agent" string to ```OLD_PROTOCOL_CLIENT_USER_AGENT_LIST``` in lib/global.c,
+and rebuild UxPlay.
 
-Modern Apple clients use a more-encrypted protocol than older ones.
-Which protocol is used by UxPlay depends on the client  _User-Agent_ string (reported by the client and now shown in the terminal output). 
-iOS 9 and 10 clients only use iTunes FairPlay encryption on the AES decryption key they send to the server.
-Somewhere around iOS sourceVersion 330 (part of the User-Agent string) Apple started to further encrypt it by a sha-512 hash with a "shared secret" created 
-during the Server-Client pairing process.   The sourceVersion 330 above which the extra decryption step is carried out is 
-a guess for a value bigger than 320 and smaller than 380, and is set in lib/global.h if you need to 
-change it.  (This applies only to audio decryption; since at least iOS 9, the AES key used for video decryption
-is derived from a hash of a key formed from the "streamConnectionID" received from the client with the _hashed_ audio AES key.)
-
-The third-party non-free Windows software  _AirMyPC_ (a commercial AirPlay emulator) uses an even older protocol:
-it not only uses the unhashed AES key for audio, but also uses a video AES key derived as above, but using the  _unhashed_ 
-audio AES key. _AirMyPC_ has  a distinctive  _User-Agent_ string, which is detected using two other settings in lib/global.h 
-that can be adjusted if necessary. These settings might be useful if 
-other AirPlay-emulators using this protocol  need support.  Uxplay declares itself to be an AppleTV2,1 with a 
+Note that Uxplay declares itself to be an AppleTV2,1 with a 
 sourceVersion 220.68 taken from an AppleTV3,1; 
-this can also be changed in global.h.   (It is crucial for UxPlay to declare this old value of sourceVersion, as it prompts the client to use 
-a less-encrypted older "legacy" protocol to make the connection with the UxPlay server; it is probably not necessary for UxPlay to 
+this can also be changed in global.h.   (It is crucial for UxPlay to declare this old value of sourceVersion, as this prompts the Apple client to use 
+the iOS 12  "legacy" protocol to make the connection with the UxPlay server; it is probably not necessary for UxPlay to 
 claim to be such an old AppleTV model.)
 
 # ChangeLog
-1.44 2021-12-13   Omit hash of aeskey with ecdh_secret (his supports AirMyPC), or use unhashed key for audio, hashed key
-                  for video (this supports iO 9 and iOS 10 clients reporting sourceVersion < 330 );
-                  make internal rearrangement of where this hash is done.   Replace decodebin by h264-specific
-                  elements in the GStreamer video pipeline.  Fully report initial communications between 
-                  client and server in -d debug mode.
+1.44 2021-12-13   Omit hash of aeskey with ecdh_secret for an AirMyPC client; make an internal rearrangement of where this hash is 
+                  done. Fully report all initial communications between client and server in -d debug mode. Replace decodebin in GStreamer
+                  video pipeline by h264-specific elements.
 
 1.43 2021-12-07   Various internal changes, such as tests for successful decryption, uniform treatment 
                   of informational/debug messages, etc., updated README.
