@@ -61,10 +61,10 @@ from one on the client.**
 UxPlay uses GStreamer Plugins for rendering audio and video, and does
 not offer the alternative Raspberry-Pi-specific audio and video
 renderers available in [RPiPlay](https://github.com/FD-/RPiPlay). It is
-tested on a number of systems, including (among others) Debian 11.2,
-Ubuntu 20.04 and 21.10, Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA
-edition), Rocky Linux 8.4 (a CentOS successor), OpenSUSE 15.3, macOS
-10.15.7, FreeBSD 13.0.
+tested on a number of systems, including (among others) Debian 10.11
+"Buster" and 11.2 "Bullseye", Ubuntu 20.04 and 21.10, Linux Mint 20.2,
+Pop!\_OS 21.10 (NVIDIA edition), Rocky Linux 8.4 (a CentOS successor),
+OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the
 box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
@@ -452,16 +452,15 @@ For such problems, use "uxplay -d" (debug log option) to see what is
 happening: it will show how far the connection process gets before the
 failure occurs.
 
-**Most such problems are due to a GStreamer plugin that doesn't work on
-your system**: (by default, GStreamer uses an algorithm to guess what is
-the "best" plugin to use on your system). A common case is that the
-GStreamer VAAPI plugin (for hardware-accelerated intel graphics) is
-being used on a system with NVIDIA graphics, If you use an NVIDIA
-graphics card, make sure that the gstreamer1.0-vaapi plugin for Intel
-graphics is *NOT* installed (**uninstall it** if it is installed!). (You
-can test for this by explicitly choosing the GStreamer videosink with
-option "-vs ximagesink" or "-vs xvimagesink", to see if this fixes the
-problem, or "-vs vaapisink" to see if this reproduces the problem.)
+**Most of such problems are due to a GStreamer plugin that doesn't work
+on your system**: (by default, GStreamer uses an algorithm to guess what
+is the "best" plugin to use on your system).
+
+The most common of these problems are connected to the GStreamer VAAPI
+plugin (for hardware-accelerated intel graphics), Your first attempt to
+resolve a problem should be to find out if the VAAPI plugin is
+installed, and if so, uninstall it. (If this does not fix the problem,
+you can reinstall it.)
 
 There are some reports of other GStreamer problems with
 hardware-accelerated Intel graphics. One user (on Debian) solved this
