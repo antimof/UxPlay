@@ -4,7 +4,7 @@ Highlights:
 
    * GPLv3, open source.
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols from current iOS/iPadOS 15.2 client devices.
-   * macOS computers (Macs released in 2011 or later) can act both as AirPlay clients, or as the server running UxPlay (tested on macOS 10.15 Catalina).  
+   * macOS computers (Macs released in 2011 or later) can act either as AirPlay clients of UxPlay, or as the server running UxPlay (tested on macOS 10.15 Catalina).  
    * Support for older iOS clients (such as iPad 2nd gen, iPhone 4S) when upgraded to iOS 9.3.5 or later, also Windows client AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
    * Support for server behind a firewall.
