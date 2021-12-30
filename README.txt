@@ -158,31 +158,34 @@ not running, control it with
 avahi-daemon.service). If UxPlay is seen, but the client fails to
 connect when it is selected, there may be a firewall on the server that
 prevents UxPlay from receiving client connection requests unless some
-network ports are opened. See **Troubleshooting** below for help with
-this or other problems.
+network ports are opened. See [Troubleshooting](#troubleshooting) below
+for help with this or other problems. See [Usage](#usage) for run-time
+options.
 
-**Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
-Linux):** (sudo yum install) openssl-devel libplist-devel
-avahi-compat-libdns\_sd-devel (some from the "PowerTools" add-on
-repository) (+libX11-devel for ZOOMFIX). The required GStreamer packages
-(some from [rpmfusion.org](https://rpmfusion.org)) are: gstreamer1-devel
-gstreamer1-plugins-base-devel gstreamer1-libav
-gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics).
+-   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
+    Linux):** (sudo yum install) openssl-devel libplist-devel
+    avahi-compat-libdns\_sd-devel (some from the "PowerTools" add-on
+    repository) (+libX11-devel for ZOOMFIX). The required GStreamer
+    packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
+    gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
+    gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel
+    graphics).
 
-**OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
-avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
-required GStreamer packages (you may need to use versions from
-[Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
-gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
-gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
+-   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
+    avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
+    required GStreamer packages (you may need to use versions from
+    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
+    gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
+    gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
+    graphics).
 
-**FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav,
-gstreamer1-plugins, gstreamer1-plugins-\* (\* = core, good, bad, x, gtk,
-gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics). Either
-avahi-libdns or mDNSResponder must also be installed to provide the
-dns\_sd library. OpenSSL is already installed as a System Library.
-"ZOOMFIX" is untested; don't try to use it on FreeBSD unless you need
-it.
+-   **FreeBSD:** (sudo pkg install) libplist gstreamer1,
+    gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-\* (\* =
+    core, good, bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi
+    for Intel graphics). Either avahi-libdns or mDNSResponder must also
+    be installed to provide the dns\_sd library. OpenSSL is already
+    installed as a System Library. "ZOOMFIX" is untested; don't try to
+    use it on FreeBSD unless you need it.
 
 ### Building OpenSSL \>= 1.1.1 from source.
 
@@ -302,8 +305,8 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
     switching between portrait and landscape mode as the device is
     rotated).
 
-**Usage:**
-==========
+Usage
+=====
 
 Options:
 
@@ -411,8 +414,8 @@ macOS, as a window created by GStreamer does not terminate correctly (it
 causes a segfault) if it is still open when the GStreamer pipeline is
 closed.*
 
-**Troubleshooting:**
-====================
+Troubleshooting
+===============
 
 Note: `uxplay` is run from a terminal command line, and informational
 messages are written to the terminal.
@@ -474,8 +477,8 @@ related to VAAPI accelerated graphics.
 
 You can try to fix audio problems by using the "-as *audiosink*" option
 to choose the GStreamer audiosink , rather than have autoaudiosink pick
-one for you. The command "gst\_inspect-1.0 \| grep Sink \| grep Audio"
-\" will show you which audiosinks are available on your system. (Replace
+one for you. The command "gst-inspect-1.0 \| grep Sink \| grep Audio" \"
+will show you which audiosinks are available on your system. (Replace
 "Audio" by "Video" to see videosinks). Some possible audiosinks are
 pulsesink, alsasink, osssink, oss4sink, and osxaudiosink (macOS).
 
