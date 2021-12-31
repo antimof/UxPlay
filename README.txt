@@ -522,7 +522,7 @@ packages as dependencies, but will not install all possible plugins.
 
 ### 5. Failure to decrypt ALL video and/or audio streams from old or non-Apple clients:
 
-This triggers an error messages, and will be probably due to use of an
+This triggers error messages, and will be probably due to use of an
 incorrect protocol for getting the AES decryption key from the client.
 This happened when a user tried to use the Windows AirPlay-emulator
 client *AirMyPC* with UxPlay. It turned out that *AirMyPC* used an older
