@@ -523,14 +523,14 @@ packages as dependencies, but will not install all possible plugins.
 ### 5. Failure to decrypt ALL video and/or audio streams from old or non-Apple clients:
 
 This triggers an error messages, and will be probably due to use of an
-incorrect protocol for getting the AES decryption key from the client.\
+incorrect protocol for getting the AES decryption key from the client.
 This happened when a user tried to use the Windows AirPlay-emulator
 client *AirMyPC* with UxPlay. It turned out that *AirMyPC* used an older
 less-encrypted protocol similar to AirPlay1, relying only on Apple's
 "FairPlay" encryption of the AES key used to decrypt the encrypted audio
 stream from the client (and which is also used as part of the video
 decryption); on top of FairPlay encryption, AirPlay2 adds a hash of the
-AES key with a "shared secret" created in the initial handshake bewteen
+AES key with a "shared secret" created in the initial handshake between
 client and server. This hash is omitted in the older protocol used by
 *AirMyPC*, which is detected using the "User Agent" string it reports:
 "AirMyPC/2.0". The client User Agent string is shown in uxplay's
