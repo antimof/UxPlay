@@ -112,7 +112,7 @@ macOS, see below).
 
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and
 libplist 2.0 or later. (This means Debian 10 "Buster", Ubuntu 18.04 or
-later.) If it doesnt, you may need to build and install these from
+later.) If it does not, you may need to build and install these from
 source (see below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development
@@ -203,23 +203,23 @@ the following for builds on MacOS:)* Assuming the library was placed in
 before running cmake. On some systems like Debian or Ubuntu, you may
 also need to add a missing entry `/usr/local/lib64` in /etc/ld.so.conf
 (or place a file containing "/usr/local/lib64/libcrypto.so" in
-/etc/ld.so.conf.d) before running "sudo ldconfig".
+/etc/ld.so.conf.d) and then run "sudo ldconfig".
 
 ### Bulding libplist \>= 2.0.0 from source.
 
-*Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can avoid
-this step by installing libplist-dev and libplist3 from Debian 10 or
-Ubuntu 18.04.* (As well as the usual build tools, you may need to also
-install some libpython\*-dev package). Download the latest source from
-<https://github.com/libimobiledevice/libplist>: get
+*(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can
+avoid this step by installing libplist-dev and libplist3 from Debian 10
+or Ubuntu 18.04.)* As well as the usual build tools, you may need to
+also install some libpython\*-dev package. Download the latest source
+from <https://github.com/libimobiledevice/libplist>: get
 [libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
 then ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install"). This will probably install
 libplist-2.0.\* in /usr/local/lib. *(Ignore the following for builds on
 MacOS:)* On some systems like Debian or Ubuntu, you may also need to add
 a missing entry `/usr/local/lib` in /etc/ld.so.conf (or place a file
-containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d) before
-running "sudo ldconfig".
+containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d) and
+then run "sudo ldconfig".
 
 Building UxPlay on macOS: **(Only tested on Intel X86\_64 Macs)**
 -----------------------------------------------------------------
