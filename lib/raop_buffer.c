@@ -173,7 +173,7 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 	  printf("%s",utils_data_to_string(output,payload_size,16));
           printf("\n");
         } else {
-            printf("%d after  %s\n", payload_size, utils_data_to_string(output,16,16 ));
+            printf("%d after  \n%s\n", payload_size, utils_data_to_string(output,16,16 ));
         }
     }
 #ifdef DUMP_AUDIO

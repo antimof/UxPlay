@@ -177,18 +177,32 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     bool valid;
     if (data_len == 0 || renderer == NULL) return;
 
-    /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol */
-    /* or ct = 2 (ALAC 44100/16/2 spf 352) AirPlay protocol */
-    /* first byte data[0] of ALAC frame is 0x20, first byte of AAC_ELD is 0x8d or 0x8e, AAC_LC is 0xff (ADTS) */
+    /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol *
+     * or ct = 2 (ALAC 44100/16/2 spf 352) AirPlay protocol.                                           *
+     * first byte data[0] of ALAC frame is 0x20,                                                       *
+     * first byte of AAC_ELD is 0x8c, 0x8d or 0x8e: 0x100011(00,01,10) in modern devices               *
+     *                   but is 0x80, 0x81 or 0x82: 0x100000(00,01,10) in ios9, ios10 devices          *
+     * first byte of AAC_LC should be 0xff (ADTS) (but has never been  seen).                          */
     
     buffer = gst_buffer_new_and_alloc(data_len);
     assert(buffer != NULL);
     GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
     gst_buffer_fill(buffer, 0, data, data_len);
-    switch (renderer->ct) {
+    switch (renderer->ct){
     case 8: /*AAC-ELD*/
-        valid = (data[0] == 0x8d || data[0] == 0x8e);
-        valid = valid || (data[0] == 0x81 || data[0] == 0x82);     /* from iOS 9, iOS 10 clients (because 32 bit devices?) */
+        switch (data[0]){
+        case 0x8c:
+        case 0x8d:
+        case 0x8e:
+        case 0x80:
+        case 0x81:
+        case 0x82:
+            valid = true;
+            break;          
+        default:
+            valid = false;
+            break;
+        }
         break;
     case 2: /*ALAC*/
         valid = (data[0] == 0x20);
