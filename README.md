@@ -365,12 +365,17 @@ For such  problems, use "uxplay -d " (debug log option)  to see what is happenin
 the failure occurs.
 
 **Most of such problems are  due to a GStreamer plugin that doesn't work on your system**: (by default,
-GStreamer uses an algorithm to guess what is the "best"
+GStreamer uses the "autovideosink" algorithm to guess what is the "best"
 plugin to use on your system).
 
-The most common of these problems are connected to the GStreamer VAAPI plugin
-(for hardware-accelerated intel graphics),
-Your first attempt to resolve a problem should be to find out if the VAAPI plugin is installed, and if so, uninstall it.
+Sometimes "autovideosink" may select the OpenGL renderer "glimagesink" which
+may not work correctly on your system.   Try the options "-vs ximagesink" or
+"-vs xvimagesink" to see if using one of these fixes the problem.
+
+Other reported problems are connected to the GStreamer VAAPI plugin
+(for hardware-accelerated Intel graphics, but not NVIDIA or AMD graphics).
+Your next attempt to resolve a problem should be to find out if the
+gstreamer1.0-vaapi plugin is installed, and if so, uninstall it.
 (If this does not fix the problem, you can reinstall it.)  
 
 There are some reports of other GStreamer problems with hardware-accelerated Intel graphics.  One user
