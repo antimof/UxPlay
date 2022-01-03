@@ -10,8 +10,9 @@ Highlights:
 -   macOS computers (Macs released in 2011 or later) can act either as
     AirPlay clients of UxPlay, or as the server running UxPlay (tested
     on macOS 10.15 Catalina).\
--   Support for older iOS clients (such as iPad 2nd gen, iPhone 4S) when
-    upgraded to iOS 9.3.5 or later, also Windows client AirMyPC.
+-   Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone
+    4S) when upgraded to iOS 9.3.5 or later, also Windows client
+    AirMyPC.
 -   Uses GStreamer, with options to select different output "videosinks"
     and "audiosinks".
 -   Support for server behind a firewall.
@@ -716,14 +717,14 @@ the components they created:
 -   **dsafa22**: Created an [AirPlay 2 mirroring
     server](https://github.com/dsafa22/AirplayServer) (seems gone now,
     *but code is preserved
-    [here](https://github.com/FD-/RPiPlay/tree/d68110a7eaa63840c06fe2b187726cc640d76706),
-    and [see here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for
-    dsafa22's description of the analysis of the AirPlay 2 mirror
-    protocol that made RPiPlay possible*) for Android based on
-    ShairPlay. This project is basically a port of dsafa22's code to the
-    Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance
-    on the Pi. All code in `lib/` concerning mirroring is dsafa22's
-    work. License: GNU LGPLv2.1+
+    [here](https://github.com/KqSMea8/AirplayServer), and [see
+    here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for dsafa22's
+    description of the analysis of the AirPlay 2 mirror protocol that
+    made RPiPlay possible*) for Android based on ShairPlay. This project
+    is basically a port of dsafa22's code to the Raspberry Pi, utilizing
+    OpenMAX and OpenSSL for better performance on the Pi. All code in
+    `lib/` concerning mirroring is dsafa22's work. License: GNU
+    LGPLv2.1+
 -   **Juho Vähä-Herttua** and contributors: Created an AirPlay audio
     server called [ShairPlay](https://github.com/juhovh/shairplay),
     including support for Fairplay based on PlayFair. Most of the code
