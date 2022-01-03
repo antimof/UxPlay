@@ -525,32 +525,27 @@ GStreamer 1.x into packages in different ways; the packages listed above
 in the build instructions should bring in other required GStreamer
 packages as dependencies, but will not install all possible plugins.
 
-### 5. Failure to decrypt ALL video and/or audio streams from old or non-Apple clients:
+### 5. Failure to decrypt ALL video and audio streams from old or non-Apple clients:
 
-This triggers error messages, and will be probably due to use of an
-incorrect protocol for getting the AES decryption key from the client.
-This happened when a user tried to use the Windows AirPlay-emulator
-client *AirMyPC* with UxPlay. It turned out that *AirMyPC* used an older
-less-encrypted protocol similar to AirPlay1, relying only on Apple's
-"FairPlay" encryption of the AES key used to decrypt the encrypted audio
-stream from the client (and which is also used as part of the video
-decryption); on top of FairPlay encryption, AirPlay2 adds a hash of the
-AES key with a "shared secret" created in the initial handshake between
-client and server. This hash is omitted in the older protocol used by
-*AirMyPC*, which is detected using the "User Agent" string it reports:
-"AirMyPC/2.0". The client User Agent string is shown in uxplay's
-terminal output; if it is suspected that some other old or non-Apple
-client is also using this modified protocol, you can add its "User
-Agent" string to `OLD_PROTOCOL_CLIENT_USER_AGENT_LIST` in lib/global.c,
-and rebuild UxPlay.
+This triggers an unending stream of error messages, and means that the
+audio decryption key (also used in video decryption) was not correctly
+extracted from data sent by the client. This should not happen for iOS
+9.3 or later clients. However, if a client uses the same older version
+of the protocol that is used by the Windows-based AirPlay client
+emulator *AirMyPC*, the protocol can be switched to the older version by
+the setting `OLD_PROTOCOL_CLIENT_USER_AGENT_LIST` in lib/global.h.
+UxPlay reports the client's "User Agent" string when it connects. If
+some other client also fails to decrypt all audio and video, try adding
+its "User Agent" string in place of "xxx" in the entry "AirMyPC/2.0;xxx"
+in global.h and rebuild uxplay.
 
 Note that Uxplay declares itself to be an AppleTV2,1 with a
-sourceVersion 220.68 taken from an AppleTV3,1; this can also be changed
-in global.h. (It is crucial for UxPlay to declare this old value of
-sourceVersion, as this prompts the Apple client to use the iOS 12
-"legacy" protocol to make the connection with the UxPlay server; it is
-probably not necessary for UxPlay to claim to be such an old AppleTV
-model.)
+sourceVersion 220.68; this can also be changed in global.h. It is
+crucial for UxPlay to declare this old value of sourceVersion, as this
+prompts the Apple client to use a less-encrypted "legacy" protocol
+needed by third-generation Apple TV's, which are 32-bit devices that
+cannot run modern tvOS; it is probably not necessary for UxPlay to claim
+to be such an old AppleTV model.
 
 ChangeLog
 =========
