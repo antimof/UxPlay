@@ -685,9 +685,7 @@ Improvements since the original UxPlay by antimof:
     AirPlay protocol, with Apple Lossless (ALAC) audio.
 
 13. Added suppport for the older AirPlay protocol used by third-party
-    Windows-based AirPlay mirror emulators such as AirMyPC, and for the
-    protocol used by older 32-bit devices that can only run iOS 9 or
-    iOS 10.
+    Windows-based AirPlay mirror emulators such as AirMyPC.
 
 Disclaimer
 ==========
