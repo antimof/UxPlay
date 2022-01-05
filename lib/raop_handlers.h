@@ -449,7 +449,7 @@ raop_handler_setup(raop_conn_t *conn,
                     plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
                     uint64_t stream_connection_id;
                     plist_get_uint_val(stream_id_node, &stream_connection_id);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption iv): %llu", stream_connection_id);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption key and iv): %llu", stream_connection_id);
 
                     if (conn->raop_rtp_mirror) {
                         raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, stream_connection_id);
