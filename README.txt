@@ -458,7 +458,9 @@ use "uxplay -p").
 
 For such problems, use "uxplay -d" (debug log option) to see what is
 happening: it will show how far the connection process gets before the
-failure occurs.
+failure occurs. You can compare your debug output to that from a
+successful start of UxPlay in the [UxPlay
+Wiki](https://github.com/FDH2/UxPlay/wiki).
 
 **Most of such problems are due to a GStreamer plugin that doesn't work
 on your system**: (by default, GStreamer uses the "autovideosink"
