@@ -201,16 +201,20 @@ Finally, build and install uxplay (without ZOOMFIX): open a terminal and change 
 ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install " (same as for Linux).  
 
-On  the  macOS build, autovideosink  uses OpenGL, not X11, to create the mirror display window (equivalent to
-"-vs glimagesink"; "-vs osxvideosink" can also be used). 
-The window title does not show  the Airplay server name, but it is visible to
-screen-sharing apps (e.g., Zoom).   On macOS, The option -t _timeout_
-cannot be used because if the GStreamer pipeline is destroyed while the mirror window is still open,
-a segfault occurs (this is an issue with the GStreamer plugins, not UxPlay).
-Also,  the resolution settings "-s wxh" do not affect
-the (small) initial OpenGL  mirror window size, but the window can be expanded using the mouse or trackpad.
-In contrast, a window created with "-vs osxvideosink" is initially big, but has the wrong aspect ratio (stretched image);
-in this case the aspect ratio changes when the window width is changed by dragging its side.
+   * On  the  macOS build, autovideosink  uses OpenGL, not X11, to create the mirror display window (equivalent to
+     "-vs glimagesink"; "-vs osxvideosink" can also be used). 
+     The window title does not show  the Airplay server name, but it is visible to
+     screen-sharing apps (e.g., Zoom).
+
+   * On macOS, The option -t _timeout_ cannot be used because if the GStreamer pipeline is destroyed while the mirror
+     window is still open,  a segfault occurs (this is an issue with the GStreamer plugins, not UxPlay).  A similar issue may
+     occur if the (OpenGL) video window does not close after a client sends the "Stop Mirroring" signal, leading to a
+     segfault when a new connection is made. If you have this problem, use the no-close option "``uxplay -nc``", which leaves the window open.  
+   
+   * Also,  the resolution settings "-s wxh" do not affect
+     the (small) initial OpenGL  mirror window size, but the window can be expanded using the mouse or trackpad.
+     In contrast, a window created with "-vs osxvideosink" is initially big, but has the wrong aspect ratio (stretched image);
+     in this case the aspect ratio changes when the window width is changed by dragging its side.
 
 
 ***Other ways (Homebrew, MacPorts) to install GStreamer on macOS (not recommended):***
@@ -406,7 +410,8 @@ Cairo-based windows created on Linux with "-vs gtksink" are visible to screen-sh
 "-vs glimagesink" (default choice) and "-vs osximagesink" are also visible.
 
 The "OpenGL renderer" window created on Linux by "-vs glimagesink" sometimes does not close properly when its "close" button is clicked.
-(this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.
+(this is a GStreamer issue).  You may need to terminate uxplay with Ctrl-C to close a "zombie" OpenGl window.   If similar problems happen when 
+the client sends the "Stop Mirroring" signal, try the no-close option "-nc" that leaves the video window open.
 
 ### 4. GStreamer issues (missing plugins, etc.): 
 
