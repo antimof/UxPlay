@@ -206,10 +206,9 @@ Finally, build and install uxplay (without ZOOMFIX): open a terminal and change 
      The window title does not show  the Airplay server name, but it is visible to
      screen-sharing apps (e.g., Zoom).
 
-   * On macOS, The option -t _timeout_ cannot be used because if the GStreamer pipeline is destroyed while the mirror
-     window is still open,  a segfault occurs (this is an issue with the GStreamer plugins, not UxPlay).  A similar issue may
-     occur if the (OpenGL) video window does not close after a client sends the "Stop Mirroring" signal, leading to a
-     segfault when a new connection is made. If you have this problem, use the no-close option "``uxplay -nc``", which leaves the window open.  
+   * On macOS, The option -t _timeout_ is currently suppressed, and the option -nc is always used, whether or not it is selected.
+     This is a workaround until a problem with GStreamer videosinks on macOS is fixed:
+     if the GStreamer pipeline is destroyed while the mirror window is still open,  a segfault occurs.
    
    * Also,  the resolution settings "-s wxh" do not affect
      the (small) initial OpenGL  mirror window size, but the window can be expanded using the mouse or trackpad.
