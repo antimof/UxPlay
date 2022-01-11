@@ -102,7 +102,7 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
     height_source = (unsigned short) *f_height_source;
     width = (unsigned short) *f_width;
     height = (unsigned short) *f_height;
-    logger_log(logger, LOGGER_INFO, "begin video stream wxh = %dx%d; source %dx%d", width, height, width_source, height_source);
+    logger_log(logger, LOGGER_DEBUG, "begin video stream wxh = %dx%d; source %dx%d", width, height, width_source, height_source);
 }
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
