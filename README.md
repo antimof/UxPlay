@@ -53,7 +53,7 @@ and does not offer the  alternative Raspberry-Pi-specific
 audio and video renderers available in [RPiPlay](https://github.com/FD-/RPiPlay).
 It is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 21.10,
 Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA edition),
-Rocky Linux 8.4 (a CentOS successor), OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
+Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
