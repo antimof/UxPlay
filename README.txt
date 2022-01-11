@@ -418,7 +418,10 @@ displays streamed video.
 
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
 close** the video window when the the client sends the "Stop Mirroring"
-signal.
+signal. *This option is currently used by default in macOS, as the
+window created in macOS by GStreamer does not terminate correctly (it
+causes a segfault) if it is still open when the GStreamer pipeline is
+closed.*
 
 **-t *timeout*** will cause the server to relaunch (without stopping
 uxplay) if no connections have been present during the previous
@@ -426,10 +429,8 @@ uxplay) if no connections have been present during the previous
 to new Clients that were inactive when the Server was launched, and an
 idle Bonjour registration eventually becomes unavailable for new
 connections (this is a workaround for what may be due to a problem with
-your DNS-SD or Avahi setup). *This option should **not** be used on
-macOS, as a window created by GStreamer does not terminate correctly (it
-causes a segfault) if it is still open when the GStreamer pipeline is
-closed.*
+your DNS-SD or Avahi setup). *This option is currently disabled in
+macOS, for the same reason that requires the -nc option*
 
 Troubleshooting
 ===============

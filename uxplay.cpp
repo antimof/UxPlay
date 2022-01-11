@@ -437,6 +437,13 @@ int main (int argc, char *argv[]) {
         use_audio = false;
     }
 
+#if __APPLE__
+    /* force use of -nc option on macOS */
+    LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
+    previous_no_close_behavior = true;
+    server_timeout = 0;
+#endif
+
     if (videosink == "0") {
         use_video = false;
 	videosink.erase();
