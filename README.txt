@@ -393,9 +393,9 @@ the streaming framerate in fps). Using quotes "..." allows some
 parameters to be included with the videosink name. As an example, a user
 has reported success in getting **fullscreen** mode (which is supported
 by the vaapisink plugin) by using quotes in
-`-vs "vaapisink fullscreen=true"`. (The syntax of such options is
-specific to a given plugin; some choices of videosink might not work on
-your system.)
+`-vs "vaapisink fullscreen=true"`; this also works if `vaapisink` is
+replaced by `waylandsink`. (The syntax of such options is specific to a
+given plugin; some choices of videosink might not work on your system.)
 
 **-vs 0** suppresses display of streamed video, but plays streamed
 audio. (The client's screen is still mirrored at a reduced rate of 1
