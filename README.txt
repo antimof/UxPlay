@@ -1,4 +1,4 @@
-UxPlay 1.44: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.45: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 Highlights:
@@ -384,9 +384,13 @@ rotations; these are carried out after any **-f** transforms.
 autovideosink pick it for you. Some videosink choices are: ximagesink,
 xvimagesink, vaapisink (for intel graphics), gtksink, glimagesink,
 waylandsink, osximagesink (for macOS), or fpsdisplaysink (which shows
-the streaming framerate in fps). Using quotes "..." might allow some
-parameters to be included with the videosink name. (Some choices of
-videosink might not work on your system.)
+the streaming framerate in fps). Using quotes "..." allows some
+parameters to be included with the videosink name. As an example, a user
+has reported success in getting **fullscreen** mode (which is supported
+by the vaapisink plugin) by using quotes in
+`-vs "vaapisink fullscreen=true"`. (The syntax of such options is
+specific to a given plugin; some choices of videosink might not work on
+your system.)
 
 **-vs 0** suppresses display of streamed video, but plays streamed
 audio. (The client's screen is still mirrored at a reduced rate of 1
@@ -403,6 +407,10 @@ name. (Some choices of audiosink might not work on your system.)
 
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
+
+**-nc** maintains previous UxPlay \< 1.45 behavior that does **not
+close** the video window when the the client sends the "Stop Mirroring"
+signal.
 
 **-t *timeout*** will cause the server to relaunch (without stopping
 uxplay) if no connections have been present during the previous
@@ -552,6 +560,10 @@ to be such an old AppleTV model.
 
 ChangeLog
 =========
+
+1.45 2022-01-10 New behavior: close video window when client requests
+"stop mirroring". (A new "no close" option "-nc" is added for users who
+wish to retain previous behavior that does not close the video window).
 
 1.44 2021-12-13 Omit hash of aeskey with ecdh\_secret for an AirMyPC
 client; make an internal rearrangement of where this hash is done. Fully
@@ -716,16 +728,17 @@ The code in this repository accumulated from various sources over time.
 Here is my (**fdrachbacher**) attempt at listing the various authors and
 the components they created:
 
--   **dsafa22**: Created an [AirPlay 2 mirroring
-    server](https://github.com/dsafa22/AirplayServer) (seems gone now,
-    *but code is preserved
+-   **dsafa22**: Created an AirPlay 2 mirroring server
+    [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems
+    gone now), *\[added: but code is preserved
     [here](https://github.com/KqSMea8/AirplayServer), and [see
-    here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for dsafa22's
+    here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for the
     description of the analysis of the AirPlay 2 mirror protocol that
-    made RPiPlay possible*) for Android based on ShairPlay. This project
-    is basically a port of dsafa22's code to the Raspberry Pi, utilizing
-    OpenMAX and OpenSSL for better performance on the Pi. All code in
-    `lib/` concerning mirroring is dsafa22's work. License: GNU
+    made RPiPlay possible, by the AirplayServer author (who uses the
+    name **droidfang**)\]* for Android based on ShairPlay. This project
+    (RPiPlay) is basically a port of dsafa22's code to the Raspberry Pi,
+    utilizing OpenMAX and OpenSSL for better performance on the Pi. All
+    code in `lib/` concerning mirroring is dsafa22's work. License: GNU
     LGPLv2.1+
 -   **Juho Vähä-Herttua** and contributors: Created an AirPlay audio
     server called [ShairPlay](https://github.com/juhovh/shairplay),

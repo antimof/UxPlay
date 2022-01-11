@@ -1,4 +1,4 @@
-# UxPlay 1.44:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.45:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 Highlights:
 
@@ -305,8 +305,11 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    autovideosink pick it for you.  Some videosink choices are:  ximagesink, xvimagesink,
    vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
-   "..." might allow some parameters to be included with the videosink name. 
-   (Some choices of videosink might not work on your system.)   
+   "..." allows some parameters to be included with the videosink name. 
+   As an example, a user has reported success in
+   getting  **fullscreen** mode (which is supported by the vaapisink plugin) by using
+   quotes in ``-vs "vaapisink fullscreen=true"``.
+   (The syntax of such options is specific to a given plugin; some choices of videosink might not work on your system.)
 
 **-vs 0** suppresses display of streamed video, but plays  streamed audio.   (The client's screen
    is still mirrored at a reduced rate of 1 frame per second,  but is not rendered or displayed.)  This
@@ -321,6 +324,9 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 
 **-as 0**  (or just **-a**) suppresses playing of streamed audio, but displays streamed video.
 
+**-nc** maintains previous UxPlay < 1.45 behavior that does **not close** the video window when the the client
+   sends the "Stop Mirroring" signal.
+   
 **-t _timeout_**  will cause the server to relaunch (without stopping uxplay) if no connections
    have been present during the previous _timeout_ seconds.  You may wish to use this if the Server
    is not visible to new Clients that were inactive when the Server was launched, and an idle Bonjour
@@ -439,6 +445,9 @@ devices that cannot run modern tvOS; it is probably
 not necessary for UxPlay to claim to be such an old AppleTV model.
 
 # ChangeLog
+1.45 2022-01-10   New behavior: close video window when client requests "stop mirroring".  (A new "no close" option "-nc" is added
+                  for users who wish to retain previous behavior that does not close the video window).
+
 1.44 2021-12-13   Omit hash of aeskey with ecdh_secret for an AirMyPC client; make an internal rearrangement of where this hash is 
                   done. Fully report all initial communications between client and server in -d debug mode. Replace decodebin in GStreamer
                   video pipeline by h264-specific elements.
@@ -566,9 +575,12 @@ Given the large number of third-party AirPlay receivers (mostly closed-source) a
 The code in this repository accumulated from various sources over time. Here
 is my (__fdrachbacher__) attempt at listing the various authors and the components they created:
 
-* **dsafa22**: Created an [AirPlay 2 mirroring server](https://github.com/dsafa22/AirplayServer) (seems gone now, _but code is preserved
+* **dsafa22**: Created an AirPlay 2 mirroring server [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems gone now), _\[added: but code is preserved
 [here](https://github.com/KqSMea8/AirplayServer), and [see here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for 
-dsafa22's description of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible_) for Android based on ShairPlay. This project is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi. All code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+
+the description of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible, by the AirplayServer author (who uses the name **droidfang**)\]_ 
+for Android based on ShairPlay.
+This project (RPiPlay)  is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi.
+All code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+
 * **Juho Vähä-Herttua** and contributors: Created an AirPlay audio server called [ShairPlay](https://github.com/juhovh/shairplay), including support for Fairplay based on PlayFair. Most of the code in `lib/` originally stems from this project. License: GNU LGPLv2.1+
 * **EstebanKubata**: Created a FairPlay library called [PlayFair](https://github.com/EstebanKubata/playfair). Located in the `lib/playfair` folder. License: GNU GPL
 * **Joyent, Inc and contributors**: Created an http library called [llhttp](https://github.com/nodejs/llhttp). Located at `lib/llhttp/`. License: MIT

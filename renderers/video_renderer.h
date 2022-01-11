@@ -52,7 +52,8 @@ void video_renderer_render_buffer (raop_ntp_t *ntp, unsigned char* data, int dat
 void video_renderer_flush ();
 unsigned int video_renderer_listen(void *loop);
 void video_renderer_destroy ();
-
+void video_renderer_size(float *width_source, float *height_source, float *width, float *height);
+  
   /* not implemented for gstreamer */
 void video_renderer_update_background (int type); 
 

@@ -273,8 +273,8 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 }
 	    }
         }
-        if (conn->raop->callbacks.teardown_request) {
-             conn->raop->callbacks.teardown_request(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
+        if (conn->raop->callbacks.conn_teardown) {
+             conn->raop->callbacks.conn_teardown(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
         }
         logger_log(conn->raop->logger, LOGGER_DEBUG, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
 

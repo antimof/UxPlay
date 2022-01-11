@@ -44,13 +44,14 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.44"
+#define VERSION "1.45"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 
+static std::string server_name = DEFAULT_NAME;
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], bool debug_log);
 static int stop_raop_server ();
@@ -65,10 +66,13 @@ static uint open_connections = 0;
 static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
+static std::string videosink = "autovideosink";
+static videoflip_t videoflip[2] = { NONE , NONE };
 static bool use_video = true;
 static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
+static bool previous_no_close_behavior = false;
 
 gboolean connection_callback (gpointer loop){
   if (!connections_stopped) {
@@ -161,7 +165,6 @@ static std::string find_mac () {
     return mac;
 }
 
-
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
@@ -205,6 +208,7 @@ static void print_info (char *name) {
     printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
+    printf("-nc       do not close video window when client stops mirroring\n");  
     printf("-d        Enable debug logging\n");
     printf("-v or -h  Displays this help and version information\n");
 }
@@ -329,14 +333,11 @@ static void append_hostname(std::string &server_name) {
 }
 
 int main (int argc, char *argv[]) {
-    std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr;
     bool do_append_hostname = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
-    videoflip_t videoflip[2] = { NONE , NONE };
-    std::string videosink = "autovideosink";
 
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
     // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
@@ -424,7 +425,9 @@ int main (int argc, char *argv[]) {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             server_timeout = 0;
             get_value(argv[++i], &server_timeout);
-	} else {
+        } else if (arg == "-nc") {
+            previous_no_close_behavior = true;
+        } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
@@ -521,6 +524,15 @@ extern "C" void conn_destroy (void *cls) {
     }
 }
 
+extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) {
+    if (*teardown_110 && !previous_no_close_behavior) {
+        audio_renderer_stop();
+        video_renderer_destroy();
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
+        video_renderer_start();
+    }
+}
+
 extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
     if (use_audio) {
         audio_renderer_render_buffer(ntp, data->data, data->data_len, data->pts);
@@ -558,10 +570,10 @@ extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *
     }
 }
 
-extern "C" void teardown(void *cls, bool *teardown_96, bool *teardown_110) {
-  LOGI("received TEARDOWN request from client, 96=%d 110 =%d", *teardown_96, *teardown_110);
+extern "C" void video_report_size(void *cls, float *width_source, float *height_source, float *width, float *height) {
+    video_renderer_size(width_source, height_source, width, height);
 }
-  
+
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {
@@ -592,13 +604,15 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
     raop_cbs.conn_destroy = conn_destroy;
+    raop_cbs.conn_teardown = conn_teardown;
     raop_cbs.audio_process = audio_process;
     raop_cbs.video_process = video_process;
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
     raop_cbs.audio_set_volume = audio_set_volume;
     raop_cbs.audio_get_format = audio_get_format;
-    
+    raop_cbs.video_report_size = video_report_size;
+
     raop = raop_init(10, &raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
