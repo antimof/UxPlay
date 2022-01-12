@@ -165,13 +165,23 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
     memcpy(output + encryptedlen, &data[12 + encryptedlen], payload_size - encryptedlen);
     *outputlen = payload_size;
     if (payload_size &&  DECRYPTION_TEST){
-        if ( !(output[0] == 0x8d || output[0] == 0x8e || output[0] == 0x81 || output[0] == 0x82 || output[0] == 0x20)) {
+        switch (output[0]) {
+        case 0x8c:
+        case 0x8d:
+        case 0x8e:
+        case 0x80:
+        case 0x81:
+        case 0x82:
+        case 0x20:
+	    break;
+        default:
             printf("***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC\n");
+	    break;
         }
         if (DECRYPTION_TEST == 2) {
-          printf("decrypted audio frame, len = %d\n", *outputlen);
-	  printf("%s",utils_data_to_string(output,payload_size,16));
-          printf("\n");
+            printf("decrypted audio frame, len = %d\n", *outputlen);
+	    printf("%s",utils_data_to_string(output,payload_size,16));
+            printf("\n");
         } else {
             printf("%d after  \n%s\n", payload_size, utils_data_to_string(output,16,16 ));
         }
