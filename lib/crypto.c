@@ -165,7 +165,7 @@ void aes_cbc_decrypt(aes_ctx_t *ctx, const uint8_t *in, uint8_t *out, int len) {
 }
 
 void aes_cbc_reset(aes_ctx_t *ctx) {
-    aes_reset(ctx, EVP_aes_128_ctr(), ctx->direction);
+    aes_reset(ctx, EVP_aes_128_cbc(), ctx->direction);
 }
 
 void aes_cbc_destroy(aes_ctx_t *ctx) {
