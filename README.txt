@@ -390,12 +390,11 @@ autovideosink pick it for you. Some videosink choices are: ximagesink,
 xvimagesink, vaapisink (for intel graphics), gtksink, glimagesink,
 waylandsink, osximagesink (for macOS), or fpsdisplaysink (which shows
 the streaming framerate in fps). Using quotes "..." allows some
-parameters to be included with the videosink name. As an example, a user
-has reported success in getting **fullscreen** mode (which is supported
-by the vaapisink plugin) by using quotes in
-`-vs "vaapisink fullscreen=true"`; this also works if `vaapisink` is
-replaced by `waylandsink`. (The syntax of such options is specific to a
-given plugin; some choices of videosink might not work on your system.)
+parameters to be included with the videosink name. For example,
+**fullscreen** mode is supported by the vaapisink plugin, and is
+obtained using `-vs "vaapisink fullscreen=true"`; this also works with
+`waylandsink`. The syntax of such options is specific to a given plugin,
+and some choices of videosink might not work on your system.
 
 **-vs 0** suppresses display of streamed video, but plays streamed
 audio. (The client's screen is still mirrored at a reduced rate of 1
@@ -427,7 +426,7 @@ to new Clients that were inactive when the Server was launched, and an
 idle Bonjour registration eventually becomes unavailable for new
 connections (this is a workaround for what may be due to a problem with
 your DNS-SD or Avahi setup). *This option is currently disabled in
-macOS, for the same reason that requires the -nc option*
+macOS, for the same reason that requires the -nc option.*
 
 Troubleshooting
 ===============
