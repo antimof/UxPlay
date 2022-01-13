@@ -46,10 +46,9 @@ typedef struct {
 
 struct raop_buffer_s {
     logger_t *logger;
-    /* Key and IV used for decryption */
-    unsigned char aeskey[RAOP_AESKEY_LEN];
-    unsigned char aesiv[RAOP_AESIV_LEN];
-    aes_ctx_t *aes_ctx_audio;
+    /* AES CTX used for decryption */
+    aes_ctx_t *aes_ctx;
+
     /* First and last seqnum */
     int is_empty;
     unsigned short first_seqnum;
@@ -72,14 +71,13 @@ raop_buffer_init(logger_t *logger,
         return NULL;
     }
     raop_buffer->logger = logger;
-    memcpy(raop_buffer->aeskey, aeskey, RAOP_AESKEY_LEN);
-    memcpy(raop_buffer->aesiv, aesiv, RAOP_AESIV_LEN);
-    raop_buffer->aes_ctx_audio = NULL;
+    // Need to be initialized internally
+    raop_buffer->aes_ctx = aes_cbc_init(aeskey, aesiv, AES_DECRYPT);
 
 #ifdef DUMP_AUDIO
     if (file_keyiv != NULL) {
-        fwrite(raop_buffer->aeskey, 16, 1, file_keyiv);
-        fwrite(raop_buffer->aesiv, 16, 1, file_keyiv);
+        fwrite(aeskey, 16, 1, file_keyiv);
+        fwrite(aesiv, 16, 1, file_keyiv);
         fclose(file_keyiv);
     }
 #endif
@@ -105,9 +103,8 @@ raop_buffer_destroy(raop_buffer_t *raop_buffer)
         }
     }
 
-    aes_cbc_destroy(raop_buffer->aes_ctx_audio);
-
     if (raop_buffer) {
+        aes_cbc_destroy(raop_buffer->aes_ctx);
         free(raop_buffer);
     }
 
@@ -160,13 +157,9 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
     }
     encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);
-    // Need to be initialized internally
-    if (!raop_buffer->aes_ctx_audio) {
-        raop_buffer->aes_ctx_audio = aes_cbc_init(raop_buffer->aeskey, raop_buffer->aesiv, AES_DECRYPT);
-    } else {
-        aes_cbc_reset(raop_buffer->aes_ctx_audio);
-    }
-    aes_cbc_decrypt(raop_buffer->aes_ctx_audio, &data[12], output, encryptedlen);
+
+    aes_cbc_decrypt(raop_buffer->aes_ctx, &data[12], output, encryptedlen);
+    aes_cbc_reset(raop_buffer->aes_ctx);
 
     memcpy(output + encryptedlen, &data[12 + encryptedlen], payload_size - encryptedlen);
     *outputlen = payload_size;
