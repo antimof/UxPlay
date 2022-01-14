@@ -94,7 +94,6 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 
 static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
-static bool broken_video;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 
 void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
@@ -164,7 +163,6 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 }
 
 void video_renderer_start() {
-    broken_video = false;
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
 }
@@ -175,14 +173,8 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
     /* first byte of invalid data (decryption failed) is 0x1 */
     if (data[0]) {
-        if (!broken_video) {
-            logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
-        } else {
-            logger_log(logger, LOGGER_DEBUG, "*** ERROR decryption of video packet failed ");
-        }
-        broken_video = true;
+        logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
     } else {
-        broken_video = false;
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
         GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
