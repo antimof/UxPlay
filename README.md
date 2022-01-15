@@ -201,17 +201,17 @@ Finally, build and install uxplay (without ZOOMFIX): open a terminal and change 
 ("UxPlay-master" for zipfile downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install " (same as for Linux).  
 
-   * On  the  macOS build, autovideosink  uses OpenGL, not X11, to create the mirror display window (equivalent to
-     "-vs glimagesink"; "-vs osxvideosink" can also be used). 
-     The window title does not show  the Airplay server name, but it is visible to
-     screen-sharing apps (e.g., Zoom).
+   * On macOS with this installation of GStreamer, the only videosinks available seem to be glimagesink (default choice made by
+     autovideosink) and osxvideosink.    (It seems that vaapisink is not supported
+     on macOS).  The window title does not show the Airplay server name, but the window is visible to
+     screen-sharing apps (e.g., Zoom). The only available audiosink seems to be osxaudiosink.
 
-   * On macOS, The option -t _timeout_ is currently suppressed, and the option -nc is always used, whether or not it is selected.
+   * On macOS, the option -t _timeout_ is currently suppressed, and the option -nc is always used, whether or not it is selected.
      This is a workaround until a problem with GStreamer videosinks on macOS is fixed:
      if the GStreamer pipeline is destroyed while the mirror window is still open,  a segfault occurs.
    
-   * Also,  the resolution settings "-s wxh" do not affect
-     the (small) initial OpenGL  mirror window size, but the window can be expanded using the mouse or trackpad.
+   * In the case of glimagesink, the resolution settings "-s wxh" do not affect
+     the (small) initial OpenGL mirror window size, but the window can be expanded using the mouse or trackpad.
      In contrast, a window created with "-vs osxvideosink" is initially big, but has the wrong aspect ratio (stretched image);
      in this case the aspect ratio changes when the window width is changed by dragging its side.
 
@@ -225,7 +225,7 @@ to using GStreamer.framework, but causes a large number of extra packages to be 
 Homebrew offers a build of GStreamer for Apple Silicon, which then was not yet available on the offical GStreamer site.)
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
-The MacPorts GStreamer is built to use X11, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs
+**The MacPorts GStreamer is built to use X11**, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs
 option "-vs ximagesink".  On an older unibody MacBook Pro, the default resolution  wxh = 1920x1080 was too large  for
 the non-retina display, but using option "-s 800x600" worked; However, the GStreamer pipeline is fragile against attempts to change
 the X11 window size, or to rotations that switch a connected client between portrait and landscape mode while uxplay is running. 

@@ -262,24 +262,25 @@ change into the UxPlay source directory ("UxPlay-master" for zipfile
 downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install" (same as for Linux).
 
--   On the macOS build, autovideosink uses OpenGL, not X11, to create
-    the mirror display window (equivalent to "-vs glimagesink"; "-vs
-    osxvideosink" can also be used). The window title does not show the
-    Airplay server name, but it is visible to screen-sharing apps (e.g.,
-    Zoom).
+-   On macOS with this installation of GStreamer, the only videosinks
+    available seem to be glimagesink (default choice made by
+    autovideosink) and osxvideosink. (It seems that vaapisink is not
+    supported on macOS). The window title does not show the Airplay
+    server name, but the window is visible to screen-sharing apps (e.g.,
+    Zoom). The only available audiosink seems to be osxaudiosink.
 
--   On macOS, The option -t *timeout* is currently suppressed, and the
+-   On macOS, the option -t *timeout* is currently suppressed, and the
     option -nc is always used, whether or not it is selected. This is a
     workaround until a problem with GStreamer videosinks on macOS is
     fixed: if the GStreamer pipeline is destroyed while the mirror
     window is still open, a segfault occurs.
 
--   Also, the resolution settings "-s wxh" do not affect the (small)
-    initial OpenGL mirror window size, but the window can be expanded
-    using the mouse or trackpad. In contrast, a window created with "-vs
-    osxvideosink" is initially big, but has the wrong aspect ratio
-    (stretched image); in this case the aspect ratio changes when the
-    window width is changed by dragging its side.
+-   In the case of glimagesink, the resolution settings "-s wxh" do not
+    affect the (small) initial OpenGL mirror window size, but the window
+    can be expanded using the mouse or trackpad. In contrast, a window
+    created with "-vs osxvideosink" is initially big, but has the wrong
+    aspect ratio (stretched image); in this case the aspect ratio
+    changes when the window width is changed by dragging its side.
 
 ***Other ways (Homebrew, MacPorts) to install GStreamer on macOS (not
 recommended):***
@@ -297,16 +298,16 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
     gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
-    gstreamer1-gst-libav". The MacPorts GStreamer is built to use X11,
-    so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and
-    needs option "-vs ximagesink". On an older unibody MacBook Pro, the
-    default resolution wxh = 1920x1080 was too large for the non-retina
-    display, but using option "-s 800x600" worked; However, the
-    GStreamer pipeline is fragile against attempts to change the X11
-    window size, or to rotations that switch a connected client between
-    portrait and landscape mode while uxplay is running. Using the
-    MacPorts X11 GStreamer is only viable if the image size is left
-    unchanged from the initial "-s wxh" setting (also use the
+    gstreamer1-gst-libav". **The MacPorts GStreamer is built to use
+    X11**, so uxplay must be run from an XQuartz terminal, can use
+    ZOOMFIX, and needs option "-vs ximagesink". On an older unibody
+    MacBook Pro, the default resolution wxh = 1920x1080 was too large
+    for the non-retina display, but using option "-s 800x600" worked;
+    However, the GStreamer pipeline is fragile against attempts to
+    change the X11 window size, or to rotations that switch a connected
+    client between portrait and landscape mode while uxplay is running.
+    Using the MacPorts X11 GStreamer is only viable if the image size is
+    left unchanged from the initial "-s wxh" setting (also use the
     iPad/iPhone setting that locks the screen orientation against
     switching between portrait and landscape mode as the device is
     rotated).
