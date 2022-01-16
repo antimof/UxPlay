@@ -120,8 +120,8 @@ You need a C/C++ compiler (e.g. g++) with the standard development
 libraries installed. Make sure that cmake\>=3.4.1 and pkg-config are
 also installed: "sudo apt-get install cmake pkg-config". In a terminal
 window, change directories to the source directory of the downloaded
-source code ("UxPlay-master" for zipfile downloads, "UxPlay" for "git
-clone" downloads), then do
+source code ("UxPlay-"\*","\*\" = "master" or the release tag for
+zipfile downloads, "UxPlay" for "git clone" downloads), then do
 
 1.  `sudo apt-get install libssl-dev libplist-dev` (unless you need to
     build OpenSSL and libplist from source).
@@ -153,7 +153,7 @@ directory after the build processs.
 **Finally, run uxplay in a terminal window**. If it is not seen by the
 iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
 server (usually avahi-daemon) is running: do this in a terminal window
-with `systemctl status avahi-daemon`. (If this shows the avahi-daemon is
+with `systemctl status avahi-daemon`. If this shows the avahi-daemon is
 not running, control it with
 `sudo systemctl [start,stop,enable,disable] avahi-daemon` (or
 avahi-daemon.service). If UxPlay is seen, but the client fails to
