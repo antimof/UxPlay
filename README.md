@@ -92,7 +92,7 @@ need to build and install these from source (see below).
 You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.
 Make sure that cmake>=3.4.1 and pkg-config are also installed: "sudo apt-get install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
-downloaded source code ("UxPlay-"\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay" for "git clone" downloads), then do
+downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay" for "git clone" downloads), then do
 
 
 1. `sudo apt-get install libssl-dev libplist-dev`  (unless you need to build OpenSSL and libplist from source).
