@@ -132,8 +132,9 @@ downloads, "UxPlay" for "git clone" downloads), then do
     name fix for screen-sharing with e.g., ZOOM)
 5.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
-    applications such as Zoom, see [Improvements](#improvements) \#3
-    below).
+    applications such as Zoom, see
+    [Improvements](#improvements%20since%20the%20original%20uxplay%20by%20antimof)
+    \#3 below).
 6.  `make`
 7.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)

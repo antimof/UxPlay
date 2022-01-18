@@ -101,7 +101,7 @@ downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipf
 4. `sudo apt-get install libx11-dev`  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
 5. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
-Zoom, see [Improvements](#improvements) \#3 below).
+Zoom, see [Improvements](#improvements since the original uxplay by antimof) \#3 below).
 6. `make`
 7. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
 
