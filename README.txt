@@ -132,9 +132,8 @@ downloads, "UxPlay" for "git clone" downloads), then do
     name fix for screen-sharing with e.g., ZOOM)
 5.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
-    applications such as Zoom, see
-    [Improvements](#improvements%20since%20the%20original%20uxplay%20by%20antimof)
-    \#3 below).
+    applications such as Zoom, see [Improvements](#improvements) \#3
+    below).
 6.  `make`
 7.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
@@ -622,8 +621,8 @@ made the first time the GStreamer window was created by uxplay, and not
 if the server was relaunched after the GStreamer window was closed, with
 uxplay still running. Corrected in v. 1.34
 
-Improvements since the original UxPlay by antimof:
-==================================================
+Improvements
+============
 
 1.  Updates of the RAOP (AirPlay protocol) collection of codes
     maintained at https://github.com/FD-/RPiPlay.git so it is current as

@@ -30,7 +30,7 @@
 <li><code>sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad</code></li>
 <li><code>sudo apt-get install gstreamer1.0-vaapi</code> (For hardware-accelerated Intel graphics, but not NVIDIA)</li>
 <li><code>sudo apt-get install libx11-dev</code> (for the “ZOOMFIX” X11_display name fix for screen-sharing with e.g., ZOOM)</li>
-<li><code>cmake .</code> (or “<code>cmake -DZOOMFIX=ON .</code>” to get a screen-sharing fix to make X11 mirror display windows visible to screen-sharing applications such as Zoom, see <a href="#improvements%20since%20the%20original%20uxplay%20by%20antimof">Improvements</a> #3 below).</li>
+<li><code>cmake .</code> (or “<code>cmake -DZOOMFIX=ON .</code>” to get a screen-sharing fix to make X11 mirror display windows visible to screen-sharing applications such as Zoom, see <a href="#improvements">Improvements</a> #3 below).</li>
 <li><code>make</code></li>
 <li><code>sudo make install</code> (you can afterwards uninstall with <code>sudo make uninstall</code> in the same directory in which this was run)</li>
 </ol>
@@ -122,7 +122,7 @@
 <p>1.35 2021-09-10 now uses a GLib MainLoop, and builds on macOS (tested on Intel Mac, 10.15 ). New option -t <em>timeout</em> for relaunching server if no connections were active in previous <em>timeout</em> seconds (to renew Bonjour registration).</p>
 <p>1.341 2021-09-04 fixed: render logger was not being destroyed by stop_server()</p>
 <p>1.34 2021-08-27 Fixed “ZOOMFIX”: the X11 window name fix was only being made the first time the GStreamer window was created by uxplay, and not if the server was relaunched after the GStreamer window was closed, with uxplay still running. Corrected in v. 1.34</p>
-<h1 id="improvements-since-the-original-uxplay-by-antimof">Improvements since the original UxPlay by antimof:</h1>
+<h1 id="improvements">Improvements</h1>
 <ol type="1">
 <li><p>Updates of the RAOP (AirPlay protocol) collection of codes maintained at https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01, adding all changes since the original release of UxPlay by antimof. This involved crypto updates, replacement of the included plist library by the system-installed version, and a change over to a library llhttp for http parsing.</p></li>
 <li><p>Added the -s, -o -p, -m, -r, -f, -fps -vs -as and -t options.</p></li>

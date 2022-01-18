@@ -101,7 +101,7 @@ downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipf
 4. `sudo apt-get install libx11-dev`  (for the "ZOOMFIX" X11_display name fix for screen-sharing with e.g.,  ZOOM)
 5. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
-Zoom, see [Improvements](#improvements since the original uxplay by antimof) \#3 below).
+Zoom, see [Improvements](#improvements) \#3 below).
 6. `make`
 7. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
 
@@ -489,7 +489,7 @@ not necessary for UxPlay to claim to be such an old AppleTV model.
 		   not if the server was relaunched after the GStreamer window
 		   was closed, with uxplay still running.   Corrected in v. 1.34
 
-# Improvements since the original UxPlay by antimof:
+# Improvements
 
 1. Updates of the RAOP (AirPlay protocol)  collection of codes  maintained
 at  https://github.com/FD-/RPiPlay.git so it is current as of 2021-08-01,
