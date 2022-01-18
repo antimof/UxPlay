@@ -559,7 +559,7 @@ some other client also fails to decrypt all audio and video, try adding
 its "User Agent" string in place of "xxx" in the entry "AirMyPC/2.0;xxx"
 in global.h and rebuild uxplay.
 
-Note that Uxplay declares itself to be an AppleTV2,1 with a
+Note that Uxplay declares itself to be an AppleTV3,2 with a
 sourceVersion 220.68; this can also be changed in global.h. It is
 crucial for UxPlay to declare this old value of sourceVersion, as this
 prompts the Apple client to use a less-encrypted "legacy" protocol
