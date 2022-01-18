@@ -581,7 +581,7 @@ is my (__fdrachbacher__) attempt at listing the various authors and the componen
 
 * **dsafa22**: Created an AirPlay 2 mirroring server [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems gone now), _\[added: but code is preserved
 [here](https://github.com/KqSMea8/AirplayServer), and [see here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for 
-the description of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible, by the AirplayServer author (who uses the name **droidfang**)\]_ 
+the description of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible, by the AirplayServer author\]_ 
 for Android based on ShairPlay.
 This project (RPiPlay)  is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi.
 All code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+

@@ -743,12 +743,11 @@ the components they created:
     [here](https://github.com/KqSMea8/AirplayServer), and [see
     here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for the
     description of the analysis of the AirPlay 2 mirror protocol that
-    made RPiPlay possible, by the AirplayServer author (who uses the
-    name **droidfang**)\]* for Android based on ShairPlay. This project
-    (RPiPlay) is basically a port of dsafa22's code to the Raspberry Pi,
-    utilizing OpenMAX and OpenSSL for better performance on the Pi. All
-    code in `lib/` concerning mirroring is dsafa22's work. License: GNU
-    LGPLv2.1+
+    made RPiPlay possible, by the AirplayServer author\]* for Android
+    based on ShairPlay. This project (RPiPlay) is basically a port of
+    dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL
+    for better performance on the Pi. All code in `lib/` concerning
+    mirroring is dsafa22's work. License: GNU LGPLv2.1+
 -   **Juho Vähä-Herttua** and contributors: Created an AirPlay audio
     server called [ShairPlay](https://github.com/juhovh/shairplay),
     including support for Fairplay based on PlayFair. Most of the code
