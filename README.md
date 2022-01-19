@@ -319,7 +319,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    feature (which streams audio in AAC audio format) is now probably unneeded, as UxPlay can now 
    stream superior-quality Apple Lossless audio without video in Airplay non-mirror mode.
 
-**-avdec*** forces use of software h264 decoding using Gstreamer element avdec_h264 (libav h264 decoder). This
+**-avdec** forces use of software h264 decoding using Gstreamer element avdec_h264 (libav h264 decoder). This
    option should prevent autovideosink choosing a hardware-accelerated videosink plugin such as vaapisink.
    
 **-as _audiosink_** chooses the GStreamer audiosink, instead of letting

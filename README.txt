@@ -405,8 +405,8 @@ streams audio in AAC audio format) is now probably unneeded, as UxPlay
 can now stream superior-quality Apple Lossless audio without video in
 Airplay non-mirror mode.
 
-**-avdec**\* forces use of software h264 decoding using Gstreamer
-element avdec\_h264 (libav h264 decoder). This option should prevent
+**-avdec** forces use of software h264 decoding using Gstreamer element
+avdec\_h264 (libav h264 decoder). This option should prevent
 autovideosink choosing a hardware-accelerated videosink plugin such as
 vaapisink.
 
