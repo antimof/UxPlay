@@ -470,8 +470,8 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-	video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
-	video_renderer_start();
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
+        video_renderer_start();
     }
     
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
