@@ -458,9 +458,9 @@ devices that cannot run modern tvOS; it is probably
 not necessary for UxPlay to claim to be such an old AppleTV model.
 
 # ChangeLog
-1.46 2022-01-20   Restore pre-1.44 behavior, using decodebin in the video pipeline; instead, introduce new option "-avdec"
-                  to force software h264 decoding by libav h264, if needed (will prevent selection of vaapisink
-                  by autovideosink).  Update llhttp to v6.0.6.  UxPlay now reports itself as AppleTV3,2.
+1.46 2022-01-20   Restore pre-1.44 behavior (1.44 may have broken hardware acceleration): once again use decodebin in the video pipeline; 
+                  introduce new option "-avdec" to force software h264 decoding by libav h264, if needed (to prevent selection of 
+                  vaapisink by autovideosink).  Update llhttp to v6.0.6.  UxPlay now reports itself as AppleTV3,2.
 
 1.45 2022-01-10   New behavior: close video window when client requests "stop mirroring".  (A new "no close" option "-nc" is added
                   for users who wish to retain previous behavior that does not close the video window).
