@@ -1,4 +1,4 @@
-UxPlay 1.45: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.46: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 Highlights:
@@ -128,8 +128,8 @@ downloads, "UxPlay" for "git clone" downloads), then do
 2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`
 3.  `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated
     Intel graphics, but not NVIDIA)
-4.  `sudo apt-get install libx11-dev` (for the "ZOOMFIX" X11\_display
-    name fix for screen-sharing with e.g., ZOOM)
+4.  `sudo apt-get install libx11-dev` (only needed if you invoke the
+    "ZOOMFIX" X11 display-name fix in the next step)
 5.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
     applications such as Zoom, see [Improvements](#improvements) \#3
@@ -405,6 +405,11 @@ streams audio in AAC audio format) is now probably unneeded, as UxPlay
 can now stream superior-quality Apple Lossless audio without video in
 Airplay non-mirror mode.
 
+**-avdec**\* forces use of software h264 decoding using Gstreamer
+element avdec\_h264 (libav h264 decoder). This option should prevent
+autovideosink choosing a hardware-accelerated videosink plugin such as
+vaapisink.
+
 **-as *audiosink*** chooses the GStreamer audiosink, instead of letting
 autoaudiosink pick it for you. Some audiosink choices are: pulsesink,
 alsasink, osssink, oss4sink, and osxaudiosink (for macOS). Using quotes
@@ -471,15 +476,19 @@ use "uxplay -p").
 
 ### 3. Problems *after* the client-server connection has been made:
 
-For such problems, use "uxplay -d" (debug log option) to see what is
-happening: it will show how far the connection process gets before the
-failure occurs. You can compare your debug output to that from a
-successful start of UxPlay in the [UxPlay
+If you do *not* see the message `raop_rtp_mirror starting mirroring`,
+something went wrong before the client-server negociations were
+finished. For such problems, use "uxplay -d" (debug log option) to see
+what is happening: it will show how far the connection process gets
+before the failure occurs. You can compare your debug output to that
+from a successful start of UxPlay in the [UxPlay
 Wiki](https://github.com/FDH2/UxPlay/wiki).
 
-**Most of such problems are due to a GStreamer plugin that doesn't work
-on your system**: (by default, GStreamer uses the "autovideosink"
-algorithm to guess what is the "best" plugin to use on your system).
+**If UxPlay reports that mirroring started, but you get no video or
+audio, the problem is probably from a GStreamer plugin that doesn't work
+on your system** (by default, GStreamer uses the "autovideosink" and
+"autoaudiosink" algorithms to guess what are the "best" plugins to use
+on your system).
 
 Sometimes "autovideosink" may select the OpenGL renderer "glimagesink"
 which may not work correctly on your system. Try the options "-vs
@@ -487,16 +496,24 @@ ximagesink" or "-vs xvimagesink" to see if using one of these fixes the
 problem.
 
 Other reported problems are connected to the GStreamer VAAPI plugin (for
-hardware-accelerated Intel graphics, but not NVIDIA or AMD graphics).
-Your next attempt to resolve a problem should be to find out if the
-gstreamer1.0-vaapi plugin is installed, and if so, uninstall it. (If
-this does not fix the problem, you can reinstall it.)
+hardware-accelerated Intel graphics, but not NVIDIA graphics). Use the
+option "-avdec" to force software h264 video decoding: this should
+prevent autovideosink from selecting the vaapisink videosink.
+Alternatively, find out if the gstreamer1.0-vaapi plugin is installed,
+and if so, uninstall it. (If this does not fix the problem, you can
+reinstall it.)
 
 There are some reports of other GStreamer problems with
-hardware-accelerated Intel graphics. One user (on Debian) solved this
+hardware-accelerated Intel HD graphics. One user (on Debian) solved this
 with "sudo apt install intel-media-va-driver-non-free". This is a driver
 for 8'th (or later) generation \"\*-lake\" Intel chips, that seems to be
 related to VAAPI accelerated graphics.
+
+If you *do* have Intel HD graphics, and have installed the vaapi plugin,
+but `-vs vaapisink` does not work, check that vaapi is not "blacklisted"
+in your GStreamer installation: run `gst-inspect-1.0 vaapi`, if this
+reports `0 features`, you need to `export GST_VAAPI_ALL_DRIVERS=1`
+before running uxplay, or set this in the default environment.
 
 You can try to fix audio problems by using the "-as *audiosink*" option
 to choose the GStreamer audiosink , rather than have autoaudiosink pick
@@ -570,6 +587,11 @@ to be such an old AppleTV model.
 ChangeLog
 =========
 
+1.46 2022-01-20 Restore pre-1.44 behavior, using decodebin in the video
+pipeline; instead, introduce new option "-avdec" to force software h264
+decoding by libav h264, if needed (will prevent selection of vaapisink
+by autovideosink). Update llhttp to v6.0.6.
+
 1.45 2022-01-10 New behavior: close video window when client requests
 "stop mirroring". (A new "no close" option "-nc" is added for users who
 wish to retain previous behavior that does not close the video window).
@@ -635,11 +657,14 @@ Improvements
 
 3.  If "`cmake -DZOOMFIX=ON .`" is run before compiling, the mirrored
     window is now visible to screen-sharing applications such as Zoom.
-    To compile with ZOOMFIX=ON, the X11 development libraries must be
-    installed. (ZOOMFIX will not be needed once the upcoming
+    (This applies only to X11 windows produced by videosinks
+    `ximagesink` and `xvimagesink`, which are often selected by
+    default.) To compile with ZOOMFIX=ON, the X11 development libraries
+    must be installed. *(ZOOMFIX will not be needed once the upcoming
     gstreamer-1.20 is available, since starting with that release, the
     GStreamer X11 mirror window will be natively visible for
-    screen-sharing.) Thanks to David Ventura
+    screen-sharing, but it make take some time for distributions to
+    supply this version.)* Thanks to David Ventura
     https://github.com/DavidVentura/UxPlay for the fix and also for
     getting it into gstreamer-1.20. \[If uxplay was compiled after cmake
     was run without -DZOOMFIX=ON, and your gstreamer version is older

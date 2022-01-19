@@ -44,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.45"
+#define VERSION "1.46"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -73,6 +73,7 @@ static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 static bool previous_no_close_behavior = false;
+static std::string decoder = "decodebin";
 
 gboolean connection_callback (gpointer loop){
   if (!connections_stopped) {
@@ -205,6 +206,7 @@ static void print_info (char *name) {
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
+    printf("-avdec    Force software h264 video decoding with libav h264 decoder\n"); 
     printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
@@ -427,6 +429,9 @@ int main (int argc, char *argv[]) {
             get_value(argv[++i], &server_timeout);
         } else if (arg == "-nc") {
             previous_no_close_behavior = true;
+        } else if (arg == "-avdec") {
+            decoder.erase();
+            decoder = "h264parse ! avdec_h264";
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
@@ -465,7 +470,7 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
+	video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
 	video_renderer_start();
     }
     
@@ -498,7 +503,7 @@ int main (int argc, char *argv[]) {
             LOGI("Re-launching server...");
             stop_raop_server();
             video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
             video_renderer_start();
             goto relaunch;
     } else {
@@ -535,7 +540,7 @@ extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) 
     if (*teardown_110 && !previous_no_close_behavior) {
         audio_renderer_stop();
         video_renderer_destroy();
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
         video_renderer_start();
     }
 }

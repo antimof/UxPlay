@@ -45,7 +45,7 @@ typedef enum videoflip_e {
 
 typedef struct video_renderer_s video_renderer_t;
 
-void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *videosink);
+void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *decoder, const char *videosink);
 void video_renderer_start ();
 void video_renderer_stop ();
 void video_renderer_render_buffer (raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type);
