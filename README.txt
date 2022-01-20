@@ -477,7 +477,7 @@ use "uxplay -p").
 ### 3. Problems *after* the client-server connection has been made:
 
 If you do *not* see the message `raop_rtp_mirror starting mirroring`,
-something went wrong before the client-server negociations were
+something went wrong before the client-server negotiations were
 finished. For such problems, use "uxplay -d" (debug log option) to see
 what is happening: it will show how far the connection process gets
 before the failure occurs. You can compare your debug output to that

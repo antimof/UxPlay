@@ -373,7 +373,7 @@ starting at port n, all three in the range 1024-65535, opened  for both tcp and 
 
 ### 3. Problems _after_ the client-server connection has been made:
 
-If you do _not_ see the message ``raop_rtp_mirror starting mirroring``, something went wrong before the client-server negociations were finished.
+If you do _not_ see the message ``raop_rtp_mirror starting mirroring``, something went wrong before the client-server negotiations were finished.
 For such  problems, use "uxplay -d " (debug log option)  to see what is happening: it will show how far the connection process gets before
 the failure occurs.    You can compare your debug  output to
 that from a successful start of UxPlay in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki).
