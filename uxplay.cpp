@@ -625,7 +625,8 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_cbs.audio_get_format = audio_get_format;
     raop_cbs.video_report_size = video_report_size;
 
-    raop = raop_init(10, &raop_cbs);
+    /* set max number of connections = 2 */
+    raop = raop_init(2, &raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;
