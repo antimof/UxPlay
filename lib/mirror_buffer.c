@@ -67,7 +67,6 @@ mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t *streamConnectio
     fwrite(aesiv_video, 16, 1, keyfile);
     fclose(keyfile);
 #endif
-    mirror_buffer->nextDecryptCount = 0;
 }
 
 mirror_buffer_t *
