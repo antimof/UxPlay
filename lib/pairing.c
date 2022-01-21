@@ -131,9 +131,9 @@ pairing_session_check_handshake_status(pairing_session_t *session)
     switch (session->status) {
     case STATUS_SETUP:
     case STATUS_HANDSHAKE:
-      return 0;
+        return 0;
     default:
-      return -1;
+        return -1;
     }
 }
 
