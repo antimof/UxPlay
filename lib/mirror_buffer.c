@@ -31,29 +31,30 @@ struct mirror_buffer_s {
     aes_ctx_t *aes_ctx;
     int nextDecryptCount;
     uint8_t og[16];
-    /* AES key and IV */
-    // Need secondary processing to use
-    unsigned char aeskey[RAOP_AESKEY_LEN];
+    /* audio aes key is used in a hash for the video aes key and iv */
+    unsigned char aeskey_audio[RAOP_AESKEY_LEN];
 };
 
 void
 mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t *streamConnectionID)
 {
-    unsigned char aeskey_audio[16];
     unsigned char aeskey_video[64];
     unsigned char aesiv_video[64];
-    memcpy(aeskey_audio, mirror_buffer->aeskey, 16);
+
+    /* AES key and IV */
+    // Need secondary processing to use
+    
     sprintf((char*) aeskey_video, "AirPlayStreamKey%" PRIu64, *streamConnectionID);
     sprintf((char*) aesiv_video, "AirPlayStreamIV%" PRIu64, *streamConnectionID);
 
     sha_ctx_t *ctx = sha_init();
     sha_update(ctx, aeskey_video, strlen((char*) aeskey_video));
-    sha_update(ctx, aeskey_audio, 16);
+    sha_update(ctx, mirror_buffer->aeskey_audio, RAOP_AESKEY_LEN);
     sha_final(ctx, aeskey_video, NULL);
 
     sha_reset(ctx);
     sha_update(ctx, aesiv_video, strlen((char*) aesiv_video));
-    sha_update(ctx, aeskey_audio, 16);
+    sha_update(ctx, mirror_buffer->aeskey_audio, RAOP_AESKEY_LEN);
     sha_final(ctx, aesiv_video, NULL);
     sha_destroy(ctx);
 
@@ -78,10 +79,9 @@ mirror_buffer_init(logger_t *logger, const unsigned char *aeskey)
     if (!mirror_buffer) {
         return NULL;
     }
-    memcpy(mirror_buffer->aeskey, aeskey, RAOP_AESKEY_LEN);
+    memcpy(mirror_buffer->aeskey_audio, aeskey, RAOP_AESKEY_LEN);
     mirror_buffer->logger = logger;
     mirror_buffer->nextDecryptCount = 0;
-    //mirror_buffer_init_aes(mirror_buffer, aeskey, streamConnectionID);
     return mirror_buffer;
 }
 
