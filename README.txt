@@ -591,7 +591,9 @@ ChangeLog
 acceleration): once again use decodebin in the video pipeline; introduce
 new option "-avdec" to force software h264 decoding by libav h264, if
 needed (to prevent selection of vaapisink by autovideosink). Update
-llhttp to v6.0.6. UxPlay now reports itself as AppleTV3,2.
+llhttp to v6.0.6. UxPlay now reports itself as AppleTV3,2.\
+Restrict connections to one client at a time (second client must now
+wait for first client to disconnect).
 
 1.45 2022-01-10 New behavior: close video window when client requests
 "stop mirroring". (A new "no close" option "-nc" is added for users who
