@@ -37,42 +37,35 @@ struct mirror_buffer_s {
 };
 
 void
-mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t streamConnectionID)
+mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t *streamConnectionID)
 {
-    unsigned char eaeskey[16];
-    memcpy(eaeskey, mirror_buffer->aeskey, 16);
-    unsigned char hash1[64];
-    unsigned char hash2[64];
-    char* skey = "AirPlayStreamKey";
-    char* siv = "AirPlayStreamIV";
-    unsigned char skeyall[255];
-    unsigned char sivall[255];
-    sprintf((char*) skeyall, "%s%" PRIu64, skey, streamConnectionID);
-    sprintf((char*) sivall, "%s%" PRIu64, siv, streamConnectionID);
+    unsigned char aeskey_audio[16];
+    unsigned char aeskey_video[64];
+    unsigned char aesiv_video[64];
+    memcpy(aeskey_audio, mirror_buffer->aeskey, 16);
+    sprintf((char*) aeskey_video, "AirPlayStreamKey%" PRIu64, *streamConnectionID);
+    sprintf((char*) aesiv_video, "AirPlayStreamIV%" PRIu64, *streamConnectionID);
 
     sha_ctx_t *ctx = sha_init();
-    sha_update(ctx, skeyall, strlen((char*) skeyall));
-    sha_update(ctx, eaeskey, 16);
-    sha_final(ctx, hash1, NULL);
+    sha_update(ctx, aeskey_video, strlen((char*) aeskey_video));
+    sha_update(ctx, aeskey_audio, 16);
+    sha_final(ctx, aeskey_video, NULL);
 
     sha_reset(ctx);
-    sha_update(ctx, sivall, strlen((char*) sivall));
-    sha_update(ctx, eaeskey, 16);
-    sha_final(ctx, hash2, NULL);
+    sha_update(ctx, aesiv_video, strlen((char*) aesiv_video));
+    sha_update(ctx, aeskey_audio, 16);
+    sha_final(ctx, aesiv_video, NULL);
     sha_destroy(ctx);
 
-    unsigned char decrypt_aeskey[16];
-    unsigned char decrypt_aesiv[16];
-    memcpy(decrypt_aeskey, hash1, 16);
-    memcpy(decrypt_aesiv, hash2, 16);
+    // Need to be initialized externally
+    mirror_buffer->aes_ctx = aes_ctr_init(aeskey_video, aesiv_video);
+
 #ifdef DUMP_KEI_IV
     FILE* keyfile = fopen("/sdcard/111.keyiv", "wb");
-    fwrite(decrypt_aeskey, 16, 1, keyfile);
-    fwrite(decrypt_aesiv, 16, 1, keyfile);
+    fwrite(aeskey_video, 16, 1, keyfile);
+    fwrite(aesiv_video, 16, 1, keyfile);
     fclose(keyfile);
 #endif
-    // Need to be initialized externally
-    mirror_buffer->aes_ctx = aes_ctr_init(decrypt_aeskey, decrypt_aesiv);
     mirror_buffer->nextDecryptCount = 0;
 }
 

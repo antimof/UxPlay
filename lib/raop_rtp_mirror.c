@@ -142,7 +142,7 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
 }
 
 void
-raop_rtp_init_mirror_aes(raop_rtp_mirror_t *raop_rtp_mirror, uint64_t streamConnectionID)
+raop_rtp_init_mirror_aes(raop_rtp_mirror_t *raop_rtp_mirror, uint64_t *streamConnectionID)
 {
     mirror_buffer_init_aes(raop_rtp_mirror->buffer, streamConnectionID);
 }

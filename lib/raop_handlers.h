@@ -452,7 +452,7 @@ raop_handler_setup(raop_conn_t *conn,
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption key and iv): %llu", stream_connection_id);
 
                     if (conn->raop_rtp_mirror) {
-                        raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, stream_connection_id);
+                        raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, &stream_connection_id);
                         raop_rtp_start_mirror(conn->raop_rtp_mirror, use_udp, &dport);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
                     } else {
