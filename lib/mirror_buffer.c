@@ -36,11 +36,14 @@ struct mirror_buffer_s {
 };
 
 void
-mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t *streamConnectionID)
+mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, const uint64_t *streamConnectionID)
 {
     unsigned char aeskey_video[64];
     unsigned char aesiv_video[64];
 
+    assert(mirror_buffer);
+    assert(streamConnectionID);
+    
     /* AES key and IV */
     // Need secondary processing to use
     
