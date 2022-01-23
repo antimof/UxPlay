@@ -61,7 +61,9 @@ static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
 
+static bool relaunch_video = false;
 static bool relaunch_server = false;
+static bool reset_loop = false;
 static uint open_connections = 0;
 static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
@@ -75,25 +77,36 @@ static bool use_audio = true;
 static bool previous_no_close_behavior = false;
 static std::string decoder = "decodebin";
 
-gboolean connection_callback (gpointer loop){
-  if (!connections_stopped) {
+static gboolean connection_callback (gpointer loop){
+    if (!connections_stopped) {
         counter = 0;
     } else {
         if (++counter == server_timeout) {
-	    LOGD("no connections for %d seconds: relaunch server",server_timeout);
-	    g_main_loop_quit((GMainLoop *) loop);
+            LOGD("no connections for %d seconds: relaunch server",server_timeout);
+            relaunch_server = true;
+            relaunch_video = false;
+            g_main_loop_quit((GMainLoop *) loop);
         }
     }
     return TRUE;
 }
 
+static gboolean reset_callback(gpointer loop) {
+    if (reset_loop) {
+        g_main_loop_quit((GMainLoop *) loop);
+    }
+    return TRUE;
+}
+
 static gboolean  sigint_callback(gpointer loop) {
+    relaunch_video = false;
     relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
 }
 
 static gboolean  sigterm_callback(gpointer loop) {
+    relaunch_video = false;
     relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
@@ -105,16 +118,22 @@ static void main_loop()  {
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     if (server_timeout) {
         connection_watch_id = g_timeout_add_seconds(1, (GSourceFunc) connection_callback, (gpointer) loop);
-    }  
-    if (use_video) gst_bus_watch_id = (guint) video_renderer_listen((void *)loop);
+    }
+    relaunch_video = false;
+    relaunch_server = false;
+    if (use_video) {
+        relaunch_video = true;
+        gst_bus_watch_id = (guint) video_renderer_listen((void *)loop);
+    }
+    guint reset_watch_id = g_timeout_add(100, (GSourceFunc) reset_callback, (gpointer) loop);
     guint sigterm_watch_id = g_unix_signal_add(SIGTERM, (GSourceFunc) sigterm_callback, (gpointer) loop);
     guint sigint_watch_id = g_unix_signal_add(SIGINT, (GSourceFunc) sigint_callback, (gpointer) loop);
-    relaunch_server = true;
     g_main_loop_run(loop);
 
     if (gst_bus_watch_id > 0) g_source_remove(gst_bus_watch_id);
     if (sigint_watch_id > 0) g_source_remove(sigint_watch_id);
     if (sigterm_watch_id > 0) g_source_remove(sigterm_watch_id);
+    if (reset_watch_id > 0) g_source_remove(reset_watch_id);
     if (connection_watch_id > 0) g_source_remove(connection_watch_id);
     g_main_loop_unref(loop);
 }    
@@ -491,21 +510,36 @@ int main (int argc, char *argv[]) {
 
     connections_stopped = true;
     relaunch:
-    counter = 0;
-    compression_type = 0;
     if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
         return 1;
     }
-
+    reconnect:
+    counter = 0;
+    compression_type = 0;
     main_loop();
-    if (relaunch_server) {
-            assert(use_video);
-            LOGI("Re-launching server...");
-            stop_raop_server();
+    if (relaunch_server || relaunch_video || reset_loop) {
+        if(reset_loop) {
+            reset_loop = false;
+        } else {
+            raop_stop(raop);
+        }
+        if (use_audio) audio_renderer_stop();
+        if (use_video) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
             video_renderer_start();
+        }
+        if (reset_loop) goto reconnect;
+        if (relaunch_video) {
+            unsigned short port = raop_get_port(raop);
+            raop_start(raop, &port);
+            raop_set_port(raop, port);
+            goto reconnect;
+        } else {
+            LOGI("Re-launching RAOP server...");
+            stop_raop_server();
             goto relaunch;
+        }
     } else {
         LOGI("Stopping...");
         stop_raop_server();
@@ -538,10 +572,7 @@ extern "C" void conn_destroy (void *cls) {
 
 extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) {
     if (*teardown_110 && !previous_no_close_behavior) {
-        audio_renderer_stop();
-        video_renderer_destroy();
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
-        video_renderer_start();
+        reset_loop = true;
     }
 }
 
