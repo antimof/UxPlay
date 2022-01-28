@@ -350,12 +350,8 @@ raop_handler_setup(raop_conn_t *conn,
         // The first SETUP call that initializes keys and timing
 
         unsigned char aesiv[16];
-        unsigned char aeskey_old[16];
         unsigned char aeskey[16];
-        unsigned char *aeskey_audio = aeskey;
-        unsigned char *aeskey_video = aeskey;
 
-	
         logger_log(conn->raop->logger, LOGGER_DEBUG, "SETUP 1");
 
         // First setup
@@ -377,9 +373,9 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
         free (str);
 
-        int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey_old);
+        int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
-        str = utils_data_to_string(aeskey_old, 16, 16);
+        str = utils_data_to_string(aeskey, 16, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
         free(str);
 
@@ -389,49 +385,27 @@ raop_handler_setup(raop_conn_t *conn,
         logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
         free(str);
 
-        unsigned char eaeskey[64] = {};
-        memcpy(eaeskey, aeskey_old, 16);
-        sha_ctx_t *ctx = sha_init();
-        sha_update(ctx, eaeskey, 16);
-        sha_update(ctx, ecdh_secret, 32);
-        sha_final(ctx, eaeskey, NULL);
-        sha_destroy(ctx);
-        memcpy(aeskey, eaeskey, 16);
-
-        str = utils_data_to_string(aeskey, 16, 16);
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
-        free(str);
-	
-        /* old-protocol clients such as AirMyPC use the unhashed key aeskey_old for both audio and video   (ios9, ios10 support)*/
-        /* clients with sourceVersion <= OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION use unhashed aeskey_old for audio decryption */
-        /* this is also done for audio or video if clients User-Agent string is included in OLD_PROTOCOL_[AUDIO,VIDEO]_CLIENT_LIST  (AirMyPC support)*/
-        /* OLD_PROTOCOL_AUDIO_CLIENT_LIST, OLD_PROTOCOL_VIDEO_CLIENT_LIST, OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION are defined in global.h */
-
-        plist_t req_source_version_node = plist_dict_get_item(req_root_node, "sourceVersion");
-        char *sourceVersion;
-        plist_get_string_val(req_source_version_node, &sourceVersion);
         const char *user_agent = http_request_get_header(request, "User-Agent");
-        logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s, sourceVersion: %s", user_agent, sourceVersion);	
+        logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s", user_agent);	
 
-#ifdef OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION
-        char *end_ptr;
-        if (strtoul(sourceVersion, &end_ptr, 10) <= strtoul(OLD_PROTOCOL_AUDIO_CLIENT_SOURCEVERSION , &end_ptr, 10)) aeskey_audio = aeskey_old;
+        bool old_protocol = false;
+#ifdef OLD_PROTOCOL_CLIENT_USER_AGENT_LIST    /* set in global.h */
+        if (strstr(OLD_PROTOCOL_CLIENT_USER_AGENT_LIST, user_agent)) old_protocol = true;
 #endif
-
-#ifdef OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST
-        if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST, user_agent)) aeskey_audio = aeskey_old;
-#endif
-
-#ifdef OLD_PROTOCOL_VIDEO_CLIENT_USER_AGENT_LIST
-        if (strstr(OLD_PROTOCOL_AUDIO_CLIENT_USER_AGENT_LIST, user_agent)) aeskey_video = aeskey_old;
-#endif
-
-        if (aeskey_audio == aeskey_old) {
+        if  (old_protocol) {    /* some windows AirPlay-client emulators use old AirPlay 1 protocol with unhashed AES key */
             logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
-        }
-
-        if (aeskey_video == aeskey_old) {
-            logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES video key)");
+        } else {
+            unsigned char eaeskey[64] = {};
+            memcpy(eaeskey, aeskey, 16);
+            sha_ctx_t *ctx = sha_init();
+            sha_update(ctx, eaeskey, 16);
+            sha_update(ctx, ecdh_secret, 32);
+            sha_final(ctx, eaeskey, NULL);
+            sha_destroy(ctx);
+            memcpy(aeskey, eaeskey, 16);
+            str = utils_data_to_string(aeskey, 16, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
+            free(str);
         }
 
         // Time port
@@ -444,8 +418,8 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, conn->remote, conn->remotelen, timing_rport);
         raop_ntp_start(conn->raop_ntp, &timing_lport);
 
-        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey_audio, aesiv);
-        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey_video);
+        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, aesiv);
+        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey);
 
         plist_t res_event_port_node = plist_new_uint(conn->raop->port);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);
@@ -475,10 +449,10 @@ raop_handler_setup(raop_conn_t *conn,
                     plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
                     uint64_t stream_connection_id;
                     plist_get_uint_val(stream_id_node, &stream_connection_id);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption iv): %llu", stream_connection_id);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption key and iv): %llu", stream_connection_id);
 
                     if (conn->raop_rtp_mirror) {
-                        raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, stream_connection_id);
+                        raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, &stream_connection_id);
                         raop_rtp_start_mirror(conn->raop_rtp_mirror, use_udp, &dport);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
                     } else {

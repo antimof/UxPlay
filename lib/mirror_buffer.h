@@ -22,7 +22,7 @@ typedef struct mirror_buffer_s mirror_buffer_t;
 
 
 mirror_buffer_t *mirror_buffer_init( logger_t *logger, const unsigned char *aeskey);
-void mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, uint64_t streamConnectionID);
+void mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, const uint64_t *streamConnectionID);
 void mirror_buffer_decrypt(mirror_buffer_t *raop_mirror, unsigned char* input, unsigned char* output, int datalen);
 void mirror_buffer_destroy(mirror_buffer_t *mirror_buffer);
 #endif //MIRROR_BUFFER_H

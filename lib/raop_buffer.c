@@ -46,9 +46,8 @@ typedef struct {
 
 struct raop_buffer_s {
     logger_t *logger;
-    /* Key and IV used for decryption */
-    unsigned char aeskey[RAOP_AESKEY_LEN];
-    unsigned char aesiv[RAOP_AESIV_LEN];
+    /* AES CTX used for decryption */
+    aes_ctx_t *aes_ctx;
 
     /* First and last seqnum */
     int is_empty;
@@ -72,13 +71,13 @@ raop_buffer_init(logger_t *logger,
         return NULL;
     }
     raop_buffer->logger = logger;
-    memcpy(raop_buffer->aeskey, aeskey, RAOP_AESKEY_LEN);
-    memcpy(raop_buffer->aesiv, aesiv, RAOP_AESIV_LEN);
+    // Need to be initialized internally
+    raop_buffer->aes_ctx = aes_cbc_init(aeskey, aesiv, AES_DECRYPT);
 
 #ifdef DUMP_AUDIO
     if (file_keyiv != NULL) {
-        fwrite(raop_buffer->aeskey, 16, 1, file_keyiv);
-        fwrite(raop_buffer->aesiv, 16, 1, file_keyiv);
+        fwrite(aeskey, 16, 1, file_keyiv);
+        fwrite(aesiv, 16, 1, file_keyiv);
         fclose(file_keyiv);
     }
 #endif
@@ -105,6 +104,7 @@ raop_buffer_destroy(raop_buffer_t *raop_buffer)
     }
 
     if (raop_buffer) {
+        aes_cbc_destroy(raop_buffer->aes_ctx);
         free(raop_buffer);
     }
 
@@ -152,28 +152,37 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 #endif
 
     if (DECRYPTION_TEST) {
-        printf("encrypted header %s", utils_data_to_string(data,12,12));
-        if (payload_size) printf("%d before %s", payload_size, utils_data_to_string(&data[12],16,16 ));
+        printf("encrypted 12 byte header %s", utils_data_to_string(data,12,12));
+        if (payload_size) printf("len %d before decryption:\n%s", payload_size, utils_data_to_string(&data[12],16,16 ));
     }
     encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);
-    // Need to be initialized internally
-    aes_ctx_t *aes_ctx_audio = aes_cbc_init(raop_buffer->aeskey, raop_buffer->aesiv, AES_DECRYPT);
-    aes_cbc_decrypt(aes_ctx_audio, &data[12], output, encryptedlen);
-    aes_cbc_destroy(aes_ctx_audio);
+
+    aes_cbc_decrypt(raop_buffer->aes_ctx, &data[12], output, encryptedlen);
+    aes_cbc_reset(raop_buffer->aes_ctx);
 
     memcpy(output + encryptedlen, &data[12 + encryptedlen], payload_size - encryptedlen);
     *outputlen = payload_size;
     if (payload_size &&  DECRYPTION_TEST){
-        if ( !(output[0] == 0x8d || output[0] == 0x8e || output[0] == 0x81 || output[0] == 0x82 || output[0] == 0x20)) {
+        switch (output[0]) {
+        case 0x8c:
+        case 0x8d:
+        case 0x8e:
+        case 0x80:
+        case 0x81:
+        case 0x82:
+        case 0x20:
+	    break;
+        default:
             printf("***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC\n");
+	    break;
         }
         if (DECRYPTION_TEST == 2) {
-          printf("decrypted audio frame, len = %d\n", *outputlen);
-	  printf("%s",utils_data_to_string(output,payload_size,16));
-          printf("\n");
+            printf("decrypted audio frame, len = %d\n", *outputlen);
+	    printf("%s",utils_data_to_string(output,payload_size,16));
+            printf("\n");
         } else {
-            printf("%d after  %s\n", payload_size, utils_data_to_string(output,16,16 ));
+            printf("%d after  \n%s\n", payload_size, utils_data_to_string(output,16,16 ));
         }
     }
 #ifdef DUMP_AUDIO

@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "December 2021" "1.44" "User Commands"
+.TH UXPLAY "1" "January 2022" "1.46" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.44: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.46: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -46,12 +46,16 @@ UxPlay 1.44: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
+\fB\-avdec\fR    Force software h264 video decoding with libav h264 decoder.
+.TP
 \fB\-as\fI sink\fR  Choose the  GStreamer audiosink; default "autoaudiosink"
 .IP
    choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink etc.
 .PP
 .TP
 \fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
+.TP
+\fB\-nc\fR       Do not close video window when client stops mirroring
 .TP
 \fB\-d\fR        Enable debug logging
 .TP

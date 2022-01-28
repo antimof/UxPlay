@@ -94,9 +94,17 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 
 static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
-static bool broken_video;
+static unsigned short width, height, width_source, height_source;  /* not currently used */
 
-void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *videosink) {
+void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
+    width_source = (unsigned short) *f_width_source;
+    height_source = (unsigned short) *f_height_source;
+    width = (unsigned short) *f_width;
+    height = (unsigned short) *f_height;
+    logger_log(logger, LOGGER_DEBUG, "begin video stream wxh = %dx%d; source %dx%d", width, height, width_source, height_source);
+}
+
+void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *decoder, const char *videosink) {
     GError *error = NULL;
     logger = render_logger;
 
@@ -112,8 +120,9 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 
     gst_init(NULL,NULL);
 
-    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true !"
-                     "queue ! h264parse ! avdec_h264 ! videoconvert ! ");
+    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! ");
+    g_string_append(launch, decoder);
+    g_string_append(launch, " ! videoconvert ! ");
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink sync=false");
@@ -155,7 +164,6 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 }
 
 void video_renderer_start() {
-    broken_video = false;
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
 }
@@ -166,14 +174,8 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
     /* first byte of invalid data (decryption failed) is 0x1 */
     if (data[0]) {
-        if (!broken_video) {
-            logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
-        } else {
-            logger_log(logger, LOGGER_DEBUG, "*** ERROR decryption of video packet failed ");
-        }
-        broken_video = true;
+        logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
     } else {
-        broken_video = false;
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
         GST_BUFFER_DTS(buffer) = (GstClockTime)pts;

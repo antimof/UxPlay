@@ -44,13 +44,14 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.44"
+#define VERSION "1.46"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 
+static std::string server_name = DEFAULT_NAME;
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                  unsigned short tcp[3], unsigned short udp[3], bool debug_log);
 static int stop_raop_server ();
@@ -60,35 +61,52 @@ static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
 
+static bool relaunch_video = false;
 static bool relaunch_server = false;
+static bool reset_loop = false;
 static uint open_connections = 0;
 static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
+static std::string videosink = "autovideosink";
+static videoflip_t videoflip[2] = { NONE , NONE };
 static bool use_video = true;
 static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
+static bool previous_no_close_behavior = false;
+static std::string decoder = "decodebin";
 
-gboolean connection_callback (gpointer loop){
-  if (!connections_stopped) {
+static gboolean connection_callback (gpointer loop){
+    if (!connections_stopped) {
         counter = 0;
     } else {
         if (++counter == server_timeout) {
-	    LOGD("no connections for %d seconds: relaunch server",server_timeout);
-	    g_main_loop_quit((GMainLoop *) loop);
+            LOGD("no connections for %d seconds: relaunch server",server_timeout);
+            relaunch_server = true;
+            relaunch_video = false;
+            g_main_loop_quit((GMainLoop *) loop);
         }
     }
     return TRUE;
 }
 
+static gboolean reset_callback(gpointer loop) {
+    if (reset_loop) {
+        g_main_loop_quit((GMainLoop *) loop);
+    }
+    return TRUE;
+}
+
 static gboolean  sigint_callback(gpointer loop) {
+    relaunch_video = false;
     relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
 }
 
 static gboolean  sigterm_callback(gpointer loop) {
+    relaunch_video = false;
     relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
@@ -100,16 +118,22 @@ static void main_loop()  {
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     if (server_timeout) {
         connection_watch_id = g_timeout_add_seconds(1, (GSourceFunc) connection_callback, (gpointer) loop);
-    }  
-    if (use_video) gst_bus_watch_id = (guint) video_renderer_listen((void *)loop);
+    }
+    relaunch_video = false;
+    relaunch_server = false;
+    if (use_video) {
+        relaunch_video = true;
+        gst_bus_watch_id = (guint) video_renderer_listen((void *)loop);
+    }
+    guint reset_watch_id = g_timeout_add(100, (GSourceFunc) reset_callback, (gpointer) loop);
     guint sigterm_watch_id = g_unix_signal_add(SIGTERM, (GSourceFunc) sigterm_callback, (gpointer) loop);
     guint sigint_watch_id = g_unix_signal_add(SIGINT, (GSourceFunc) sigint_callback, (gpointer) loop);
-    relaunch_server = true;
     g_main_loop_run(loop);
 
     if (gst_bus_watch_id > 0) g_source_remove(gst_bus_watch_id);
     if (sigint_watch_id > 0) g_source_remove(sigint_watch_id);
     if (sigterm_watch_id > 0) g_source_remove(sigterm_watch_id);
+    if (reset_watch_id > 0) g_source_remove(reset_watch_id);
     if (connection_watch_id > 0) g_source_remove(connection_watch_id);
     g_main_loop_unref(loop);
 }    
@@ -161,7 +185,6 @@ static std::string find_mac () {
     return mac;
 }
 
-
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
@@ -202,9 +225,11 @@ static void print_info (char *name) {
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
+    printf("-avdec    Force software h264 video decoding with libav h264 decoder\n"); 
     printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
+    printf("-nc       do not close video window when client stops mirroring\n");  
     printf("-d        Enable debug logging\n");
     printf("-v or -h  Displays this help and version information\n");
 }
@@ -329,14 +354,11 @@ static void append_hostname(std::string &server_name) {
 }
 
 int main (int argc, char *argv[]) {
-    std::string server_name = DEFAULT_NAME;
     std::vector<char> server_hw_addr;
     bool do_append_hostname = true;
     bool use_random_hw_addr = false;
     bool debug_log = DEFAULT_DEBUG_LOG;
     unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
-    videoflip_t videoflip[2] = { NONE , NONE };
-    std::string videosink = "autovideosink";
 
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
     // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
@@ -424,7 +446,12 @@ int main (int argc, char *argv[]) {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             server_timeout = 0;
             get_value(argv[++i], &server_timeout);
-	} else {
+        } else if (arg == "-nc") {
+            previous_no_close_behavior = true;
+        } else if (arg == "-avdec") {
+            decoder.erase();
+            decoder = "h264parse ! avdec_h264";
+        } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
@@ -433,6 +460,13 @@ int main (int argc, char *argv[]) {
     if (audiosink == "0") {
         use_audio = false;
     }
+
+#if __APPLE__
+    /* force use of -nc option on macOS */
+    LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
+    previous_no_close_behavior = true;
+    server_timeout = 0;
+#endif
 
     if (videosink == "0") {
         use_video = false;
@@ -455,8 +489,8 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
-	video_renderer_start();
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
+        video_renderer_start();
     }
     
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
@@ -476,21 +510,36 @@ int main (int argc, char *argv[]) {
 
     connections_stopped = true;
     relaunch:
-    counter = 0;
-    compression_type = 0;
     if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
         return 1;
     }
-
+    reconnect:
+    counter = 0;
+    compression_type = 0;
     main_loop();
-    if (relaunch_server) {
-            assert(use_video);
-            LOGI("Re-launching server...");
-            stop_raop_server();
+    if (relaunch_server || relaunch_video || reset_loop) {
+        if(reset_loop) {
+            reset_loop = false;
+        } else {
+            raop_stop(raop);
+        }
+        if (use_audio) audio_renderer_stop();
+        if (use_video) {
             video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip, videosink.c_str());
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
             video_renderer_start();
+        }
+        if (reset_loop) goto reconnect;
+        if (relaunch_video) {
+            unsigned short port = raop_get_port(raop);
+            raop_start(raop, &port);
+            raop_set_port(raop, port);
+            goto reconnect;
+        } else {
+            LOGI("Re-launching RAOP server...");
+            stop_raop_server();
             goto relaunch;
+        }
     } else {
         LOGI("Stopping...");
         stop_raop_server();
@@ -518,6 +567,12 @@ extern "C" void conn_destroy (void *cls) {
     LOGI("Open connections: %i", open_connections);
     if(!open_connections) {
         connections_stopped = true;
+    }
+}
+
+extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) {
+    if (*teardown_110 && !previous_no_close_behavior) {
+        reset_loop = true;
     }
 }
 
@@ -558,10 +613,10 @@ extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *
     }
 }
 
-extern "C" void teardown(void *cls, bool *teardown_96, bool *teardown_110) {
-  LOGI("received TEARDOWN request from client, 96=%d 110 =%d", *teardown_96, *teardown_110);
+extern "C" void video_report_size(void *cls, float *width_source, float *height_source, float *width, float *height) {
+    video_renderer_size(width_source, height_source, width, height);
 }
-  
+
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {
@@ -592,14 +647,17 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
     raop_cbs.conn_destroy = conn_destroy;
+    raop_cbs.conn_teardown = conn_teardown;
     raop_cbs.audio_process = audio_process;
     raop_cbs.video_process = video_process;
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
     raop_cbs.audio_set_volume = audio_set_volume;
     raop_cbs.audio_get_format = audio_get_format;
-    
-    raop = raop_init(10, &raop_cbs);
+    raop_cbs.video_report_size = video_report_size;
+
+    /* set max number of connections = 2 */
+    raop = raop_init(2, &raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;

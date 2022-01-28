@@ -33,6 +33,7 @@ target_link_libraries( uxplay
 install( TARGETS  uxplay RUNTIME DESTINATION bin )
 install( FILES uxplay.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 )
 install( FILES README.md README.txt README.html LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR} ) 
+install( FILES lib/llhttp/LICENSE-MIT DESTINATION ${CMAKE_INSTALL_DOCDIR}/llhttp ) 
 
 # uninstall target
 if(NOT TARGET uninstall)

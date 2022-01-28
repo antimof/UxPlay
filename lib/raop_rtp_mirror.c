@@ -142,7 +142,7 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
 }
 
 void
-raop_rtp_init_mirror_aes(raop_rtp_mirror_t *raop_rtp_mirror, uint64_t streamConnectionID)
+raop_rtp_init_mirror_aes(raop_rtp_mirror_t *raop_rtp_mirror, uint64_t *streamConnectionID)
 {
     mirror_buffer_init_aes(raop_rtp_mirror->buffer, streamConnectionID);
 }
@@ -359,6 +359,9 @@ raop_rtp_mirror_thread(void *arg)
                 float height_source = byteutils_get_float(packet, 44);
                 float width = byteutils_get_float(packet, 56);
                 float height = byteutils_get_float(packet, 60);
+                if (raop_rtp_mirror->callbacks.video_report_size) {
+                    raop_rtp_mirror->callbacks.video_report_size(raop_rtp_mirror->callbacks.cls, &width_source, &height_source, &width, &height);
+                }
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror width_source = %f height_source = %f width = %f height = %f",
                            width_source, height_source, width, height);
 
