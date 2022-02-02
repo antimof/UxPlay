@@ -165,7 +165,7 @@ raop_rtp_mirror_thread(void *arg)
     memset(packet, 0 , 128);
     unsigned char* payload = NULL;
     unsigned int readstart = 0;
-
+    int  bad_video_counter = 0;
 #ifdef DUMP_H264
     // C decrypted
     FILE* file = fopen("/home/pi/Airplay.h264", "wb");
@@ -263,8 +263,10 @@ raop_rtp_mirror_thread(void *arg)
                 continue;
             } else if (payload == NULL && ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in header recv: %d", errno);
-                break;
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error 1 in header recv: %d", errno);
+                if (bad_video_counter) break;   /* exit on the second time this occurs */
+                bad_video_counter = true;
+                continue;
             }
 
             logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video packet header: %s", utils_data_to_string(packet, 16, 16));
@@ -273,6 +275,8 @@ raop_rtp_mirror_thread(void *arg)
             unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
             //unsigned short payload_option = byteutils_get_short(packet, 6);
 
+            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "payload_size = %d, type = %d", payload_size, payload_type);             
+	    
             if (payload == NULL) {
                 payload = malloc(payload_size);
                 readstart = 0;
@@ -290,8 +294,10 @@ raop_rtp_mirror_thread(void *arg)
                 break;
             } else if (ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d", errno);
-                break;
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error 2 in recv: %d", errno);
+                if (bad_video_counter) break;   /* exit on the second time this occurs */
+                bad_video_counter = true;
+                continue;
             }
 
             if (payload_type == 0) {
