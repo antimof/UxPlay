@@ -29,6 +29,7 @@
 #include "byteutils.h"
 #include "mirror_buffer.h"
 #include "stream.h"
+#include "utils.h"
 
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
@@ -266,6 +267,8 @@ raop_rtp_mirror_thread(void *arg)
                 break;
             }
 
+            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video packet header: %s", utils_data_to_string(packet, 16, 16));
+	    
             int payload_size = byteutils_get_int(packet, 0);
             unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
             //unsigned short payload_option = byteutils_get_short(packet, 6);
