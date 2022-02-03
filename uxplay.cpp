@@ -600,6 +600,12 @@ extern "C" void video_flush (void *cls) {
     }
 }
 
+extern "C" void video_conn_reset (void *cls) {
+    if (use_video) {
+        LOGI("***ERROR Exited raop_rtp_mirror thread because ECONNRESET was received");      
+    }
+}
+
 extern "C" void audio_set_volume (void *cls, float volume) {
     if (use_audio) {
         audio_renderer_set_volume(volume);
@@ -650,6 +656,7 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_cbs.conn_teardown = conn_teardown;
     raop_cbs.audio_process = audio_process;
     raop_cbs.video_process = video_process;
+    raop_cbs.video_conn_reset = video_conn_reset;
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
     raop_cbs.audio_set_volume = audio_set_volume;

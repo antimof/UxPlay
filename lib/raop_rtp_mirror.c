@@ -29,7 +29,7 @@
 #include "byteutils.h"
 #include "mirror_buffer.h"
 #include "stream.h"
-#include "utils.h"
+//#include "utils.h"
 
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
@@ -165,7 +165,7 @@ raop_rtp_mirror_thread(void *arg)
     memset(packet, 0 , 128);
     unsigned char* payload = NULL;
     unsigned int readstart = 0;
-    int  bad_video_counter = 0;
+    bool conn_reset = false;
 #ifdef DUMP_H264
     // C decrypted
     FILE* file = fopen("/home/pi/Airplay.h264", "wb");
@@ -210,7 +210,6 @@ raop_rtp_mirror_thread(void *arg)
         if (stream_fd == -1 && FD_ISSET(raop_rtp_mirror->mirror_data_sock, &rfds)) {
             struct sockaddr_storage saddr;
             socklen_t saddrlen;
-
             logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror accepting client");
             saddrlen = sizeof(saddr);
             stream_fd = accept(raop_rtp_mirror->mirror_data_sock, (struct sockaddr *)&saddr, &saddrlen);
@@ -263,13 +262,12 @@ raop_rtp_mirror_thread(void *arg)
                 continue;
             } else if (payload == NULL && ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error 1 in header recv: %d", errno);
-                if (bad_video_counter) break;   /* exit on the second time this occurs */
-                bad_video_counter = true;
-                continue;
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error  in header recv: %d", errno);
+                if (errno == ECONNRESET) conn_reset = true;; 
+                break;
             }
 
-            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video packet header: %s", utils_data_to_string(packet, 16, 16));
+            //logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video packet header: %s", utils_data_to_string(packet, 16, 16));
 	    
             int payload_size = byteutils_get_int(packet, 0);
             unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
@@ -294,10 +292,9 @@ raop_rtp_mirror_thread(void *arg)
                 break;
             } else if (ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error 2 in recv: %d", errno);
-                if (bad_video_counter) break;   /* exit on the second time this occurs */
-                bad_video_counter = true;
-                continue;
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d", errno);
+                if (errno == ECONNRESET) conn_reset = true;;
+                break;
             }
 
             if (payload_type == 0) {
@@ -445,8 +442,12 @@ raop_rtp_mirror_thread(void *arg)
     raop_rtp_mirror->running = false;
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
-    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
 
+    if (conn_reset && raop_rtp_mirror->callbacks.video_conn_reset) {
+        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: connection reset by client");
+        raop_rtp_mirror->callbacks.video_conn_reset(raop_rtp_mirror->callbacks.cls);
+    }
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");      
     return 0;
 }
 
