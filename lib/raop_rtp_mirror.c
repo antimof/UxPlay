@@ -442,7 +442,7 @@ raop_rtp_mirror_thread(void *arg)
     raop_rtp_mirror->running = false;
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
-    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");      
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
     if (conn_reset && raop_rtp_mirror->callbacks.video_conn_reset) {
         logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: received ECONNRESET from socket");
         raop_rtp_mirror->callbacks.video_conn_reset(raop_rtp_mirror->callbacks.cls);
