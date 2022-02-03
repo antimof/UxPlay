@@ -293,7 +293,7 @@ raop_rtp_mirror_thread(void *arg)
             } else if (ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d", errno);
-                if (errno == ECONNRESET) conn_reset = true;;
+                if (errno == ECONNRESET) conn_reset = true;
                 break;
             }
 
@@ -442,12 +442,11 @@ raop_rtp_mirror_thread(void *arg)
     raop_rtp_mirror->running = false;
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
-
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");      
     if (conn_reset && raop_rtp_mirror->callbacks.video_conn_reset) {
-        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: connection reset by client");
+        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: received ECONNRESET from socket");
         raop_rtp_mirror->callbacks.video_conn_reset(raop_rtp_mirror->callbacks.cls);
     }
-    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");      
     return 0;
 }
 

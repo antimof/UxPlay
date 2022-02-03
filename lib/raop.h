@@ -43,6 +43,7 @@ struct raop_callbacks_s {
     void  (*conn_teardown)(void *cls, bool *teardown_96, bool *teardown_110 );
     void  (*audio_flush)(void *cls);
     void  (*video_flush)(void *cls);
+    void  (*video_conn_reset) (void *cls);
     void  (*audio_set_volume)(void *cls, float volume);
     void  (*audio_set_metadata)(void *cls, const void *buffer, int buflen);
     void  (*audio_set_coverart)(void *cls, const void *buffer, int buflen);
