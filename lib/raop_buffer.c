@@ -152,8 +152,14 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 #endif
 
     if (DECRYPTION_TEST) {
-        printf("encrypted 12 byte header %s", utils_data_to_string(data,12,12));
-        if (payload_size) printf("len %d before decryption:\n%s", payload_size, utils_data_to_string(&data[12],16,16 ));
+        char *str = utils_data_to_string(data,12,12));
+        printf("encrypted 12 byte header %s", str);
+        free(str);
+        if (payload_size) {
+            str = utils_data_to_string(&data[12],16,16 );
+            printf("len %d before decryption:\n%s", payload_size, str);
+            free(str);
+        }
     }
     encryptedlen = payload_size / 16*16;
     memset(output, 0, payload_size);
@@ -179,10 +185,14 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
         }
         if (DECRYPTION_TEST == 2) {
             printf("decrypted audio frame, len = %d\n", *outputlen);
-	    printf("%s",utils_data_to_string(output,payload_size,16));
+            char *str = utils_data_to_string(output,payload_size,16);
+	    printf("%s",str);
             printf("\n");
+            free(str);
         } else {
-            printf("%d after  \n%s\n", payload_size, utils_data_to_string(output,16,16 ));
+            char *str = utils_data_to_string(output,16,16);
+            printf("%d after  \n%s\n", payload_size, str);
+            free(str);
         }
     }
 #ifdef DUMP_AUDIO
