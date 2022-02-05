@@ -44,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.46"
+#define VERSION "1.47"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -76,6 +76,8 @@ static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 static bool previous_no_close_behavior = false;
 static std::string decoder = "decodebin";
+static bool show_client_FPS_data = true;
+
 
 static gboolean connection_callback (gpointer loop){
     if (!connections_stopped) {
@@ -229,7 +231,8 @@ static void print_info (char *name) {
     printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
-    printf("-nc       do not close video window when client stops mirroring\n");  
+    printf("-nc       do Not Close video window when client stops mirroring\n");  
+    printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-d        Enable debug logging\n");
     printf("-v or -h  Displays this help and version information\n");
 }
@@ -451,7 +454,9 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-avdec") {
             decoder.erase();
             decoder = "h264parse ! avdec_h264";
-        } else {
+        } else if (arg == "-FPSdata") {
+            show_client_FPS_data = true;
+	} else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
@@ -678,7 +683,9 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     if (display[2]) raop_set_plist(raop, "refreshRate", (int) display[2]);
     if (display[3]) raop_set_plist(raop, "maxFPS", (int) display[3]);
     if (display[4]) raop_set_plist(raop, "overscanned", (int) display[4]);
-
+ 
+    if (show_client_FPS_data) raop_set_plist(raop, "clientFPSdata", 1);
+    
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
     raop_set_udp_ports(raop, udp);

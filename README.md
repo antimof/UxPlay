@@ -1,4 +1,4 @@
-# UxPlay 1.46:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.47:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 Highlights:
 
@@ -265,7 +265,11 @@ Options:
    the client device, so setting a high value will not force a high framerate._
    (You can test using "-vs fpsdisplaysink" to see what framerate is being
    received.)
-   
+
+**-FPSdata** Turns on monitoring of regular reports about video streaming performance
+   that are sent by the client.  These will be displayed in the terminal window if this
+   option is used.
+
 **-o** turns on an "overscanned" option for the display window.    This
    reduces the image resolution by using some of the pixels requested
    by  option -s wxh (or their default values 1920x1080) by adding an empty
@@ -458,6 +462,9 @@ devices that cannot run modern tvOS; it is probably
 not necessary for UxPlay to claim to be such an old AppleTV model.
 
 # ChangeLog
+1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming performance.  
+                  Internal cleanups of processing of video packets received from the client.
+
 1.46 2022-01-20   Restore pre-1.44 behavior (1.44 may have broken hardware acceleration): once again use decodebin in the video pipeline; 
                   introduce new option "-avdec" to force software h264 decoding by libav h264, if needed (to prevent selection of 
                   vaapisink by autovideosink).  Update llhttp to v6.0.6.  UxPlay now reports itself as AppleTV3,2.  Restrict connections 

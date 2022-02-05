@@ -29,7 +29,8 @@
 #include "byteutils.h"
 #include "mirror_buffer.h"
 #include "stream.h"
-//#include "utils.h"
+#include "utils.h"
+#include "plist/plist.h"
 
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
@@ -79,6 +80,12 @@ struct raop_rtp_mirror_s {
 
     unsigned short mirror_data_lport;
 
+    /* SPS and PPS */
+    int sps_pps_len;
+    unsigned char* sps_pps;  
+
+     /* switch for displaying client FPS data */
+     uint8_t show_client_FPS_data;
 };
 
 static int
@@ -123,7 +130,9 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
     }
     raop_rtp_mirror->logger = logger;
     raop_rtp_mirror->ntp = ntp;
-
+    raop_rtp_mirror->sps_pps_len = 0;
+    raop_rtp_mirror->sps_pps = NULL;
+    
     memcpy(&raop_rtp_mirror->callbacks, callbacks, sizeof(raop_callbacks_t));
     raop_rtp_mirror->buffer = mirror_buffer_init(logger, aeskey);
     if (!raop_rtp_mirror->buffer) {
@@ -166,6 +175,9 @@ raop_rtp_mirror_thread(void *arg)
     unsigned char* payload = NULL;
     unsigned int readstart = 0;
     bool conn_reset = false;
+    uint64_t ntp_timestamp_nal = 0;
+    uint64_t ntp_timestamp_raw = 0;
+    
 #ifdef DUMP_H264
     // C decrypted
     FILE* file = fopen("/home/pi/Airplay.h264", "wb");
@@ -262,19 +274,15 @@ raop_rtp_mirror_thread(void *arg)
                 continue;
             } else if (payload == NULL && ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error  in header recv: %d", errno);
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error  in header recv: %d %s", errno, strerror(errno));
                 if (errno == ECONNRESET) conn_reset = true;; 
                 break;
             }
 
-            //logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video packet header: %s", utils_data_to_string(packet, 16, 16));
-	    
             int payload_size = byteutils_get_int(packet, 0);
-            unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
+            //unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
             //unsigned short payload_option = byteutils_get_short(packet, 6);
 
-            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "payload_size = %d, type = %d", payload_size, payload_type);             
-	    
             if (payload == NULL) {
                 payload = malloc(payload_size);
                 readstart = 0;
@@ -292,19 +300,20 @@ raop_rtp_mirror_thread(void *arg)
                 break;
             } else if (ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d", errno);
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d %s", errno, strerror(errno));
                 if (errno == ECONNRESET) conn_reset = true;
                 break;
             }
 
-            if (payload_type == 0) {
+	    switch (packet[4]) {
+            case  0x00:
                 // Normal video data (VCL NAL)
 
                 // Conveniently, the video data is already stamped with the remote wall clock time,
                 // so no additional clock syncing needed. The only thing odd here is that the video
                 // ntp time stamps don't include the SECONDS_FROM_1900_TO_1970, so it's really just
                 // counting micro seconds since last boot.
-                uint64_t ntp_timestamp_raw = byteutils_get_long(packet, 8);
+                ntp_timestamp_raw = byteutils_get_long(packet, 8);
                 uint64_t ntp_timestamp_remote = raop_ntp_timestamp_to_micro_seconds(ntp_timestamp_raw, false);
                 uint64_t ntp_timestamp = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
 
@@ -316,9 +325,18 @@ raop_rtp_mirror_thread(void *arg)
                 fwrite(payload, payload_size, 1, file_source);
                 fwrite(&readstart, sizeof(readstart), 1, file_len);
 #endif
-
+                unsigned char* payload_out;
+		unsigned char* payload_decrypted;
+                bool prepend_sps_pps = ((packet[5] != 0x00) && (raop_rtp_mirror->sps_pps_len > 0));
+                if (prepend_sps_pps) {
+                    payload_out = (unsigned char*)  malloc(payload_size + raop_rtp_mirror->sps_pps_len);
+                    payload_decrypted = payload_out + raop_rtp_mirror->sps_pps_len;
+                    memcpy(payload_out, raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len);
+                } else {
+                    payload_out = (unsigned char*)  malloc(payload_size);
+                    payload_decrypted = payload_out;
+                }
                 // Decrypt data
-                unsigned char* payload_decrypted = malloc(payload_size);
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
                 int nalu_size = 0;
@@ -326,21 +344,23 @@ raop_rtp_mirror_thread(void *arg)
 
                 // It seems the AirPlay protocol prepends NALs with their size, which we're replacing with the 4-byte
                 // start code for the NAL Byte-Stream Format.
-                bool valid = true;
+                bool valid_data = true;
                 while (nalu_size < payload_size) {
                     int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
                                  (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
                     if (nc_len < 0 || nalu_size + 4 > payload_size) {
-                        valid = false;
+                        valid_data = false;
                         break;
                     }
                     payload_decrypted[nalu_size + 0] = 0;
                     payload_decrypted[nalu_size + 1] = 0;
                     payload_decrypted[nalu_size + 2] = 0;
                     payload_decrypted[nalu_size + 3] = 1;
-                    nalu_size += nc_len + 4;
+                    nalu_size += 4;
                     nalus_count++;
+                    nalu_size += nc_len;
                 }
+                if (nalu_size != payload_size) valid_data = false;
 
                 // int nalu_type = payload[4] & 0x1f;
                 // logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalutype = %d", nalu_type);
@@ -350,17 +370,30 @@ raop_rtp_mirror_thread(void *arg)
 #ifdef DUMP_H264
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
-                if (!valid || nalu_size != payload_size) payload_decrypted[0] = 1; /* mark as invalid */
-                h264_decode_struct h264_data;
-                h264_data.data_len = payload_size;
-                h264_data.data = payload_decrypted;
-                h264_data.frame_type = 1;
-                h264_data.pts = ntp_timestamp;
-                raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
-                free(payload_decrypted);
-            } else if ((payload_type & 255) == 1) {
-                // The information in the payload contains an SPS and a PPS NAL
 
+		h264_decode_struct h264_data;
+                h264_data.pts = ntp_timestamp;
+                h264_data.frame_type = payload_decrypted[4] & 0x1f;
+                if (h264_data.frame_type == 5) {
+		    assert(prepend_sps_pps);
+                    h264_data.data = payload_out;
+                    h264_data.data_len = payload_size + raop_rtp_mirror->sps_pps_len;
+                    if (ntp_timestamp_raw != ntp_timestamp_nal) {
+                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror: prepended sps_pps timestamp does not match that of video payload");
+                    }
+                } else {
+                    h264_data.data_len = payload_size;
+                    h264_data.data = payload_decrypted;
+                }
+
+
+		if (!valid_data) h264_data.data[0] = 1; /* mark video data as invalid h264 (failed decryption) */
+                raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
+                free(payload_out);
+                break;
+            case 0x01:
+                // The information in the payload contains an SPS and a PPS NAL
+                ntp_timestamp_nal = byteutils_get_long(packet, 8);
                 float width_source = byteutils_get_float(packet, 40);
                 float height_source = byteutils_get_float(packet, 44);
                 float width = byteutils_get_float(packet, 56);
@@ -391,32 +424,69 @@ raop_rtp_mirror_thread(void *arg)
 
                 if (h264.sps_size + h264.pps_size < 102400) {
                     // Copy the sps and pps into a buffer to hand to the decoder
-                    int sps_pps_len = (h264.sps_size + h264.pps_size) + 8;
-                    unsigned char sps_pps[sps_pps_len];
-                    sps_pps[0] = 0;
-                    sps_pps[1] = 0;
-                    sps_pps[2] = 0;
-                    sps_pps[3] = 1;
-                    memcpy(sps_pps + 4, h264.sequence_parameter_set, h264.sps_size);
-                    sps_pps[h264.sps_size + 4] = 0;
-                    sps_pps[h264.sps_size + 5] = 0;
-                    sps_pps[h264.sps_size + 6] = 0;
-                    sps_pps[h264.sps_size + 7] = 1;
-                    memcpy(sps_pps + h264.sps_size + 8, h264.picture_parameter_set, h264.pps_size);
+                    raop_rtp_mirror->sps_pps_len = (h264.sps_size + h264.pps_size) + 8;
+		    if (raop_rtp_mirror->sps_pps) {
+                        free(raop_rtp_mirror->sps_pps);
+                        raop_rtp_mirror->sps_pps = NULL;
+		    }
+                    raop_rtp_mirror->sps_pps = (unsigned char*) malloc(raop_rtp_mirror->sps_pps_len);
+                    assert(raop_rtp_mirror->sps_pps);
+                    raop_rtp_mirror->sps_pps[0] = 0;
+                    raop_rtp_mirror->sps_pps[1] = 0;
+                    raop_rtp_mirror->sps_pps[2] = 0;
+                    raop_rtp_mirror->sps_pps[3] = 1;
+                    memcpy(raop_rtp_mirror->sps_pps + 4, h264.sequence_parameter_set, h264.sps_size);
+                    raop_rtp_mirror->sps_pps[h264.sps_size + 4] = 0;
+                    raop_rtp_mirror->sps_pps[h264.sps_size + 5] = 0;
+                    raop_rtp_mirror->sps_pps[h264.sps_size + 6] = 0;
+                    raop_rtp_mirror->sps_pps[h264.sps_size + 7] = 1;
+                    memcpy(raop_rtp_mirror->sps_pps + h264.sps_size + 8, h264.picture_parameter_set, h264.pps_size);
 
 #ifdef DUMP_H264
-                    fwrite(sps_pps, sps_pps_len, 1, file);
+                    fwrite(raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len, 1, file);
 #endif
 
-                    h264_decode_struct h264_data;
-                    h264_data.data_len = sps_pps_len;
-                    h264_data.data = sps_pps;
-                    h264_data.frame_type = 0;
-                    h264_data.pts = 0;
-                    raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 }
                 free(h264.picture_parameter_set);
                 free(h264.sequence_parameter_set);
+                break;
+            case 0x05:
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived video streaming performance info packet from client");
+	      /* payloads with packet[4] = 0x05 have no timestamp, and carry video info from the client as a binary plist *
+               * Sometimes (e.g, when the client has a locked screen), there is a 25kB trailer attached to the packet.    *
+	       * This 25000 Byte trailer with unidentified content seems to be the same data each time it is sent.        */
+
+                if (payload_size) {
+                    //char *str = utils_data_to_string(packet, 128, 16);
+                    //logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "type 5 video packet header:\n%s", str);
+                    //free (str);
+		    
+                    int plist_size = payload_size;
+                    if (payload_size > 25000) {
+		        plist_size = payload_size - 25000;
+                        char *str = utils_data_to_string(payload + plist_size, 16, 16);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video_info packet had 25kB trailer; first 16 bytes are:\n%s", str);
+                        free(str);
+                    }
+                    if (plist_size) {
+                        char *plist_xml;
+                        uint32_t plist_len;
+                        plist_t root_node = NULL;
+                        plist_from_bin((char *) payload, plist_size, &root_node);
+                        plist_to_xml(root_node, &plist_xml, &plist_len);
+                        switch (raop_rtp_mirror->show_client_FPS_data) {
+                        case 1:
+                            logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "%s", plist_xml);
+                            break;
+                        default:
+                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "%s", plist_xml);
+                            break;
+                        }
+                        free(plist_xml);
+                    }
+                }
+            default:
+                break;
             }
 
             free(payload);
@@ -432,7 +502,7 @@ raop_rtp_mirror_thread(void *arg)
     }
 
 #ifdef DUMP_H264
-        fclose(file);
+    fclose(file);
     fclose(file_source);
     fclose(file_len);
 #endif
@@ -454,13 +524,14 @@ static int
 raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
 
 void
-raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport)
+raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport, uint8_t show_client_FPS_data)
 {
     logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror starting mirroring");
     int use_ipv6 = 0;
 
     assert(raop_rtp_mirror);
     assert(mirror_data_lport);
+    raop_rtp_mirror->show_client_FPS_data = show_client_FPS_data;
 
     MUTEX_LOCK(raop_rtp_mirror->run_mutex);
     if (raop_rtp_mirror->running || !raop_rtp_mirror->joined) {
@@ -521,7 +592,10 @@ void raop_rtp_mirror_destroy(raop_rtp_mirror_t *raop_rtp_mirror) {
         raop_rtp_mirror_stop(raop_rtp_mirror);
         MUTEX_DESTROY(raop_rtp_mirror->run_mutex);
         mirror_buffer_destroy(raop_rtp_mirror->buffer);
-        free(raop_rtp_mirror);
+        if (raop_rtp_mirror->sps_pps) {
+            free(raop_rtp_mirror->sps_pps);
+        }
+	free(raop_rtp_mirror);
     }
 }
 

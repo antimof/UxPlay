@@ -263,7 +263,7 @@ raop_ntp_thread(void *arg)
         byteutils_put_ntp_timestamp(request, 24, send_time);
         int send_len = sendto(raop_ntp->tsock, (char *)request, sizeof(request), 0,
                               (struct sockaddr *) &raop_ntp->remote_saddr, raop_ntp->remote_saddr_len);
-        logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp send_len = %d", send_len);
+        logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp send_len = %d, now = %llu", send_len, send_time);
         if (send_len < 0) {
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
