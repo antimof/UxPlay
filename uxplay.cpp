@@ -76,7 +76,7 @@ static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 static bool previous_no_close_behavior = false;
 static std::string decoder = "decodebin";
-static bool show_client_FPS_data = true;
+static bool show_client_FPS_data = false;
 
 
 static gboolean connection_callback (gpointer loop){

@@ -246,7 +246,8 @@ raop_ntp_thread(void *arg)
     };
     raop_ntp_data_t data_sorted[RAOP_NTP_DATA_COUNT];
     const unsigned  two_pow_n[RAOP_NTP_DATA_COUNT] = {2, 4, 8, 16, 32, 64, 128, 256};
-
+    int timeout_counter = 0;
+    
     while (1) {
         MUTEX_LOCK(raop_ntp->run_mutex);
         if (!raop_ntp->running) {
@@ -271,8 +272,10 @@ raop_ntp_thread(void *arg)
             response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0,
                                     (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
             if (response_len < 0) {
-                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout");
+                timeout_counter++;
+                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout %5d (request sent %llu)", timeout_counter, send_time);
             } else {
+	        timeout_counter = 0;
                 logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d", response_len);
 
                 int64_t t3 = (int64_t) raop_ntp_get_local_time(raop_ntp);
