@@ -51,8 +51,8 @@ struct raop_s {
     unsigned short mirror_data_lport;  
 
     /* configurable plist items: width, height, refreshRate, maxFPS, overscanned *
-     * also clientFPSdata, which controls whether video stream info received    *
-     * from the client is shown on terminal monitor.                                      */
+     * also clientFPSdata, which controls whether video stream info received     *
+     * from the client is shown on terminal monitor.                             */
     uint16_t width;
     uint16_t height;
     uint8_t refreshRate;
