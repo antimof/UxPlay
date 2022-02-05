@@ -18,7 +18,6 @@
 #include <stdint.h>
 #include "raop.h"
 #include "logger.h"
-#include "raop_ntp.h"
 
 typedef struct raop_rtp_mirror_s raop_rtp_mirror_t;
 typedef struct h264codec_s h264codec_t;
