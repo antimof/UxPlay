@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "raop_ntp.h"
+#include "raop.h"
 #include "threads.h"
 #include "compat.h"
 #include "netutils.h"
@@ -45,6 +45,7 @@ typedef struct raop_ntp_data_s {
 
 struct raop_ntp_s {
     logger_t *logger;
+    raop_callbacks_t callbacks;
 
     thread_handle_t thread;
     mutex_handle_t run_mutex;
@@ -125,16 +126,18 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
     return 0;
 }
 
-raop_ntp_t *raop_ntp_init(logger_t *logger, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport) {
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport) {
     raop_ntp_t *raop_ntp;
 
     assert(logger);
+    assert(callbacks);
 
     raop_ntp = calloc(1, sizeof(raop_ntp_t));
     if (!raop_ntp) {
         return NULL;
     }
     raop_ntp->logger = logger;
+    memcpy(&raop_ntp->callbacks, callbacks, sizeof(raop_callbacks_t));    
     raop_ntp->timing_rport = timing_rport;
 
     if (raop_ntp_parse_remote_address(raop_ntp, remote_addr, remote_addr_len) < 0) {
