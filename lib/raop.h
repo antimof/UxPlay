@@ -54,6 +54,8 @@ struct raop_callbacks_s {
 };
 typedef struct raop_callbacks_s raop_callbacks_t;
 
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport);
+  
 RAOP_API raop_t *raop_init(int max_clients, raop_callbacks_t *callbacks);
 
 RAOP_API void raop_set_log_level(raop_t *raop, int level);
