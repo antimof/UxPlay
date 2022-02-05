@@ -19,7 +19,6 @@
 
 #include "raop.h"
 #include "raop_rtp.h"
-#include "raop_rtp.h"
 #include "pairing.h"
 #include "httpd.h"
 
