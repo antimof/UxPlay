@@ -456,7 +456,7 @@ raop_rtp_mirror_thread(void *arg)
                * Sometimes (e.g, when the client has a locked screen), there is a 25kB trailer attached to the packet.    *
 	       * This 25000 Byte trailer with unidentified content seems to be the same data each time it is sent.        */
 
-                if (payload_size) {
+                if (payload_size && raop_rtp_mirror->show_client_FPS_data) {
                     //char *str = utils_data_to_string(packet, 128, 16);
                     //logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "type 5 video packet header:\n%s", str);
                     //free (str);
@@ -474,14 +474,7 @@ raop_rtp_mirror_thread(void *arg)
                         plist_t root_node = NULL;
                         plist_from_bin((char *) payload, plist_size, &root_node);
                         plist_to_xml(root_node, &plist_xml, &plist_len);
-                        switch (raop_rtp_mirror->show_client_FPS_data) {
-                        case 1:
-                            logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "%s", plist_xml);
-                            break;
-                        default:
-                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "%s", plist_xml);
-                            break;
-                        }
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "%s", plist_xml);
                         free(plist_xml);
                     }
                 }
@@ -513,9 +506,8 @@ raop_rtp_mirror_thread(void *arg)
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
-    if (conn_reset && raop_rtp_mirror->callbacks.video_conn_reset) {
-        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: received ECONNRESET from socket");
-        raop_rtp_mirror->callbacks.video_conn_reset(raop_rtp_mirror->callbacks.cls);
+    if (conn_reset && raop_rtp_mirror->callbacks.conn_reset) {
+        raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls);
     }
     return 0;
 }

@@ -59,6 +59,8 @@ struct raop_s {
     uint8_t maxFPS;
     uint8_t overscanned;
     uint8_t clientFPSdata;
+
+    int max_ntp_timeouts;
 };
 
 struct raop_conn_s {
@@ -443,6 +445,8 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     /* initialize switch for display of client's streaming data records */    
     raop->clientFPSdata = 0;
 
+    raop->max_ntp_timeouts = 0;
+
     return raop;
 }
 
@@ -479,24 +483,27 @@ int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
     assert(raop);
     assert(plist_item);
     
-    if (strcmp(plist_item,"width") == 0) {
+    if (strcmp(plist_item, "width") == 0) {
         raop->width = (uint16_t) value;
         if ((int) raop->width != value) retval = 1;
-    } else if (strcmp(plist_item,"height") == 0) {
+    } else if (strcmp(plist_item, "height") == 0) {
         raop->height = (uint16_t) value;
         if ((int) raop->height != value) retval = 1;
-    } else if (strcmp(plist_item,"refreshRate") == 0) {
+    } else if (strcmp(plist_item, "refreshRate") == 0) {
         raop->refreshRate = (uint8_t) value;
         if ((int) raop->refreshRate != value) retval = 1;
-    } else if (strcmp(plist_item,"maxFPS") == 0) {
+    } else if (strcmp(plist_item, "maxFPS") == 0) {
         raop->maxFPS = (uint8_t) value;
         if ((int) raop->maxFPS != value) retval = 1;
-    } else if (strcmp(plist_item,"overscanned") == 0) {
+    } else if (strcmp(plist_item, "overscanned") == 0) {
         raop->overscanned = (uint8_t) (value ? 1 : 0);
         if ((int) raop->overscanned  != value) retval = 1;
-    } else if (strcmp(plist_item,"clientFPSdata") == 0) {
+    } else if (strcmp(plist_item, "clientFPSdata") == 0) {
         raop->clientFPSdata = (value ? 1 : 0);
         if ((int) raop->clientFPSdata  != value) retval = 1;
+    } else if (strcmp(plist_item, "max_ntp_timeouts") == 0) {
+        raop->max_ntp_timeouts = (value > 0 ? value : 0);
+        if (raop->max_ntp_timeouts != value) retval = 1;
     }  else {
         retval = -1;
     }	  

@@ -23,7 +23,7 @@
 typedef struct raop_ntp_s raop_ntp_t;
 
 
-void raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport);
+void raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_timeouts);
 
 void raop_ntp_stop(raop_ntp_t *raop_ntp);
 

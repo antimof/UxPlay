@@ -47,6 +47,8 @@ struct raop_ntp_s {
     logger_t *logger;
     raop_callbacks_t callbacks;
 
+    int max_ntp_timeouts;
+
     thread_handle_t thread;
     mutex_handle_t run_mutex;
 
@@ -250,7 +252,8 @@ raop_ntp_thread(void *arg)
     raop_ntp_data_t data_sorted[RAOP_NTP_DATA_COUNT];
     const unsigned  two_pow_n[RAOP_NTP_DATA_COUNT] = {2, 4, 8, 16, 32, 64, 128, 256};
     int timeout_counter = 0;
-    
+    bool conn_reset = false;
+      
     while (1) {
         MUTEX_LOCK(raop_ntp->run_mutex);
         if (!raop_ntp->running) {
@@ -276,8 +279,13 @@ raop_ntp_thread(void *arg)
                                     (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
             if (response_len < 0) {
                 timeout_counter++;
-                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout %5d (request sent %llu)", timeout_counter, send_time);
-            } else {
+                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout %d (limit %d) (request sent %llu)",
+                           timeout_counter, raop_ntp->max_ntp_timeouts, send_time);
+                if (timeout_counter ==  raop_ntp->max_ntp_timeouts) {
+                    conn_reset = true;   /* client is no longer responding */
+                    break;
+                }
+	    } else {
 	        timeout_counter = 0;
                 logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d", response_len);
 
@@ -342,11 +350,14 @@ raop_ntp_thread(void *arg)
     MUTEX_UNLOCK(raop_ntp->run_mutex);
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp exiting thread");
+    if (conn_reset && raop_ntp->callbacks.conn_reset) {
+        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls);
+    }
     return 0;
 }
 
 void
-raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
+raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_timeouts)
 {
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp starting time");
     int use_ipv6 = 0;
@@ -354,6 +365,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
     assert(raop_ntp);
     assert(timing_lport);
 
+    raop_ntp->max_ntp_timeouts = max_ntp_timeouts;
     raop_ntp->timing_lport = *timing_lport;
 
     MUTEX_LOCK(raop_ntp->run_mutex);
@@ -377,7 +389,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
     /* Create the thread and initialize running values */
     raop_ntp->running = 1;
     raop_ntp->joined = 0;
-
+    
     THREAD_CREATE(raop_ntp->thread, raop_ntp_thread, raop_ntp);
     MUTEX_UNLOCK(raop_ntp->run_mutex);
 }

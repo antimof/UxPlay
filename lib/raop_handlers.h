@@ -416,7 +416,7 @@ raop_handler_setup(raop_conn_t *conn,
 
         unsigned short timing_lport = conn->raop->timing_lport;
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, conn->remote, conn->remotelen, timing_rport);
-        raop_ntp_start(conn->raop_ntp, &timing_lport);
+        raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
 
         conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey, aesiv);
         conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp, conn->remote, conn->remotelen, aeskey);

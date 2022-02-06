@@ -423,6 +423,13 @@ name. (Some choices of audiosink might not work on your system.)
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
 
+**-reset n** sets a limit of n consective timeout failures of the client
+to respond to ntp requests from the server (these are sent every 3
+seconds to check if the client is still present). After n failures, the
+client will be presumed to be offline, and the connection will be reset
+to allow a new connection. The default value of n is 10; the value n = 0
+means "no limit" on timeouts.
+
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
 close** the video window when the the client sends the "Stop Mirroring"
 signal. *This option is currently used by default in macOS, as the
@@ -594,7 +601,8 @@ ChangeLog
 1.47 2022-02-05 Added -FPSdata option to display (in the terminal)
 regular reports sent by the client about video streaming performance.\
 Internal cleanups of processing of video packets received from the
-client.
+client. Added -reset n option to reset the connection after n ntp
+timeouts (also reset after ECONNRESET error in video stream).
 
 1.46 2022-01-20 Restore pre-1.44 behavior (1.44 may have broken hardware
 acceleration): once again use decodebin in the video pipeline; introduce
