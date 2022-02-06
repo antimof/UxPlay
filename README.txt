@@ -9,10 +9,11 @@ Highlights:
     devices.
 -   macOS computers (Macs released in 2011 or later) can act either as
     AirPlay clients of UxPlay, or as the server running UxPlay (tested
-    on macOS 10.15 Catalina).\
+    on macOS 10.15 Catalina). UxPlay can provide a second Airplay-based
+    display for macOS client computers.
 -   Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone
-    4S) when upgraded to iOS 9.3.5 or later, also Windows client
-    AirMyPC.
+    4S) when upgraded to iOS 9.3.5 or later. Also supports the Windows
+    client AirMyPC.
 -   Uses GStreamer, with options to select different output "videosinks"
     and "audiosinks".
 -   Support for server behind a firewall.
