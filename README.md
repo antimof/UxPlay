@@ -468,9 +468,9 @@ devices that cannot run modern tvOS; it is probably
 not necessary for UxPlay to claim to be such an old AppleTV model.
 
 # ChangeLog
-1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming performance.  
-                  Internal cleanups of processing of video packets received from the client.   Added -reset n option to reset  the connection
-                  after n ntp timeouts (also reset after ECONNRESET error in video stream).
+1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming 
+                  performance.  Internal cleanups of processing of video packets received from the client.   Added -reset n option 
+                  to reset the connection after n ntp timeouts (also reset after "connection reset by peer" error in video stream).
 
 1.46 2022-01-20   Restore pre-1.44 behavior (1.44 may have broken hardware acceleration): once again use decodebin in the video pipeline; 
                   introduce new option "-avdec" to force software h264 decoding by libav h264, if needed (to prevent selection of 
