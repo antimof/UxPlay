@@ -264,11 +264,12 @@ Options:
    _This setting is only an advisory to
    the client device, so setting a high value will not force a high framerate._
    (You can test using "-vs fpsdisplaysink" to see what framerate is being
-   received.)
+   received, or use the option -FPSdata which displays video-stream performance data
+   continuously sent by the client during video-streaming.)
 
 **-FPSdata** Turns on monitoring of regular reports about video streaming performance
    that are sent by the client.  These will be displayed in the terminal window if this
-   option is used.
+   option is used.   The data is updated by the client at 1 second intervals.
 
 **-o** turns on an "overscanned" option for the display window.    This
    reduces the image resolution by using some of the pixels requested

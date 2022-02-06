@@ -346,11 +346,14 @@ default is 30 fps.) A setting below 30 fps might be useful to reduce
 latency if you are running more than one instance of uxplay at the same
 time. *This setting is only an advisory to the client device, so setting
 a high value will not force a high framerate.* (You can test using "-vs
-fpsdisplaysink" to see what framerate is being received.)
+fpsdisplaysink" to see what framerate is being received, or use the
+option -FPSdata which displays video-stream performance data
+continuously sent by the client during video-streaming.)
 
 **-FPSdata** Turns on monitoring of regular reports about video
 streaming performance that are sent by the client. These will be
-displayed in the terminal window if this option is used.
+displayed in the terminal window if this option is used. The data is
+updated by the client at 1 second intervals.
 
 **-o** turns on an "overscanned" option for the display window. This
 reduces the image resolution by using some of the pixels requested by
