@@ -812,8 +812,9 @@ code included in UxPlay by inheritance from RPiPlay include:
     is basically a port of dsafa22's code to the Raspberry Pi, utilizing
     OpenMAX and OpenSSL for better performance on the Pi. License GPL
     v3.
--   **Joyent, Inc and contributors**: Created an http parsing library
-    called [llhttp](https://github.com/nodejs/llhttp). Located at
+-   **Fedor Indutny** (of Node.js, and formerly Joyent, Inc) and
+    contributors: Created an http parsing library called
+    [llhttp](https://github.com/nodejs/llhttp). Located at
     `lib/llhttp/`. License: MIT
 
 Notes on AirPlay protocol versions by Florian Draschbacher, RPiPlay creator
