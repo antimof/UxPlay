@@ -602,27 +602,29 @@ This project makes use of a third-party GPL library for handling FairPlay. The l
 Given the large number of third-party AirPlay receivers (mostly closed-source) available for purchase, it is my understanding that an open source implementation of the same functionality wouldn't violate any of Apple's rights either.
 
 
-# Notes by Florian Draschbacher, RPiPlay creator
-(From the  https://github.com/FD-/RPiPlay.git repository.)
 
-## RPiPlay authors
+# UxPlay authors
+
+_[adapted from fdraschbacher's notes on  RPiPlay antecedents]_
 
 The code in this repository accumulated from various sources over time. Here
-is my (__fdrachbacher__) attempt at listing the various authors and the components they created:
+is an attempt at listing the various authors and the components they created:
 
-* **dsafa22**: Created an AirPlay 2 mirroring server [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems gone now), _\[added: but code is preserved
-[here](https://github.com/KqSMea8/AirplayServer), and [see here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for 
-the description of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible, by the AirplayServer author\]_ 
-for Android based on ShairPlay.
-This project (RPiPlay)  is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi.
-All code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+
-* **Juho Vähä-Herttua** and contributors: Created an AirPlay audio server called [ShairPlay](https://github.com/juhovh/shairplay), including support for Fairplay based on PlayFair. Most of the code in `lib/` originally stems from this project. License: GNU LGPLv2.1+
+UxPlay was initially created by **antimof** from RPiPlay, by replacing its Raspberry-Pi-specific  video and audio rendering system with GStreamer rendering for
+Desktop Linux (antimof's work on code in `renderers/` was later backported to RPiPlay).   The previous authors of code included in UxPlay by inheritance from RPiPlay include:
+
 * **EstebanKubata**: Created a FairPlay library called [PlayFair](https://github.com/EstebanKubata/playfair). Located in the `lib/playfair` folder. License: GNU GPL
-* **Joyent, Inc and contributors**: Created an http library called [llhttp](https://github.com/nodejs/llhttp). Located at `lib/llhttp/`. License: MIT
-* **Team XBMC**: Managed to show a black background for OpenMAX video rendering. This code is used in the video renderer. License: GNU GPL
-* **Alex Izvorski and contributors**: Wrote [h264bitstream](https://github.com/aizvorski/h264bitstream), a library for manipulation h264 streams. Used for reducing delay in the Raspberry Pi video pipeline. Located in the `renderers/h264-bitstream` folder. License: GNU LGPLv2.1
+* **Juho Vähä-Herttua** and contributors: Created an AirPlay audio server called [ShairPlay](https://github.com/juhovh/shairplay), including support for Fairplay based on PlayFair. Most of the code   in `lib/` originally stems from this project. License: GNU LGPLv2.1+
+* **dsafa22**: Created an AirPlay 2 mirroring server [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems gone now), for Android based on ShairPlay.   Code is 
+  preserved [here](https://github.com/KqSMea8/AirplayServer), and [see here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for  the description 
+  of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible, by the AirplayServer author. All 
+  code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+
+* **Florian Draschbacher** and contributors: adapted dsafa22's Android project for the Raspberry Pi, with extensive cleanups, debugging and improvements.  The
+   project RPiPlay is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi. License GPL v3.
+* **Joyent, Inc and contributors**: Created an http parsing library called [llhttp](https://github.com/nodejs/llhttp). Located at `lib/llhttp/`. License: MIT
 
-## AirPlay protocol versions
+## Notes on AirPlay protocol versions  by Florian Draschbacher, RPiPlay creator
+(From the  https://github.com/FD-/RPiPlay.git repository.)
 
 For multiple reasons, it's very difficult to clearly define the protocol names and versions of the components that make up the AirPlay streaming system. In fact, it seems like the AirPlay version number used for marketing differs from that used in the actual implementation. In order to tidy up this whole mess a bit, I did a little research that I'd like to summarize here:
 
