@@ -577,7 +577,28 @@ GStreamer 1.x into packages in different ways; the packages listed above
 in the build instructions should bring in other required GStreamer
 packages as dependencies, but will not install all possible plugins.
 
-### 5. Failure to decrypt ALL video and audio streams from old or non-Apple clients:
+### 5. Mirror screen freezes:
+
+This can happen if the TCP video stream from the client stops arriving
+at the server, probably because of network problems (the UDP audio
+stream may continue to arrive). At 3-second intervals, UxPlay checks
+that the client is still connected by sending it a request for a NTP
+time signal. If a reply is not received from the client within a 0.3 sec
+time-window, an "ntp timeout" is registered. If a certain number
+(currently 10) of consecutive ntp timeouts occur, UxPlay assumes that
+the client is "dead", and resets the connection, becoming available for
+connection to a new client, or reconnection to the previous one.
+Sometimes the connection may recover before the timeout limit is
+reached, and if the default limit is not right for your network, it can
+be modified using the option "-reset *n*", where *n* is the desired
+timeout value (*n* = 0 means "no limit"). If the connection starts to
+recover after ntp timeouts, a corrupt video packet from before the
+timeout may trigger a "connection reset by peer" error, which also
+causes UxPlay to reset the connection. When the connection is reset, the
+"frozen" mirror screen of the previous connection is left in place, and
+will be taken over by a new client connection when it is made.
+
+### 6. Failure to decrypt ALL video and audio streams from old or non-Apple clients:
 
 This triggers an unending stream of error messages, and means that the
 audio decryption key (also used in video decryption) was not correctly
