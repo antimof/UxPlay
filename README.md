@@ -620,7 +620,7 @@ Desktop Linux (antimof's work on code in `renderers/` was later backported to RP
   of the analysis of the AirPlay 2 mirror protocol that made RPiPlay possible, by the AirplayServer author. All 
   code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+
 * **Florian Draschbacher** and contributors: adapted dsafa22's Android project for the Raspberry Pi, with extensive cleanups, debugging and improvements.  The
-   project RPiPlay is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi. License GPL v3.
+   project [RPiPlay](https://github.com/FD-/RPiPlay) is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi. License GPL v3.
 * **Joyent, Inc and contributors**: Created an http parsing library called [llhttp](https://github.com/nodejs/llhttp). Located at `lib/llhttp/`. License: MIT
 
 ## Notes on AirPlay protocol versions  by Florian Draschbacher, RPiPlay creator
