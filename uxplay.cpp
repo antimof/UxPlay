@@ -471,7 +471,7 @@ int main (int argc, char *argv[]) {
                 fprintf(stderr, "invalid \"-reset %s\"; -reset n must have n >= 0,  default n = %d\n", argv[i], NTP_TIMEOUT_LIMIT);
                 exit(1);
             }      
-	} else {
+        } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
