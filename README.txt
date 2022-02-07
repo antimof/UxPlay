@@ -591,8 +591,8 @@ connection to a new client, or reconnection to the previous one.
 Sometimes the connection may recover before the timeout limit is
 reached, and if the default limit is not right for your network, it can
 be modified using the option "-reset *n*", where *n* is the desired
-timeout value (*n* = 0 means "no limit"). If the connection starts to
-recover after ntp timeouts, a corrupt video packet from before the
+timeout-limit value (*n* = 0 means "no limit"). If the connection starts
+to recover after ntp timeouts, a corrupt video packet from before the
 timeout may trigger a "connection reset by peer" error, which also
 causes UxPlay to reset the connection. When the connection is reset, the
 "frozen" mirror screen of the previous connection is left in place, and
