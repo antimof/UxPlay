@@ -40,6 +40,7 @@ struct raop_callbacks_s {
     /* Optional but recommended callback functions */
     void  (*conn_init)(void *cls);
     void  (*conn_destroy)(void *cls);
+    void  (*conn_reset) (void *cls);
     void  (*conn_teardown)(void *cls, bool *teardown_96, bool *teardown_110 );
     void  (*audio_flush)(void *cls);
     void  (*video_flush)(void *cls);
@@ -52,9 +53,9 @@ struct raop_callbacks_s {
     void  (*video_report_size)(void *cls, float *width_source, float *height_source, float *width, float *height);
 };
 typedef struct raop_callbacks_s raop_callbacks_t;
-
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport);
+  
 RAOP_API raop_t *raop_init(int max_clients, raop_callbacks_t *callbacks);
-
 RAOP_API void raop_set_log_level(raop_t *raop, int level);
 RAOP_API void raop_set_log_callback(raop_t *raop, raop_log_callback_t callback, void *cls);
 RAOP_API int raop_set_plist(raop_t *raop, const char *plist_item, const int value);

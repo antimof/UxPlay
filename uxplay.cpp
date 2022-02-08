@@ -44,12 +44,13 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.46"
+#define VERSION "1.47"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
+#define NTP_TIMEOUT_LIMIT 10
 
 static std::string server_name = DEFAULT_NAME;
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
@@ -74,8 +75,11 @@ static bool use_video = true;
 static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
-static bool previous_no_close_behavior = false;
+static bool new_window_closing_behavior = true;
+static bool close_window;
 static std::string decoder = "decodebin";
+static bool show_client_FPS_data = false;
+static unsigned int max_ntp_timeouts = NTP_TIMEOUT_LIMIT;
 
 static gboolean connection_callback (gpointer loop){
     if (!connections_stopped) {
@@ -229,7 +233,9 @@ static void print_info (char *name) {
     printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
-    printf("-nc       do not close video window when client stops mirroring\n");  
+    printf("-reset n  Reset after 3n seconds client silence (default %d, 0 = never)\n", NTP_TIMEOUT_LIMIT);
+    printf("-nc       do Not Close video window when client stops mirroring\n");  
+    printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-d        Enable debug logging\n");
     printf("-v or -h  Displays this help and version information\n");
 }
@@ -268,11 +274,13 @@ static bool get_display_settings (std::string value, unsigned short *w, unsigned
 }
 
 static bool get_value (const char *str, unsigned int *n) {
-    // str must be a positive decimal <= input value *n  
+    // if n > 0 str must be a positive decimal <= input value *n  
+    // if n = 0, str must be a non-negative decimal
     if (strlen(str) == 0 || strlen(str) > 10 || str[0] == '-') return false;
     char *end;
     unsigned long l = strtoul(str, &end, 10);
-    if (*end || l == 0 || (*n > 0 && l > *n)) return false;
+    if (*end) return false;
+    if (*n && (l == 0 || l > *n)) return false;
     *n = (unsigned int) l;
     return true;
 }
@@ -445,12 +453,24 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-t") {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             server_timeout = 0;
-            get_value(argv[++i], &server_timeout);
+            bool valid = get_value(argv[++i], &server_timeout);
+            if (!valid || server_timeout == 0) {
+                fprintf(stderr,"invalid \"-t %s\", must have -t n with  n > 0\n",argv[i]);
+                exit(1);
+            }
         } else if (arg == "-nc") {
-            previous_no_close_behavior = true;
+            new_window_closing_behavior = false;
         } else if (arg == "-avdec") {
             decoder.erase();
             decoder = "h264parse ! avdec_h264";
+        } else if (arg == "-FPSdata") {
+            show_client_FPS_data = true;
+        } else if (arg == "-reset") {
+            max_ntp_timeouts = 0;
+            if (!get_value(argv[++i], &max_ntp_timeouts)) {
+                fprintf(stderr, "invalid \"-reset %s\"; -reset n must have n >= 0,  default n = %d\n", argv[i], NTP_TIMEOUT_LIMIT);
+                exit(1);
+            }      
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
@@ -464,7 +484,7 @@ int main (int argc, char *argv[]) {
 #if __APPLE__
     /* force use of -nc option on macOS */
     LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
-    previous_no_close_behavior = true;
+    new_window_closing_behavior = false;
     server_timeout = 0;
 #endif
 
@@ -516,6 +536,7 @@ int main (int argc, char *argv[]) {
     reconnect:
     counter = 0;
     compression_type = 0;
+    close_window = new_window_closing_behavior; 
     main_loop();
     if (relaunch_server || relaunch_video || reset_loop) {
         if(reset_loop) {
@@ -524,7 +545,7 @@ int main (int argc, char *argv[]) {
             raop_stop(raop);
         }
         if (use_audio) audio_renderer_stop();
-        if (use_video) {
+        if (use_video && close_window) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
             video_renderer_start();
@@ -570,8 +591,15 @@ extern "C" void conn_destroy (void *cls) {
     }
 }
 
+extern "C" void conn_reset (void *cls) {
+    LOGI("***ERROR lost connection with client");
+    close_window = false;    /* leave "frozen" window open */
+    raop_stop(raop);
+    reset_loop = true;
+}
+
 extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) {
-    if (*teardown_110 && !previous_no_close_behavior) {
+    if (*teardown_110 && close_window) {
         reset_loop = true;
     }
 }
@@ -647,6 +675,7 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
     raop_cbs.conn_destroy = conn_destroy;
+    raop_cbs.conn_reset = conn_reset;
     raop_cbs.conn_teardown = conn_teardown;
     raop_cbs.audio_process = audio_process;
     raop_cbs.video_process = video_process;
@@ -671,6 +700,9 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     if (display[2]) raop_set_plist(raop, "refreshRate", (int) display[2]);
     if (display[3]) raop_set_plist(raop, "maxFPS", (int) display[3]);
     if (display[4]) raop_set_plist(raop, "overscanned", (int) display[4]);
+ 
+    if (show_client_FPS_data) raop_set_plist(raop, "clientFPSdata", 1);
+    raop_set_plist(raop, "max_ntp_timeouts", max_ntp_timeouts);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);

@@ -22,9 +22,8 @@
 
 typedef struct raop_ntp_s raop_ntp_t;
 
-raop_ntp_t *raop_ntp_init(logger_t *logger, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport);
 
-void raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport);
+void raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_timeouts);
 
 void raop_ntp_stop(raop_ntp_t *raop_ntp);
 

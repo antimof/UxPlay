@@ -1,4 +1,4 @@
-UxPlay 1.46: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.47: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 Highlights:
@@ -7,12 +7,13 @@ Highlights:
 -   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
     Lossless ALAC) protocols from current iOS/iPadOS 15.2 client
     devices.
--   macOS computers (Macs released in 2011 or later) can act either as
-    AirPlay clients of UxPlay, or as the server running UxPlay (tested
-    on macOS 10.15 Catalina).\
+-   macOS computers (2011 or later) can act either as AirPlay clients,
+    or as the server running UxPlay (tested on macOS 10.15 Catalina).
+    Using AirPlay, UxPlay can emulate a second display for macOS
+    clients.
 -   Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone
-    4S) when upgraded to iOS 9.3.5 or later, also Windows client
-    AirMyPC.
+    4S, when upgraded to iOS 9.3.5 or later), and also a Windows
+    AirPlay-client emulator, AirMyPC.
 -   Uses GStreamer, with options to select different output "videosinks"
     and "audiosinks".
 -   Support for server behind a firewall.
@@ -346,7 +347,14 @@ default is 30 fps.) A setting below 30 fps might be useful to reduce
 latency if you are running more than one instance of uxplay at the same
 time. *This setting is only an advisory to the client device, so setting
 a high value will not force a high framerate.* (You can test using "-vs
-fpsdisplaysink" to see what framerate is being received.)
+fpsdisplaysink" to see what framerate is being received, or use the
+option -FPSdata which displays video-stream performance data
+continuously sent by the client during video-streaming.)
+
+**-FPSdata** Turns on monitoring of regular reports about video
+streaming performance that are sent by the client. These will be
+displayed in the terminal window if this option is used. The data is
+updated by the client at 1 second intervals.
 
 **-o** turns on an "overscanned" option for the display window. This
 reduces the image resolution by using some of the pixels requested by
@@ -418,6 +426,13 @@ name. (Some choices of audiosink might not work on your system.)
 
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
+
+**-reset n** sets a limit of n consective timeout failures of the client
+to respond to ntp requests from the server (these are sent every 3
+seconds to check if the client is still present). After n failures, the
+client will be presumed to be offline, and the connection will be reset
+to allow a new connection. The default value of n is 10; the value n = 0
+means "no limit" on timeouts.
 
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
 close** the video window when the the client sends the "Stop Mirroring"
@@ -562,7 +577,28 @@ GStreamer 1.x into packages in different ways; the packages listed above
 in the build instructions should bring in other required GStreamer
 packages as dependencies, but will not install all possible plugins.
 
-### 5. Failure to decrypt ALL video and audio streams from old or non-Apple clients:
+### 5. Mirror screen freezes:
+
+This can happen if the TCP video stream from the client stops arriving
+at the server, probably because of network problems (the UDP audio
+stream may continue to arrive). At 3-second intervals, UxPlay checks
+that the client is still connected by sending it a request for a NTP
+time signal. If a reply is not received from the client within a 0.3 sec
+time-window, an "ntp timeout" is registered. If a certain number
+(currently 10) of consecutive ntp timeouts occur, UxPlay assumes that
+the client is "dead", and resets the connection, becoming available for
+connection to a new client, or reconnection to the previous one.
+Sometimes the connection may recover before the timeout limit is
+reached, and if the default limit is not right for your network, it can
+be modified using the option "-reset *n*", where *n* is the desired
+timeout-limit value (*n* = 0 means "no limit"). If the connection starts
+to recover after ntp timeouts, a corrupt video packet from before the
+timeout may trigger a "connection reset by peer" error, which also
+causes UxPlay to reset the connection. When the connection is reset, the
+"frozen" mirror screen of the previous connection is left in place, and
+will be taken over by a new client connection when it is made.
+
+### 6. Failure to decrypt ALL video and audio streams from old or non-Apple clients:
 
 This triggers an unending stream of error messages, and means that the
 audio decryption key (also used in video decryption) was not correctly
@@ -586,6 +622,13 @@ to be such an old AppleTV model.
 
 ChangeLog
 =========
+
+1.47 2022-02-05 Added -FPSdata option to display (in the terminal)
+regular reports sent by the client about video streaming performance.
+Internal cleanups of processing of video packets received from the
+client. Added -reset n option to reset the connection after n ntp
+timeouts (also reset after "connection reset by peer" error in video
+stream).
 
 1.46 2022-01-20 Restore pre-1.44 behavior (1.44 may have broken hardware
 acceleration): once again use decodebin in the video pipeline; introduce
@@ -753,49 +796,52 @@ closed-source) available for purchase, it is my understanding that an
 open source implementation of the same functionality wouldn't violate
 any of Apple's rights either.
 
-Notes by Florian Draschbacher, RPiPlay creator
-==============================================
+UxPlay authors
+==============
 
-(From the https://github.com/FD-/RPiPlay.git repository.)
-
-RPiPlay authors
----------------
+*\[adapted from fdraschbacher's notes on RPiPlay antecedents\]*
 
 The code in this repository accumulated from various sources over time.
-Here is my (**fdrachbacher**) attempt at listing the various authors and
-the components they created:
+Here is an attempt at listing the various authors and the components
+they created:
 
--   **dsafa22**: Created an AirPlay 2 mirroring server
-    [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems
-    gone now), *\[added: but code is preserved
-    [here](https://github.com/KqSMea8/AirplayServer), and [see
-    here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for the
-    description of the analysis of the AirPlay 2 mirror protocol that
-    made RPiPlay possible, by the AirplayServer author\]* for Android
-    based on ShairPlay. This project (RPiPlay) is basically a port of
-    dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL
-    for better performance on the Pi. All code in `lib/` concerning
-    mirroring is dsafa22's work. License: GNU LGPLv2.1+
+UxPlay was initially created by **antimof** from RPiPlay, by replacing
+its Raspberry-Pi-specific video and audio rendering system with
+GStreamer rendering for Desktop Linux (antimof's work on code in
+`renderers/` was later backported to RPiPlay). The previous authors of
+code included in UxPlay by inheritance from RPiPlay include:
+
+-   **EstebanKubata**: Created a FairPlay library called
+    [PlayFair](https://github.com/EstebanKubata/playfair). Located in
+    the `lib/playfair` folder. License: GNU GPL
 -   **Juho Vähä-Herttua** and contributors: Created an AirPlay audio
     server called [ShairPlay](https://github.com/juhovh/shairplay),
     including support for Fairplay based on PlayFair. Most of the code
     in `lib/` originally stems from this project. License: GNU LGPLv2.1+
--   **EstebanKubata**: Created a FairPlay library called
-    [PlayFair](https://github.com/EstebanKubata/playfair). Located in
-    the `lib/playfair` folder. License: GNU GPL
--   **Joyent, Inc and contributors**: Created an http library called
+-   **dsafa22**: Created an AirPlay 2 mirroring server
+    [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems
+    gone now), for Android based on ShairPlay. Code is preserved
+    [here](https://github.com/KqSMea8/AirplayServer), and [see
+    here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for the
+    description of the analysis of the AirPlay 2 mirror protocol that
+    made RPiPlay possible, by the AirplayServer author. All code in
+    `lib/` concerning mirroring is dsafa22's work. License: GNU
+    LGPLv2.1+
+-   **Florian Draschbacher** and contributors: adapted dsafa22's Android
+    project for the Raspberry Pi, with extensive cleanups, debugging and
+    improvements. The project [RPiPlay](https://github.com/FD-/RPiPlay)
+    is basically a port of dsafa22's code to the Raspberry Pi, utilizing
+    OpenMAX and OpenSSL for better performance on the Pi. License GPL
+    v3.
+-   **Fedor Indutny** (of Node.js, and formerly Joyent, Inc) and
+    contributors: Created an http parsing library called
     [llhttp](https://github.com/nodejs/llhttp). Located at
     `lib/llhttp/`. License: MIT
--   **Team XBMC**: Managed to show a black background for OpenMAX video
-    rendering. This code is used in the video renderer. License: GNU GPL
--   **Alex Izvorski and contributors**: Wrote
-    [h264bitstream](https://github.com/aizvorski/h264bitstream), a
-    library for manipulation h264 streams. Used for reducing delay in
-    the Raspberry Pi video pipeline. Located in the
-    `renderers/h264-bitstream` folder. License: GNU LGPLv2.1
 
-AirPlay protocol versions
--------------------------
+Notes on AirPlay protocol versions by Florian Draschbacher, RPiPlay creator
+---------------------------------------------------------------------------
+
+(From the https://github.com/FD-/RPiPlay.git repository.)
 
 For multiple reasons, it's very difficult to clearly define the protocol
 names and versions of the components that make up the AirPlay streaming

@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "raop_ntp.h"
+#include "raop.h"
 #include "threads.h"
 #include "compat.h"
 #include "netutils.h"
@@ -45,6 +45,9 @@ typedef struct raop_ntp_data_s {
 
 struct raop_ntp_s {
     logger_t *logger;
+    raop_callbacks_t callbacks;
+
+    int max_ntp_timeouts;
 
     thread_handle_t thread;
     mutex_handle_t run_mutex;
@@ -125,16 +128,18 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
     return 0;
 }
 
-raop_ntp_t *raop_ntp_init(logger_t *logger, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport) {
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport) {
     raop_ntp_t *raop_ntp;
 
     assert(logger);
+    assert(callbacks);
 
     raop_ntp = calloc(1, sizeof(raop_ntp_t));
     if (!raop_ntp) {
         return NULL;
     }
     raop_ntp->logger = logger;
+    memcpy(&raop_ntp->callbacks, callbacks, sizeof(raop_callbacks_t));    
     raop_ntp->timing_rport = timing_rport;
 
     if (raop_ntp_parse_remote_address(raop_ntp, remote_addr, remote_addr_len) < 0) {
@@ -246,7 +251,9 @@ raop_ntp_thread(void *arg)
     };
     raop_ntp_data_t data_sorted[RAOP_NTP_DATA_COUNT];
     const unsigned  two_pow_n[RAOP_NTP_DATA_COUNT] = {2, 4, 8, 16, 32, 64, 128, 256};
-
+    int timeout_counter = 0;
+    bool conn_reset = false;
+      
     while (1) {
         MUTEX_LOCK(raop_ntp->run_mutex);
         if (!raop_ntp->running) {
@@ -263,7 +270,7 @@ raop_ntp_thread(void *arg)
         byteutils_put_ntp_timestamp(request, 24, send_time);
         int send_len = sendto(raop_ntp->tsock, (char *)request, sizeof(request), 0,
                               (struct sockaddr *) &raop_ntp->remote_saddr, raop_ntp->remote_saddr_len);
-        logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp send_len = %d", send_len);
+        logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp send_len = %d, now = %llu", send_len, send_time);
         if (send_len < 0) {
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
@@ -271,8 +278,15 @@ raop_ntp_thread(void *arg)
             response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0,
                                     (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
             if (response_len < 0) {
-                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout");
-            } else {
+                timeout_counter++;
+                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout %d (limit %d) (request sent %llu)",
+                           timeout_counter, raop_ntp->max_ntp_timeouts, send_time);
+                if (timeout_counter ==  raop_ntp->max_ntp_timeouts) {
+                    conn_reset = true;   /* client is no longer responding */
+                    break;
+                }
+	    } else {
+	        timeout_counter = 0;
                 logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d", response_len);
 
                 int64_t t3 = (int64_t) raop_ntp_get_local_time(raop_ntp);
@@ -336,11 +350,14 @@ raop_ntp_thread(void *arg)
     MUTEX_UNLOCK(raop_ntp->run_mutex);
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp exiting thread");
+    if (conn_reset && raop_ntp->callbacks.conn_reset) {
+        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls);
+    }
     return 0;
 }
 
 void
-raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
+raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_timeouts)
 {
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp starting time");
     int use_ipv6 = 0;
@@ -348,6 +365,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
     assert(raop_ntp);
     assert(timing_lport);
 
+    raop_ntp->max_ntp_timeouts = max_ntp_timeouts;
     raop_ntp->timing_lport = *timing_lport;
 
     MUTEX_LOCK(raop_ntp->run_mutex);
@@ -371,7 +389,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
     /* Create the thread and initialize running values */
     raop_ntp->running = 1;
     raop_ntp->joined = 0;
-
+    
     THREAD_CREATE(raop_ntp->thread, raop_ntp_thread, raop_ntp);
     MUTEX_UNLOCK(raop_ntp->run_mutex);
 }

@@ -196,6 +196,7 @@ char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per
     sprintf(p,"\n");
     p++;
     assert(p == &(str[len]));
+    assert(len == strlen(str));
     return str;
 }
 
