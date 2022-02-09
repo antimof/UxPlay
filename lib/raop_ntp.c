@@ -351,7 +351,7 @@ raop_ntp_thread(void *arg)
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp exiting thread");
     if (conn_reset && raop_ntp->callbacks.conn_reset) {
-        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls);
+        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls, timeout_counter);
     }
     return 0;
 }

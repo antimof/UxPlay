@@ -587,8 +587,8 @@ stream may continue to arrive). At 3-second intervals, UxPlay checks
 that the client is still connected by sending it a request for a NTP
 time signal. If a reply is not received from the client within a 0.3 sec
 time-window, an "ntp timeout" is registered. If a certain number
-(currently 10) of consecutive ntp timeouts occur, UxPlay assumes that
-the client is "dead", and resets the connection, becoming available for
+(currently 5) of consecutive ntp timeouts occur, UxPlay assumes that the
+client is "dead", and resets the connection, becoming available for
 connection to a new client, or reconnection to the previous one.
 Sometimes the connection may recover before the timeout limit is
 reached, and if the default limit is not right for your network, it can

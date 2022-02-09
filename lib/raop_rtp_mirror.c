@@ -507,7 +507,7 @@ raop_rtp_mirror_thread(void *arg)
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
     if (conn_reset && raop_rtp_mirror->callbacks.conn_reset) {
-        raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls);
+      raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0);
     }
     return 0;
 }

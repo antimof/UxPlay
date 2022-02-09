@@ -50,7 +50,7 @@
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
-#define NTP_TIMEOUT_LIMIT 10
+#define NTP_TIMEOUT_LIMIT 5
 
 static std::string server_name = DEFAULT_NAME;
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
@@ -591,8 +591,12 @@ extern "C" void conn_destroy (void *cls) {
     }
 }
 
-extern "C" void conn_reset (void *cls) {
-    LOGI("***ERROR lost connection with client");
+extern "C" void conn_reset (void *cls, int timeouts) {
+    LOGI("***ERROR lost connection with client (network problem?)");
+    if (timeouts) {
+        LOGI("   Client no-response limit of %d timeouts (%d seconds) reached:", timeouts, 3*timeouts);
+        LOGI("   The default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
+    }
     close_window = false;    /* leave "frozen" window open */
     raop_stop(raop);
     reset_loop = true;
