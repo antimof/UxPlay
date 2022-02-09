@@ -186,8 +186,8 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 
 First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
-Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.18.5
-they are ```gstreamer-1.0-1.18.5-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.5-x86_64.pkg```.
+Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.18.6
+they are ```gstreamer-1.0-1.18.6-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.6-x86_64.pkg```.   (**Note: v1.20.0 is also available now, but if it does not work for you, use 1.18.6**.)
 Click on them to install (they install to
 /Library/FrameWorks/GStreamer.framework).
 It is recommended you use GStreamer.framework rather than install Gstreamer with Homebrew or MacPorts (see later).
