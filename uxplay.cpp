@@ -595,7 +595,8 @@ extern "C" void conn_reset (void *cls, int timeouts) {
     LOGI("***ERROR lost connection with client (network problem?)");
     if (timeouts) {
         LOGI("   Client no-response limit of %d timeouts (%d seconds) reached:", timeouts, 3*timeouts);
-        LOGI("   The default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
+        LOGI("   Sometimes the network connection may recover after a longer delay:\n"
+             "   the default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
     }
     close_window = false;    /* leave "frozen" window open */
     raop_stop(raop);
