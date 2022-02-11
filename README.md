@@ -55,7 +55,7 @@ and does not offer the  alternative Raspberry-Pi-specific
 audio and video renderers available in [RPiPlay](https://github.com/FD-/RPiPlay).
 It is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 21.10,
 Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA edition),
-Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
+Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
@@ -125,13 +125,16 @@ help with this or other problems.   See [Usage](#usage) for run-time options.
  * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
 (+libX11-devel for ZOOMFIX). The required GStreamer packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
-gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel graphics). 
+gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics). 
 
  * **OpenSUSE:**
 (sudo zypper install) libopenssl-devel libplist-devel
 avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
 GStreamer packages  (you may need to use versions from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
+
+* **Arch Linux**
+(sudo pacman -Syu) openssl libplist avahi  gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+ gstreamer-vaapi for Intel graphics).
 
  * **FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
 (\* = core, good,  bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics).
@@ -187,10 +190,10 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
 Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.18.6
-they are ```gstreamer-1.0-1.18.6-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.6-x86_64.pkg```.   (**Note: v1.20.0 is also available now, but if it does not work for you, use 1.18.6**.)
-Click on them to install (they install to
-/Library/FrameWorks/GStreamer.framework).
-It is recommended you use GStreamer.framework rather than install Gstreamer with Homebrew or MacPorts (see later).
+they are ```gstreamer-1.0-1.18.6-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.6-x86_64.pkg```.   (**Note: v1.20.0 is also
+available now, but if it does not work for you, use 1.18.6**.) Click on them to install (they install to
+/Library/FrameWorks/GStreamer.framework).  It is recommended you use GStreamer.framework rather than install
+Gstreamer with Homebrew or MacPorts (see later).
 
 Next install OpenSSL and libplist:  these can be built from source (see above); only the
 static forms of the two libraries will used for the macOS build, so you can uninstall them ("sudo make uninstall")
@@ -631,6 +634,9 @@ Desktop Linux (antimof's work on code in `renderers/` was later backported to RP
   code in `lib/` concerning mirroring is dsafa22's work. License: GNU LGPLv2.1+
 * **Florian Draschbacher** and contributors: adapted dsafa22's Android project for the Raspberry Pi, with extensive cleanups, debugging and improvements.  The
    project [RPiPlay](https://github.com/FD-/RPiPlay) is basically a port of dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL for better performance on the Pi. License GPL v3.
+
+Independent of UxPlay, but used by it and bundled with it:
+
 * **Fedor Indutny** (of Node.js, and formerly Joyent, Inc) and contributors: Created an http parsing library called [llhttp](https://github.com/nodejs/llhttp). Located at `lib/llhttp/`. License: MIT
 
 ## Notes on AirPlay protocol versions  by Florian Draschbacher, RPiPlay creator

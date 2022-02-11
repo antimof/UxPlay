@@ -70,7 +70,7 @@ renderers available in [RPiPlay](https://github.com/FD-/RPiPlay). It is
 tested on a number of systems, including (among others) Debian 10.11
 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 and 21.10, Linux Mint 20.2,
 Pop!\_OS 21.10 (NVIDIA edition), Rocky Linux 8.5 (a CentOS successor),
-OpenSUSE 15.3, macOS 10.15.7, FreeBSD 13.0.
+OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD 13.0.
 
 Using Gstreamer means that video and audio are supported "out of the
 box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
@@ -171,8 +171,7 @@ options.
     repository) (+libX11-devel for ZOOMFIX). The required GStreamer
     packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
     gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
-    gstreamer1-plugins-bad-free ( + gstreamer1-vaapi for intel
-    graphics).
+    gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics).
 
 -   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
     avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
@@ -181,6 +180,10 @@ options.
     gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
     graphics).
+
+-   **Arch Linux** (sudo pacman -Syu) openssl libplist avahi
+    gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+
+    gstreamer-vaapi for Intel graphics).
 
 -   **FreeBSD:** (sudo pkg install) libplist gstreamer1,
     gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-\* (\* =
@@ -835,6 +838,9 @@ code included in UxPlay by inheritance from RPiPlay include:
     is basically a port of dsafa22's code to the Raspberry Pi, utilizing
     OpenMAX and OpenSSL for better performance on the Pi. License GPL
     v3.
+
+Independent of UxPlay, but used by it and bundled with it:
+
 -   **Fedor Indutny** (of Node.js, and formerly Joyent, Inc) and
     contributors: Created an http parsing library called
     [llhttp](https://github.com/nodejs/llhttp). Located at
