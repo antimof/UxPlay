@@ -470,7 +470,7 @@ raop_handler_setup(raop_conn_t *conn,
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
                     unsigned short remote_cport = 0;
-		    uint64_t uint_val = 0;
+                    uint64_t uint_val = 0;
                     plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
                     plist_get_uint_val(req_stream_control_port_node, &uint_val);
                     //remote_cport = (unsigned short) uint_val;   /* must != 0 to activate audio resend requests, leave off till tested */
@@ -478,8 +478,8 @@ raop_handler_setup(raop_conn_t *conn,
                     if (conn->raop->callbacks.audio_get_format) {
 		        /* get audio compression type */
                         uint64_t audioFormat;
-		        unsigned char ct;
-	                unsigned short spf;
+                        unsigned char ct;
+                        unsigned short spf;
                         bool isMedia; 
                         bool usingScreen;
                         uint8_t bool_val = 0;
