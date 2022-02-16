@@ -495,17 +495,17 @@ raop_handler_setup(raop_conn_t *conn,
                         plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
                         plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
 			
-                        plist_t req_stream_ismedia_node = plist_dict_get_item(req_stream_node, "isMedia");
-		        if (req_stream_ismedia_node) {
-		            plist_get_bool_val(req_stream_ismedia_node, &bool_val);
+                        plist_t req_stream_is_media_node = plist_dict_get_item(req_stream_node, "isMedia");
+		        if (req_stream_is_media_node) {
+		            plist_get_bool_val(req_stream_is_media_node, &bool_val);
 			    isMedia = (bool) bool_val;
                         } else {
                             isMedia = false;
                         }
 
-                        plist_t req_stream_usingscreen_node = plist_dict_get_item(req_stream_node, "usingScreen");
-                        if (req_stream_usingscreen_node) {
-                            plist_get_bool_val(req_stream_usingscreen_node, &bool_val);
+                        plist_t req_stream_using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
+                        if (req_stream_using_screen_node) {
+                            plist_get_bool_val(req_stream_using_screen_node, &bool_val);
                             usingScreen = (bool) bool_val;
                         } else {
                             usingScreen = false;
