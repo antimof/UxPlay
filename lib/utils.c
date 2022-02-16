@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
+#include <stdint.h>
 
 char *
 utils_strsep(char **stringp, const char *delim)
@@ -211,4 +213,19 @@ char *utils_data_to_text(const char *data, int datalen) {
     }
     return ptr;
 }
-  
+
+void ntp_timestamp_to_time(uint64_t ntp_timestamp, char *timestamp, size_t maxsize) {
+    time_t rawtime = (time_t) (ntp_timestamp / 1000000);
+    struct tm ts = *localtime(&rawtime);
+    assert(maxsize > 26);
+    strftime(timestamp, 20, "%F %T", &ts);
+    snprintf(timestamp + 19, 8,".%6.6u", (unsigned int) ntp_timestamp % 1000000);
+}
+
+void ntp_timestamp_to_seconds(uint64_t ntp_timestamp, char *timestamp, size_t maxsize) {
+    time_t rawtime = (time_t) (ntp_timestamp / 1000000);
+    struct tm ts = *localtime(&rawtime);
+    assert(maxsize > 9);
+    strftime(timestamp, 3, "%S", &ts);
+    snprintf(timestamp + 2, 8,".%6.6u", (unsigned int) ntp_timestamp % 1000000);
+}
