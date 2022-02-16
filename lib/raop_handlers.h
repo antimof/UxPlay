@@ -491,14 +491,14 @@ raop_handler_setup(raop_conn_t *conn,
                         plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
                         plist_get_uint_val(req_stream_spf_node, &uint_val);
                         spf = (unsigned short) uint_val;
-		    
+
                         plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
                         plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
-			
+
                         plist_t req_stream_is_media_node = plist_dict_get_item(req_stream_node, "isMedia");
-		        if (req_stream_is_media_node) {
-		            plist_get_bool_val(req_stream_is_media_node, &bool_val);
-			    isMedia = (bool) bool_val;
+                        if (req_stream_is_media_node) {
+                            plist_get_bool_val(req_stream_is_media_node, &bool_val);
+                            isMedia = (bool) bool_val;
                         } else {
                             isMedia = false;
                         }
