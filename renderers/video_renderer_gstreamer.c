@@ -95,6 +95,7 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
+static bool first_packet = false;
 
 void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
     width_source = (unsigned short) *f_width_source;
@@ -166,6 +167,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
+    first_packet = true;
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
@@ -176,6 +178,10 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     if (data[0]) {
         logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
     } else {
+        if (first_packet) {
+            logger_log(logger, LOGGER_INFO, "Begin streaming to GStreamer video pipeline");
+            first_packet = false;
+        }
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
         GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
