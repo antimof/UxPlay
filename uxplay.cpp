@@ -463,6 +463,9 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-avdec") {
             decoder.erase();
             decoder = "h264parse ! avdec_h264";
+        } else if (arg == "-v4l2") {
+            decoder.erase();
+            decoder = "h264parse ! v4l2h264dec";  /* undocumented option for Raspberry PI (may be removed without warning) */
         } else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
