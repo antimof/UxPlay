@@ -77,7 +77,8 @@ static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 static bool new_window_closing_behavior = true;
 static bool close_window;
-static std::string decoder = "decodebin";
+static std::string decoder = "decodebin ! ";
+static std::string converter = "videoconvert ! ";
 static bool show_client_FPS_data = false;
 static unsigned int max_ntp_timeouts = NTP_TIMEOUT_LIMIT;
 
@@ -462,10 +463,12 @@ int main (int argc, char *argv[]) {
             new_window_closing_behavior = false;
         } else if (arg == "-avdec") {
             decoder.erase();
-            decoder = "h264parse ! avdec_h264";
+            decoder = "h264parse ! avdec_h264 ! ";
         } else if (arg == "-v4l2") {
             decoder.erase();
-            decoder = "h264parse ! v4l2h264dec";  /* undocumented option for Raspberry PI (may be removed without warning) */
+            decoder = "h264parse ! v4l2h264dec ! ";  /* undocumented option for Raspberry PI (may be removed without warning) */
+            converter.erase();
+            converter = "v4l2convert ! ";
         } else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
@@ -512,7 +515,7 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
+      video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), converter.c_str(), videosink.c_str());
         video_renderer_start();
     }
     
@@ -550,7 +553,7 @@ int main (int argc, char *argv[]) {
         if (use_audio) audio_renderer_stop();
         if (use_video && close_window) {
             video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), converter.c_str(), videosink.c_str());
             video_renderer_start();
         }
         if (reset_loop) goto reconnect;

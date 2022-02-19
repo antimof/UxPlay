@@ -105,7 +105,7 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
     logger_log(logger, LOGGER_DEBUG, "begin video stream wxh = %dx%d; source %dx%d", width, height, width_source, height_source);
 }
 
-void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *decoder, const char *videosink) {
+void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *decoder, const char *converter, const char *videosink) {
     GError *error = NULL;
     logger = render_logger;
 
@@ -120,14 +120,14 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     assert(renderer);
 
     gst_init(NULL,NULL);
-
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! ");
     g_string_append(launch, decoder);
-    g_string_append(launch, " ! videoconvert ! ");
+    g_string_append(launch, converter);
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink sync=false");
-    renderer->pipeline = gst_parse_launch(launch->str,  &error);
+    logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline will be:\n\"%s\"", launch->str);
+    renderer->pipeline = gst_parse_launch(launch->str, &error);
     g_assert (renderer->pipeline);
     g_string_free(launch, TRUE);
 
