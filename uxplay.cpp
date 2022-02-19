@@ -515,7 +515,7 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-      video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), converter.c_str(), videosink.c_str());
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), converter.c_str(), videosink.c_str());
         video_renderer_start();
     }
     
