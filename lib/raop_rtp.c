@@ -442,7 +442,7 @@ raop_rtp_thread_udp(void *arg)
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
             if (type_c == 0x56) {
                 /* Handle resent data packet */
-                uint32_t rtp_timestamp =  (packet[4 + 4] << 24) | (packet[4 + 5] << 16) | (packet[4 + 6] << 8) | packet[4 + 7];
+                uint32_t rtp_timestamp = byteutils_get_int_be(packet, 4 + 4); // (packet[4 + 4] << 24) | (packet[4 + 5] << 16) | (packet[4 + 6] << 8) | packet[4 + 7];
                 uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, rtp_timestamp);
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: ntp = %llu, now = %llu, latency=%lld, rtp=%u",
@@ -479,7 +479,7 @@ raop_rtp_thread_udp(void *arg)
             if (packetlen >= 12) {
                 int no_resend = (raop_rtp->control_rport == 0);// false
 
-                uint32_t rtp_timestamp =  (packet[4] << 24) | (packet[5] << 16) | (packet[6] << 8) | packet[7];
+                uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4); //(packet[4] << 24) | (packet[5] << 16) | (packet[6] << 8) | packet[7];
                 uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, rtp_timestamp);
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: ntp = %llu, now = %llu, latency=%lld, rtp=%u",
