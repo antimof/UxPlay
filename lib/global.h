@@ -1,10 +1,8 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#define GLOBAL_FEATURES 0x7
 #define GLOBAL_MODEL    "AppleTV3,2"
 #define GLOBAL_VERSION  "220.68"
-
 
 /* use old protocol for audio AES key if client's User-Agent string is contained in these strings */
 /* replace xxx by any new User-Agent string as needed */

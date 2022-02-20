@@ -202,7 +202,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
 
     http_response_add_header(*response, "CSeq", cseq);
     //http_response_add_header(*response, "Apple-Jack-Status", "connected; type=analog");
-    http_response_add_header(*response, "Server", "AirTunes/220.68");
+    http_response_add_header(*response, "Server", "AirTunes/"GLOBAL_VERSION);
 
     logger_log(conn->raop->logger, LOGGER_DEBUG, "Handling request %s with URL %s", method, url);
     raop_handler_t handler = NULL;

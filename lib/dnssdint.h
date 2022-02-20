@@ -1,6 +1,7 @@
 #ifndef DNSSDINT_H
 #define DNSSDINT_H
 
+#include "global.h"
 #define RAOP_TXTVERS "1"
 #define RAOP_CH "2"             /* Audio channels: 2 */
 #define RAOP_CN "0,1,2,3"           /* Audio codec: PCM, ALAC, AAC, AAC ELD */
@@ -13,14 +14,14 @@
 #define RAOP_DA "true"
 #define RAOP_SR "44100"         /* Sample rate: 44100 */
 #define RAOP_SS "16"            /* Sample size: 16 */
-#define RAOP_VS "220.68"
+#define RAOP_VS GLOBAL_VERSION  /* defined in global.h */
 #define RAOP_TP "UDP"           /* Transport protocol. Possible values: UDP or TCP or TCP,UDP */
 #define RAOP_MD "0,1,2"         /* Metadata: text, artwork, progress */
 #define RAOP_VN "65537"
 #define RAOP_PK "b07727d6f6cd6e08b58ede525ec3cdeaa252ad9f683feb212ef8a205246554e7"
 
 #define AIRPLAY_FEATURES "0x5A7FFEE6"
-#define AIRPLAY_SRCVERS "220.68"
+#define AIRPLAY_SRCVERS GLOBAL_VERSION /*defined in global.h */
 #define AIRPLAY_FLAGS "0x4"
 #define AIRPLAY_VV "2"
 #define AIRPLAY_PK "b07727d6f6cd6e08b58ede525ec3cdeaa252ad9f683feb212ef8a205246554e7"
