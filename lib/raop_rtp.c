@@ -442,7 +442,7 @@ raop_rtp_thread_udp(void *arg)
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
             if (type_c == 0x56) {
                 /* Handle resent data packet */
-	        const int offset = 4;
+                const int offset = 4;
                 uint32_t rtp_timestamp = byteutils_get_int_be(packet + offset, 4);
                 uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, rtp_timestamp);
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
