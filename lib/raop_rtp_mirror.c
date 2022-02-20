@@ -339,15 +339,13 @@ raop_rtp_mirror_thread(void *arg)
                 // Decrypt data
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
-                int nalu_size = 0;
-                int nalus_count = 0;
-
                 // It seems the AirPlay protocol prepends NALs with their size, which we're replacing with the 4-byte
                 // start code for the NAL Byte-Stream Format.
                 bool valid_data = true;
+                int nalu_size = 0;
+                int nalus_count = 0;
                 while (nalu_size < payload_size) {
-                    int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
-                                 (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
+                    int nc_len = byteutils_get_int_be(payload_decrypted, nalu_size);
                     if (nc_len < 0 || nalu_size + 4 > payload_size) {
                         valid_data = false;
                         break;
