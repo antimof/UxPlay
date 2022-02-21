@@ -193,6 +193,7 @@ raop_rtp_mirror_thread(void *arg)
         MUTEX_LOCK(raop_rtp_mirror->run_mutex);
         if (!raop_rtp_mirror->running) {
             MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
+            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror->running is no longer true");
             break;
         }
         MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
@@ -505,7 +506,7 @@ raop_rtp_mirror_thread(void *arg)
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
     if (conn_reset && raop_rtp_mirror->callbacks.conn_reset) {
-      raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0);
+      raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0, false);
     }
     return 0;
 }
