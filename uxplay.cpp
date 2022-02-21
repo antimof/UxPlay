@@ -599,14 +599,15 @@ extern "C" void conn_destroy (void *cls) {
     }
 }
 
-extern "C" void conn_reset (void *cls, int timeouts) {
+extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
     LOGI("***ERROR lost connection with client (network problem?)");
     if (timeouts) {
         LOGI("   Client no-response limit of %d timeouts (%d seconds) reached:", timeouts, 3*timeouts);
         LOGI("   Sometimes the network connection may recover after a longer delay:\n"
              "   the default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
     }
-    close_window = false;    /* leave "frozen" window open */
+    printf("reset_video %d\n",(int) reset_video);
+    close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
     raop_stop(raop);
     reset_loop = true;
 }
