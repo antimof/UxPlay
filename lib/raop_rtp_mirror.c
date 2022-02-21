@@ -506,7 +506,8 @@ raop_rtp_mirror_thread(void *arg)
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
     if (conn_reset && raop_rtp_mirror->callbacks.conn_reset) {
-      raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0, false);
+        const bool video_reset = false;   /* leave "frozen video" showing */
+        raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0, video_reset);
     }
     return 0;
 }

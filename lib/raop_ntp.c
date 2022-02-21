@@ -354,7 +354,8 @@ raop_ntp_thread(void *arg)
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp exiting thread");
     if (conn_reset && raop_ntp->callbacks.conn_reset) {
-        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls, timeout_counter, false);
+        const bool video_reset = false;   /* leave "frozen video" in place */
+        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls, timeout_counter, video_reset);
     }
     return 0;
 }
