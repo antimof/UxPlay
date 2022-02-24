@@ -61,7 +61,7 @@ Using Gstreamer means that video and audio are supported "out of the box", using
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
 available. For Intel integrated graphics, the VAAPI plugin is preferable.  VAAPI is convenient for Intel and some AMD systems.
 For NVIDIA graphics, the proprietary nvdec (or nvh264dec) plugin can be used with the NVIDIA GPU if you manage to build and install it (it is part of
-GStreamer-plugins-bad, but the user must build them after adding some files from NVIDIA).
+GStreamer-plugins-bad, but the user must build it after adding some files from NVIDIA).
 The decoder v4l2h264dec
 (from GStreamer1.0-plugins-good) would be the appropriate choice for the Broadcom GPU in the Raspberry Pi 4, if you can get it working (UxPlay
 does not run well on the Raspberry PI if GPU  hardware h264 decoding is not used, as its CPU is not powerful enough for
