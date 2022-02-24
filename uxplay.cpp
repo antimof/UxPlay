@@ -227,6 +227,8 @@ static void print_info (char *name) {
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
     printf("-t n      Relaunch server if no connection existed in last n seconds\n");
     printf("-vd ...   Choose the GStreamer h264 decoder; default \"decodebin\"\n");
+    printf("          choices: (software) avdec_h264; (hardware) v4l2h264dec,\n");
+    printf("          nvdec, nvh264dec, vaapih64dec, vtdec,etc.\n");
     printf("          choices: avdec_h264,vaapih264dec,nvdec,nvh264dec,v4l2h264dec\n");
     printf("-vc ...   Choose the GStreamer videoconverter; default \"videoconvert\"\n");
     printf("          another choice when using v4l2h264decode: v4l2convert\n");
@@ -234,11 +236,11 @@ static void print_info (char *name) {
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
-    printf("-avdec    Force software h264 video decoding with libav h264 decoder\n"); 
+    printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
-    printf("-reset n  Reset after 3n seconds client silence (default %d, 0 = never)\n", NTP_TIMEOUT_LIMIT);
+    printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");  
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-d        Enable debug logging\n");

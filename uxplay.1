@@ -39,22 +39,24 @@ UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vd\fI dec \fR  Choose GStreamer h264 decoder; default "decodebin"
 .IP
-   some choices: avdec_h264,vaapih264dec,nvdec,nvh264dec,v4l2h264dec.
+   choices: (software) avdec_h264; (hardware) v4l2h264dec,
+.IP
+   nvdec, nvh264dec, vaapih264dec, vtdec, etc.
 .TP
 \fB\-vc\fI cnv \fR  Choose GStreamer videoconverter; default "videoconvert"
 .IP
-   another choice when using v4l2h264dec: v4l2decode.
+   another choice when using v4l2h264dec: v4l2convert.
 .TP
 \fB\-vs\fI sink\fR  Choose the GStreamer videosink; default "autovideosink"
 .IP
-   some choices: ximagesink,xvimagesink,vaapisink,glimagesink,
+   choices: ximagesink,xvimagesink,vaapisink,glimagesink,
 .IP
    gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.
 .PP
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
-\fB\-avdec\fR    Force software h264 video decoding with libav h264 decoder.
+\fB\-avdec\fR    Force software h264 video decoding with libav decoder.
 .TP
 \fB\-as\fI sink\fR  Choose the  GStreamer audiosink; default "autoaudiosink"
 .IP
@@ -63,7 +65,7 @@ UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
 .TP
-\fB\-reset\fR n  Reset after 3n seconds client silence (default 10, 0 = never).
+\fB\-reset\fR n  Reset after 3n seconds client silence (default 10, 0=never).
 .TP
 \fB\-nc\fR       Do not close video window when client stops mirroring
 .TP
