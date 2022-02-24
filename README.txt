@@ -78,7 +78,9 @@ and uses accelerated decoders if available. For Intel integrated
 graphics, the VAAPI plugin is preferable. VAAPI is convenient for Intel
 and some AMD systems. For NVIDIA graphics, the proprietary nvdec (or
 nvh264dec) plugin can be used with the NVIDIA GPU if you manage to build
-and install it; v4l2h264dec would be the appropriate choice for the
+and install it (it is part of GStreameter-plugins-bad, but the user must
+build them after adding some files from NVIDIA). The decoder v4l2h264dec
+(from GStreamer1.0-plugins-good) would be the appropriate choice for the
 Broadcom GPU in the Raspberry Pi 4, if you can get it working (UxPlay
 does not run well on the Raspberry PI if GPU hardware h264 decoding is
 not used, as its CPU is not powerful enough for satisfactory software
@@ -409,7 +411,7 @@ degree rotation or inversion (which is the combination of H with V).
 rotations; these are carried out after any **-f** transforms.
 
 **-vd *decoder*** chooses the GStreamer pipeline's h264 decoder, instead
-of letting decodebin pick it for you. Software deconing is done by
+of letting decodebin pick it for you. Software decoding is done by
 avdec\_h264; various hardware decoders include: vaapi264dec, nvdec,
 nvh264dec, v4l2h264dec (these require that the appropriate hardware is
 available). Using quotes "..." allows some parameters to be included

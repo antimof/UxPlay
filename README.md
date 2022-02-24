@@ -60,8 +60,10 @@ Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10
 Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
 available. For Intel integrated graphics, the VAAPI plugin is preferable.  VAAPI is convenient for Intel and some AMD systems.
-For NVIDIA graphics, the proprietary nvdec (or nvh264dec) plugin can be used with the NVIDIA GPU if you manage to build and install it; v4l2h264dec
-would be the appropriate choice for the Broadcom GPU in the Raspberry Pi 4, if you can get it working (UxPlay
+For NVIDIA graphics, the proprietary nvdec (or nvh264dec) plugin can be used with the NVIDIA GPU if you manage to build and install it (it is part of
+GStreameter-plugins-bad, but the user must build them after adding some files from NVIDIA).
+The decoder v4l2h264dec
+(from GStreamer1.0-plugins-good) would be the appropriate choice for the Broadcom GPU in the Raspberry Pi 4, if you can get it working (UxPlay
 does not run well on the Raspberry PI if GPU  hardware h264 decoding is not used, as its CPU is not powerful enough for
 satisfactory software h264 video decoding).   The -vd, -vc, and -vs options
 can be used to create GStreamer video pipelines to use non-VAAPI hardware decoders.
@@ -320,7 +322,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    rotations; these are carried out after any **-f** transforms.
 
 **-vd _decoder_** chooses the GStreamer pipeline's h264 decoder, instead of letting
-   decodebin pick it for you.  Software deconing is done by avdec_h264; various hardware decoders
+   decodebin pick it for you.  Software decoding is done by avdec_h264; various hardware decoders
    include: vaapi264dec, nvdec, nvh264dec, v4l2h264dec (these require that the appropriate hardware is
    available).  Using quotes "..." allows some parameters to be included with the decoder name.
 
