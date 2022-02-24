@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "February 2022" "1.47" "User Commands"
+.TH UXPLAY "1" "February 2022" "1.48" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.47: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -37,7 +37,15 @@ UxPlay 1.47: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-t\fR n      Relaunch server if no connection existed in last n seconds
 .TP
-\fB\-vs\fI sink\fR  Choose the  GStreamer videosink; default "autovideosink"
+\fB\-vd\fI dec \fR  Choose GStreamer h264 decoder; default "decodebin"
+.IP
+   some choices: avdec_h264,vaapih264dec,nvdec,nvh264dec,v4l2h264dec.
+.TP
+\fB\-vc\fI cnv \fR  Choose GStreamer videoconverter; default "videoconvert"
+.IP
+   another choice when using v4l2h264dec: v4l2decode.
+.TP
+\fB\-vs\fI sink\fR  Choose the GStreamer videosink; default "autovideosink"
 .IP
    some choices: ximagesink,xvimagesink,vaapisink,glimagesink,
 .IP

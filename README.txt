@@ -1,4 +1,4 @@
-UxPlay 1.47: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.48: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 Highlights:
@@ -19,9 +19,9 @@ Highlights:
 -   Support for server behind a firewall.
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
-Linux, macOS, and \*BSD. It is now hosted at the github site
+Linux, macOS, and \*BSD. *It is now hosted at the github site
 <https://github.com/FDH2/UxPlay> (where development and user-assistance
-now takes place), although it initially was developed by
+now takes place)*, although it initially was developed by
 [antimof](http://github.com/antimof/Uxplay) using code from
 [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [AirplayServer](https://github.com/KqsMea8/AirplayServer),
@@ -75,8 +75,15 @@ OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD 13.0.
 Using Gstreamer means that video and audio are supported "out of the
 box", using a choice of plugins. Gstreamer decoding is plugin agnostic,
 and uses accelerated decoders if available. For Intel integrated
-graphics, the VAAPI plugin is preferable, (but don't use it with
-NVIDIA).
+graphics, the VAAPI plugin is preferable. VAAPI is convenient for Intel
+and some AMD systems. For NVIDIA graphics, the proprietary nvdec (or
+nvh264dec) plugin can be used with the NVIDIA GPU if you manage to build
+and install it; v4l2h264dec would be the appropriate choice for the
+Broadcom GPU in the Raspberry Pi 4, if you can get it working (UxPlay
+does not run well on the Raspberry PI if GPU hardware h264 decoding is
+not used, as its CPU is not powerful enough for satisfactory software
+h264 video decoding). The -vd, -vc, and -vs options can be used to
+create GStreamer video pipelines to use non-VAAPI hardware decoders.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -401,6 +408,19 @@ degree rotation or inversion (which is the combination of H with V).
 **-r {R\|L}** 90 degree Right (clockwise) or Left (counter-clockwise)
 rotations; these are carried out after any **-f** transforms.
 
+**-vd *decoder*** chooses the GStreamer pipeline's h264 decoder, instead
+of letting decodebin pick it for you. Software deconing is done by
+avdec\_h264; various hardware decoders include: vaapi264dec, nvdec,
+nvh264dec, v4l2h264dec (these require that the appropriate hardware is
+available). Using quotes "..." allows some parameters to be included
+with the decoder name.
+
+**-vc *converter*** chooses the GStreamer pipeline's videoconverter,
+instead of letting videoconvert choose what to do. When using
+video4linux hardware decoding by a GPU, v4l2convert will also use the
+GPU for video conversion. Using quotes "..." allows some parameters to
+be included with the converter name.
+
 **-vs *videosink*** chooses the GStreamer videosink, instead of letting
 autovideosink pick it for you. Some videosink choices are: ximagesink,
 xvimagesink, vaapisink (for intel graphics), gtksink, glimagesink,
@@ -628,6 +648,9 @@ to be such an old AppleTV model.
 
 ChangeLog
 =========
+
+1.48 2022-02-24 Made the video pipeline fully configurable, for use with
+hardware h264 decoding.
 
 1.47 2022-02-05 Added -FPSdata option to display (in the terminal)
 regular reports sent by the client about video streaming performance.
