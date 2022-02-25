@@ -41,7 +41,7 @@ UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .IP
    choices: (software) avdec_h264; (hardware) v4l2h264dec,
 .IP
-   nvdec, nvh264dec, vaapih264dec, vtdec, etc.
+   nvdec, nvh264dec, vaapih264dec, vtdec, ...
 .TP
 \fB\-vc\fI cnv \fR  Choose GStreamer videoconverter; default "videoconvert"
 .IP
@@ -51,16 +51,18 @@ UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .IP
    choices: ximagesink,xvimagesink,vaapisink,glimagesink,
 .IP
-   gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.
+   gtksink,waylandsink,osximagesink,fpsdisplaysink,...
 .PP
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
+\fB\-rpi\fR      Video settings for Raspberry Pi 4 (h264 decoding in GPU).
+.TP
 \fB\-avdec\fR    Force software h264 video decoding with libav decoder.
 .TP
-\fB\-as\fI sink\fR  Choose the  GStreamer audiosink; default "autoaudiosink"
+\fB\-as\fI sink\fR  Choose the GStreamer audiosink; default "autoaudiosink"
 .IP
-   choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink etc.
+   choices:pulsesink,alsasink,osssink,oss4sink,osxaudiosink,..
 .PP
 .TP
 \fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
