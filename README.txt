@@ -18,8 +18,6 @@ Highlights:
     AirPlay-client emulator, AirMyPC.
 -   Uses GStreamer, with options to select different output "videosinks"
     and "audiosinks".
--   Since v1.48, it works well on **Raspberry Pi** (tested on model 4B)
-    when using GPU for h264 video decoding.
 -   Support for server behind a firewall.
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
