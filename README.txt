@@ -91,7 +91,7 @@ instructions.](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200)
 The plugin should be used with the `-vd nvdec` (or nvh264dec) and
 `-vs glimagesink` uxplay options.
 
-The Video4Linux2 decoder v4l2h264dec (from GStreamer1.0-plugins-good) is
+The Video4Linux2 decoder v4l2h264dec (from gstreamer1.0-plugins-good) is
 the appropriate choice for the Broadcom GPU in the Raspberry Pi 4,
 (UxPlay does not run well on the Raspberry Pi if GPU hardware h264 video
 decoding is not used, as its CPU is not powerful enough for satisfactory
