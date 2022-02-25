@@ -22,6 +22,10 @@ from [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [shairplay](https://github.com/juhovh/shairplay), and [playfair](https://github.com/EstebanKubata/playfair).   (The antimof site is
 mainly inactive, but periodically posts updates pulled from the [main UxPlay site](https://github.com/FDH2/UxPlay)). 
 
+UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 21.10,
+Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA edition),
+Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD 13.0.
+
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
 (iPhones, iPads, MacBooks) in a window
 on the server display (with the possibility of
@@ -51,10 +55,6 @@ switch back by initiating a Mirror mode connection._  **Note that Apple DRM
 (as in Apple TV app content on the client) cannot be decrypted by UxPlay,
 and (unlike with a true AppleTV), the client cannot run a http connection on the server
 instead of streaming content from one on the client.**
-
-UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 21.10,
-Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA edition),
-Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD 13.0.
 
 UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) Plugins for rendering audio and video,
 This means that video and audio are supported "out of the box", using a choice of plugins.
