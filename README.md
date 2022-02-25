@@ -72,7 +72,7 @@ The decoder v4l2h264dec (from GStreamer1.0-plugins-good) is the appropriate choi
 Raspberry Pi 4, (UxPlay does not run well on the Raspberry Pi if GPU hardware h264 video decoding is not used,
 as its CPU is not powerful enough for satisfactory software-based decoding without large latency);
 uxplay options can be used to create GStreamer video pipelines to use non-VAAPI hardware decoders, and a special
-option -rpi creates a pipeline appropriate for the Raspberry Pi.
+option `-rpi` creates a pipeline appropriate for the Raspberry Pi.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -134,7 +134,7 @@ If this shows the avahi-daemon is not running, control it with ```sudo systemctl
 If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
 UxPlay from receiving client connection requests unless some network ports are opened. See  [Troubleshooting](#troubleshooting) below for
 help with this or other problems.   See [Usage](#usage) for run-time options.   For OpenGL support (option -vs glimagesink), needed for
-Raspberry Pi or NVIDIA  GPU-based video decoding, make sure gstreamer-1.0-gl is installed.
+Raspberry Pi or NVIDIA  GPU-based video decoding, make sure gstreamer1.0-gl is installed.
 
  * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
