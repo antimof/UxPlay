@@ -75,7 +75,7 @@ rendering audio and video, This means that video and audio are supported
 "out of the box", using a choice of plugins. Gstreamer decoding is
 plugin agnostic, and uses accelerated GPU decoders if available. For
 Intel integrated graphics, the VAAPI plugin is preferable. VAAPI is
-open-source, and supports some AMD systems, as well as INTEL, and
+open-source, and supports some AMD systems, as well as Intel, and
 open-source "Nouveau" NVIDIA drivers.
 
 For NVIDIA graphics with the proprietary drivers (and CUDA), the nvdec
