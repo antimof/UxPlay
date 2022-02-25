@@ -67,7 +67,8 @@ accelerated video decoding on the NVIDIA GPU. This plugin is part of gstreamer1.
 included in binary packages, as NVIDIA's
 proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/)
 must be downloaded, and three header files from it must be added to the gstreamer source before the plugin can be compiled.
-Users must do this themselves, see [these instructions.](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200)
+Users must do this themselves, see [these instructions.](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200), and
+adapt them as necessary for your GStreamer installation.
 The plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
 The Video4Linux2 decoder v4l2h264dec (from gstreamer1.0-plugins-good) is the appropriate choice for the Broadcom GPU in the
