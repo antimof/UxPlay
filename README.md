@@ -1,6 +1,6 @@
 # UxPlay 1.48:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
-### Now developed at GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted).
+###Now developed at GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted).
 
 
 Highlights:
@@ -111,8 +111,7 @@ downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipf
 
 
 1. `sudo apt-get install libssl-dev libplist-dev`  (unless you need to build OpenSSL and libplist from source).
-2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad` 
-(for the Raspberry Pi, make sure `gstreamer-1.0-gl` is also installed).
+2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`. 
 3. `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated Intel graphics, but not NVIDIA)
 4. `sudo apt-get install libx11-dev`  (only needed if you invoke the "ZOOMFIX" X11 display-name fix in the next step)
 5. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
@@ -134,7 +133,8 @@ check that your DNS-SD server (usually avahi-daemon) is running: do this in a te
 If this shows the avahi-daemon is not running, control it with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or avahi-daemon.service). 
 If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
 UxPlay from receiving client connection requests unless some network ports are opened. See  [Troubleshooting](#troubleshooting) below for
-help with this or other problems.   See [Usage](#usage) for run-time options.
+help with this or other problems.   See [Usage](#usage) for run-time options.   For OpenGL support (option -vs glimagesink), needed for
+Raspberry Pi or NVIDIA  GPU-based video decoding, make sure gstreamer-1.0-gl is installed.
 
  * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
