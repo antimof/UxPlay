@@ -1,5 +1,8 @@
 # UxPlay 1.48:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
+** Now developed at GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted)**.
+
+
 Highlights:
 
    * GPLv3, open source.
@@ -13,8 +16,7 @@ Highlights:
    * Support for server behind a firewall.
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
-*It is now hosted at the
-github site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where development and user-assistance now takes place)*, although it initially was developed by
+It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code 
 from [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [AirplayServer](https://github.com/KqsMea8/AirplayServer),
@@ -51,19 +53,17 @@ switch back by initiating a Mirror mode connection._  **Note that Apple DRM
 and (unlike with a true AppleTV), the client cannot run a http connection on the server
 instead of streaming content from one on the client.**
 
-UxPlay uses GStreamer Plugins for rendering audio and video,
-and does not offer the  alternative Raspberry-Pi-specific
-audio and video renderers available in [RPiPlay](https://github.com/FD-/RPiPlay).
-It is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 21.10,
+UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 21.10,
 Linux Mint 20.2, Pop!\_OS 21.10 (NVIDIA edition),
 Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD 13.0.
 
-Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
+UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) Plugins for rendering audio and video,
+This means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
 available. For Intel integrated graphics, the VAAPI plugin is preferable.  VAAPI is convenient for Intel and some AMD systems.
 
 For NVIDIA graphics with the proprietary drivers, the nvdec plugin (now renamed nvh264dec) can be used with the NVIDIA GPU.
-This plugin is part of gstreamer1.0-plugins-bad, but not included in the binary packages, as NVIDIA's
+This plugin is part of gstreamer1.0-plugins-bad, but is generally not included in binary packages, as NVIDIA's
 proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/) must be downloaded,
 and three header files from it must be added to the gstreamer source before the plugin can be compiled.
 Users must do this themselves, see [these instructions.](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200)
