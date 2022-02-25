@@ -9,6 +9,7 @@ Highlights:
    * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S, when upgraded to iOS 9.3.5 or later), and also a Windows AirPlay-client
      emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
+   * Since v1.48, it works well on **Raspberry Pi** (tested on model 4B) when using GPU for h264 video decoding.
    * Support for server behind a firewall.
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
@@ -60,13 +61,18 @@ Rocky Linux 8.5 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10
 Using Gstreamer means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
 available. For Intel integrated graphics, the VAAPI plugin is preferable.  VAAPI is convenient for Intel and some AMD systems.
-For NVIDIA graphics, the proprietary nvdec (or nvh264dec) plugin can be used with the NVIDIA GPU if you manage to build and install it (it is part of
-GStreamer-plugins-bad, but the user must build it after adding some files from NVIDIA).
-The decoder v4l2h264dec
-(from GStreamer1.0-plugins-good) would be the appropriate choice for the Broadcom GPU in the Raspberry Pi 4, if you can get it working (UxPlay
-does not run well on the Raspberry PI if GPU  hardware h264 decoding is not used, as its CPU is not powerful enough for
-satisfactory software h264 video decoding).   The -vd, -vc, and -vs options
-can be used to create GStreamer video pipelines to use non-VAAPI hardware decoders.
+
+For NVIDIA graphics with the proprietary drivers, the nvdec plugin (now renamed nvh264dec) can be used with the NVIDIA GPU.
+This plugin is part of gstreamer1.0-plugins-bad, but not included in the binary packages, as NVIDIA's
+proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/) must be downloaded,
+and three header files from it must be added to the gstreamer source before the plugin can be compiled.
+Users must do this themselves, see [these instructions.](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200)
+The plugin should be used with the `-vc nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
+
+The decoder v4l2h264dec (from GStreamer1.0-plugins-good) is the appropriate choice for the Broadcom GPU in the Raspberry Pi 4, (UxPlay
+does not run well on the Raspberry Pi if GPU  hardware h264 decoding is not used, as its CPU is not powerful enough for
+satisfactory software h264 video decoding).   The -vd, -vc, and -vs uxplay options
+can be used to create GStreamer video pipelines to use non-VAAPI hardware decoders, and an option -rpi does this for the Raspberry Pi.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -106,6 +112,7 @@ downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipf
 
 1. `sudo apt-get install libssl-dev libplist-dev`  (unless you need to build OpenSSL and libplist from source).
 2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad` 
+(for the Raspberry Pi, make sure `gstreamer-1.0-gl` is also installed).
 3. `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated Intel graphics, but not NVIDIA)
 4. `sudo apt-get install libx11-dev`  (only needed if you invoke the "ZOOMFIX" X11 display-name fix in the next step)
 5. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
