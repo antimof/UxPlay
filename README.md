@@ -61,17 +61,18 @@ This means that video and audio are supported "out of the box", using a choice o
 Gstreamer decoding is plugin agnostic, and uses accelerated decoders if
 available. For Intel integrated graphics, the VAAPI plugin is preferable.  VAAPI is convenient for Intel and some AMD systems.
 
-For NVIDIA graphics with the proprietary drivers, the nvdec plugin (now renamed nvh264dec) can be used with the NVIDIA GPU.
+For NVIDIA graphics with the proprietary drivers, the nvdec plugin (recently renamed nvh264dec) can be used with the NVIDIA GPU.
 This plugin is part of gstreamer1.0-plugins-bad, but is generally not included in binary packages, as NVIDIA's
-proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/) must be downloaded,
-and three header files from it must be added to the gstreamer source before the plugin can be compiled.
+proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/)
+must be downloaded, and three header files from it must be added to the gstreamer source before the plugin can be compiled.
 Users must do this themselves, see [these instructions.](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200)
-The plugin should be used with the `-vc nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
+The plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
-The decoder v4l2h264dec (from GStreamer1.0-plugins-good) is the appropriate choice for the Broadcom GPU in the Raspberry Pi 4, (UxPlay
-does not run well on the Raspberry Pi if GPU  hardware h264 decoding is not used, as its CPU is not powerful enough for
-satisfactory software h264 video decoding).   The -vd, -vc, and -vs uxplay options
-can be used to create GStreamer video pipelines to use non-VAAPI hardware decoders, and an option -rpi does this for the Raspberry Pi.
+The decoder v4l2h264dec (from GStreamer1.0-plugins-good) is the appropriate choice for the Broadcom GPU in the
+Raspberry Pi 4, (UxPlay does not run well on the Raspberry Pi if GPU hardware h264 video decoding is not used,
+as its CPU is not powerful enough for satisfactory software-based decoding without large latency);
+uxplay options can be used to create GStreamer video pipelines to use non-VAAPI hardware decoders, and a special
+option -rpi creates a pipeline appropriate for the Raspberry Pi.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
