@@ -340,7 +340,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    available).  Using quotes "..." allows some parameters to be included with the decoder name.
 
 **-vc _converter_** chooses the GStreamer pipeline's videoconverter, instead of letting videoconvert
-   choose what to do.  When using video4linux hardware decoding by a GPU, v4l2convert will also use
+   choose what to do.  When using video4linux hardware decoding by a GPU,`-vc  v4l2convert` will also use
    the GPU for video conversion.  Using quotes "..." allows some parameters to be included with the converter name.
    
 **-vs _videosink_** chooses the GStreamer videosink, instead of letting

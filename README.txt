@@ -442,9 +442,9 @@ with the decoder name.
 
 **-vc *converter*** chooses the GStreamer pipeline's videoconverter,
 instead of letting videoconvert choose what to do. When using
-video4linux hardware decoding by a GPU, v4l2convert will also use the
-GPU for video conversion. Using quotes "..." allows some parameters to
-be included with the converter name.
+video4linux hardware decoding by a GPU,`-vc  v4l2convert` will also use
+the GPU for video conversion. Using quotes "..." allows some parameters
+to be included with the converter name.
 
 **-vs *videosink*** chooses the GStreamer videosink, instead of letting
 autovideosink pick it for you. Some videosink choices are: ximagesink,
