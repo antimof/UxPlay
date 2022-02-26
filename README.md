@@ -60,7 +60,7 @@ UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) Plugins for rendering
 This means that video and audio are supported "out of the box", using a choice of plugins.
 Gstreamer decoding is plugin agnostic, and uses accelerated GPU decoders if
 available. For Intel integrated graphics, the VAAPI plugin is preferable.  VAAPI is open-source, and
-in addition to Intel, can support supports some AMD GPU's (the open-source "Nouveau" NVIDIA drivers
+in addition to Intel, can support some AMD GPU's (the open-source "Nouveau" NVIDIA drivers
 are also in principle supported when supplemented with firmware extracted from the proprietary drivers).
 
 For NVIDIA graphics with the proprietary drivers (and CUDA), the nvdec plugin (recently renamed nvh264dec) can be used for
