@@ -664,12 +664,15 @@ its "User Agent" string in place of "xxx" in the entry "AirMyPC/2.0;xxx"
 in global.h and rebuild uxplay.
 
 Note that Uxplay declares itself to be an AppleTV3,2 with a
-sourceVersion 220.68; this can also be changed in global.h. It is
-crucial for UxPlay to declare this old value of sourceVersion, as this
-prompts the Apple client to use a less-encrypted "legacy" protocol
-needed by third-generation Apple TV's, which are 32-bit devices that
-cannot run modern tvOS; it is probably not necessary for UxPlay to claim
-to be such an old AppleTV model.
+sourceVersion 220.68; this can also be changed in global.h. It had been
+thought that it was necessary for UxPlay to claim to be an older 32 bit
+AppleTV model that cannot run modern 64bit tvOS, in order for the client
+to use a "legacy" protocol for pairing with the server (see the *"Notes
+on AirPlay protocol versions"* at the end of this README). However,
+UxPlay still works if it declares itself as an AppleTV6,2 with
+sourceVersion 380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running
+tvOS 12.2.1), so it is unclear what setting prompts the client to use
+the "legacy" protocol needed by UxPlay.
 
 ChangeLog
 =========
