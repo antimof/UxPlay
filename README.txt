@@ -70,6 +70,8 @@ be decrypted by UxPlay, and (unlike with a true AppleTV), the client
 cannot run a http connection on the server instead of streaming content
 from one on the client.**
 
+### Possibility for using hardware-accelerated h264 video-decoding, if available.
+
 UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) Plugins for
 rendering audio and video, This means that video and audio are supported
 "out of the box", using a choice of plugins. AirPlay streams video in
