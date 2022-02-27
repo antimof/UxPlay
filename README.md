@@ -140,7 +140,7 @@ If this shows the avahi-daemon is not running, control it with ```sudo systemctl
 If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
 UxPlay from receiving client connection requests unless some network ports are opened. See  [Troubleshooting](#troubleshooting) below for
 help with this or other problems.   See [Usage](#usage) for run-time options.   For OpenGL support (option -vs glimagesink), needed for
-Raspberry Pi or NVIDIA  GPU-based video decoding, make sure gstreamer1.0-gl is installed.
+NVIDIA  GPU-based video decoding, make sure gstreamer1.0-gl is installed.
 
  * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
