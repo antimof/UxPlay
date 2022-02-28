@@ -92,7 +92,8 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
   choices. (`-rpi` is equivalent
   to `-vd v4l2h264dec -vc v4l2convert`).   The first frame in the h264 video stream sends the "caps"
   details (SPS, PPS) to h264parse.  UxPlay users with the R Pi (model 4 recommended) are invited to experiment and report any
-  successes. (The uxplay `-d` option will display the actual video pipeline being used.)
+  successes. (The uxplay `-d` option will display the actual video pipeline being
+  used, `-export GST_DEBUG=2` will display GStreamer errors and warnings.)
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
