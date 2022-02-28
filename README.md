@@ -85,7 +85,7 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
   hardware video decoding by the Broadcom GPU on the Pi. UxPlay options can be used to create GStreamer video pipelines to use
   non-VAAPI hardware decoders, and a new UxPlay option `-rpi` creates  a pipeline that should be appropriate for the Raspberry Pi,
   and when it has worked, it has worked well.   However, it usually does not work because of a "caps" mismatch between source and
-  sink, which could be fixable with GStreamer "know-how".  The GStreamer
+  sink, which could be fixable with GStreamer "know-how" (perhaps involving using the "capssetter" element).  The GStreamer
   video pipeline is "` (decrypted h264 stream from iOS)! queue  ! h264parse ! decodebin ! videoconvert ! autovideosink sync=false`"
   and the uxplay options `-vp ,  -vd, -vc ,-vs` can be used to
   replace `h264parse, decodebin, videoconvert, autovideosink` by the user's
