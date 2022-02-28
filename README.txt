@@ -100,15 +100,31 @@ and adapt them as necessary for your GStreamer installation. This plugin
 should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`
 uxplay options.
 
-The Video4Linux2 decoder v4l2h264dec (from gstreamer1.0-plugins-good) is
-the appropriate choice for the Broadcom GPU in the Raspberry Pi 4,
-(UxPlay does not run well on the Raspberry Pi if GPU hardware h264 video
-decoding is not used, as its CPU is not powerful enough for satisfactory
-software-based decoding without large latency); uxplay options can be
-used to create GStreamer video pipelines to use non-VAAPI hardware
-decoders, and a special option `-rpi` creates a pipeline appropriate for
-the Raspberry Pi. *(This is "Work In Progess": it does not yet
-consistently work.)*
+-   **support for Raspberry Pi** (*work in progess*): the R Pi platform
+    has long been supported by [RPiPlay](http://github.com/FD-/RPiPlay)
+    using the deprecated 32-bit-only omx (OpenMAX) decoder, now removed
+    from latest Raspberry Pi OS (Bullseye), leading to user interest in
+    getting UxPlay to work on the R Pi (at least on model 4). UxPlay can
+    work with software h264 video decoding (option `-avdec`), but
+    without hardware decoding has unacceptable latency on the Pi. The
+    Video4Linux2 GStreamer plugin v4l2h264dec (from
+    gstreamer1.0-plugins-good) is now the appropriate choice for
+    accelerated hardware video decoding by the Broadcom GPU on the Pi.
+    UxPlay options can be used to create GStreamer video pipelines to
+    use non-VAAPI hardware decoders, and a new UxPlay option `-rpi`
+    creates a pipeline that should be appropriate for the Raspberry Pi,
+    and when it has worked, it has worked well. However, it usually does
+    not work because of a "caps" mismatch between source and sink, which
+    could be fixable with GStreamer "know-how". The GStreamer video
+    pipeline is
+    "`(decrypted h264 stream from iOS)! queue  ! h264parse ! decodebin ! videoconvert ! autovideosink sync=false`"
+    and the uxplay options `-vp ,  -vd, -vc ,-vs` can be used to replace
+    `h264parse, decodebin, videoconvert, autovideosink` by the user's
+    choices. (`-rpi` is equivalent to '-vd v4l2h264dec -vc
+    v4l2convert\`). The first frame in the h264 video stream sends the
+    "caps" details (SPS, PPS) to h264parse. UxPlay users with the R Pi
+    (model 4 recommended) are invited to experiment and report any
+    successes.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 

@@ -77,6 +77,7 @@ static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 static bool new_window_closing_behavior = true;
 static bool close_window;
+static std::string video_parser = "h264parse";
 static std::string video_decoder = "decodebin";
 static std::string video_converter = "videoconvert";
 static bool show_client_FPS_data = false;
@@ -226,6 +227,7 @@ static void print_info (char *name) {
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports separately\n");
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
     printf("-t n      Relaunch server if no connection existed in last n seconds\n");
+    printf("-vp ...   Choose the GSteamer h264 parser: default \"h264parse\"\n");
     printf("-vd ...   Choose the GStreamer h264 decoder; default \"decodebin\"\n");
     printf("          choices: (software) avdec_h264; (hardware) v4l2h264dec,\n");
     printf("          nvdec, nvh264dec, vaapih64dec, vtdec,etc.\n");
@@ -450,6 +452,10 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-h" || arg == "-v") {
             print_info(argv[0]);
             exit(0);
+        } else if (arg == "-vp") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            video_parser.erase();
+            video_parser.append(argv[++i]);
         } else if (arg == "-vd") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             video_decoder.erase();
@@ -530,7 +536,7 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip,
+      video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                             video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
         video_renderer_start();
     }
@@ -569,7 +575,7 @@ int main (int argc, char *argv[]) {
         if (use_audio) audio_renderer_stop();
         if (use_video && close_window) {
             video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip,
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
             video_renderer_start();
         }

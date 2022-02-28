@@ -105,8 +105,8 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
     logger_log(logger, LOGGER_DEBUG, "begin video stream wxh = %dx%d; source %dx%d", width, height, width_source, height_source);
 }
 
-void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *decoder,
-                          const char *converter, const char *videosink) {
+void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
+                          const char *decoder, const char *converter, const char *videosink) {
     GError *error = NULL;
     logger = render_logger;
 
@@ -123,7 +123,8 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     gst_init(NULL,NULL);
     GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! ");
     g_string_append(launch, "queue ! ");
-    g_string_append(launch, "h264parse ! ");
+    g_string_append(launch, parser);
+    g_string_append(launch, " ! ");
     g_string_append(launch, decoder);
     g_string_append(launch, " ! ");
     g_string_append(launch, converter);
