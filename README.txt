@@ -100,7 +100,7 @@ and adapt them as necessary for your GStreamer installation. This plugin
 should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`
 uxplay options.
 
--   **support for Raspberry Pi** (*work in progess*): the R Pi platform
+-   **support for Raspberry Pi** (*work in progress*): the R Pi platform
     has long been supported by [RPiPlay](http://github.com/FD-/RPiPlay)
     using the deprecated 32-bit-only omx (OpenMAX) decoder, now removed
     from latest Raspberry Pi OS (Bullseye), leading to user interest in

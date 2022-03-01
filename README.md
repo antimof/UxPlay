@@ -76,7 +76,7 @@ Users must do this themselves: see [these instructions](https://gist.github.com/
 adapt them as necessary for your GStreamer installation.
 This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
-* **support for Raspberry Pi** (_work in progess_): the R Pi  platform has long been
+* **support for Raspberry Pi** (_work in progress_): the R Pi  platform has long been
   supported by [RPiPlay](http://github.com/FD-/RPiPlay) using the deprecated 32-bit-only  omx (OpenMAX) decoder, now
   removed from latest Raspberry Pi OS (Bullseye), leading to user interest in getting UxPlay to work
   on the R Pi (at least on model 4).   UxPlay can work with software h264 video decoding (option `-avdec`), but without hardware decoding
