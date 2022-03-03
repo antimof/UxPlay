@@ -91,7 +91,7 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
     the pipeline is ` (video stream from appsrc) ... ! h264parse ! decodebin ! videoconvert ! autovideosink ... `; the elements h264parse,
     decodebin, videoconvert, and autovideosink can respectively be modified with options  -vp, -vd, -vc, and -vs.   Please report any successes!
     (See [this](https://github.com/raspberrypi/firmware/issues/1673), which suggests some workaround involving "capssetter" might be possible;
-    `export GST_DEBUG=GST_CAPS:5` may be useful in debugging the pipeline.
+    `export GST_DEBUG=GST_CAPS:5` may be useful in debugging the pipeline.)
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 

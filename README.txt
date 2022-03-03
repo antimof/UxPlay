@@ -128,7 +128,7 @@ uxplay options.
     [this](https://github.com/raspberrypi/firmware/issues/1673), which
     suggests some workaround involving "capssetter" might be possible;
     `export GST_DEBUG=GST_CAPS:5` may be useful in debugging the
-    pipeline.
+    pipeline.)
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
