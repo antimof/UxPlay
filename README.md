@@ -80,7 +80,7 @@ The Raspberry Pi has a Broadcom GPU which is needed for hardware-accelerated h26
 on the Pi when software decoding is used.  The Pi has been supported by [RPiPlay](http://github.com/FD-/RPiPlay) using omx (OpenMAX)
 drivers.    These 32-bit drivers are deprecated, and are unsupported on  Raspberry Pi OS (Bullseye), though they can still be installed on the
 32-bit version of the OS, allowing RPiPlay to still be used.
-The designated replacement for OpenMAX is Video4linux2, and the options that _should_ provide GStreamerhardware decoding  with UxPlay
+The designated replacement for OpenMAX is Video4linux2, and the options that _should_ provide GStreamer hardware decoding  with UxPlay
 are `-vd  v4l2h264dec`
 (best supplemented with  `-vc v4l2convert`), which is a plugin from gstreamer1.0-plugins-good.
 Unfortunately, with this plugin GStreamer "caps negotiation" usually fails; a workaround has not yet been found. This is currently
