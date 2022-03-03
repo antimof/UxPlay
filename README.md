@@ -76,22 +76,14 @@ Users must do this themselves: see [these instructions](https://gist.github.com/
 adapt them as necessary for your GStreamer installation.
 This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
-* **possible support for Raspberry Pi** (_not working_): the CPU of the Raspberry Pi is not powerful
-    enough for GStreamer to decode the h264 video stream using software decoding (option `-avdec` ) without unacceptable latency.
-    The Pi has a Broadcom GPU for accelerated hardware h264 decoding, and in the past this has been
-    supported by [RPiPlay](https://github.com/FD-/RPiPlay) using the deprecated 32-bit omx (OpenMax) driver.   Unfortunately, with the move
-    to a 64-bit OS, this has been removed from recent Raspberry Pi OS (Bullseye), and there has been user interest in making UxPlay work on the Pi.
-    The designated replacement for OpenMAX is Video4linux2, and the options that
-    _should_ work with UxPlay are `-vd  v4l2h264dec -vc v4l2convert`, which are from gstreamer1.0-plugins-good.
-    This has occasionally worked, and when it did, it worked well, with no
-    appreciable latency. Unfortunately, the v4l2h264dec GStreamer plugin usually fails to match the "caps" (capacities) of the h264
-    source to the videosink, and h264 hardware decoding fails. It is
-    not clear whether there is any workaround before an updated v4l2h264dec plugin becomes  available. GStreamer-knowledgeable users
-    who wish to experiment can see if any video pipeline modifications can provide a workaround:
-    the pipeline is ` (video stream from appsrc) ... ! h264parse ! decodebin ! videoconvert ! autovideosink ... `; the elements h264parse,
-    decodebin, videoconvert, and autovideosink can respectively be modified with options  -vp, -vd, -vc, and -vs.   Please report any successes!
-    (See [this](https://github.com/raspberrypi/firmware/issues/1673), which suggests some workaround involving "capssetter" might be possible;
-    `export GST_DEBUG=GST_CAPS:5` may be useful in debugging the pipeline.)
+The Raspberry Pi has a Broadcom GPU which is needed for hardware-accelerated h264 decoding, as UxPlay has unacceptible latency
+on the Pi when software decoding is used.  The Pi has been supported by [RPiPlay](http://github.com/FD-/RPiPlay) using omx (OpenMAX)
+drivers.    These 32-bit drivers are deprecated, and were recently removed from Raspberry Pi OS (Bullseye).
+The designated replacement for OpenMAX is Video4linux2, and the options that _should_ provide hardware decoding  with UxPlay
+are `-vd  v4l2h264dec`
+(best supplemented with  `-vc v4l2convert`), which is a plugin from gstreamer1.0-plugins-good.
+Unfortunately, with this plugin GStreamer "caps negotiation" usually fails; a workaround has not yet been found. This is currently
+an open [Issue](https://github.com/FDH2/UxPlay/issues/70). ** UxPlay support for the Pi may need to wait for a fix to the v4l2 plugin.**
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
