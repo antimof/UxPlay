@@ -111,8 +111,8 @@ with UxPlay are `-vd  v4l2h264dec` (best supplemented with
 `-vc v4l2convert`), which is a plugin from gstreamer1.0-plugins-good.
 Unfortunately, with this plugin GStreamer "caps negotiation" usually
 fails; a workaround has not yet been found. This is currently an open
-[Issue](https://github.com/FDH2/UxPlay/issues/70). \*\* UxPlay support
-for the Pi may need to wait for a fix to the v4l2 plugin.\*\*
+[Issue](https://github.com/FDH2/UxPlay/issues/70). **UxPlay support for
+the Pi may need to wait for a fix to the v4l2 plugin.**
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
