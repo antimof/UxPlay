@@ -76,24 +76,22 @@ Users must do this themselves: see [these instructions](https://gist.github.com/
 adapt them as necessary for your GStreamer installation.
 This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
-* **support for Raspberry Pi** (_work in progress_): the R Pi  platform has long been
-  supported by [RPiPlay](http://github.com/FD-/RPiPlay) using the deprecated 32-bit-only  omx (OpenMAX) decoder, now
-  removed from latest Raspberry Pi OS (Bullseye), leading to user interest in getting UxPlay to work
-  on the R Pi (at least on model 4).   UxPlay can work with software h264 video decoding (option `-avdec`), but without hardware decoding
-  has unacceptable latency on the Pi.  The  Video4Linux2 GStreamer plugin v4l2h264dec (from gstreamer1.0-plugins-good) is now the
-  appropriate choice for accelerated
-  hardware video decoding by the Broadcom GPU on the Pi. UxPlay options can be used to create GStreamer video pipelines to use
-  non-VAAPI hardware decoders, and a new UxPlay option `-rpi` creates  a pipeline that should be appropriate for the Raspberry Pi,
-  and when it has worked, it has worked well.   However, it usually does not work because of a "caps" mismatch between source and
-  sink, which could be fixable with GStreamer "know-how" (perhaps involving using the "capssetter" element).  The GStreamer
-  video pipeline is "` (decrypted h264 stream from iOS)! queue  ! h264parse ! decodebin ! videoconvert ! autovideosink sync=false`"
-  and the uxplay options `-vp ,  -vd, -vc ,-vs` can be used to
-  replace `h264parse, decodebin, videoconvert, autovideosink` by the user's
-  choices. (`-rpi` is equivalent
-  to `-vd v4l2h264dec -vc v4l2convert`).   The first frame in the h264 video stream sends the "caps"
-  details (SPS, PPS) to h264parse.  UxPlay users with the R Pi (model 4 recommended) are invited to experiment and report any
-  successes. (The uxplay `-d` option will display the actual video pipeline being
-  used, `export GST_DEBUG=2` before running uxplay will display GStreamer errors and warnings.)
+* **possible support for Raspberry Pi** (_not working_): the CPU of the Raspberry Pi is not powerful
+    enough for GStreamer to decode the h264 video stream using software decoding (option `-avdec` ) without unacceptable latency.
+    The Pi has a Broadcom GPU for accelerated hardware h264 decoding, and in the past this has been
+    supported by [RPiPlay](https://github.com/FD-/RPiPlay) using the deprecated 32-bit omx (OpenMax) driver.   Unfortunately, with the move
+    to a 64-bit OS, this has been removed from recent Raspberry Pi OS (Bullseye), and there has been user interest in making UxPlay work on the Pi.
+    The designated replacement for OpenMAX is Video4linux2, and the options that
+    _should_ work with UxPlay are `-vd  v4l2h264dec -vc v4l2convert`, which are from gstreamer1.0-plugins-good.
+    This has occasionally worked, and when it did, it worked well, with no
+    appreciable latency. Unfortunately, the v4l2h264dec GStreamer plugin usually fails to match the "caps" (capacities) of the h264
+    source to the videosink, and h264 hardware decoding fails. It is
+    not clear whether there is any workaround before an updated v4l2h264dec plugin becomes  available. GStreamer-knowledgeable users
+    who wish to experiment can see if any video pipeline modifications can provide a workaround:
+    the pipeline is ` (video stream from appsrc) ... ! h264parse ! decodebin ! videoconvert ! autovideosink ... `; the elements h264parse,
+    decodebin, videoconvert, and autovideosink can respectively be modified with options  -vp, -vd, -vc, and -vs.   Please report any successes!
+    (See [this](https://github.com/raspberrypi/firmware/issues/1673), which suggests some workaround involving "capssetter" might be possible;
+    `export GST_DEBUG=GST_CAPS:5` may be useful in debugging the pipeline.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -349,12 +347,15 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-r {R|L}**  90 degree Right (clockwise) or Left (counter-clockwise)
    rotations; these are carried out after any **-f** transforms.
 
-**-vd _decoder_** chooses the GStreamer pipeline's h264 decoder, instead of letting
+**-vp _parser_** choses the GStreamer pipeline's h264 parser element, default is h264parse. Using
+   quotes "..." allows options to be added.
+   
+**-vd _decoder_** chooses the GStreamer pipeline's h264 decoder element, instead of letting
    decodebin pick it for you.  Software decoding is done by avdec_h264; various hardware decoders
    include: vaapi264dec, nvdec, nvh264dec, v4l2h264dec (these require that the appropriate hardware is
    available).  Using quotes "..." allows some parameters to be included with the decoder name.
 
-**-vc _converter_** chooses the GStreamer pipeline's videoconverter, instead of the default
+**-vc _converter_** chooses the GStreamer pipeline's videoconverter element, instead of the default
    value "videoconvert".  When using video4linux hardware decoding by a GPU,`-vc  v4l2convert` will also use
    the GPU for video conversion.  Using quotes "..." allows some parameters to be included with the converter name.
    
