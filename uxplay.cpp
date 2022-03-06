@@ -485,11 +485,13 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-avdec") {
             video_decoder.erase();
             video_decoder = "avdec_h264";
-        // } else if (arg == "-rpi") {      /*undocumented option, may be removed  */
-        //    video_decoder.erase();
-        //    video_decoder = "v4l2h264dec";
-        //    video_converter.erase();
-        //    video_converter = "v4l2convert";
+        } else if (arg == "-rpi") {      /*undocumented option, may be removed  */
+            video_parser.erase();
+            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+            video_decoder.erase();
+            video_decoder = "v4l2h264dec";
+            video_converter.erase();
+            video_converter = "v4l2convert";
         } else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
