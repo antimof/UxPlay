@@ -102,10 +102,10 @@ uxplay options.
 
 -   **Support for Raspberry Pi (not yet).**
 
-    The Raspberry Pi (e.g, model 4B) is powerful enough to run UxPlay,
+    The Raspberry Pi (e.g., model 4B) is powerful enough to run UxPlay,
     but only with hardware-accelerated h264 decoding by its Broadcom GPU
     (software decoding with uxplay option `-avdec` works, but with
-    unacceptible latency). Raspberry Pi OS (Bullseye) has abandoned the
+    unacceptable latency). Raspberry Pi OS (Bullseye) has abandoned the
     omx (OpenMAX) GPU driver used by
     [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
     GStreamer plugin omxh264dec has been deprecated and broken for some
