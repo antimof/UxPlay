@@ -100,21 +100,26 @@ and adapt them as necessary for your GStreamer installation. This plugin
 should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`
 uxplay options.
 
-The Raspberry Pi has a Broadcom GPU which is needed for
-hardware-accelerated h264 decoding, as UxPlay has unacceptible latency
-on the Pi when software decoding is used. The Pi has been supported by
-[RPiPlay](http://github.com/FD-/RPiPlay) using omx (OpenMAX) drivers.
-These 32-bit drivers are deprecated, and are unsupported on Raspberry Pi
-OS (Bullseye), though they can still be installed on the 32-bit version
-of the OS, allowing RPiPlay to still be used. The designated replacement
-for OpenMAX is Video4linux2, and the options that *should* provide
-GStreamer hardware decoding with UxPlay are `-vd  v4l2h264dec` (best
-supplemented with `-vc v4l2convert`), which is a plugin from
-gstreamer1.0-plugins-good. Unfortunately, with this plugin GStreamer
-"caps negotiation" usually fails; a workaround has not yet been found.
-This is currently an open
-[Issue](https://github.com/FDH2/UxPlay/issues/70). **UxPlay support for
-the Pi may need to wait for a fix to the v4l2 plugin.**
+-   **Support for Raspberry Pi (not yet).**
+
+    The Raspberry Pi (e.g, model 4B) is powerful enough to run UxPlay,
+    but only with hardware-accelerated h264 decoding by its Broadcom GPU
+    (software decoding with uxplay option `-avdec` works, but with
+    unacceptible latency). Raspberry Pi OS (Bullseye) has abandoned the
+    omx (OpenMAX) GPU driver used by
+    [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
+    GStreamer plugin omxh264dec has been deprecated and broken for some
+    time. The replacement is the Video4Linux (v4l2) plugin v4l2h264dec
+    from gstreamer1.0-plugins-good, which works well for playing mp4
+    files on the Pi. Unfortunately, features needed by UxPlay are
+    currently broken in this plugin, see the open
+    [Issue](https://github.com/FDH2/UxPlay/issues/70). The
+    (undocumented) UxPlay option `-rpi` will use the Pi's GPU for video
+    decoding, but will only work when an updated v4l2h264dec plugin
+    becomes available. There is now work on this in the GStreamer
+    development cycle: hopefully this might get backported to
+    GStreamer-1.18 or 1.20 for the Pi, otherwise it will appear in
+    v1.22.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
