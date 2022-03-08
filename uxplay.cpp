@@ -237,8 +237,8 @@ static void print_info (char *name) {
     printf("-vs ...   Choose the GStreamer videosink; default \"autovideosink\"\n");
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.\n");
-    //    printf("-rpi      Video settings for Raspberry Pi 4 (h264 decoding in GPU).\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
+    printf("-rpi      Video settings for Raspberry Pi (for GPU h264 decoding).\n");
     printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
@@ -483,9 +483,13 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-nc") {
             new_window_closing_behavior = false;
         } else if (arg == "-avdec") {
+            video_parser.erase();
+            video_parser = "h264parse";
             video_decoder.erase();
             video_decoder = "avdec_h264";
-        } else if (arg == "-rpi") {      /*undocumented option, may be removed  */
+            video_converter.erase();
+            video_converter = "videoconvert";
+        } else if (arg == "-rpi") {
             video_parser.erase();
             video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();

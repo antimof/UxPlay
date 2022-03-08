@@ -76,17 +76,18 @@ Users must do this themselves: see [these instructions](https://gist.github.com/
 adapt them as necessary for your GStreamer installation.
 This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
-*  **Support for Raspberry Pi (not yet).**
+*  **GPU Support for Raspberry Pi**
 
-    The Raspberry Pi (e.g., model 4B) is powerful enough to run UxPlay, but only with  hardware-accelerated h264 decoding by
-    its Broadcom GPU  (software decoding with uxplay option `-avdec` works, but with unacceptable latency).  Raspberry Pi OS (Bullseye)
-    has abandoned the omx (OpenMAX) GPU driver used by [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
+    Some Raspberry Pi models (e.g., model 4B) are powerful enough to run UxPlay, but work best  with  hardware-accelerated h264 decoding by
+    its Broadcom GPU  (software decoding with combined uxplay options `-rpi -avdec`  may also work with acceptable 
+    latency on Pi model 4).  Raspberry Pi OS (Bullseye)
+    has recently abandoned the older omx (OpenMAX) GPU driver used by [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
     GStreamer plugin omxh264dec has been deprecated and broken for some time.   The replacement is the Video4Linux (v4l2) plugin
     v4l2h264dec from gstreamer1.0-plugins-good, which works well for playing mp4 files on the Pi.   Unfortunately, features needed
-    by UxPlay are currently broken in this plugin, see the open [Issue](https://github.com/FDH2/UxPlay/issues/70).   The (undocumented)
-    UxPlay option `-rpi` will use the Pi's GPU for video decoding, but will only work when an updated v4l2h264dec plugin becomes available.
-    There is now work on this in the GStreamer development cycle: hopefully this might get backported to GStreamer-1.18 or 1.20 for the Pi,
-    otherwise it will appear in v1.22.
+    by UxPlay are broken in current releases of this plugin, but are fixed as of the v1.21 development branch.  See the
+    open [Issue](https://github.com/FDH2/UxPlay/issues/70) for a patch against the current stable release  1.20.0.   The
+    UxPlay option `-rpi` by itself will use the Pi's GPU for video decoding with the patched plugin.
+
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -148,7 +149,7 @@ If this shows the avahi-daemon is not running, control it with ```sudo systemctl
 If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
 UxPlay from receiving client connection requests unless some network ports are opened. See  [Troubleshooting](#troubleshooting) below for
 help with this or other problems.   See [Usage](#usage) for run-time options.   For OpenGL support (option -vs glimagesink), needed for
-NVIDIA  GPU-based video decoding, make sure gstreamer1.0-gl is installed.
+Raspberry Pi and NVIDIA  GPU-based video decoding, make sure gstreamer1.0-gl is installed.
 
  * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
@@ -369,6 +370,10 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    feature (which streams audio in AAC audio format) is now probably unneeded, as UxPlay can now 
    stream superior-quality Apple Lossless audio without video in Airplay non-mirror mode.
 
+**-rpi** Video settings for Raspberry Pi, for hardware h264 video decoding in the GPU (requires the
+   video4linux2 plugin from GStreamer-1.21.0 or later, or a backported patched version of an earlier release.
+   (If this is unavailable, use `uxplay -rpi -avdec`).  Uses the glimagesink videosink.
+
 **-avdec** forces use of software h264 decoding using Gstreamer element avdec_h264 (libav h264 decoder). This
    option should prevent autovideosink choosing a hardware-accelerated videosink plugin such as vaapisink.
    
@@ -526,7 +531,7 @@ tvOS 12.2.1), so it is unclear what setting prompts the client
 to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
-1.48 2022-02-24   Made the video pipeline fully configurable, for use with hardware h264 decoding.
+1.48 2022-02-24   Made the video pipeline fully configurable, for use with hardware h264 decoding.  Support for Raspberry Pi.
 
 1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming 
                   performance.  Internal cleanups of processing of video packets received from the client.   Added -reset n option 
