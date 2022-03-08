@@ -105,9 +105,9 @@ uxplay options.
     Some Raspberry Pi models (e.g., model 4B) are powerful enough to run
     UxPlay, but work best with hardware-accelerated h264 decoding by the
     Pi's Broadcom GPU; software decoding with combined uxplay options
-    `-rpi -avdec` may also work with acceptable latency on Pi model 4.
-    Raspberry Pi OS (Bullseye) has recently abandoned the older omx
-    (OpenMAX) GPU driver used by
+    `-rpi -avdec` will work, but may (but not always) have unacceptable
+    latency. Raspberry Pi OS (Bullseye) has recently abandoned the older
+    omx (OpenMAX) GPU driver used by
     [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
     GStreamer plugin omxh264dec has been deprecated and broken for some
     time. The replacement is the Video4Linux (v4l2) plugin v4l2h264dec
@@ -169,17 +169,22 @@ downloads, "UxPlay" for "git clone" downloads), then do
 1.  `sudo apt-get install libssl-dev libplist-dev` (unless you need to
     build OpenSSL and libplist from source).
 2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`.
-3.  `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated
-    Intel graphics, but not NVIDIA)
-4.  `sudo apt-get install libx11-dev` (only needed if you invoke the
+3.  `sudo apt-get install libx11-dev` (only needed if you invoke the
     "ZOOMFIX" X11 display-name fix in the next step)
-5.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
+4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
     applications such as Zoom, see [Improvements](#improvements) \#3
     below).
-6.  `make`
-7.  `sudo make install` (you can afterwards uninstall with
+5.  `make`
+6.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
+7.  Install GStreamer plugins that you need: 'sudo apt-get install
+    gstreamer1.0-`<plugin>`{=html}`; values of``<plugin>`{=html} needed
+    are: "libav" (for sound), and "plugins-bad" (for software h264
+    decoding). Also needed may be "gl" for OpenGL support, and "x" for
+    X11 support, although these may already be installed; "vaapi" is
+    needed for hardware-accelerated h264 video decoding by Intel
+    graphics (not for NVIDIA).
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*

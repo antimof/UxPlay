@@ -79,8 +79,8 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
 *  **GPU Support for Raspberry Pi**
 
     Some Raspberry Pi models (e.g., model 4B) are powerful enough to run UxPlay, but work best  with  hardware-accelerated h264 decoding by
-    the Pi's  Broadcom GPU; software decoding with combined uxplay options `-rpi -avdec`  may also work with acceptable 
-    latency on Pi model 4.  Raspberry Pi OS (Bullseye)
+    the Pi's  Broadcom GPU; software decoding with combined uxplay options `-rpi -avdec` will work, but may (but not always)  have  unacceptable
+    latency.  Raspberry Pi OS (Bullseye)
     has recently abandoned the older omx (OpenMAX) GPU driver used by [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
     GStreamer plugin omxh264dec has been deprecated and broken for some time.   The replacement is the Video4Linux (v4l2) plugin
     v4l2h264dec from gstreamer1.0-plugins-good, which works well for playing mp4 files on the Pi.   Unfortunately, features needed
@@ -127,13 +127,15 @@ downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipf
 
 1. `sudo apt-get install libssl-dev libplist-dev`  (unless you need to build OpenSSL and libplist from source).
 2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`. 
-3. `sudo apt-get install gstreamer1.0-vaapi` (For hardware-accelerated Intel graphics, but not NVIDIA)
-4. `sudo apt-get install libx11-dev`  (only needed if you invoke the "ZOOMFIX" X11 display-name fix in the next step)
-5. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
+3. `sudo apt-get install libx11-dev`  (only needed if you invoke the "ZOOMFIX" X11 display-name fix in the next step)
+4. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
 Zoom, see [Improvements](#improvements) \#3 below).
-6. `make`
-7. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
+5. `make`
+6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
+7.  Install GStreamer plugins that you need: 'sudo apt-get install gstreamer1.0-<plugin>`; values of
+    `<plugin> needed are: "libav" (for sound), and  "plugins-bad" (for software h264 decoding). Also needed may be "gl" for OpenGL support, and "x" for X11
+    support, although these may  already be installed; "vaapi" is needed for hardware-accelerated h264 video decoding by Intel graphics (not for NVIDIA).
 
 _If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean
 the build directory with_ "```rm -rf build/* ```" _(run from within the UxPlay source directory) without affecting the source directories which contain your modifications_.
