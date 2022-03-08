@@ -492,6 +492,8 @@ int main (int argc, char *argv[]) {
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
+            videosink.erase();
+            videosink = "glimagesink";
         } else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
