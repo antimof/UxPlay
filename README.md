@@ -114,6 +114,7 @@ now being periodically merged with the antimof tree (thank you antimof!).
 ## Building UxPlay on  Linux (or \*BSD):
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS, see below).
+See [Troubleshooting](#troubleshooting) below for help with any difficulties.
 
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and libplist 2.0 or later.
 (This means Debian 10 "Buster", Ubuntu 18.04 or later.) If it does not, you may
@@ -149,7 +150,7 @@ processs.
 check that your DNS-SD server (usually avahi-daemon) is running: do this in a terminal window with ```systemctl status avahi-daemon```.
 If this shows the avahi-daemon is not running, control it with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or avahi-daemon.service). 
 If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
-UxPlay from receiving client connection requests unless some network ports are opened. See  [Troubleshooting](#troubleshooting) below for
+UxPlay from receiving client connection requests unless some network ports are opened. See [Troubleshooting](#troubleshooting) below for
 help with this or other problems.   See [Usage](#usage) for run-time options.   For OpenGL support (option -vs glimagesink), needed for
 Raspberry Pi and NVIDIA  GPU-based video decoding, make sure gstreamer1.0-gl is installed.
 
@@ -407,6 +408,15 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 # Troubleshooting
 
 Note: ```uxplay```  is run from a terminal command line, and informational messages are written to the terminal.
+
+### 0.  Problems in compiling UxPlay.
+    
+One user (on Ubuntu) found compilation failed with messages about linking to "usr/local/lib/libcrypto.a"  and "zlib".
+This was because (in addition to the standard ubuntu installation of libssl-dev), the user was unaware that a second installation
+with libcrypto in /usr/local was present.
+Solution: when more than one installation of OpenSSL is present, set the environment variable OPEN_SSL_ROOT_DIR to point to the correct one;
+on 64-bit Ubuntu, this is done by
+running `export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/` before running cmake.
 
 ### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
 
