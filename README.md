@@ -133,8 +133,8 @@ make X11 mirror display windows visible to screen-sharing applications such as
 Zoom, see [Improvements](#improvements) \#3 below).
 5. `make`
 6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
-7.  Install GStreamer plugins that you need: 'sudo apt-get install gstreamer1.0-<plugin>`; values of
-    `<plugin> needed are: "libav" (for sound), and  "plugins-bad" (for software h264 decoding). Also needed may be "gl" for OpenGL support, and "x" for X11
+7.  Install GStreamer plugins that you need: `sudo apt-get install gstreamer1.0-<plugin>`; values of
+    `<plugin>` needed are: "libav" (for sound), and  "plugins-bad" (for software h264 decoding). Also needed may be "gl" for OpenGL support, and "x" for X11
     support, although these may  already be installed; "vaapi" is needed for hardware-accelerated h264 video decoding by Intel graphics (not for NVIDIA).
 
 _If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean
