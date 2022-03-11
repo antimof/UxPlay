@@ -7,18 +7,20 @@ Highlights:
 
 -   GPLv3, open source.
 -   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-    Lossless ALAC) protocols from current iOS/iPadOS 15.2 client
+    Lossless ALAC) protocols f from current iOS/iPadOS 15.2 client
     devices.
 -   macOS computers (2011 or later) can act either as AirPlay clients,
     or as the server running UxPlay (tested on macOS 10.15 Catalina).
     Using AirPlay, UxPlay can emulate a second display for macOS
     clients.
 -   Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone
-    4S, when upgraded to iOS 9.3.5 or later), and also a Windows
+    4S, when upgraded to iOS 9.3.5 or later), and a Windows
     AirPlay-client emulator, AirMyPC.
 -   Uses GStreamer, with options to select different output "videosinks"
     and "audiosinks".
 -   Support for server behind a firewall.
+-   **New**: Support for Raspberry Pi, with hardware video acceleration
+    by Video4Linux2 (replacement for OpenMAX)
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
 Linux, macOS, and \*BSD. It was initially developed by
@@ -102,23 +104,21 @@ uxplay options.
 
 -   **GPU Support for Raspberry Pi**
 
-    Some Raspberry Pi models (e.g., model 4B) are powerful enough to run
-    UxPlay, but work best with hardware-accelerated h264 decoding by the
-    Pi's Broadcom GPU; software decoding with combined uxplay options
-    `-rpi -avdec` will work, but may (but not always) have unacceptable
-    latency. Raspberry Pi OS (Bullseye) has recently abandoned the older
-    omx (OpenMAX) GPU driver used by
-    [RPiPlay](http://github.com/FD-/RPiPlay), and the corresponding
-    GStreamer plugin omxh264dec has been deprecated and broken for some
-    time. The replacement is the Video4Linux (v4l2) plugin v4l2h264dec
-    from gstreamer1.0-plugins-good, which works well for playing mp4
-    files on the Pi. Unfortunately, features needed by UxPlay are broken
-    in current releases of this plugin, but are fixed as of the v1.21
-    development branch. See the open
-    [Issue](https://github.com/FDH2/UxPlay/issues/70) for a patch
-    against the current stable release 1.20.0. The UxPlay option `-rpi`
-    by itself will use the Pi's GPU for video decoding with the patched
-    plugin.
+    Raspberry Pi computers can run UxPlay with software decoding of h264
+    video (options `uxplay -rpi -avdec`) but this usually has
+    unacceptible latency, and hardware-accelerated decoding by the Pi's
+    built-in Broadcom GPU should be used. UxPlay's antecedent
+    [RPiPlay](http://github.com/FD-/RPiPlay) was developed to use the
+    32-bit-only omx (OpenMAX) driver for this, but omx has recently been
+    declared obsolete and abandoned in "legacy" status by Raspberry Pi
+    OS (Bullseye). The GStreamer plugin for its replacement v4l2
+    (Video4Linux2) has until recently been unusable with UxPlay, but new
+    fixes in the GStreamer development branch have changed this.
+    Backports (as patches) to GStreamer 1.18.4 (Bullseye) and 1.20.0
+    (Manjaro) are now available
+    [here](https://github.com/FDH2/UxPlay/issues/70), until
+    distributions release them as updates, and work well with UxPlay,
+    using a new option `uxplay -rpi` (tested on R Pi model 4B)
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -166,6 +166,11 @@ also installed: "sudo apt-get install cmake pkg-config". In a terminal
 window, change directories to the source directory of the downloaded
 source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile
 downloads, "UxPlay" for "git clone" downloads), then do
+
+**Note:** By default UxPlay will be built with optimization for the
+computer it is built on; when this is not the case, as when you are
+packaging for a distribution, use the cmake option
+`-DNO_MARCH_NATIVE=ON`.
 
 1.  `sudo apt-get install libssl-dev libplist-dev` (unless you need to
     build OpenSSL and libplist from source).
