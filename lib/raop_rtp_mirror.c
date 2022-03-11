@@ -269,7 +269,7 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             if (payload == NULL && ret == 0) {
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, no payload exists");
+	      logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, got %d bytes of 128 byte header",readstart);
                 FD_CLR(stream_fd, &rfds);
                 stream_fd = -1;
                 continue;
