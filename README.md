@@ -545,7 +545,7 @@ tvOS 12.2.1), so it is unclear what setting prompts the client
 to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
-1.48 2022-02-24   Made the video pipeline fully configurable, for use with hardware h264 decoding.  Support for Raspberry Pi.
+1.48 2022-03-11   Made the GStreamer video pipeline fully configurable, for use with hardware h264 decoding.  Support for Raspberry Pi.
 
 1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming 
                   performance.  Internal cleanups of processing of video packets received from the client.   Added -reset n option 
