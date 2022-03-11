@@ -281,8 +281,9 @@ raop_ntp_thread(void *arg)
             if (response_len < 0) {
                 timeout_counter++;
                 char time[28];
+                int level = (timeout_counter == 1 ? LOGGER_DEBUG : LOGGER_ERR);
                 ntp_timestamp_to_time(send_time, time, sizeof(time));
-                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout %d (limit %d) (request sent %s)",
+                logger_log(raop_ntp->logger, level, "raop_ntp receive timeout %d (limit %d) (request sent %s)",
                            timeout_counter, raop_ntp->max_ntp_timeouts, time);
                 if (timeout_counter ==  raop_ntp->max_ntp_timeouts) {
                     conn_reset = true;   /* client is no longer responding */
