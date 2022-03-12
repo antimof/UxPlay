@@ -161,11 +161,13 @@ later.) If it does not, you may need to build and install these from
 source (see below).
 
 You need a C/C++ compiler (e.g. g++) with the standard development
-libraries installed. Make sure that cmake\>=3.4.1 and pkg-config are
-also installed: "sudo apt-get install cmake pkg-config". In a terminal
-window, change directories to the source directory of the downloaded
-source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile
-downloads, "UxPlay" for "git clone" downloads), then do
+libraries installed. Debian-based systems provide a package
+"build-essential" for use in compiling software. Make sure that
+cmake\>=3.4.1 and pkg-config are also installed: "sudo apt-get install
+cmake pkg-config". In a terminal window, change directories to the
+source directory of the downloaded source code ("UxPlay-\*", "\*" =
+"master" or the release tag for zipfile downloads, "UxPlay" for "git
+clone" downloads), then do
 
 **Note:** By default UxPlay will be built with optimization for the
 computer it is built on; when this is not the case, as when you are
@@ -186,11 +188,12 @@ packaging for a distribution, use the cmake option
     `sudo make uninstall` in the same directory in which this was run)
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
-    needed are: "libav" (for sound), and "plugins-bad" (for software
-    h264 decoding). Also needed may be "gl" for OpenGL support, and "x"
-    for X11 support, although these may already be installed; "vaapi" is
-    needed for hardware-accelerated h264 video decoding by Intel
-    graphics (not for NVIDIA).
+    needed are: "libav" (for sound), "plugins-good" (for v4l2 hardware
+    h264 decoding) and "plugins-bad" (for software h264 decoding). Also
+    needed may be "gl" for OpenGL support, and "x" for X11 support,
+    although these may already be installed; "vaapi" is needed for
+    hardware-accelerated h264 video decoding by Intel graphics (not for
+    NVIDIA).
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
