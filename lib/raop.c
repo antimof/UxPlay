@@ -280,7 +280,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         if (conn->raop->callbacks.conn_teardown) {
              conn->raop->callbacks.conn_teardown(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
         }
-        logger_log(conn->raop->logger, LOGGER_INFO, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
 
         http_response_add_header(*response, "Connection", "close");
 
@@ -291,7 +291,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
             }
         } else if (teardown_110) {
             if (conn->raop_rtp_mirror) {
-             /* Stop our video RTP session */
+                /* Stop our video RTP session */
                 raop_rtp_mirror_stop(conn->raop_rtp_mirror);
             }
         } else {
