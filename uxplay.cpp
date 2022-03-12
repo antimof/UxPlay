@@ -44,13 +44,13 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.47"
+#define VERSION "1.48"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
-#define NTP_TIMEOUT_LIMIT 10
+#define NTP_TIMEOUT_LIMIT 5
 
 static std::string server_name = DEFAULT_NAME;
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
@@ -77,7 +77,9 @@ static std::string audiosink = "autoaudiosink";
 static bool use_audio = true;
 static bool new_window_closing_behavior = true;
 static bool close_window;
-static std::string decoder = "decodebin";
+static std::string video_parser = "h264parse";
+static std::string video_decoder = "decodebin";
+static std::string video_converter = "videoconvert";
 static bool show_client_FPS_data = false;
 static unsigned int max_ntp_timeouts = NTP_TIMEOUT_LIMIT;
 
@@ -225,15 +227,23 @@ static void print_info (char *name) {
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports separately\n");
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
     printf("-t n      Relaunch server if no connection existed in last n seconds\n");
-    printf("-vs       Choose the GStreamer videosink; default \"autovideosink\"\n");
+    printf("-vp ...   Choose the GSteamer h264 parser: default \"h264parse\"\n");
+    printf("-vd ...   Choose the GStreamer h264 decoder; default \"decodebin\"\n");
+    printf("          choices: (software) avdec_h264; (hardware) v4l2h264dec,\n");
+    printf("          nvdec, nvh264dec, vaapih64dec, vtdec,etc.\n");
+    printf("          choices: avdec_h264,vaapih264dec,nvdec,nvh264dec,v4l2h264dec\n");
+    printf("-vc ...   Choose the GStreamer videoconverter; default \"videoconvert\"\n");
+    printf("          another choice when using v4l2h264decode: v4l2convert\n");
+    printf("-vs ...   Choose the GStreamer videosink; default \"autovideosink\"\n");
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
-    printf("-avdec    Force software h264 video decoding with libav h264 decoder\n"); 
-    printf("-as       Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
-    printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink,etc.\n");
+    printf("-rpi      Video settings for Raspberry Pi (for GPU h264 decoding).\n");
+    printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
+    printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
+    printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
-    printf("-reset n  Reset after 3n seconds client silence (default %d, 0 = never)\n", NTP_TIMEOUT_LIMIT);
+    printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");  
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-d        Enable debug logging\n");
@@ -442,6 +452,18 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-h" || arg == "-v") {
             print_info(argv[0]);
             exit(0);
+        } else if (arg == "-vp") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            video_parser.erase();
+            video_parser.append(argv[++i]);
+        } else if (arg == "-vd") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            video_decoder.erase();
+            video_decoder.append(argv[++i]);
+        } else if (arg == "-vc") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            video_converter.erase();
+            video_converter.append(argv[++i]);
         } else if (arg == "-vs") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             videosink.erase();
@@ -461,8 +483,21 @@ int main (int argc, char *argv[]) {
         } else if (arg == "-nc") {
             new_window_closing_behavior = false;
         } else if (arg == "-avdec") {
-            decoder.erase();
-            decoder = "h264parse ! avdec_h264";
+            video_parser.erase();
+            video_parser = "h264parse";
+            video_decoder.erase();
+            video_decoder = "avdec_h264";
+            video_converter.erase();
+            video_converter = "videoconvert";
+        } else if (arg == "-rpi") {
+            video_parser.erase();
+            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+            video_decoder.erase();
+            video_decoder = "v4l2h264dec";
+            video_converter.erase();
+            video_converter = "v4l2convert";
+            videosink.erase();
+            videosink = "glimagesink";
         } else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
@@ -509,7 +544,8 @@ int main (int argc, char *argv[]) {
     }
 
     if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
+      video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
         video_renderer_start();
     }
     
@@ -547,7 +583,8 @@ int main (int argc, char *argv[]) {
         if (use_audio) audio_renderer_stop();
         if (use_video && close_window) {
             video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip, decoder.c_str(), videosink.c_str());
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
             video_renderer_start();
         }
         if (reset_loop) goto reconnect;
@@ -572,6 +609,7 @@ int main (int argc, char *argv[]) {
         video_renderer_destroy();
     }
     logger_destroy(render_logger);
+    render_logger = NULL;
 }
 
 // Server callbacks
@@ -591,9 +629,15 @@ extern "C" void conn_destroy (void *cls) {
     }
 }
 
-extern "C" void conn_reset (void *cls) {
-    LOGI("***ERROR lost connection with client");
-    close_window = false;    /* leave "frozen" window open */
+extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
+    LOGI("***ERROR lost connection with client (network problem?)");
+    if (timeouts) {
+        LOGI("   Client no-response limit of %d timeouts (%d seconds) reached:", timeouts, 3*timeouts);
+        LOGI("   Sometimes the network connection may recover after a longer delay:\n"
+             "   the default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
+    }
+    printf("reset_video %d\n",(int) reset_video);
+    close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
     raop_stop(raop);
     reset_loop = true;
 }
@@ -737,11 +781,15 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
 }
 
 int stop_raop_server () {
-    if (raop) raop_destroy(raop);
+  if (raop) {
+    raop_destroy(raop);
+    raop = NULL;
+  }
     if (dnssd) {
         dnssd_unregister_raop(dnssd);
         dnssd_unregister_airplay(dnssd);
         dnssd_destroy(dnssd);
+        dnssd = NULL;
     }
     return 0;
 }

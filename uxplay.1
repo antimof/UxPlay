@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "February 2022" "1.47" "User Commands"
+.TH UXPLAY "1" "February 2022" "1.48" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.47: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -37,25 +37,39 @@ UxPlay 1.47: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-t\fR n      Relaunch server if no connection existed in last n seconds
 .TP
-\fB\-vs\fI sink\fR  Choose the  GStreamer videosink; default "autovideosink"
+\fB\-vp\fI prs \fR  Choose GStreamer h264 parser; default "h264parse"
+.TP
+\fB\-vd\fI dec \fR  Choose GStreamer h264 decoder; default "decodebin"
 .IP
-   some choices: ximagesink,xvimagesink,vaapisink,glimagesink,
+   choices: (software) avdec_h264; (hardware) v4l2h264dec,
 .IP
-   gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.
+   nvdec, nvh264dec, vaapih264dec, vtdec, ...
+.TP
+\fB\-vc\fI cnv \fR  Choose GStreamer videoconverter; default "videoconvert"
+.IP
+   another choice when using v4l2h264dec: v4l2convert.
+.TP
+\fB\-vs\fI sink\fR  Choose the GStreamer videosink; default "autovideosink"
+.IP
+   choices: ximagesink,xvimagesink,vaapisink,glimagesink,
+.IP
+   gtksink,waylandsink,osximagesink,fpsdisplaysink,...
 .PP
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
-\fB\-avdec\fR    Force software h264 video decoding with libav h264 decoder.
+\fB\-rpi\fR      Video settings for Raspberry Pi (for GPU h264 decoding).
 .TP
-\fB\-as\fI sink\fR  Choose the  GStreamer audiosink; default "autoaudiosink"
+\fB\-avdec\fR    Force software h264 video decoding with libav decoder.
+.TP
+\fB\-as\fI sink\fR  Choose the GStreamer audiosink; default "autoaudiosink"
 .IP
-   choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink etc.
+   choices:pulsesink,alsasink,osssink,oss4sink,osxaudiosink,..
 .PP
 .TP
 \fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
 .TP
-\fB\-reset\fR n  Reset after 3n seconds client silence (default 10, 0 = never).
+\fB\-reset\fR n  Reset after 3n seconds client silence (default 10, 0=never).
 .TP
 \fB\-nc\fR       Do not close video window when client stops mirroring
 .TP

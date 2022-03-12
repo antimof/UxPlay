@@ -26,6 +26,7 @@
 #include "compat.h"
 #include "netutils.h"
 #include "byteutils.h"
+#include "utils.h"
 
 #define RAOP_NTP_DATA_COUNT   8
 #define RAOP_NTP_PHI_PPM   15ull                   // PPM
@@ -279,8 +280,11 @@ raop_ntp_thread(void *arg)
                                     (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
             if (response_len < 0) {
                 timeout_counter++;
-                logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp receive timeout %d (limit %d) (request sent %llu)",
-                           timeout_counter, raop_ntp->max_ntp_timeouts, send_time);
+                char time[28];
+                int level = (timeout_counter == 1 ? LOGGER_DEBUG : LOGGER_ERR);
+                ntp_timestamp_to_time(send_time, time, sizeof(time));
+                logger_log(raop_ntp->logger, level, "raop_ntp receive timeout %d (limit %d) (request sent %s)",
+                           timeout_counter, raop_ntp->max_ntp_timeouts, time);
                 if (timeout_counter ==  raop_ntp->max_ntp_timeouts) {
                     conn_reset = true;   /* client is no longer responding */
                     break;
@@ -351,7 +355,8 @@ raop_ntp_thread(void *arg)
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp exiting thread");
     if (conn_reset && raop_ntp->callbacks.conn_reset) {
-        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls);
+        const bool video_reset = false;   /* leave "frozen video" in place */
+        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls, timeout_counter, video_reset);
     }
     return 0;
 }

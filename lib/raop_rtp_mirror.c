@@ -177,6 +177,7 @@ raop_rtp_mirror_thread(void *arg)
     bool conn_reset = false;
     uint64_t ntp_timestamp_nal = 0;
     uint64_t ntp_timestamp_raw = 0;
+    bool conn_started = false;
     
 #ifdef DUMP_H264
     // C decrypted
@@ -193,6 +194,7 @@ raop_rtp_mirror_thread(void *arg)
         MUTEX_LOCK(raop_rtp_mirror->run_mutex);
         if (!raop_rtp_mirror->running) {
             MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
+            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror->running is no longer true");
             break;
         }
         MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
@@ -268,10 +270,15 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             if (payload == NULL && ret == 0) {
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket closed");
-                FD_CLR(stream_fd, &rfds);
-                stream_fd = -1;
-                continue;
+                if (conn_started) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, connection ended");
+                    break;
+                } else {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, got %d bytes of 128 byte header",readstart);
+                    FD_CLR(stream_fd, &rfds);
+                    stream_fd = -1;
+                    continue;
+                }
             } else if (payload == NULL && ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error  in header recv: %d %s", errno, strerror(errno));
@@ -279,6 +286,7 @@ raop_rtp_mirror_thread(void *arg)
                 break;
             }
 
+            conn_started = true;
             int payload_size = byteutils_get_int(packet, 0);
             //unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
             //unsigned short payload_option = byteutils_get_short(packet, 6);
@@ -296,7 +304,7 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             if (ret == 0) {
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket closed");
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed");
                 break;
             } else if (ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
@@ -339,15 +347,13 @@ raop_rtp_mirror_thread(void *arg)
                 // Decrypt data
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
-                int nalu_size = 0;
-                int nalus_count = 0;
-
                 // It seems the AirPlay protocol prepends NALs with their size, which we're replacing with the 4-byte
                 // start code for the NAL Byte-Stream Format.
                 bool valid_data = true;
+                int nalu_size = 0;
+                int nalus_count = 0;
                 while (nalu_size < payload_size) {
-                    int nc_len = (payload_decrypted[nalu_size + 0] << 24) | (payload_decrypted[nalu_size + 1] << 16) |
-                                 (payload_decrypted[nalu_size + 2] << 8) | (payload_decrypted[nalu_size + 3]);
+                    int nc_len = byteutils_get_int_be(payload_decrypted, nalu_size);
                     if (nc_len < 0 || nalu_size + 4 > payload_size) {
                         valid_data = false;
                         break;
@@ -507,7 +513,8 @@ raop_rtp_mirror_thread(void *arg)
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
     if (conn_reset && raop_rtp_mirror->callbacks.conn_reset) {
-        raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls);
+        const bool video_reset = false;   /* leave "frozen video" showing */
+        raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0, video_reset);
     }
     return 0;
 }

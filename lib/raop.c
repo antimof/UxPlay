@@ -202,7 +202,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
 
     http_response_add_header(*response, "CSeq", cseq);
     //http_response_add_header(*response, "Apple-Jack-Status", "connected; type=analog");
-    http_response_add_header(*response, "Server", "AirTunes/220.68");
+    http_response_add_header(*response, "Server", "AirTunes/"GLOBAL_VERSION);
 
     logger_log(conn->raop->logger, LOGGER_DEBUG, "Handling request %s with URL %s", method, url);
     raop_handler_t handler = NULL;
@@ -282,17 +282,28 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         }
         logger_log(conn->raop->logger, LOGGER_DEBUG, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
 
-        //http_response_add_header(*response, "Connection", "close");
+        http_response_add_header(*response, "Connection", "close");
 
-        if (conn->raop_rtp != NULL && raop_rtp_is_running(conn->raop_rtp)) {
-	    /* Stop our RTP sessions */
-            raop_rtp_stop(conn->raop_rtp);
-        } else if (conn->raop_rtp_mirror) {
+        if (teardown_96) {
+            if (conn->raop_rtp) {
+	        /* Stop our audio RTP session */
+                raop_rtp_stop(conn->raop_rtp);
+            }
+        } else if (teardown_110) {
+            if (conn->raop_rtp_mirror) {
+                /* Stop our video RTP session */
+                raop_rtp_mirror_stop(conn->raop_rtp_mirror);
+            }
+        } else {
             /* Destroy our sessions */
-            raop_rtp_destroy(conn->raop_rtp);
-            conn->raop_rtp = NULL;
-            raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
-            conn->raop_rtp_mirror = NULL;
+            if (conn->raop_rtp) {
+                raop_rtp_destroy(conn->raop_rtp);
+                conn->raop_rtp = NULL;
+            }
+            if (conn->raop_rtp_mirror) {
+                raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
+                conn->raop_rtp_mirror = NULL;
+            }
         }
     }
     if (handler != NULL) {

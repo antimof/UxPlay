@@ -89,7 +89,7 @@ raop_handler_info(raop_conn_t *conn,
     plist_t keep_alive_low_power_node = plist_new_uint(1);
     plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
 
-    plist_t source_version_node = plist_new_string(AIRPLAY_SRCVERS);
+    plist_t source_version_node = plist_new_string(GLOBAL_VERSION);
     plist_dict_set_item(r_node, "sourceVersion", source_version_node);
 
     plist_t pk_node = plist_new_data(pk, pk_len);
@@ -305,8 +305,6 @@ raop_handler_setup(raop_conn_t *conn,
                    http_request_t *request, http_response_t *response,
                    char **response_data, int *response_datalen)
 {
-    unsigned short remote_cport = 0;
-
     const char *transport;
     int use_udp;
     const char *dacp_id;
@@ -471,18 +469,21 @@ raop_handler_setup(raop_conn_t *conn,
                 } case 96: {
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
-
-                    uint64_t audioFormat;
-		    unsigned char ct;
-	            unsigned short spf;
-                    bool isMedia; 
-                    bool usingScreen;
+                    unsigned short remote_cport = 0;
+                    uint64_t uint_val = 0;
+                    plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
+                    plist_get_uint_val(req_stream_control_port_node, &uint_val);
+                    //remote_cport = (unsigned short) uint_val;   /* must != 0 to activate audio resend requests, leave off till tested */
 
                     if (conn->raop->callbacks.audio_get_format) {
 		        /* get audio compression type */
-		        uint64_t uint_val;
-                        uint8_t bool_val;
-			
+                        uint64_t audioFormat;
+                        unsigned char ct;
+                        unsigned short spf;
+                        bool isMedia; 
+                        bool usingScreen;
+                        uint8_t bool_val = 0;
+
                         plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
                         plist_get_uint_val(req_stream_ct_node, &uint_val);
                         ct = (unsigned char) uint_val;
@@ -490,21 +491,21 @@ raop_handler_setup(raop_conn_t *conn,
                         plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
                         plist_get_uint_val(req_stream_spf_node, &uint_val);
                         spf = (unsigned short) uint_val;
-		    
+
                         plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
                         plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
-			
-                        plist_t req_stream_ismedia_node = plist_dict_get_item(req_stream_node, "isMedia");
-		        if (req_stream_ismedia_node) {
-		            plist_get_bool_val(req_stream_ismedia_node, &bool_val);
-			    isMedia = (bool) bool_val;
+
+                        plist_t req_stream_is_media_node = plist_dict_get_item(req_stream_node, "isMedia");
+                        if (req_stream_is_media_node) {
+                            plist_get_bool_val(req_stream_is_media_node, &bool_val);
+                            isMedia = (bool) bool_val;
                         } else {
                             isMedia = false;
                         }
 
-                        plist_t req_stream_usingscreen_node = plist_dict_get_item(req_stream_node, "usingScreen");
-                        if (req_stream_usingscreen_node) {
-                            plist_get_bool_val(req_stream_usingscreen_node, &bool_val);
+                        plist_t req_stream_using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
+                        if (req_stream_using_screen_node) {
+                            plist_get_bool_val(req_stream_using_screen_node, &bool_val);
                             usingScreen = (bool) bool_val;
                         } else {
                             usingScreen = false;

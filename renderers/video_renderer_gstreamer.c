@@ -95,6 +95,7 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
+static bool first_packet = false;
 
 void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
     width_source = (unsigned short) *f_width_source;
@@ -104,7 +105,8 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
     logger_log(logger, LOGGER_DEBUG, "begin video stream wxh = %dx%d; source %dx%d", width, height, width_source, height_source);
 }
 
-void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *decoder, const char *videosink) {
+void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
+                          const char *decoder, const char *converter, const char *videosink) {
     GError *error = NULL;
     logger = render_logger;
 
@@ -119,14 +121,19 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     assert(renderer);
 
     gst_init(NULL,NULL);
-
-    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! ");
+    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! ");
+    g_string_append(launch, "queue ! ");
+    g_string_append(launch, parser);
+    g_string_append(launch, " ! ");
     g_string_append(launch, decoder);
-    g_string_append(launch, " ! videoconvert ! ");
+    g_string_append(launch, " ! ");
+    g_string_append(launch, converter);
+    g_string_append(launch, " ! ");    
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink sync=false");
-    renderer->pipeline = gst_parse_launch(launch->str,  &error);
+    logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline will be:\n\"%s\"", launch->str);
+    renderer->pipeline = gst_parse_launch(launch->str, &error);
     g_assert (renderer->pipeline);
     g_string_free(launch, TRUE);
 
@@ -166,6 +173,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
+    first_packet = true;
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
@@ -176,6 +184,10 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     if (data[0]) {
         logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
     } else {
+        if (first_packet) {
+            logger_log(logger, LOGGER_INFO, "Begin streaming to GStreamer video pipeline");
+            first_packet = false;
+        }
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
         GST_BUFFER_DTS(buffer) = (GstClockTime)pts;

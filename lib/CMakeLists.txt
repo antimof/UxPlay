@@ -1,14 +1,29 @@
 cmake_minimum_required(VERSION 3.4.1)
 include_directories( playfair llhttp )
 
+# Common Linux cflags
+if ( UNIX AND NOT APPLE )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall -g" )
+endif()
+
+
+# Common x86/x86_64 cflags
+if( NOT NO_MARCH_NATIVE AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -march=native" )
+  message( STATUS "Using CFLAGS with  -march=native" )
+  message( STATUS "*** ONLY USE THIS WHEN COMPILING ON THE MACHINE THAT WILL RUN UXPLAY" )
+  message( STATUS "  run \"cmake -DNO_MARCH_NATIVE=ON\" to switch off this compiler option" )
+else()
+  message( STATUS "Not using -march=native" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2" )
+endif()
+
 INCLUDE (CheckIncludeFiles)
 # for BSD Unix (e.g. FreeBSD)
 CHECK_INCLUDE_FILES ("sys/endian.h" BSD )
 if ( BSD )
   add_definitions( -DSYS_ENDIAN_H )
 endif ( BSD )
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -march=native -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall -g")
 
 if( APPLE )
   set( ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig" ) # standard location, and Brew
