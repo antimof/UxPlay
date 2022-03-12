@@ -609,6 +609,7 @@ int main (int argc, char *argv[]) {
         video_renderer_destroy();
     }
     logger_destroy(render_logger);
+    render_logger = NULL;
 }
 
 // Server callbacks
@@ -780,11 +781,15 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
 }
 
 int stop_raop_server () {
-    if (raop) raop_destroy(raop);
+  if (raop) {
+    raop_destroy(raop);
+    raop = NULL;
+  }
     if (dnssd) {
         dnssd_unregister_raop(dnssd);
         dnssd_unregister_airplay(dnssd);
         dnssd_destroy(dnssd);
+        dnssd = NULL;
     }
     return 0;
 }
