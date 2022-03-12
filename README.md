@@ -130,7 +130,7 @@ downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipf
 not the case, as when you are packaging for a distribution, use the cmake option `-DNO_MARCH_NATIVE=ON`.
 
 1. `sudo apt-get install libssl-dev libplist-dev`  (unless you need to build OpenSSL and libplist from source).
-2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`. 
+2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. 
 3. `sudo apt-get install libx11-dev`  (only needed if you invoke the "ZOOMFIX" X11 display-name fix in the next step)
 4. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
@@ -138,9 +138,9 @@ Zoom, see [Improvements](#improvements) \#3 below).
 5. `make`
 6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)
 7.  Install GStreamer plugins that you need: `sudo apt-get install gstreamer1.0-<plugin>`; values of
-    `<plugin>` needed are: "libav" (for sound), "plugins-good" (for v4l2 hardware h264 decoding) and  "plugins-bad" (for software h264 decoding).
-    Also needed may be "gl" for OpenGL support, and "x" for X11 support, although these may  already be installed; "vaapi" is needed
-    for hardware-accelerated h264 video decoding by Intel graphics (not for NVIDIA).
+    `<plugin>` needed are: "plugins-base", "libav" (for sound), "plugins-good" (for v4l2 hardware h264 decoding)
+    and  "plugins-bad" (for software h264 decoding).   Also needed may be "gl" for OpenGL support, and "x" for X11 support, although
+    these may  already be installed; "vaapi" is needed  for hardware-accelerated h264 video decoding by Intel graphics (not for NVIDIA).
 
 _If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean
 the build directory with_ "```rm -rf build/* ```" _(run from within the UxPlay source directory) without affecting the source directories which contain your modifications_.

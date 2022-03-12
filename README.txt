@@ -176,7 +176,7 @@ packaging for a distribution, use the cmake option
 
 1.  `sudo apt-get install libssl-dev libplist-dev` (unless you need to
     build OpenSSL and libplist from source).
-2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-libav gstreamer1.0-plugins-bad`.
+2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`.
 3.  `sudo apt-get install libx11-dev` (only needed if you invoke the
     "ZOOMFIX" X11 display-name fix in the next step)
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
@@ -188,12 +188,12 @@ packaging for a distribution, use the cmake option
     `sudo make uninstall` in the same directory in which this was run)
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
-    needed are: "libav" (for sound), "plugins-good" (for v4l2 hardware
-    h264 decoding) and "plugins-bad" (for software h264 decoding). Also
-    needed may be "gl" for OpenGL support, and "x" for X11 support,
-    although these may already be installed; "vaapi" is needed for
-    hardware-accelerated h264 video decoding by Intel graphics (not for
-    NVIDIA).
+    needed are: "plugins-base", "libav" (for sound), "plugins-good" (for
+    v4l2 hardware h264 decoding) and "plugins-bad" (for software h264
+    decoding). Also needed may be "gl" for OpenGL support, and "x" for
+    X11 support, although these may already be installed; "vaapi" is
+    needed for hardware-accelerated h264 video decoding by Intel
+    graphics (not for NVIDIA).
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
