@@ -800,7 +800,7 @@ Improvements
     included plist library by the system-installed version, and a change
     over to a library llhttp for http parsing.
 
-2.  Added the -s, -o -p, -m, -r, -f, -fps -vs -as and -t options.
+2.  Added -s, -o -p, -m, -r, -f, -fps, -vs, -as and -t options.
 
 3.  If "`cmake -DZOOMFIX=ON .`" is run before compiling, the mirrored
     window is now visible to screen-sharing applications such as Zoom.
@@ -878,6 +878,12 @@ Improvements
 13. Added suppport for the older AirPlay protocol used by third-party
     Windows-based AirPlay mirror emulators such as AirMyPC.
 
+14. Made the video pipeline fully configurable with options -vp, -vd,
+    -vc, for accelerated hardware support (e.g. NVIDIA).
+
+15. Added Raspberry Pi support (accelerated hardware decoding) with -rpi
+    option.
+
 Disclaimer
 ==========
 
@@ -922,7 +928,7 @@ code included in UxPlay by inheritance from RPiPlay include:
 -   **dsafa22**: Created an AirPlay 2 mirroring server
     [AirplayServer](https://github.com/dsafa22/AirplayServer) (seems
     gone now), for Android based on ShairPlay. Code is preserved
-    [here](https://github.com/KqSMea8/AirplayServer), and [see
+    [here](https://github.com/jiangban/AirplayServer), and [see
     here](https://github.com/FDH2/UxPlay/wiki/AirPlay2) for the
     description of the analysis of the AirPlay 2 mirror protocol that
     made RPiPlay possible, by the AirplayServer author. All code in
