@@ -193,7 +193,8 @@ packaging for a distribution, use the cmake option
     decoding). Also needed may be "gl" for OpenGL support, and "x" for
     X11 support, although these may already be installed; "vaapi" is
     needed for hardware-accelerated h264 video decoding by Intel
-    graphics (not for NVIDIA).
+    graphics (not for NVIDIA). Also install "tools" to get the utility
+    gst-inspect-1.0 for examining the GStreamer installation.
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*

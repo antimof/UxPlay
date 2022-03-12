@@ -141,6 +141,8 @@ Zoom, see [Improvements](#improvements) \#3 below).
     `<plugin>` needed are: "plugins-base", "libav" (for sound), "plugins-good" (for v4l2 hardware h264 decoding)
     and  "plugins-bad" (for software h264 decoding).   Also needed may be "gl" for OpenGL support, and "x" for X11 support, although
     these may  already be installed; "vaapi" is needed  for hardware-accelerated h264 video decoding by Intel graphics (not for NVIDIA).
+    Also install "tools" to get the utility gst-inspect-1.0 for examining the GStreamer installation.
+
 
 _If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean
 the build directory with_ "```rm -rf build/* ```" _(run from within the UxPlay source directory) without affecting the source directories which contain your modifications_.
