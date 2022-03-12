@@ -286,8 +286,13 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
 
         if (teardown_96) {
             if (conn->raop_rtp) {
-	        /* Stop our RTP sessions */
+	        /* Stop our audio RTP session */
                 raop_rtp_stop(conn->raop_rtp);
+            }
+        } else if (teardown_110) {
+            if (conn->raop_rtp_mirror) {
+             /* Stop our video RTP session */
+                raop_rtp_mirror_stop(conn->raop_rtp_mirror);
             }
         } else {
             /* Destroy our sessions */
