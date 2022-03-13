@@ -114,12 +114,12 @@ uxplay options.
     OS (Bullseye). The GStreamer plugin for its replacement v4l2
     (Video4Linux2) has until recently been unusable with UxPlay, but new
     fixes in the GStreamer development branch have changed this.
-    Backports (as patches) to GStreamer 1.18.4 (R Pi OS Bullseye),
-    1.18.5 (Ubuntu 21.10) and 1.20.0 (Manjaro) are now available
+    Backports (as patches) to GStreamer 1.18.4 (RPi OS Bullseye), 1.18.5
+    (Ubuntu 21.10) and 1.20.0 (Manjaro) are now available
     [here](https://github.com/FDH2/UxPlay/issues/70), until
     distributions release them as updates, and work well with UxPlay,
-    using a new option `uxplay -rpi` (tested on R Pi model 4B). When
-    using R Pi OS Lite (no X11), use `uxplay -rpi -vs kmssink`.
+    using a new option `uxplay -rpi` (tested on RPi model 4B). When
+    using RPi OS Lite (no X11), use `uxplay -rpi -vs kmssink`.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
