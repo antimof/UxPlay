@@ -114,11 +114,12 @@ uxplay options.
     OS (Bullseye). The GStreamer plugin for its replacement v4l2
     (Video4Linux2) has until recently been unusable with UxPlay, but new
     fixes in the GStreamer development branch have changed this.
-    Backports (as patches) to GStreamer 1.18.4 (Bullseye) and 1.20.0
-    (Manjaro) are now available
+    Backports (as patches) to GStreamer 1.18.4 (R Pi OS Bullseye),
+    1.18.5 (Ubuntu 21.10) and 1.20.0 (Manjaro) are now available
     [here](https://github.com/FDH2/UxPlay/issues/70), until
     distributions release them as updates, and work well with UxPlay,
-    using a new option `uxplay -rpi` (tested on R Pi model 4B)
+    using a new option `uxplay -rpi` (tested on R Pi model 4B). When
+    using R Pi OS Lite (no X11), use 'uxplay -rpi -vs kmssink\`.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -479,13 +480,14 @@ to be included with the converter name.
 **-vs *videosink*** chooses the GStreamer videosink, instead of letting
 autovideosink pick it for you. Some videosink choices are: ximagesink,
 xvimagesink, vaapisink (for intel graphics), gtksink, glimagesink,
-waylandsink, osximagesink (for macOS), or fpsdisplaysink (which shows
-the streaming framerate in fps). Using quotes "..." allows some
-parameters to be included with the videosink name. For example,
-**fullscreen** mode is supported by the vaapisink plugin, and is
-obtained using `-vs "vaapisink fullscreen=true"`; this also works with
-`waylandsink`. The syntax of such options is specific to a given plugin,
-and some choices of videosink might not work on your system.
+waylandsink, osximagesink (for macOS), kmssink (for systems without X11,
+like Raspberry Pi OS lite) or fpsdisplaysink (which shows the streaming
+framerate in fps). Using quotes "..." allows some parameters to be
+included with the videosink name. For example, **fullscreen** mode is
+supported by the vaapisink plugin, and is obtained using
+`-vs "vaapisink fullscreen=true"`; this also works with `waylandsink`.
+The syntax of such options is specific to a given plugin, and some
+choices of videosink might not work on your system.
 
 **-vs 0** suppresses display of streamed video, but plays streamed
 audio. (The client's screen is still mirrored at a reduced rate of 1

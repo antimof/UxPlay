@@ -84,10 +84,10 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
     has unacceptible latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
     UxPlay's antecedent [RPiPlay](http://github.com/FD-/RPiPlay) was developed to use the 32-bit-only omx (OpenMAX) driver for this, but omx
     has recently been declared obsolete and abandoned in "legacy" status by Raspberry Pi OS (Bullseye).   The GStreamer plugin for its
-    replacement v4l2 (Video4Linux2) has until recently been unusable with UxPlay, but new fixes in the GStreamer
-    development branch have changed this.   Backports (as patches) to GStreamer 1.18.4 (Bullseye) and 1.20.0 (Manjaro) are now
+    replacement v4l2 (Video4Linux2) has until recently been unusable with UxPlay, but new fixes in the GStreamer  development branch have
+    changed this.   Backports (as patches) to GStreamer 1.18.4 (R Pi OS Bullseye), 1.18.5 (Ubuntu 21.10) and 1.20.0 (Manjaro) are now
     available [here](https://github.com/FDH2/UxPlay/issues/70), until distributions release them as updates, and work well with UxPlay,
-    using a new option `uxplay -rpi` (tested on R Pi model 4B)
+    using a new option `uxplay -rpi` (tested on R Pi model 4B).  When using R Pi OS Lite (no X11), use 'uxplay -rpi -vs kmssink`.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -366,7 +366,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    
 **-vs _videosink_** chooses the GStreamer videosink, instead of letting
    autovideosink pick it for you.  Some videosink choices are:  ximagesink, xvimagesink,
-   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  or
+   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  kmssink (for systems without X11, like Raspberry Pi OS lite) or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
    "..." allows some parameters to be included with the videosink name. 
    For example, **fullscreen** mode is supported by the vaapisink plugin, and is

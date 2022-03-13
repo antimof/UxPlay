@@ -236,7 +236,7 @@ static void print_info (char *name) {
     printf("          another choice when using v4l2h264decode: v4l2convert\n");
     printf("-vs ...   Choose the GStreamer videosink; default \"autovideosink\"\n");
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
-    printf("          gtksink,waylandsink,osximagesink,fpsdisplaysink, etc.\n");
+    printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-rpi      Video settings for Raspberry Pi (for GPU h264 decoding).\n");
     printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
