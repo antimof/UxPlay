@@ -119,7 +119,7 @@ uxplay options.
     [here](https://github.com/FDH2/UxPlay/issues/70), until
     distributions release them as updates, and work well with UxPlay,
     using a new option `uxplay -rpi` (tested on R Pi model 4B). When
-    using R Pi OS Lite (no X11), use 'uxplay -rpi -vs kmssink\`.
+    using R Pi OS Lite (no X11), use `uxplay -rpi -vs kmssink`.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
