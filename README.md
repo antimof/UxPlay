@@ -88,7 +88,7 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
     you can find [patching instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) in
     the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki).  Use the options `uxplay -rpi` (
     or `uxplay -rpi -vs kmssink` on RPi OS Lite  with no X11) with the patched GStreamer.  Patches for
-    GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.0 (Used in Manjaro for RPi) are also available there.
+    GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.0 (used in Manjaro for RPi) are also available there.
 
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.

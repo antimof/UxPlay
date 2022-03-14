@@ -120,7 +120,7 @@ uxplay options.
     options `uxplay -rpi` ( or `uxplay -rpi -vs kmssink` on RPi OS Lite
     with no X11) with the patched GStreamer. Patches for
     GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.0
-    (Used in Manjaro for RPi) are also available there.
+    (used in Manjaro for RPi) are also available there.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
