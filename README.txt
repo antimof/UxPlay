@@ -104,22 +104,23 @@ uxplay options.
 
 -   **GPU Support for Raspberry Pi**
 
-    Raspberry Pi computers can run UxPlay with software decoding of h264
-    video (options `uxplay -rpi -avdec`) but this usually has
+    Raspberry Pi (RPi) computers can run UxPlay with software decoding
+    of h264 video (options `uxplay -rpi -avdec`) but this usually has
     unacceptible latency, and hardware-accelerated decoding by the Pi's
-    built-in Broadcom GPU should be used. UxPlay's antecedent
-    [RPiPlay](http://github.com/FD-/RPiPlay) was developed to use the
-    32-bit-only omx (OpenMAX) driver for this, but omx has recently been
-    declared obsolete and abandoned in "legacy" status by Raspberry Pi
-    OS (Bullseye). The GStreamer plugin for its replacement v4l2
-    (Video4Linux2) has until recently been unusable with UxPlay, but new
-    fixes in the GStreamer development branch have changed this.
-    Backports (as patches) to GStreamer 1.18.4 (RPi OS Bullseye), 1.18.5
-    (Ubuntu 21.10) and 1.20.0 (Manjaro) are now available
-    [here](https://github.com/FDH2/UxPlay/issues/70), until
-    distributions release them as updates, and work well with UxPlay,
-    using a new option `uxplay -rpi` (tested on RPi model 4B). When
-    using RPi OS Lite (no X11), use `uxplay -rpi -vs kmssink`.
+    built-in Broadcom GPU should be used. RPi OS (Bullseye) has
+    abandoned the omx (OpenMAX) driver used till now for this by
+    [RPiPlay](http://github.com/FD-/RPiPlay), in favor of v4l2
+    (Video4Linux2). The GStreamer Video4Linux2 plugin only works with
+    UxPlay since GStreamer-1.21.0.0 on the development branch, but a
+    backport to 1.18.4 for RPi OS (Bullseye) has been created, and will
+    appear in some future update. If you cannot wait for the update, you
+    can find [patching
+    instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
+    in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Use the
+    options `uxplay -rpi` ( or `uxplay -rpi -vs kmssink` on RPi OS Lite
+    with no X11) with the patched GStreamer. Patches for
+    GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.0
+    (Used in Manjaro for RPi) are also available there.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
