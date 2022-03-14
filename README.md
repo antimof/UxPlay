@@ -81,8 +81,8 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
 *  **GPU Support for Raspberry Pi**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding of h264 video (options `uxplay -rpi -avdec`) but this usually
-    has unacceptible latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
-    RPi OS (Bullseye) has abandoned the omx (OpenMAX) driver used till now for this by [RPiPlay](http://github.com/FD-/RPiPlay), in
+    has unacceptable latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
+    RPi OS (Bulseye) has abandoned the omx (OpenMAX) driver used till now for this by [RPiPlay](http://github.com/FD-/RPiPlay), in
     favor of v4l2 (Video4Linux2).  The GStreamer Video4Linux2 plugin only works with UxPlay since GStreamer-1.21.0.0 on the development branch,
     but a backport to 1.18.4 for RPi OS (Bullseye) has been created, and will appear in some future update.   If you cannot wait for the update,
     you can find [patching instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) in
