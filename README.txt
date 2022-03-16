@@ -312,7 +312,7 @@ runtime and development installer packages. Assuming that the latest
 release is 1.20.1. install `gstreamer-1.0-1.20.1-universal.pkg` and
 `gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have problems with
 the "universal" packages, you can also use
-`gstreamer-1.0-1.1.6-x86_64.pkg` and
+`gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
 install to /Library/FrameWorks/GStreamer.framework). It is recommended
 you use GStreamer.framework rather than install Gstreamer with Homebrew
