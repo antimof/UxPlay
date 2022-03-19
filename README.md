@@ -74,7 +74,7 @@ accelerated video decoding on the NVIDIA GPU with CUDA. The nvdec  plugin is par
 included in binary packages, as NVIDIA's
 proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/)
 must be downloaded, and three header files from it must be added to the gstreamer source before the plugin can be compiled.
-Users must do this themselves: see [these instructions](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200), and
+Users must do this themselves: see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins), and
 adapt them as necessary for your GStreamer installation.
 This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
 
@@ -82,9 +82,9 @@ This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimages
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding of h264 video (options `uxplay -rpi -avdec`) but this usually
     has unacceptable latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
-    RPi OS (Bulseye) has abandoned the omx (OpenMAX) driver used till now for this by [RPiPlay](http://github.com/FD-/RPiPlay), in
+    RPi OS (Bullseye) has abandoned the omx (OpenMAX) driver used till now for this by [RPiPlay](http://github.com/FD-/RPiPlay), in
     favor of v4l2 (Video4Linux2).  The GStreamer Video4Linux2 plugin only works with UxPlay since GStreamer-1.21.0.0 on the development branch,
-    but backports to 1.18.4 for RPi OS (Bullseye) are appearing in current updates.   In case the latest update has not yet appeared, or you
+    but a (partial) backport to 1.18.4 for RPi OS (Bullseye) has  already appeared in current updates.   In case the full  update has not yet appeared, or you
     are using a different distribution,
     you can find [patching instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) in
     the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki).  Use the options `uxplay -rpi` (
