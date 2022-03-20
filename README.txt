@@ -88,19 +88,19 @@ drivers for NVIDIA graphics are also in principle supported when VAAPI
 is supplemented with firmware extracted from the proprietary NVIDIA
 drivers).
 
-For NVIDIA graphics with the proprietary drivers, the nvdec plugin
-(recently renamed nvh264dec) can be used for accelerated video decoding
-on the NVIDIA GPU with CUDA. The nvdec plugin is part of
-gstreamer1.0-plugins-bad, but is generally not included in binary
-packages, as NVIDIA's proprietary [Video Codec
-SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/)
-must be downloaded, and three header files from it must be added to the
-gstreamer source before the plugin can be compiled. Users must do this
-themselves: see [these
-instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins),
-and adapt them as necessary for your GStreamer installation. This plugin
-should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`
-uxplay options.
+For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
+(included in gstreamer1.0-plugins-bad since GStreamer-1.18.0) can be
+used for accelerated video decoding on the NVIDIA GPU after NVIDIA's
+CUDA toolkit is installed. This plugin should be used with options
+`uxplay -vd nvh264dec -vs glimagesink`. For GStreamer-1.16 or earlier,
+the plugin is called `nvdec`, and must be build by the user, using
+NVIDIA's proprietary [Video Codec
+SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/).
+This must be downloaded, and three header files from it must be added to
+the gstreamer source before the plugin can be compiled: see [these
+instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+This older form of the plugin should be used with the
+`-vd nvdec -vs glimagesink` uxplay options.
 
 -   **GPU Support for Raspberry Pi**
 
