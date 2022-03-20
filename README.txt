@@ -91,10 +91,10 @@ drivers).
 For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
 (included in gstreamer1.0-plugins-bad since GStreamer-1.18.0) can be
 used for accelerated video decoding on the NVIDIA GPU after NVIDIA's
-CUDA toolkit is installed. This plugin should be used with options
-`uxplay -vd nvh264dec -vs glimagesink`. For GStreamer-1.16 or earlier,
-the plugin is called `nvdec`, and must be build by the user, using
-NVIDIA's proprietary [Video Codec
+CUDA driver `libcuda.so` is installed. This plugin should be used with
+options `uxplay -vd nvh264dec -vs glimagesink`. For GStreamer-1.16 or
+earlier, the plugin is called `nvdec`, and must be build by the user,
+using NVIDIA's proprietary [Video Codec
 SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/).
 This must be downloaded, and three header files from it must be added to
 the gstreamer source before the plugin can be compiled: see [these
