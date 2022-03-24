@@ -96,6 +96,7 @@ static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
+static const char h264_caps[]="video/x-h264,stream-format=(string)byte-stream,alignment=(string)au";
 
 void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
     width_source = (unsigned short) *f_width_source;
@@ -108,6 +109,7 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
                           const char *decoder, const char *converter, const char *videosink) {
     GError *error = NULL;
+    GstCaps *caps = NULL;
     logger = render_logger;
 
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
@@ -139,6 +141,10 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     assert(renderer->appsrc);
+    caps = gst_caps_from_string(h264_caps);
+    g_object_set(renderer->appsrc, "caps", caps, NULL);
+    gst_caps_unref(caps);
+
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
     assert(renderer->sink);
 
