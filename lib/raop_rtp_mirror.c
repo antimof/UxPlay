@@ -422,12 +422,17 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror sps size = %d", h264.sps_size);
                 h264.sequence_parameter_set = malloc(h264.sps_size);
                 memcpy(h264.sequence_parameter_set, payload + 8, h264.sps_size);
+                char *str = utils_data_to_string(h264.sequence_parameter_set,h264.sps_size,16);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
+                free(str);
                 h264.number_of_pps = payload[h264.sps_size + 8];
                 h264.pps_size = (short) (((payload[h264.sps_size + 9] & 2040) + payload[h264.sps_size + 10]) & 255);
                 h264.picture_parameter_set = malloc(h264.pps_size);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror pps size = %d", h264.pps_size);
                 memcpy(h264.picture_parameter_set, payload + h264.sps_size + 11, h264.pps_size);
-
+                str = utils_data_to_string(h264.picture_parameter_set,h264.pps_size,16);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
+		free(str);
                 if (h264.sps_size + h264.pps_size < 102400) {
                     // Copy the sps and pps into a buffer to hand to the decoder
                     raop_rtp_mirror->sps_pps_len = (h264.sps_size + h264.pps_size) + 8;
