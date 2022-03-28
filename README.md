@@ -270,8 +270,7 @@ Finally, build and install uxplay (without ZOOMFIX): open a terminal and change 
 First make sure that pkgconfig is installed  (Homebrew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
-to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.  (However, as of November 2021,
-Homebrew offers a build of GStreamer for Apple Silicon, which then was not yet available on the offical GStreamer site.)
+to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 **The MacPorts GStreamer is built to use X11**, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs

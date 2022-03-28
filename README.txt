@@ -364,9 +364,6 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
     gst-plugins-bad gst-libav". This appears to be functionally
     equivalent to using GStreamer.framework, but causes a large number
     of extra packages to be installed by Homebrew as dependencies.
-    (However, as of November 2021, Homebrew offers a build of GStreamer
-    for Apple Silicon, which then was not yet available on the offical
-    GStreamer site.)
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
     gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
