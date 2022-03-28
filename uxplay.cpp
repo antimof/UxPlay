@@ -95,17 +95,17 @@ static int audio_dump_limit = 0;
 static int audio_dumpfile_count = 0;
 static int audio_dump_count = 0;
 static bool dump_audio = false;
-static unsigned char audio_type = 0x0;
-static unsigned char previous_audio_type = 0x0;
+static unsigned char audio_type = 0x00;
+static unsigned char previous_audio_type = 0x00;
 
 void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
         char suffix[20];
         std::string fn = audio_dumpfile_name;
-	previous_audio_type = audio_type;
+        previous_audio_type = audio_type;
         audio_dumpfile_count++;
-	audio_dump_count = 0;
-        /* type 0x20 is lossless ALAC, type 0x80 is compressed AAC-ELD, type 0x00 is "other" */
+        audio_dump_count = 0;
+        /* type 0x20 is lossless ALAC, type 0x80 is compressed AAC-ELD, type 0x10 is "other" */
         if (audio_type == 0x20) {
             snprintf(suffix, sizeof(suffix), ".%d.alac", audio_dumpfile_count);
         } else if (audio_type == 0x80) {
@@ -145,15 +145,15 @@ void dump_video_to_file(unsigned char *data, int datalen, int type) {
             video_dumpfile = fopen (fn.c_str(),"w");
             if (video_dumpfile == NULL) {
                 LOGE("could not open file %s for dumping h264 frames",fn.c_str());
-	    }
-	}
+            }
+        }
     } else if (type == 5) {
         char suffix[20];
         std::string fn = video_dumpfile_name;
         video_dumpfile_count++;
         snprintf(suffix, sizeof(suffix), ".%d.h264", video_dumpfile_count);
         fn.append(suffix);
-	if (video_dumpfile) {
+        if (video_dumpfile) {
             fwrite(mark, 1, sizeof(mark), video_dumpfile);
             fclose(video_dumpfile);
          }
@@ -608,7 +608,7 @@ int main (int argc, char *argv[]) {
             }
         } else if (arg == "-vdmp") {
             dump_video = true;
-	    if (option_has_value(i, argc, arg, argv[i+1])) {
+            if (option_has_value(i, argc, arg, argv[i+1])) {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
@@ -627,7 +627,7 @@ int main (int argc, char *argv[]) {
             }
         } else if (arg == "-admp") {
             dump_audio = true;
-	    if (option_has_value(i, argc, arg, argv[i+1])) {
+            if (option_has_value(i, argc, arg, argv[i+1])) {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
@@ -808,7 +808,7 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
     }
     if (use_video) {
         video_renderer_render_buffer(ntp, data->data, data->data_len, data->pts, data->frame_type);
-    }	    
+    }
 }
 
 extern "C" void audio_flush (void *cls) {
