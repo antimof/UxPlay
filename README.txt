@@ -631,7 +631,7 @@ on your system).
 4.2, as opposed to High at level 4.1 (streamed by Intel Macs).
 Currently, this is not being correctly recognized by GStreamer, and a
 video window fails to open when the client is a M1 Mac. Audio streaming
-is unaffected. ** See [here](https://github.com/FDH2/UxPlay/issues/73)
+is unaffected.** See [here](https://github.com/FDH2/UxPlay/issues/73)
 for efforts to fix this.
 
 **Raspberry Pi** devices (-rpi option) only work with hardware GPU
