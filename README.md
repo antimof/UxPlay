@@ -9,14 +9,15 @@ Highlights:
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols f
    from current iOS/iPadOS 15.2 client devices.
    * macOS computers (2011 or later) can act either as AirPlay clients, or as the server running UxPlay (tested
-     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for Intel macOS clients (A video format
+     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for Intel macOS clients (a video format
      issue on "Apple Silicon" (M1) macOS clients is not yet resolved, see [Issues](https://github.com/FDH2/UxPlay/issues/73)) .
    * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S, when upgraded to iOS 9.3.5 or later),
    and a Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
    * Support for server behind a firewall.
    * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX)
-
+     (may require a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) to the GStreamer Video4Linux2 plugin.)
+     
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code 
