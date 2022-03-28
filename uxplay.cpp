@@ -44,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.48"
+#define VERSION "1.49"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -82,7 +82,99 @@ static std::string video_decoder = "decodebin";
 static std::string video_converter = "videoconvert";
 static bool show_client_FPS_data = false;
 static unsigned int max_ntp_timeouts = NTP_TIMEOUT_LIMIT;
+static FILE *video_dumpfile = NULL;
+static std::string video_dumpfile_name = "videodump";
+static int video_dump_limit = 0;
+static int video_dumpfile_count = 0;
+static int video_dump_count = 0;
+static bool dump_video = false;
+static unsigned char mark[] = { 0x00, 0x00, 0x00, 0x01 };
+static FILE *audio_dumpfile = NULL;
+static std::string audio_dumpfile_name = "audiodump";
+static int audio_dump_limit = 0;
+static int audio_dumpfile_count = 0;
+static int audio_dump_count = 0;
+static bool dump_audio = false;
+static unsigned char audio_type = 0x0;
+static unsigned char previous_audio_type = 0x0;
 
+void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
+    if (!audio_dumpfile && audio_type != previous_audio_type) {
+        char suffix[20];
+        std::string fn = audio_dumpfile_name;
+	previous_audio_type = audio_type;
+        audio_dumpfile_count++;
+	audio_dump_count = 0;
+        /* type 0x20 is lossless ALAC, type 0x80 is compressed AAC-ELD, type 0x00 is "other" */
+        if (audio_type == 0x20) {
+            snprintf(suffix, sizeof(suffix), ".%d.alac", audio_dumpfile_count);
+        } else if (audio_type == 0x80) {
+            snprintf(suffix, sizeof(suffix), ".%d.aac", audio_dumpfile_count);
+        } else {
+            snprintf(suffix, sizeof(suffix), ".%d.aud", audio_dumpfile_count);
+        }
+        fn.append(suffix);
+        audio_dumpfile = fopen(fn.c_str(),"w");
+        if (audio_dumpfile == NULL) {
+            LOGE("could not open file %s for dumping audio frames",fn.c_str());
+        }
+    }
+
+    if (audio_dumpfile) {
+        fwrite(data, 1, datalen, audio_dumpfile);
+        if (audio_dump_limit) {
+            audio_dump_count++;
+            if (audio_dump_count == audio_dump_limit) {
+                fclose(audio_dumpfile);
+                audio_dumpfile = NULL;
+            }          
+        }
+    }
+}
+
+void dump_video_to_file(unsigned char *data, int datalen, int type) {
+
+  /* type 5  NAL's are precedded by a PPS and SPS  */
+    if (type == 5 && video_dumpfile && video_dump_limit) {
+    }
+
+    if (video_dump_limit == 0) {
+        if (!video_dumpfile) {
+            std::string fn = video_dumpfile_name;
+            fn.append(".h264");
+            video_dumpfile = fopen (fn.c_str(),"w");
+            if (video_dumpfile == NULL) {
+                LOGE("could not open file %s for dumping h264 frames",fn.c_str());
+	    }
+	}
+    } else if (type == 5) {
+        char suffix[20];
+        std::string fn = video_dumpfile_name;
+        video_dumpfile_count++;
+        snprintf(suffix, sizeof(suffix), ".%d.h264", video_dumpfile_count);
+        fn.append(suffix);
+	if (video_dumpfile) {
+            fwrite(mark, 1, sizeof(mark), video_dumpfile);
+            fclose(video_dumpfile);
+         }
+        video_dumpfile = fopen (fn.c_str(),"w");
+        if (video_dumpfile == NULL) {
+            LOGE("could not open file %s for dumping h264 frames",fn.c_str());
+        }
+    }
+ 
+    if (video_dumpfile) {
+        fwrite(data, 1, datalen, video_dumpfile);
+        if (video_dump_limit) {
+            video_dump_count++;
+            if (video_dump_count == video_dump_limit) {
+                fwrite(mark, 1, sizeof(mark), video_dumpfile);
+                fclose(video_dumpfile);
+                video_dumpfile = NULL;
+            }
+        }
+    }
+}
 static gboolean connection_callback (gpointer loop){
     if (!connections_stopped) {
         counter = 0;
@@ -246,6 +338,14 @@ static void print_info (char *name) {
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");  
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
+    printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
+    printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
+    printf("          x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n\n");
+    printf("          NAL units are dumped.\n");
+    printf("-admp [n] Dump audio output to \"fn.x.fmt\", fmt ={aac, alac, aud}, x\n");
+    printf("          =1,2,..; fn=\"audiodump\"; change with \"-admp [n] filename\".\n");
+    printf("          x increases when audio format changes. If n is given, <= n\n");
+    printf("          audio packets are dumped. \"aud\"= unknown format.\n");
     printf("-d        Enable debug logging\n");
     printf("-v or -h  Displays this help and version information\n");
 }
@@ -505,7 +605,45 @@ int main (int argc, char *argv[]) {
             if (!get_value(argv[++i], &max_ntp_timeouts)) {
                 fprintf(stderr, "invalid \"-reset %s\"; -reset n must have n >= 0,  default n = %d\n", argv[i], NTP_TIMEOUT_LIMIT);
                 exit(1);
-            }      
+            }
+        } else if (arg == "-vdmp") {
+            dump_video = true;
+	    if (option_has_value(i, argc, arg, argv[i+1])) {
+                unsigned int n = 0;
+                if (get_value (argv[++i], &n)) {
+                    if (n == 0) {
+                        fprintf(stderr, "invalid \"-vdmp 0 %s\"; -vdmp n  needs a non-zero value of n\n");
+                        exit(1);
+                    }
+                    video_dump_limit = n;
+                    if (option_has_value(i, argc, arg, argv[i+1])) {
+                        video_dumpfile_name.erase();
+                        video_dumpfile_name.append(argv[++i]);
+                    }
+                } else {
+                    video_dumpfile_name.erase();
+                    video_dumpfile_name.append(argv[i]);
+                }
+            }
+        } else if (arg == "-admp") {
+            dump_audio = true;
+	    if (option_has_value(i, argc, arg, argv[i+1])) {
+                unsigned int n = 0;
+                if (get_value (argv[++i], &n)) {
+                    if (n == 0) {
+                        fprintf(stderr, "invalid \"-admp 0 %s\"; -admp n  needs a non-zero value of n\n");
+                        exit(1);
+                    }
+                    audio_dump_limit = n;
+                    if (option_has_value(i, argc, arg, argv[i+1])) {
+                        audio_dumpfile_name.erase();
+                        audio_dumpfile_name.append(argv[++i]);
+                    }
+                } else {
+                    audio_dumpfile_name.erase();
+                    audio_dumpfile_name.append(argv[i]);
+                }
+            }
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
@@ -610,6 +748,13 @@ int main (int argc, char *argv[]) {
     }
     logger_destroy(render_logger);
     render_logger = NULL;
+    if(audio_dumpfile) {
+        fclose(audio_dumpfile);
+    }
+    if (video_dumpfile) {
+        fwrite(mark, 1, sizeof(mark), video_dumpfile);
+        fclose(video_dumpfile);
+    }
 }
 
 // Server callbacks
@@ -649,15 +794,21 @@ extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) 
 }
 
 extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
+    if (dump_audio) {
+        dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
+    }
     if (use_audio) {
         audio_renderer_render_buffer(ntp, data->data, data->data_len, data->pts);
     }
 }
 
 extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *data) {
+    if (dump_video) {
+      dump_video_to_file(data->data, data->data_len,  data->frame_type);
+    }
     if (use_video) {
         video_renderer_render_buffer(ntp, data->data, data->data_len, data->pts, data->frame_type);
-    }
+    }	    
 }
 
 extern "C" void audio_flush (void *cls) {
@@ -679,7 +830,25 @@ extern "C" void audio_set_volume (void *cls, float volume) {
 }
 
 extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat) {
+    unsigned char type;
     LOGI("ct=%d spf=%d usingScreen=%d isMedia=%d  audioFormat=0x%lx",*ct, *spf, *usingScreen, *isMedia, (unsigned long) *audioFormat);
+    switch (*ct) {
+    case 2:
+        type = 0x20;
+        break;
+    case 8:
+        type = 0x80;
+        break;
+    default:
+        type = 0x10;
+        break;
+    }
+    if (audio_dumpfile && type != audio_type) {
+        fclose(audio_dumpfile);
+        audio_dumpfile = NULL;
+    }
+    audio_type = type;
+    
     if (use_audio) {
         audio_renderer_start(ct);
     }

@@ -1,4 +1,4 @@
-# UxPlay 1.48:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.49:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 ### Now developed at GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted).
 
@@ -9,7 +9,8 @@ Highlights:
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols f
    from current iOS/iPadOS 15.2 client devices.
    * macOS computers (2011 or later) can act either as AirPlay clients, or as the server running UxPlay (tested
-     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for macOS clients.
+     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for Intel macOS clients (A video format
+     issue on "Apple Silicon" (M1) macOS clients is not yet resolved, see [Issues](https://github.com/FDH2/UxPlay/issues/73)) .
    * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S, when upgraded to iOS 9.3.5 or later),
    and a Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
@@ -415,6 +416,18 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    may be due to a problem with your DNS-SD or Avahi setup).   _This option is currently disabled in
    macOS, for the same reason that requires the -nc option._
 
+**-vdmp** Dumps h264 video to file videodump.h264.  -vdmp n dumps not more than n NAL units to
+   videodump.x.h264; x= 1,2,... increases each time a SPS/PPS NAL unit arrives.   To change the name
+   _videodump_,  use -vdmp [n] _filename_.
+
+**-admp** Dumps  audio to file audiodump.x.aac (AAC-ELD format audio), audiodump.x.alac (ALAC format audio) or audiodump.x.aud
+   (other-format audio), where x = 1,2,3... increases each time the audio format changes. -admp _n_ restricts the number of
+   packets dumped to a file to _n_ or less.    To change the name _audiodump_, use -admp [n] _filename_.
+
+**-d**  Enable debug output.   Note:  this does not show GStreamer error or debug messages.   To see GStreamer error
+    error and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
+    To see GStreamer debug messages, set GST_DEBUG=4; increase this to see even more of the GStreamer inner workings.
+
 # Troubleshooting
 
 Note: ```uxplay```  is run from a terminal command line, and informational messages are written to the terminal.
@@ -464,6 +477,16 @@ that from a successful start of UxPlay in the [UxPlay Wiki](https://github.com/F
 GStreamer plugin that doesn't work on your system** (by default,
 GStreamer uses the "autovideosink"  and  "autoaudiosink" algorithms 
 to guess what are  the "best" plugins to use on your system).
+
+**M1 (Apple Silicon) Macs stream  video with h264 profile High at level 4.2, as opposed to High at  level 4.1
+(streamed by Intel Macs).
+Currently, this is not being correctly recognized by GStreamer, and a video window fails to open when the client is a M1 Mac.
+Audio streaming is unaffected. **
+See [here]( https://github.com/FDH2/UxPlay/issues/73)  for efforts to fix this.
+
+**Raspberry Pi** devices (-rpi option) only work with hardware GPU decoding if the Video4Linux2 plugin in  GStreamer v1.20.x or earlier has been patched
+(see the UxPlay [Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) for patches).
+This may be fixed in the future when GStreamer-1.22 is released, or by backport patches in distributions such as Raspberry Pi OS (Bullseye).
 
 Sometimes "autovideosink" may select the OpenGL renderer "glimagesink" which
 may not work correctly on your system.   Try the options "-vs ximagesink" or
@@ -553,6 +576,8 @@ tvOS 12.2.1), so it is unclear what setting prompts the client
 to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
+1.49 2022-03-28   Addded options for dumping video and/or audio to file, for debugging, etc.  h264  PPS/SPS NALU's are shown with -d.
+
 1.48 2022-03-11   Made the GStreamer video pipeline fully configurable, for use with hardware h264 decoding.  Support for Raspberry Pi.
 
 1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming 
@@ -681,6 +706,8 @@ is compiled.) On macOS, Avahi is not used.
 14. Made the video pipeline fully configurable with options -vp, -vd, -vc, for accelerated hardware support (e.g. NVIDIA).
 
 15. Added Raspberry Pi support (accelerated hardware decoding) with -rpi option.
+
+16. Added otions to dump audio and/or video to file.
 
 # Disclaimer
 
