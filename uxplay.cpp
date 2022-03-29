@@ -134,7 +134,7 @@ void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
 
 void dump_video_to_file(unsigned char *data, int datalen, int type) {
 
-  /* type 5  NAL's are precedded by a PPS and SPS  */
+  /* type 5  NAL's are preceded by a PPS and SPS  */
     if (type == 5 && video_dumpfile && video_dump_limit) {
     }
 
