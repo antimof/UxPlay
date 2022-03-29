@@ -707,7 +707,7 @@ is compiled.) On macOS, Avahi is not used.
 
 15. Added Raspberry Pi support (accelerated hardware decoding) with -rpi option.
 
-16. Added otions to dump audio and/or video to file.
+16. Added options to dump audio and/or video to file.
 
 # Disclaimer
 
