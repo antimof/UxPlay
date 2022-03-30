@@ -386,6 +386,17 @@ Usage
 
 Options:
 
+**-p** allows you to select the network ports used by UxPlay (these need
+to be opened if the server is behind a firewall). By itself, -p sets
+"legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011. -p n (e.g. -p
+35000) sets TCP and UDP ports n, n+1, n+2. -p n1,n2,n3 (comma-separated
+values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1. -p
+tcp n or -p udp n sets just the TCP or UDP ports. Ports must be in the
+range \[1024-65535\].
+
+If the -p option is not used, the ports are chosen dynamically
+(randomly), which will not work if a firewall is running.
+
 **-n server\_name** (Default: UxPlay); server\_name\@\_hostname\_ will
 be the name that appears offering AirPlay services to your iPad, iPhone
 etc, where *hostname* is the name of the server running uxplay. This
@@ -407,6 +418,14 @@ an iPad is held, for example).
 screen refresh rate of the display. Default is r=60 (60 Hz); r must be a
 whole number less than 256.
 
+**-o** turns on an "overscanned" option for the display window. This
+reduces the image resolution by using some of the pixels requested by
+option -s wxh (or their default values 1920x1080) by adding an empty
+boundary frame of unused pixels (which would be lost in a full-screen
+display that overscans, and is not displayed by gstreamer).
+Recommendation: **don't use this option** unless there is some special
+reason to use it.
+
 **-fps n** sets a maximum frame rate (in frames per second) for the
 AirPlay client to stream video; n must be a whole number less than 256.
 (The client may choose to serve video at any frame rate lower than this;
@@ -422,25 +441,6 @@ continuously sent by the client during video-streaming.)
 streaming performance that are sent by the client. These will be
 displayed in the terminal window if this option is used. The data is
 updated by the client at 1 second intervals.
-
-**-o** turns on an "overscanned" option for the display window. This
-reduces the image resolution by using some of the pixels requested by
-option -s wxh (or their default values 1920x1080) by adding an empty
-boundary frame of unused pixels (which would be lost in a full-screen
-display that overscans, and is not displayed by gstreamer).
-Recommendation: **don't use this option** unless there is some special
-reason to use it.
-
-**-p** allows you to select the network ports used by UxPlay (these need
-to be opened if the server is behind a firewall). By itself, -p sets
-"legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011. -p n (e.g. -p
-35000) sets TCP and UDP ports n, n+1, n+2. -p n1,n2,n3 (comma-separated
-values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1. -p
-tcp n or -p udp n sets just the TCP or UDP ports. Ports must be in the
-range \[1024-65535\].
-
-If the -p option is not used, the ports are chosen dynamically
-(randomly), which will not work if a firewall is running.
 
 **-m** generates a random MAC address to use instead of the true
 hardware MAC number of the computer's network card. (Different
@@ -474,7 +474,7 @@ with the decoder name.
 
 **-vc *converter*** chooses the GStreamer pipeline's videoconverter
 element, instead of the default value "videoconvert". When using
-video4linux hardware decoding by a GPU,`-vc  v4l2convert` will also use
+Video4Linux2 hardware-decoding by a GPU,`-vc  v4l2convert` will also use
 the GPU for video conversion. Using quotes "..." allows some parameters
 to be included with the converter name.
 

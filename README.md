@@ -285,11 +285,23 @@ as the device is rotated).
 
 Options:
 
+**-p**  allows you to select the network ports used by UxPlay (these need
+   to be opened if the server is behind a firewall).   By itself, -p sets
+   "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
+   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comma-separated
+   values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
+   or -p udp n sets just the TCP or UDP ports.  Ports must be in the range
+   [1024-65535].
+
+If the -p option is not used, the ports are chosen dynamically (randomly),
+which will not work if a firewall is running.
+
 **-n server_name** (Default: UxPlay);  server_name@_hostname_ will be the name that appears offering
    AirPlay services to your iPad, iPhone etc, where _hostname_ is the name of the server running uxplay. 
    This will also now be the name shown above the mirror display (X11)  window.
 
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
+
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -303,7 +315,15 @@ Options:
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
    refresh rate of the display. Default is r=60 (60 Hz); r must be a whole number
    less than 256.
-   
+
+**-o** turns on an "overscanned" option for the display window.    This
+   reduces the image resolution by using some of the pixels requested
+   by  option -s wxh (or their default values 1920x1080) by adding an empty
+   boundary frame of unused pixels (which would be lost in a full-screen
+   display that overscans, and is not displayed by gstreamer).
+   Recommendation: **don't use this option** unless there is some special
+   reason to use it.
+
 **-fps n** sets a maximum frame rate (in frames per second) for the AirPlay
    client to stream video; n must be a whole number less than 256.
    (The client may choose to serve video at any frame rate lower
@@ -318,25 +338,6 @@ Options:
 **-FPSdata** Turns on monitoring of regular reports about video streaming performance
    that are sent by the client.  These will be displayed in the terminal window if this
    option is used.   The data is updated by the client at 1 second intervals.
-
-**-o** turns on an "overscanned" option for the display window.    This
-   reduces the image resolution by using some of the pixels requested
-   by  option -s wxh (or their default values 1920x1080) by adding an empty
-   boundary frame of unused pixels (which would be lost in a full-screen
-   display that overscans, and is not displayed by gstreamer).
-   Recommendation: **don't use this option** unless there is some special
-   reason to use it.
-
-**-p**  allows you to select the network ports used by UxPlay (these need
-   to be opened if the server is behind a firewall).   By itself, -p sets
-   "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
-   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comma-separated
-   values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
-   or -p udp n sets just the TCP or UDP ports.  Ports must be in the range
-   [1024-65535].
-
-If the -p option is not used, the ports are chosen dynamically (randomly),
-which will not work if a firewall is running.
 
 **-m**  generates a random MAC address to use instead of the true hardware MAC
    number of the computer's network card.   (Different server_name,  MAC
@@ -366,7 +367,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    available).  Using quotes "..." allows some parameters to be included with the decoder name.
 
 **-vc _converter_** chooses the GStreamer pipeline's videoconverter element, instead of the default
-   value "videoconvert".  When using video4linux hardware decoding by a GPU,`-vc  v4l2convert` will also use
+   value "videoconvert".  When using Video4Linux2 hardware-decoding by a GPU,`-vc  v4l2convert` will also use
    the GPU for video conversion.  Using quotes "..." allows some parameters to be included with the converter name.
    
 **-vs _videosink_** chooses the GStreamer videosink, instead of letting
