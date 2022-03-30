@@ -15,7 +15,8 @@ Highlights:
    and a Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
    * Support for server behind a firewall.
-   * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX)
+   * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX, which
+     is no longer supplied in Raspberry Pi OS)
      (may require a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) to the GStreamer Video4Linux2 plugin.)
      
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
