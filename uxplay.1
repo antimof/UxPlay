@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "February 2022" "1.48" "User Commands"
+.TH UXPLAY "1" "March 2022" "1.49" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.49: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -53,7 +53,7 @@ UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 .IP
    choices: ximagesink,xvimagesink,vaapisink,glimagesink,
 .IP
-   gtksink,waylandsink,osximagesink,fpsdisplaysink,...
+   gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink,...
 .PP
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
@@ -74,6 +74,24 @@ UxPlay 1.48: An open\-source AirPlay mirroring server based on RPiPlay
 \fB\-nc\fR       Do not close video window when client stops mirroring
 .TP
 \fB\-FPSdata\fR  Show video-streaming performance reports sent by client.
+.TP
+\fB\-vdmp\fR [n] Dump h264 video output to "fn.h264"; fn="videodump", change
+.IP
+    with "-vdmp [n] filename". If [n] is given, file fn.x.h264
+.IP
+    x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n
+.IP
+    NAL units are dumped.
+.PP
+.TP
+\fB\-admp\fR [n] Dump audio output to "fn.x.fmt", fmt ={aac, alac, aud}, x
+.IP
+    =1,2,..; fn="audiodump"; change with "-admp [n] filename".
+.IP
+    x increases when audio format changes. If n is given, <= n
+.IP
+    audio packets are dumped. "aud"= unknown format.
+.PP
 .TP
 \fB\-d\fR        Enable debug logging
 .TP

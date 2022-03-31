@@ -1,4 +1,4 @@
-# UxPlay 1.48:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.49:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 ### Now developed at GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted).
 
@@ -9,13 +9,16 @@ Highlights:
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols f
    from current iOS/iPadOS 15.2 client devices.
    * macOS computers (2011 or later) can act either as AirPlay clients, or as the server running UxPlay (tested
-     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for macOS clients.
+     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for Intel macOS clients (a video format
+     issue on "Apple Silicon" (M1) macOS clients is not yet resolved, see [Issues](https://github.com/FDH2/UxPlay/issues/73)) .
    * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S, when upgraded to iOS 9.3.5 or later),
    and a Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
    * Support for server behind a firewall.
-   * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX)
-
+   * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX, which
+     is no longer supplied in Raspberry Pi OS)
+     (may require a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) to the GStreamer Video4Linux2 plugin.)
+     
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code 
@@ -69,28 +72,31 @@ For systems with Intel integrated graphics, hardware GPU decoding with the gstre
 open-source, and in addition to Intel, can support some AMD GPU's (the open-source "Nouveau" drivers for NVIDIA
 graphics are also in principle supported when VAAPI is supplemented with firmware extracted from the proprietary NVIDIA drivers).
 
-For NVIDIA graphics with the proprietary drivers, the nvdec plugin (recently renamed nvh264dec) can be used for
-accelerated video decoding on the NVIDIA GPU with CUDA. The nvdec  plugin is part of gstreamer1.0-plugins-bad, but is generally not
-included in binary packages, as NVIDIA's
-proprietary [Video Codec SDK](https://docs.nvidia.com/video-technologies/video-codec-sdk/nvdec-video-decoder-api-prog-guide/)
-must be downloaded, and three header files from it must be added to the gstreamer source before the plugin can be compiled.
-Users must do this themselves: see [these instructions](https://gist.github.com/corenel/a615b6f7eb5b5425aa49343a7b409200), and
-adapt them as necessary for your GStreamer installation.
-This plugin should be used with the `-vd nvdec` (or nvh264dec) and `-vs glimagesink`  uxplay options.
+For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
+(included in gstreamer1.0-plugins-bad since GStreamer-1.18.0)
+can be used for accelerated video decoding on the NVIDIA GPU after
+NVIDIA's CUDA driver `libcuda.so` is installed.
+This plugin should be used with options
+`uxplay -vd nvh264dec -vs glimagesink`.     For GStreamer-1.16.3
+or earlier, the
+plugin is called `nvdec`, and must be built by the user: see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+This older form  of the  plugin should be used with the `-vd nvdec -vs glimagesink`  uxplay options.
 
 *  **GPU Support for Raspberry Pi**
 
-    Raspberry Pi computers can run UxPlay with software decoding of h264 video (options `uxplay -rpi -avdec`) but this usually
-    has unacceptible latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
-    UxPlay's antecedent [RPiPlay](http://github.com/FD-/RPiPlay) was developed to use the 32-bit-only omx (OpenMAX) driver for this, but omx
-    has recently been declared obsolete and abandoned in "legacy" status by Raspberry Pi OS (Bullseye).   The GStreamer plugin for its
-    replacement v4l2 (Video4Linux2) has until recently been unusable with UxPlay, but new fixes in the GStreamer
-    development branch have changed this.   Backports (as patches) to GStreamer 1.18.4 (Bullseye) and 1.20.0 (Manjaro) are now
-    available [here](https://github.com/FDH2/UxPlay/issues/70), until distributions release them as updates, and work well with UxPlay,
-    using a new option `uxplay -rpi` (tested on R Pi model 4B)
+    Raspberry Pi (RPi) computers can run UxPlay with software decoding of h264 video (options `uxplay -rpi -avdec`) but this usually
+    has unacceptable latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
+    RPi OS (Bullseye) has abandoned the omx (OpenMAX) driver used till now for this by [RPiPlay](http://github.com/FD-/RPiPlay), in
+    favor of v4l2 (Video4Linux2).  The GStreamer Video4Linux2 plugin only works with UxPlay since GStreamer-1.21.0.0 on the development branch,
+    but a (partial) backport to 1.18.4 for RPi OS (Bullseye) has  already appeared in current updates.   In case the full  update has not yet appeared, or you
+    are using a different distribution,
+    you can find [patching instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) in
+    the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki).  Use the options `uxplay -rpi` (
+    or `uxplay -rpi -vs kmssink` on RPi OS Lite  with no X11) with the patched GStreamer.  Patches for
+    GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.0 (used in Manjaro for RPi) are also available there.
+
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
-
 Some Linux distributions such as Debian do not allow distribution of compiled
 GPL code linked to OpenSSL-1.1.1 because its "dual OpenSSL/SSLeay" license
 has some incompatibilities with GPL, unless all code authors have explicitly given an "exception" to allow
@@ -227,9 +233,10 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 
 First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
-Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.18.6
-they are ```gstreamer-1.0-1.18.6-x86_64.pkg``` and ```gstreamer-1.0-devel-1.18.6-x86_64.pkg```.   (**Note: v1.20.0 is also
-available now, but if it does not work for you, use 1.18.6**.) Click on them to install (they install to
+Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.1.
+install `gstreamer-1.0-1.20.1-universal.pkg` and ``gstreamer-1.0-devel-1.20.1-universal.pkg``.  (If
+you have problems with the "universal" packages, you can also use `gstreamer-1.0-1.18.6-x86_64.pkg`
+and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to install (they install to
 /Library/FrameWorks/GStreamer.framework).  It is recommended you use GStreamer.framework rather than install
 Gstreamer with Homebrew or MacPorts (see later).
 
@@ -264,8 +271,7 @@ Finally, build and install uxplay (without ZOOMFIX): open a terminal and change 
 First make sure that pkgconfig is installed  (Homebrew: "brew install pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).  
 
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
-to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.  (However, as of November 2021,
-Homebrew offers a build of GStreamer for Apple Silicon, which then was not yet available on the offical GStreamer site.)
+to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 **The MacPorts GStreamer is built to use X11**, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs
@@ -280,11 +286,23 @@ as the device is rotated).
 
 Options:
 
+**-p**  allows you to select the network ports used by UxPlay (these need
+   to be opened if the server is behind a firewall).   By itself, -p sets
+   "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
+   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comma-separated
+   values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
+   or -p udp n sets just the TCP or UDP ports.  Ports must be in the range
+   [1024-65535].
+
+If the -p option is not used, the ports are chosen dynamically (randomly),
+which will not work if a firewall is running.
+
 **-n server_name** (Default: UxPlay);  server_name@_hostname_ will be the name that appears offering
    AirPlay services to your iPad, iPhone etc, where _hostname_ is the name of the server running uxplay. 
    This will also now be the name shown above the mirror display (X11)  window.
 
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
+
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -298,7 +316,15 @@ Options:
 **-s wxh@r**  As above, but also informs the AirPlay  client about the screen
    refresh rate of the display. Default is r=60 (60 Hz); r must be a whole number
    less than 256.
-   
+
+**-o** turns on an "overscanned" option for the display window.    This
+   reduces the image resolution by using some of the pixels requested
+   by  option -s wxh (or their default values 1920x1080) by adding an empty
+   boundary frame of unused pixels (which would be lost in a full-screen
+   display that overscans, and is not displayed by gstreamer).
+   Recommendation: **don't use this option** unless there is some special
+   reason to use it.
+
 **-fps n** sets a maximum frame rate (in frames per second) for the AirPlay
    client to stream video; n must be a whole number less than 256.
    (The client may choose to serve video at any frame rate lower
@@ -313,25 +339,6 @@ Options:
 **-FPSdata** Turns on monitoring of regular reports about video streaming performance
    that are sent by the client.  These will be displayed in the terminal window if this
    option is used.   The data is updated by the client at 1 second intervals.
-
-**-o** turns on an "overscanned" option for the display window.    This
-   reduces the image resolution by using some of the pixels requested
-   by  option -s wxh (or their default values 1920x1080) by adding an empty
-   boundary frame of unused pixels (which would be lost in a full-screen
-   display that overscans, and is not displayed by gstreamer).
-   Recommendation: **don't use this option** unless there is some special
-   reason to use it.
-
-**-p**  allows you to select the network ports used by UxPlay (these need
-   to be opened if the server is behind a firewall).   By itself, -p sets
-   "legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011.   -p n (e.g. -p
-   35000)  sets TCP and UDP ports n, n+1, n+2.  -p n1,n2,n3 (comma-separated
-   values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1.  -p tcp n
-   or -p udp n sets just the TCP or UDP ports.  Ports must be in the range
-   [1024-65535].
-
-If the -p option is not used, the ports are chosen dynamically (randomly),
-which will not work if a firewall is running.
 
 **-m**  generates a random MAC address to use instead of the true hardware MAC
    number of the computer's network card.   (Different server_name,  MAC
@@ -361,12 +368,12 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    available).  Using quotes "..." allows some parameters to be included with the decoder name.
 
 **-vc _converter_** chooses the GStreamer pipeline's videoconverter element, instead of the default
-   value "videoconvert".  When using video4linux hardware decoding by a GPU,`-vc  v4l2convert` will also use
+   value "videoconvert".  When using Video4Linux2 hardware-decoding by a GPU,`-vc  v4l2convert` will also use
    the GPU for video conversion.  Using quotes "..." allows some parameters to be included with the converter name.
    
 **-vs _videosink_** chooses the GStreamer videosink, instead of letting
    autovideosink pick it for you.  Some videosink choices are:  ximagesink, xvimagesink,
-   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  or
+   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  kmssink (for systems without X11, like Raspberry Pi OS lite) or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
    "..." allows some parameters to be included with the videosink name. 
    For example, **fullscreen** mode is supported by the vaapisink plugin, and is
@@ -410,6 +417,18 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    registration  eventually becomes unavailable for new connections (this is a workaround for what
    may be due to a problem with your DNS-SD or Avahi setup).   _This option is currently disabled in
    macOS, for the same reason that requires the -nc option._
+
+**-vdmp** Dumps h264 video to file videodump.h264.  -vdmp n dumps not more than n NAL units to
+   videodump.x.h264; x= 1,2,... increases each time a SPS/PPS NAL unit arrives.   To change the name
+   _videodump_,  use -vdmp [n] _filename_.
+
+**-admp** Dumps  audio to file audiodump.x.aac (AAC-ELD format audio), audiodump.x.alac (ALAC format audio) or audiodump.x.aud
+   (other-format audio), where x = 1,2,3... increases each time the audio format changes. -admp _n_ restricts the number of
+   packets dumped to a file to _n_ or less.    To change the name _audiodump_, use -admp [n] _filename_.
+
+**-d**  Enable debug output.   Note:  this does not show GStreamer error or debug messages.   To see GStreamer error
+    error and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
+    To see GStreamer debug messages, set GST_DEBUG=4; increase this to see even more of the GStreamer inner workings.
 
 # Troubleshooting
 
@@ -460,6 +479,16 @@ that from a successful start of UxPlay in the [UxPlay Wiki](https://github.com/F
 GStreamer plugin that doesn't work on your system** (by default,
 GStreamer uses the "autovideosink"  and  "autoaudiosink" algorithms 
 to guess what are  the "best" plugins to use on your system).
+
+**M1 (Apple Silicon) Macs stream  video with h264 profile High at level 4.2, as opposed to High at  level 4.1
+(streamed by Intel Macs).
+Currently, this is not being correctly recognized by GStreamer, and a video window fails to open when the client is a M1 Mac.
+Audio streaming is unaffected.**
+See [here]( https://github.com/FDH2/UxPlay/issues/73)  for efforts to fix this.
+
+**Raspberry Pi** devices (-rpi option) only work with hardware GPU decoding if the Video4Linux2 plugin in  GStreamer v1.20.x or earlier has been patched
+(see the UxPlay [Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) for patches).
+This may be fixed in the future when GStreamer-1.22 is released, or by backport patches in distributions such as Raspberry Pi OS (Bullseye).
 
 Sometimes "autovideosink" may select the OpenGL renderer "glimagesink" which
 may not work correctly on your system.   Try the options "-vs ximagesink" or
@@ -549,6 +578,8 @@ tvOS 12.2.1), so it is unclear what setting prompts the client
 to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
+1.49 2022-03-28   Addded options for dumping video and/or audio to file, for debugging, etc.  h264  PPS/SPS NALU's are shown with -d.
+
 1.48 2022-03-11   Made the GStreamer video pipeline fully configurable, for use with hardware h264 decoding.  Support for Raspberry Pi.
 
 1.47 2022-02-05   Added -FPSdata option to display (in the terminal) regular reports sent by the client about video streaming 
@@ -677,6 +708,8 @@ is compiled.) On macOS, Avahi is not used.
 14. Made the video pipeline fully configurable with options -vp, -vd, -vc, for accelerated hardware support (e.g. NVIDIA).
 
 15. Added Raspberry Pi support (accelerated hardware decoding) with -rpi option.
+
+16. Added options to dump audio and/or video to file.
 
 # Disclaimer
 
