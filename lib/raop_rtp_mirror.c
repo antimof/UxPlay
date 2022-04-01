@@ -399,7 +399,7 @@ raop_rtp_mirror_thread(void *arg)
                 }
 
                 if (!valid_data) {
-                    264_data.data[0] = 1; /* mark video data as invalid h264 (failed decryption) */
+                    h264_data.data[0] = 1; /* mark video data as invalid h264 (failed decryption) */
                 }
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 free(payload_out);
