@@ -10,7 +10,7 @@ Highlights:
      from current iOS/iPadOS 15.2 client devices.
    * macOS computers (2011 or later) can act either as AirPlay clients, or as the server running UxPlay (tested
      on macOS 10.15 Catalina and 12.3 Monterey).  Using AirPlay, UxPlay can emulate a second display for macOS clients.
-     Both Intel and "Apple Silcon"  M1 Macs are now fully supported in both roles.
+     Both Intel and "Apple Silicon"  M1 Macs are now fully supported in both roles.
    * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S, when upgraded to iOS 9.3.5 or later),
      and a Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
