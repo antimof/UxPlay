@@ -39,8 +39,8 @@ UxPlay site](https://github.com/FDH2/UxPlay)).
 UxPlay is tested on a number of systems, including (among others) Debian
 10.11 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 and 21.10, Linux Mint
 20.2, Pop!\_OS 21.10 (NVIDIA edition), Rocky Linux 8.5 (a CentOS
-successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD
-13.0.
+successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 12.3 (Intel and M1),
+FreeBSD 13.0.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
 of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
