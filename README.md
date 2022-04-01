@@ -7,12 +7,12 @@ Highlights:
 
    * GPLv3, open source.
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless ALAC) protocols f
-   from current iOS/iPadOS 15.2 client devices.
+     from current iOS/iPadOS 15.2 client devices.
    * macOS computers (2011 or later) can act either as AirPlay clients, or as the server running UxPlay (tested
-     on macOS 10.15 Catalina).  Using AirPlay, UxPlay can emulate a second display for Intel macOS clients (a video format
-     issue on "Apple Silicon" (M1) macOS clients is not yet resolved, see [Issues](https://github.com/FDH2/UxPlay/issues/73)) .
+     on macOS 10.15 Catalina and 12.3 Monterey).  Using AirPlay, UxPlay can emulate a second display for macOS clients.
+     Both Intel and "Apple Silcon"  M1 Macs are now fully supported in both roles.
    * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S, when upgraded to iOS 9.3.5 or later),
-   and a Windows AirPlay-client emulator, AirMyPC.
+     and a Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks" and  "audiosinks".
    * Support for server behind a firewall.
    * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX, which
@@ -188,7 +188,7 @@ OpenSSL is already installed as a System Library.   "ZOOMFIX" is untested; don't
 ### Building OpenSSL >= 1.1.1 from source.
 
 If you need to do this, note that you may be able to use a newer version (OpenSSL-3.0.1 is known to work).
-You will need the standard development toolset (autoconf, automake, libtool, etc.).
+You will need the standard development toolset (autoconf, automake, libtool).
 Download the source code from
 [https://www.openssl.org/source/](https://www.openssl.org/source/).
 Install the downloaded
@@ -208,7 +208,8 @@ and then run "sudo ldconfig".
 
 _(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can avoid this step by installing libplist-dev
 and libplist3 from Debian 10 or Ubuntu 18.04.)_
-As well as the usual build tools, you  may need to also install some libpython\*-dev package.  Download the latest source
+As well as the usual build tools (autoconf, automake, libtool), you
+may need to also install some libpython\*-dev package.  Download the latest source
 from [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist): get
 [libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip), then
 ("unzip libplist-master.zip ; cd libplist-master"), build/install
@@ -218,7 +219,7 @@ Debian or Ubuntu, you may also need to add a missing  entry ```/usr/local/lib```
 in /etc/ld.so.conf (or place a file containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d)
 and then run "sudo ldconfig". 
 
-## Building UxPlay on macOS:  **(Only tested on Intel X86_64 Macs)**
+## Building UxPlay on macOS:  **(Now tested on both Intel X86_64 and "Apple Silicon" M1 Macs)**
 
 _Note: A native AirPlay Server feature is included in  macOS 12 Monterey, but is restricted to recent hardware.
 UxPlay can run  on older macOS systems that will not be able to run Monterey, or can run Monterey  but not AirPlay._
@@ -235,14 +236,15 @@ First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
 Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.1.
 install `gstreamer-1.0-1.20.1-universal.pkg` and ``gstreamer-1.0-devel-1.20.1-universal.pkg``.  (If
-you have problems with the "universal" packages, you can also use `gstreamer-1.0-1.18.6-x86_64.pkg`
-and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to install (they install to
-/Library/FrameWorks/GStreamer.framework).  It is recommended you use GStreamer.framework rather than install
-Gstreamer with Homebrew or MacPorts (see later).
+you have an Intel-architecture Mac, and  have problems with the "universal" packages, you can also
+use `gstreamer-1.0-1.18.6-x86_64.pkg` and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to
+install (they install to /Library/FrameWorks/GStreamer.framework).
+It is recommended you use GStreamer.framework rather than install Gstreamer with Homebrew or MacPorts (see later).
 
-Next install OpenSSL and libplist:  these can be built from source (see above); only the
-static forms of the two libraries will used for the macOS build, so you can uninstall them ("sudo make uninstall")
-after you have built UxPlay. It may be  easier to get them using
+Next install OpenSSL and libplist:  these can be built from source (see above), in which case you may need to install
+the standard development tools auutoconf, automake, libtool, which can be done with MacPorts, HomeBrew, or Fink.
+Only the static forms of the two libraries will used for the macOS build, so you can uninstall them ("sudo 
+make uninstall") after you have built UxPlay. It may be  easier to get them using
 MacPorts "sudo port install openssl libplist-devel" or Homebrew "brew install openssl libplist" (but not Fink).
 if you don't have MacPorts or Homebrew installed, you can just install
 one of them before building  uxplay, and uninstall afterwards if it is not wanted.

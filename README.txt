@@ -10,11 +10,10 @@ Highlights:
     Lossless ALAC) protocols f from current iOS/iPadOS 15.2 client
     devices.
 -   macOS computers (2011 or later) can act either as AirPlay clients,
-    or as the server running UxPlay (tested on macOS 10.15 Catalina).
-    Using AirPlay, UxPlay can emulate a second display for Intel macOS
-    clients (a video format issue on "Apple Silicon" (M1) macOS clients
-    is not yet resolved, see
-    [Issues](https://github.com/FDH2/UxPlay/issues/73)) .
+    or as the server running UxPlay (tested on macOS 10.15 Catalina and
+    12.3 Monterey). Using AirPlay, UxPlay can emulate a second display
+    for macOS clients. Both Intel and "Apple Silcon" M1 Macs are now
+    fully supported in both roles.
 -   Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone
     4S, when upgraded to iOS 9.3.5 or later), and a Windows
     AirPlay-client emulator, AirMyPC.
@@ -262,27 +261,28 @@ gstreamer1.0-gl is installed.
 
 If you need to do this, note that you may be able to use a newer version
 (OpenSSL-3.0.1 is known to work). You will need the standard development
-toolset (autoconf, automake, libtool, etc.). Download the source code
-from <https://www.openssl.org/source/>. Install the downloaded openssl
-by opening a terminal in your Downloads directory, and unpacking the
-source distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd
-openssl-3.0.1"). Then build/install with "./config ; make ; sudo make
-install\_dev". This will typically install the needed library
-`libcrypto.*`, either in /usr/local/lib or /usr/local/lib64. *(Ignore
-the following for builds on MacOS:)* Assuming the library was placed in
-/usr/local/lib64, you must "export OPENSSL\_ROOT\_DIR=/usr/local/lib64"
-before running cmake. On some systems like Debian or Ubuntu, you may
-also need to add a missing entry `/usr/local/lib64` in /etc/ld.so.conf
-(or place a file containing "/usr/local/lib64/libcrypto.so" in
-/etc/ld.so.conf.d) and then run "sudo ldconfig".
+toolset (autoconf, automake, libtool). Download the source code from
+<https://www.openssl.org/source/>. Install the downloaded openssl by
+opening a terminal in your Downloads directory, and unpacking the source
+distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd openssl-3.0.1").
+Then build/install with "./config ; make ; sudo make install\_dev". This
+will typically install the needed library `libcrypto.*`, either in
+/usr/local/lib or /usr/local/lib64. *(Ignore the following for builds on
+MacOS:)* Assuming the library was placed in /usr/local/lib64, you must
+"export OPENSSL\_ROOT\_DIR=/usr/local/lib64" before running cmake. On
+some systems like Debian or Ubuntu, you may also need to add a missing
+entry `/usr/local/lib64` in /etc/ld.so.conf (or place a file containing
+"/usr/local/lib64/libcrypto.so" in /etc/ld.so.conf.d) and then run "sudo
+ldconfig".
 
 ### Bulding libplist \>= 2.0.0 from source.
 
 *(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can
 avoid this step by installing libplist-dev and libplist3 from Debian 10
-or Ubuntu 18.04.)* As well as the usual build tools, you may need to
-also install some libpython\*-dev package. Download the latest source
-from <https://github.com/libimobiledevice/libplist>: get
+or Ubuntu 18.04.)* As well as the usual build tools (autoconf, automake,
+libtool), you may need to also install some libpython\*-dev package.
+Download the latest source from
+<https://github.com/libimobiledevice/libplist>: get
 [libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
 then ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install"). This will probably install
@@ -292,8 +292,8 @@ a missing entry `/usr/local/lib` in /etc/ld.so.conf (or place a file
 containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d) and
 then run "sudo ldconfig".
 
-Building UxPlay on macOS: **(Only tested on Intel X86\_64 Macs)**
------------------------------------------------------------------
+Building UxPlay on macOS: **(Now tested on both Intel X86\_64 and "Apple Silicon" M1 Macs)**
+--------------------------------------------------------------------------------------------
 
 *Note: A native AirPlay Server feature is included in macOS 12 Monterey,
 but is restricted to recent hardware. UxPlay can run on older macOS
@@ -313,20 +313,22 @@ First get the latest macOS release of GStreamer-1.0 from
 <https://gstreamer.freedesktop.org/download/>. Install both the macOS
 runtime and development installer packages. Assuming that the latest
 release is 1.20.1. install `gstreamer-1.0-1.20.1-universal.pkg` and
-`gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have problems with
-the "universal" packages, you can also use
-`gstreamer-1.0-1.18.6-x86_64.pkg` and
+`gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have an
+Intel-architecture Mac, and have problems with the "universal" packages,
+you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
 install to /Library/FrameWorks/GStreamer.framework). It is recommended
 you use GStreamer.framework rather than install Gstreamer with Homebrew
 or MacPorts (see later).
 
 Next install OpenSSL and libplist: these can be built from source (see
-above); only the static forms of the two libraries will used for the
-macOS build, so you can uninstall them ("sudo make uninstall") after you
-have built UxPlay. It may be easier to get them using MacPorts "sudo
-port install openssl libplist-devel" or Homebrew "brew install openssl
-libplist" (but not Fink). if you don't have MacPorts or Homebrew
+above), in which case you may need to install the standard development
+tools auutoconf, automake, libtool, which can be done with MacPorts,
+HomeBrew, or Fink. Only the static forms of the two libraries will used
+for the macOS build, so you can uninstall them ("sudo make uninstall")
+after you have built UxPlay. It may be easier to get them using MacPorts
+"sudo port install openssl libplist-devel" or Homebrew "brew install
+openssl libplist" (but not Fink). if you don't have MacPorts or Homebrew
 installed, you can just install one of them before building uxplay, and
 uninstall afterwards if it is not wanted.
 
