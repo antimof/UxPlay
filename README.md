@@ -140,7 +140,7 @@ not the case, as when you are packaging for a distribution, use the cmake option
 3. `sudo apt-get install libx11-dev`  (only needed if you invoke the "ZOOMFIX" X11 display-name fix in the next step)
 4. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
 make X11 mirror display windows visible to screen-sharing applications such as
-Zoom, see [Improvements](#improvements) \#3 below). **This is only needed
+Zoom, see [Improvements](#improvements) \#3 below). **ZOOMFIX  is only needed
 for GStreamer-1.18.x or earlier**.
 5. `make`
 6. `sudo make install`    (you can afterwards uninstall with `sudo make uninstall` in the same directory in which this was run)

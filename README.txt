@@ -186,7 +186,7 @@ packaging for a distribution, use the cmake option
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
     applications such as Zoom, see [Improvements](#improvements) \#3
-    below). **This is only needed for GStreamer-1.18.x or earlier**.
+    below). **ZOOMFIX is only needed for GStreamer-1.18.x or earlier**.
 5.  `make`
 6.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
