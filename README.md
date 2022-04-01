@@ -581,6 +581,7 @@ to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
 1.49 2022-03-28   Addded options for dumping video and/or audio to file, for debugging, etc.  h264  PPS/SPS NALU's are shown with -d.
+                  Fixed video-not-working for M1 Mac clients.
 
 1.48 2022-03-11   Made the GStreamer video pipeline fully configurable, for use with hardware h264 decoding.  Support for Raspberry Pi.
 
