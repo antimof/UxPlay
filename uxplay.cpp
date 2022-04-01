@@ -612,7 +612,7 @@ int main (int argc, char *argv[]) {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
-                        fprintf(stderr, "invalid \"-vdmp 0 %s\"; -vdmp n  needs a non-zero value of n\n");
+		      fprintf(stderr, "invalid \"-vdmp 0 %s\"; -vdmp n  needs a non-zero value of n\n", argv[i]);
                         exit(1);
                     }
                     video_dump_limit = n;
@@ -625,13 +625,14 @@ int main (int argc, char *argv[]) {
                     video_dumpfile_name.append(argv[i]);
                 }
             }
+	    printf("dump_video %d %d %s \n",dump_video, video_dump_limit, video_dumpfile_name.c_str());
         } else if (arg == "-admp") {
             dump_audio = true;
             if (option_has_value(i, argc, arg, argv[i+1])) {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
-                        fprintf(stderr, "invalid \"-admp 0 %s\"; -admp n  needs a non-zero value of n\n");
+                        fprintf(stderr, "invalid \"-admp 0 %s\"; -admp n  needs a non-zero value of n\n", argv[i]);
                         exit(1);
                     }
                     audio_dump_limit = n;
