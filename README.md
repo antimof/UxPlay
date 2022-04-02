@@ -130,7 +130,7 @@ You need a C/C++ compiler (e.g. g++) with the standard development libraries ins
 systems provide a package "build-essential" for use in compiling software.  Make sure that cmake>=3.4.1
 and pkg-config are also installed: "sudo apt-get install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
-downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay" for "git clone" downloads), then do
+downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay" for "git clone" downloads), then follow the instructions below:
 
 **Note:** By default UxPlay will be built with optimization for the computer it is built on; when this is
 not the case, as when you are packaging for a distribution, use the cmake option `-DNO_MARCH_NATIVE=ON`.

@@ -171,7 +171,7 @@ cmake\>=3.4.1 and pkg-config are also installed: "sudo apt-get install
 cmake pkg-config". In a terminal window, change directories to the
 source directory of the downloaded source code ("UxPlay-\*", "\*" =
 "master" or the release tag for zipfile downloads, "UxPlay" for "git
-clone" downloads), then do
+clone" downloads), then follow the instructions below:
 
 **Note:** By default UxPlay will be built with optimization for the
 computer it is built on; when this is not the case, as when you are
