@@ -193,12 +193,12 @@ packaging for a distribution, use the cmake option
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
     needed are: "plugins-base", "libav" (for sound), "plugins-good" (for
-    v4l2 hardware h264 decoding) and "plugins-bad" (for software h264
-    decoding). Also needed may be "gl" for OpenGL support, and "x" for
-    X11 support, although these may already be installed; "vaapi" is
-    needed for hardware-accelerated h264 video decoding by Intel
-    graphics (not for NVIDIA). Also install "tools" to get the utility
-    gst-inspect-1.0 for examining the GStreamer installation.
+    v4l2 hardware h264 decoding) and "plugins-bad" (for h264 decoding).
+    Also needed may be "gl" for OpenGL support, and "x" for X11 support,
+    although these may already be installed; "vaapi" is needed for
+    hardware-accelerated h264 video decoding by Intel graphics (not for
+    NVIDIA). Also install "tools" to get the utility gst-inspect-1.0 for
+    examining the GStreamer installation.
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
