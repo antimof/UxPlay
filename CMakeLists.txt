@@ -17,6 +17,8 @@ endif ( ZOOMFIX )
 
 if( UNIX AND NOT APPLE )
  add_definitions( -DSUPPRESS_AVAHI_COMPAT_WARNING )
+else()
+  set( CMAKE_INSTALL_RPATH "/Library/Frameworks/" )
 endif()
 
 add_subdirectory( lib/llhttp )

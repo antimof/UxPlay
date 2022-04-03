@@ -7,14 +7,13 @@ Highlights:
 
 -   GPLv3, open source.
 -   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-    Lossless ALAC) protocols f from current iOS/iPadOS 15.2 client
+    Lossless ALAC) protocols from current iOS/iPadOS 15.2 client
     devices.
 -   macOS computers (2011 or later) can act either as AirPlay clients,
-    or as the server running UxPlay (tested on macOS 10.15 Catalina).
-    Using AirPlay, UxPlay can emulate a second display for Intel macOS
-    clients (a video format issue on "Apple Silicon" (M1) macOS clients
-    is not yet resolved, see
-    [Issues](https://github.com/FDH2/UxPlay/issues/73)) .
+    or as the server running UxPlay (tested on macOS 10.15 Catalina and
+    12.3 Monterey). Using AirPlay, UxPlay can emulate a second display
+    for macOS clients. Both Intel and "Apple Silicon" M1 Macs are now
+    fully supported in both roles.
 -   Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone
     4S, when upgraded to iOS 9.3.5 or later), and a Windows
     AirPlay-client emulator, AirMyPC.
@@ -40,8 +39,8 @@ UxPlay site](https://github.com/FDH2/UxPlay)).
 UxPlay is tested on a number of systems, including (among others) Debian
 10.11 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 and 21.10, Linux Mint
 20.2, Pop!\_OS 21.10 (NVIDIA edition), Rocky Linux 8.5 (a CentOS
-successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 10.15.7, FreeBSD
-13.0.
+successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 12.3 (Intel and M1),
+FreeBSD 13.0.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
 of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
@@ -172,7 +171,7 @@ cmake\>=3.4.1 and pkg-config are also installed: "sudo apt-get install
 cmake pkg-config". In a terminal window, change directories to the
 source directory of the downloaded source code ("UxPlay-\*", "\*" =
 "master" or the release tag for zipfile downloads, "UxPlay" for "git
-clone" downloads), then do
+clone" downloads), then follow the instructions below:
 
 **Note:** By default UxPlay will be built with optimization for the
 computer it is built on; when this is not the case, as when you are
@@ -187,19 +186,19 @@ packaging for a distribution, use the cmake option
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
     applications such as Zoom, see [Improvements](#improvements) \#3
-    below).
+    below). **ZOOMFIX is only needed for GStreamer-1.18.x or earlier**.
 5.  `make`
 6.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
     needed are: "plugins-base", "libav" (for sound), "plugins-good" (for
-    v4l2 hardware h264 decoding) and "plugins-bad" (for software h264
-    decoding). Also needed may be "gl" for OpenGL support, and "x" for
-    X11 support, although these may already be installed; "vaapi" is
-    needed for hardware-accelerated h264 video decoding by Intel
-    graphics (not for NVIDIA). Also install "tools" to get the utility
-    gst-inspect-1.0 for examining the GStreamer installation.
+    v4l2 hardware h264 decoding) and "plugins-bad" (for h264 decoding).
+    Also needed may be "gl" for OpenGL support, and "x" for X11 support,
+    although these may already be installed; "vaapi" is needed for
+    hardware-accelerated h264 video decoding by Intel graphics (not for
+    NVIDIA). Also install "tools" to get the utility gst-inspect-1.0 for
+    examining the GStreamer installation.
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
@@ -262,27 +261,28 @@ gstreamer1.0-gl is installed.
 
 If you need to do this, note that you may be able to use a newer version
 (OpenSSL-3.0.1 is known to work). You will need the standard development
-toolset (autoconf, automake, libtool, etc.). Download the source code
-from <https://www.openssl.org/source/>. Install the downloaded openssl
-by opening a terminal in your Downloads directory, and unpacking the
-source distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd
-openssl-3.0.1"). Then build/install with "./config ; make ; sudo make
-install\_dev". This will typically install the needed library
-`libcrypto.*`, either in /usr/local/lib or /usr/local/lib64. *(Ignore
-the following for builds on MacOS:)* Assuming the library was placed in
-/usr/local/lib64, you must "export OPENSSL\_ROOT\_DIR=/usr/local/lib64"
-before running cmake. On some systems like Debian or Ubuntu, you may
-also need to add a missing entry `/usr/local/lib64` in /etc/ld.so.conf
-(or place a file containing "/usr/local/lib64/libcrypto.so" in
-/etc/ld.so.conf.d) and then run "sudo ldconfig".
+toolset (autoconf, automake, libtool). Download the source code from
+<https://www.openssl.org/source/>. Install the downloaded openssl by
+opening a terminal in your Downloads directory, and unpacking the source
+distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd openssl-3.0.1").
+Then build/install with "./config ; make ; sudo make install\_dev". This
+will typically install the needed library `libcrypto.*`, either in
+/usr/local/lib or /usr/local/lib64. *(Ignore the following for builds on
+MacOS:)* Assuming the library was placed in /usr/local/lib64, you must
+"export OPENSSL\_ROOT\_DIR=/usr/local/lib64" before running cmake. On
+some systems like Debian or Ubuntu, you may also need to add a missing
+entry `/usr/local/lib64` in /etc/ld.so.conf (or place a file containing
+"/usr/local/lib64/libcrypto.so" in /etc/ld.so.conf.d) and then run "sudo
+ldconfig".
 
 ### Bulding libplist \>= 2.0.0 from source.
 
 *(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can
 avoid this step by installing libplist-dev and libplist3 from Debian 10
-or Ubuntu 18.04.)* As well as the usual build tools, you may need to
-also install some libpython\*-dev package. Download the latest source
-from <https://github.com/libimobiledevice/libplist>: get
+or Ubuntu 18.04.)* As well as the usual build tools (autoconf, automake,
+libtool), you may need to also install some libpython\*-dev package.
+Download the latest source from
+<https://github.com/libimobiledevice/libplist>: get
 [libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
 then ("unzip libplist-master.zip ; cd libplist-master"), build/install
 ("./autogen.sh ; make ; sudo make install"). This will probably install
@@ -292,8 +292,8 @@ a missing entry `/usr/local/lib` in /etc/ld.so.conf (or place a file
 containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d) and
 then run "sudo ldconfig".
 
-Building UxPlay on macOS: **(Only tested on Intel X86\_64 Macs)**
------------------------------------------------------------------
+Building UxPlay on macOS: **(Now tested on both Intel X86\_64 and "Apple Silicon" M1 Macs)**
+--------------------------------------------------------------------------------------------
 
 *Note: A native AirPlay Server feature is included in macOS 12 Monterey,
 but is restricted to recent hardware. UxPlay can run on older macOS
@@ -313,20 +313,22 @@ First get the latest macOS release of GStreamer-1.0 from
 <https://gstreamer.freedesktop.org/download/>. Install both the macOS
 runtime and development installer packages. Assuming that the latest
 release is 1.20.1. install `gstreamer-1.0-1.20.1-universal.pkg` and
-`gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have problems with
-the "universal" packages, you can also use
-`gstreamer-1.0-1.18.6-x86_64.pkg` and
+`gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have an
+Intel-architecture Mac, and have problems with the "universal" packages,
+you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
 install to /Library/FrameWorks/GStreamer.framework). It is recommended
 you use GStreamer.framework rather than install Gstreamer with Homebrew
 or MacPorts (see later).
 
 Next install OpenSSL and libplist: these can be built from source (see
-above); only the static forms of the two libraries will used for the
-macOS build, so you can uninstall them ("sudo make uninstall") after you
-have built UxPlay. It may be easier to get them using MacPorts "sudo
-port install openssl libplist-devel" or Homebrew "brew install openssl
-libplist" (but not Fink). if you don't have MacPorts or Homebrew
+above), in which case you may need to install the standard development
+tools auutoconf, automake, libtool, which can be done with MacPorts,
+HomeBrew, or Fink. Only the static forms of the two libraries will used
+for the macOS build, so you can uninstall them ("sudo make uninstall")
+after you have built UxPlay. It may be easier to get them using MacPorts
+"sudo port install openssl libplist-devel" or Homebrew "brew install
+openssl libplist" (but not Fink). if you don't have MacPorts or Homebrew
 installed, you can just install one of them before building uxplay, and
 uninstall afterwards if it is not wanted.
 
@@ -762,7 +764,8 @@ ChangeLog
 =========
 
 1.49 2022-03-28 Addded options for dumping video and/or audio to file,
-for debugging, etc. h264 PPS/SPS NALU's are shown with -d.
+for debugging, etc. h264 PPS/SPS NALU's are shown with -d. Fixed
+video-not-working for M1 Mac clients.
 
 1.48 2022-03-11 Made the GStreamer video pipeline fully configurable,
 for use with hardware h264 decoding. Support for Raspberry Pi.
