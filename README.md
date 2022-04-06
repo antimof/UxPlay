@@ -122,13 +122,15 @@ now being periodically merged with the antimof tree (thank you antimof!).
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS, see below).
 See [Troubleshooting](#troubleshooting) below for help with any difficulties.
 
+You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.  Debian-based
+systems provide a package "build-essential" for use in compiling software.   You also need pkg-config: if it is is not found by "`which pkg-config`",
+install either pkg-config or its  work-alike replacement pkgconf.   Also make sure that cmake>=3.4.1
+is installed: "`sudo apt-get install cmake`" (add ``build-essential`` and ```pkgconf``` to this if needed).
+
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and libplist 2.0 or later.
 (This means Debian 10 "Buster", Ubuntu 18.04 or later.) If it does not, you may
 need to build and install these from source (see below).
 
-You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.  Debian-based
-systems provide a package "build-essential" for use in compiling software.  Make sure that cmake>=3.4.1
-and pkg-config are also installed: "sudo apt-get install cmake pkg-config".
 In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay" for "git clone" downloads), then follow the instructions below:
 
