@@ -612,7 +612,7 @@ int main (int argc, char *argv[]) {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
-		      fprintf(stderr, "invalid \"-vdmp 0 %s\"; -vdmp n  needs a non-zero value of n\n", argv[i]);
+                        fprintf(stderr, "invalid \"-vdmp 0 %s\"; -vdmp n  needs a non-zero value of n\n", argv[i]);
                         exit(1);
                     }
                     video_dump_limit = n;
