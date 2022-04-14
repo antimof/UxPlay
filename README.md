@@ -486,12 +486,6 @@ GStreamer plugin that doesn't work on your system** (by default,
 GStreamer uses the "autovideosink"  and  "autoaudiosink" algorithms 
 to guess what are  the "best" plugins to use on your system).
 
-**M1 (Apple Silicon) Macs stream  video with h264 profile High at level 4.2, as opposed to High at  level 4.1
-(streamed by Intel Macs).
-Currently, this is not being correctly recognized by GStreamer, and a video window fails to open when the client is a M1 Mac.
-Audio streaming is unaffected.**
-See [here]( https://github.com/FDH2/UxPlay/issues/73)  for efforts to fix this.
-
 **Raspberry Pi** devices (-rpi option) only work with hardware GPU decoding if the Video4Linux2 plugin in  GStreamer v1.20.x or earlier has been patched
 (see the UxPlay [Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) for patches).
 This may be fixed in the future when GStreamer-1.22 is released, or by backport patches in distributions such as Raspberry Pi OS (Bullseye).
