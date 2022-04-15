@@ -284,7 +284,27 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             conn_started = true;
+
+            /*packet[0:3] contains the payload size */
             int payload_size = byteutils_get_int(packet, 0);
+
+            /* packet[4] appears to have one of three possible values:                           *
+             * 0x00 : encrypted packet                                                           *    
+             * 0x01 : unencrypted packet with a SPS and a PPS NAL, sent initially, and also when *
+             *        a change in video format (e.g., width, height) subsequently occurs         *
+             * 0x05 : unencrypted packet with a "streaming report", sent once per second         */
+
+            /* encrypted packets have packet[5] = 0x00 or 0x10, and packet[6]= packet[7] = 0x00; *
+             * encrypted packets immediately following an unencrypted SPS/PPS packet appear to   *
+             * be the only ones with packet[5] = 0x10, and almost always have packet[5] = 0x10,  *
+             * but occasionally have packet[5] = 0x00.                                           */
+
+            /* unencrypted SPS/PPS packets have packet[4-7] = 0x01 0x00 0x01 0x16                *
+             * they are followed by an encrypted packet with the same timestamp in packet[8:15]  */
+
+            /* "streaming report" packages have packet4:7] = 0x05 0x00 0x00 0x00, and have no    *
+             * timestamp in packet[8:15]                                                         */
+
             //unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
             //unsigned short payload_option = byteutils_get_short(packet, 6);
 
@@ -335,7 +355,7 @@ raop_rtp_mirror_thread(void *arg)
                 bool prepend_sps_pps = ( sps_pps_len > 0);
                 if (prepend_sps_pps) {
                     if (packet[5] != 0x10) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "Warning:  prepending SPS and PPS NAL units, but  packet[5] = 0x%2.2x is not 0x10", packet[5]);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "Unexpected:  prepending SPS and PPS NAL units, but  packet[5] = 0x%2.2x is not 0x10", packet[5]);
                     }
                     payload_out = (unsigned char*)  malloc(payload_size + sps_pps_len);
                     payload_decrypted = payload_out + sps_pps_len;
@@ -408,10 +428,19 @@ raop_rtp_mirror_thread(void *arg)
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
                 ntp_timestamp_nal = byteutils_get_long(packet, 8);
+                float width = byteutils_get_float(packet, 16);
+                float height = byteutils_get_float(packet, 20);
                 float width_source = byteutils_get_float(packet, 40);
                 float height_source = byteutils_get_float(packet, 44);
-                float width = byteutils_get_float(packet, 56);
-                float height = byteutils_get_float(packet, 60);
+                if (width != width_source || height != height_source) {
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: Unexpected : data  %f, %f != width_source = %f, height_source = %f",
+                           width, height, width_source, height_source);
+                }
+                width = byteutils_get_float(packet, 48);
+                height = byteutils_get_float(packet, 52);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: unidentified extra header data  %f, %f", width, height);
+                width = byteutils_get_float(packet, 56);
+                height = byteutils_get_float(packet, 60);
                 if (raop_rtp_mirror->callbacks.video_report_size) {
                     raop_rtp_mirror->callbacks.video_report_size(raop_rtp_mirror->callbacks.cls, &width_source, &height_source, &width, &height);
                 }
@@ -422,22 +451,28 @@ raop_rtp_mirror_thread(void *arg)
                 unsigned char *sequence_parameter_set = payload + 8;
                 short pps_size = byteutils_get_short_be(payload, sps_size + 9);
                 unsigned char *picture_parameter_set = payload + sps_size + 11;
-                int remainder_size = payload_size - sps_size - pps_size - 11; 
-                char *str = utils_data_to_string(sequence_parameter_set,sps_size,16);
+                int data_size = 6; 
+                char *str = utils_data_to_string(payload, data_size, 16);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: sps/pps header size = %d", data_size);		
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 sps/pps header:\n%s", str);
+                free(str);
+                str = utils_data_to_string(sequence_parameter_set, sps_size,16);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror sps size = %d",  sps_size);		
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
                 free(str);
-                str = utils_data_to_string(picture_parameter_set,pps_size,16);
+                data_size = pps_size;
+                str = utils_data_to_string(picture_parameter_set, pps_size, 16);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror pps size = %d", pps_size);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
                 free(str);
-                if (remainder_size > 0) {
-                    str = utils_data_to_string (picture_parameter_set + pps_size, remainder_size, 16);
-                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder size = %d", remainder_size);
+                data_size = payload_size - sps_size - pps_size - 11; 
+                if (data_size > 0) {
+                    str = utils_data_to_string (picture_parameter_set + pps_size, data_size, 16);
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder size = %d", data_size);
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder of sps+pps packet:\n%s", str);
                     free(str);
-                } else if (remainder_size < 0) {
-                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, " pps_sps error: packet remainder size = %d < 0", remainder_size);
+                } else if (data_size < 0) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, " pps_sps error: packet remainder size = %d < 0", data_size);
                 }
 
                 // Copy the sps and pps into a buffer to prepend to the next NAL unit.
@@ -505,7 +540,9 @@ raop_rtp_mirror_thread(void *arg)
                         free(plist_xml);
                     }
                 }
+                break;
             default:
+                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "\nReceived unexpected TCP packet from client, packet[4] = 0x%2.2x", packet[4]);
                 break;
             }
 
