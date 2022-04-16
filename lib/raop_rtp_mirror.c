@@ -460,7 +460,6 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror sps size = %d",  sps_size);		
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
                 free(str);
-                data_size = pps_size;
                 str = utils_data_to_string(picture_parameter_set, pps_size, 16);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror pps size = %d", pps_size);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
