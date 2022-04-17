@@ -44,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.49"
+#define VERSION "1.50"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -97,6 +97,7 @@ static int audio_dump_count = 0;
 static bool dump_audio = false;
 static unsigned char audio_type = 0x00;
 static unsigned char previous_audio_type = 0x00;
+static bool fullscreen = false;
 
 void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
@@ -301,6 +302,7 @@ static void print_info (char *name) {
     printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set mirror \"overscanned\" mode on (not usually needed)\n");
+    printf("-fs       Full-screen (only with Wayland and VAAPI plugins)\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
@@ -321,7 +323,9 @@ static void print_info (char *name) {
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
-    printf("-rpi      Video settings for Raspberry Pi (for GPU h264 decoding).\n");
+    printf("-rpigl    (or \"-rpi\") Raspberry Pi GPU h264 video with OpenGL.\n");
+    printf("-rpiwl    Raspberry Pi GPU h264 video with Wayland compositor.\n");
+    printf("-rpifb    Raspberry Pi \"Lite\" video with KMS frame buffer (no X11).\n");
     printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
@@ -580,7 +584,7 @@ int main (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-        } else if (arg == "-rpi") {
+        } else if (arg == "-rpi" ||  arg == "-rpigl") {
             video_parser.erase();
             video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();
@@ -589,7 +593,27 @@ int main (int argc, char *argv[]) {
             video_converter = "v4l2convert";
             videosink.erase();
             videosink = "glimagesink";
-        } else if (arg == "-FPSdata") {
+        } else if (arg == "-rpiwl" ) {
+            video_parser.erase();
+            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+            video_decoder.erase();
+            video_decoder = "v4l2h264dec";
+            video_converter.erase();
+            video_converter = "v4l2convert";
+            videosink.erase();
+            videosink = "waylandsink";
+        } else if (arg == "-rpifb" ) {
+            video_parser.erase();
+            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+            video_decoder.erase();
+            video_decoder = "v4l2h264dec";
+            video_converter.erase();
+            video_converter = "v4l2convert";
+            videosink.erase();
+            videosink = "kmssink";
+        } else if (arg == "-fs" ) {
+            fullscreen = true;
+	} else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
             max_ntp_timeouts = 0;
@@ -661,6 +685,10 @@ int main (int argc, char *argv[]) {
         display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
     }
 
+    if (fullscreen && use_video) {
+        videosink.append(" fullscreen=true");
+    }
+    
     if (do_append_hostname) append_hostname(server_name);
     
     render_logger = logger_init();

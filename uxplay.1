@@ -1,4 +1,4 @@
-.TH UXPLAY "1" "March 2022" "1.49" "User Commands"
+.TH UXPLAY "1" "April 2022" "1.50" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
@@ -17,6 +17,8 @@ UxPlay 1.49: An open\-source AirPlay mirroring server based on RPiPlay
 \fB\-s\fR wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]
 .TP
 \fB\-o\fR        Set mirror "overscanned" mode on (not usually needed)
+.TP
+\fB-fs\fR       Full-screen (only with Wayland and VAAPI plugins)
 .TP
 \fB\-fps\fR n    Set maximum allowed streaming framerate, default 30
 .TP
@@ -58,7 +60,11 @@ UxPlay 1.49: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
-\fB\-rpi\fR      Video settings for Raspberry Pi (for GPU h264 decoding).
+\fB\-rpigl\fR    (or "-rpi") Raspberry Pi GPU h264 video with OpenGL.
+.TP
+\fB\-rpiwl\fR    Raspberry Pi GPU h264 video with Wayland compositor.
+.TP
+\fB\-rpifb\fR    Raspberry Pi "Lite" video with KMS framebuffer (no X11).
 .TP
 \fB\-avdec\fR    Force software h264 video decoding with libav decoder.
 .TP
