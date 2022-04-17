@@ -198,7 +198,7 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         }
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
-        GST_BUFFER_DTS(buffer) = (GstClockTime) pts;
+        GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
         gst_buffer_fill(buffer, 0, data, data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
