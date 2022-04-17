@@ -1,4 +1,4 @@
-UxPlay 1.49: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.50: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 ### Now developed at GitHub site <https://github.com/FDH2/UxPlay> (where user issues should be posted).
@@ -106,10 +106,10 @@ This older form of the plugin should be used with the
 -   **GPU Support for Raspberry Pi**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
-    of h264 video (options `uxplay -rpi -avdec`) but this usually has
-    unacceptable latency, and hardware-accelerated decoding by the Pi's
-    built-in Broadcom GPU should be used. RPi OS (Bullseye) has
-    abandoned the omx (OpenMAX) driver used till now for this by
+    of h264 video (by adding `-avdec` to the uxplay options) but this
+    usually has unacceptable latency, and hardware-accelerated decoding
+    by the Pi's built-in Broadcom GPU should be used. RPi OS (Bullseye)
+    has abandoned the omx (OpenMAX) driver used till now for this by
     [RPiPlay](http://github.com/FD-/RPiPlay), in favor of v4l2
     (Video4Linux2). The GStreamer Video4Linux2 plugin only works with
     UxPlay since GStreamer-1.21.0.0 on the development branch, but a
@@ -118,11 +118,14 @@ This older form of the plugin should be used with the
     appeared, or you are using a different distribution, you can find
     [patching
     instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
-    in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Use the
-    options `uxplay -rpi` ( or `uxplay -rpi -vs kmssink` on RPi OS Lite
-    with no X11) with the patched GStreamer. Patches for
-    GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.0
-    (used in Manjaro for RPi) are also available there.
+    in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
+    for GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and
+    GStreamer-1.20.1 (used in Manjaro for RPi) are also available. On a
+    non-"Desktop" system without X11 that uses framebuffer video (such
+    as RPi OS Bullseye "Lite") use option `uxplay  -rpifb` with the
+    patched GStreamer. On "Desktop" operating systems, use the options
+    `uxplay -rpigl` (for openGL video), or `uxplay -rpiwl` (for Wayland
+    video).
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -433,6 +436,9 @@ display that overscans, and is not displayed by gstreamer).
 Recommendation: **don't use this option** unless there is some special
 reason to use it.
 
+**-fs** uses fullscreen mode, but only works with Wayland or VAAPI
+plugins.
+
 **-fps n** sets a maximum frame rate (in frames per second) for the
 AirPlay client to stream video; n must be a whole number less than 256.
 (The client may choose to serve video at any frame rate lower than this;
@@ -504,11 +510,18 @@ streams audio in AAC audio format) is now probably unneeded, as UxPlay
 can now stream superior-quality Apple Lossless audio without video in
 Airplay non-mirror mode.
 
-**-rpi** Video settings for Raspberry Pi, for hardware h264 video
-decoding in the GPU (requires the video4linux2 plugin from
+**-rpifb** Video settings for Raspberry Pi, for hardware h264 video
+decoding in the GPU and rendering by the framebuffer, for systems not
+using X11 or Wayland (requires the video4linux2 plugin from
 GStreamer-1.21.0 or later, or a backported patched version of an earlier
 release. (If this is unavailable, use `uxplay -rpi -avdec`). Uses the
-glimagesink videosink.
+videosink "kmssink".
+
+**-rpigl** (or just **-rpi**) Similar to -rpifb, but uses the OpenGL
+videosink "glimagesink" (for Raspberry Pi systems with X11).
+
+**-rpiwl** Similar to -rpifb, but for Raspberry Pi systems using the
+Wayland video compositor (uses the videosink "waylandsink".
 
 **-avdec** forces use of software h264 decoding using Gstreamer element
 avdec\_h264 (libav h264 decoder). This option should prevent
@@ -759,6 +772,11 @@ the "legacy" protocol needed by UxPlay.
 
 ChangeLog
 =========
+
+1.50 2022-04-15 Added -fs fullscreen option (for Wayland or VAAPI
+plugins only), and -rpifb -rpigl -rpiwl options for RPi. Also modified
+timestamps from "DTS" to "PTS" for latency improvement, plus internal
+cleanups.
 
 1.49 2022-03-28 Addded options for dumping video and/or audio to file,
 for debugging, etc. h264 PPS/SPS NALU's are shown with -d. Fixed
