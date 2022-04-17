@@ -5,7 +5,7 @@ uxplay \- start AirPlay server
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.49: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.50: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -60,11 +60,11 @@ UxPlay 1.49: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
-\fB\-rpigl\fR    (or "-rpi") Raspberry Pi GPU h264 video with OpenGL.
+\fB\-rpi\fR      Raspberry Pi "Lite" GPU video with KMS framebuffer.
 .TP
-\fB\-rpiwl\fR    Raspberry Pi GPU h264 video with Wayland compositor.
+\fB\-rpigl\fR    Raspberry Pi GPU video with OpenGL.
 .TP
-\fB\-rpifb\fR    Raspberry Pi "Lite" video with KMS framebuffer (no X11).
+\fB\-rpiwl\fR    Raspberry Pi GPU video with Wayland compositor.
 .TP
 \fB\-avdec\fR    Force software h264 video decoding with libav decoder.
 .TP

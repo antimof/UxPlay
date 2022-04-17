@@ -323,9 +323,9 @@ static void print_info (char *name) {
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
     printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
-    printf("-rpigl    (or \"-rpi\") Raspberry Pi GPU h264 video with OpenGL.\n");
-    printf("-rpiwl    Raspberry Pi GPU h264 video with Wayland compositor.\n");
-    printf("-rpifb    Raspberry Pi \"Lite\" video with KMS frame buffer (no X11).\n");
+    printf("-rpi      Raspberry Pi \"Lite\" GPU video with KMS frame buffer.\n");
+    printf("-rpigl    Raspberry Pi GPU video with OpenGL.\n");
+    printf("-rpiwl    Raspberry Pi GPU video with Wayland compositor.\n");
     printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
@@ -584,7 +584,7 @@ int main (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-        } else if (arg == "-rpi" ||  arg == "-rpigl") {
+        } else if (arg == "-rpigl") {
             video_parser.erase();
             video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();
@@ -602,7 +602,7 @@ int main (int argc, char *argv[]) {
             video_converter = "v4l2convert";
             videosink.erase();
             videosink = "waylandsink";
-        } else if (arg == "-rpifb" ) {
+        } else if (arg == "-rpi" ) {
             video_parser.erase();
             video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();

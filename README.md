@@ -94,7 +94,7 @@ This older form  of the  plugin should be used with the `-vd nvdec -vs glimagesi
     the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches for
     GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.1 (used in Manjaro for RPi) are also available.
     On a non-"Desktop" system without X11 that uses
-    framebuffer video (such as RPi OS Bullseye "Lite") use option `uxplay  -rpifb` with the patched GStreamer.
+    framebuffer video (such as RPi OS Bullseye "Lite") use option `uxplay  -rpi` with the patched GStreamer.
     On "Desktop" operating systems, use the options `uxplay -rpigl`
     (for openGL video), or ``uxplay -rpiwl`` (for Wayland video).
 
@@ -397,15 +397,15 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    feature (which streams audio in AAC audio format) is now probably unneeded, as UxPlay can now 
    stream superior-quality Apple Lossless audio without video in Airplay non-mirror mode.
 
-**-rpifb** Video settings for Raspberry Pi, for hardware h264 video decoding in the GPU and rendering by the
-   framebuffer, for systems not using  X11 or Wayland (requires the
+**-rpi** Video settings for Raspberry Pi, for hardware h264 video decoding in the GPU and rendering by the
+   framebuffer, for "Lite" or minimal systems not using  X11 or Wayland (requires the
    video4linux2 plugin from GStreamer-1.21.0 or later, or a backported patched version of an earlier release.
    (If this is unavailable, use `uxplay -rpi -avdec`).   Uses the videosink "kmssink".
 
-**-rpigl** (or just **-rpi**) Similar to -rpifb, but uses the OpenGL videosink "glimagesink" (for Raspberry Pi systems
+**-rpigl** Similar to -rpi, but uses the OpenGL videosink "glimagesink" (for Raspberry Pi "Desktop" systems
    with X11).
 
-**-rpiwl**  Similar to -rpifb, but for Raspberry Pi systems using the  Wayland video compositor (uses the
+**-rpiwl**  Similar to -rpi, but for Raspberry Pi "Desktop" systems using the  Wayland video compositor (uses the
    videosink "waylandsink".
 
 
@@ -591,7 +591,8 @@ tvOS 12.2.1), so it is unclear what setting prompts the client
 to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
-1.50 2022-04-15   Added -fs fullscreen option (for Wayland or VAAPI plugins only), and -rpifb -rpigl -rpiwl options for RPi.
+1.50 2022-04-15   Added -fs fullscreen option (for Wayland or VAAPI plugins only), Changed -rpi to be for framebuffer ("lite") RPi
+                  systems and added -rpigl (OpenGL) and -rpiwl (Wayland) options for RPi Desktop systems.
                   Also modified  timestamps from "DTS" to "PTS" for latency improvement, plus internal cleanups.
 		  
 1.49 2022-03-28   Addded options for dumping video and/or audio to file, for debugging, etc.  h264  PPS/SPS NALU's are shown with -d.
