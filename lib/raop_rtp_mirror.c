@@ -405,8 +405,8 @@ raop_rtp_mirror_thread(void *arg)
 #ifdef DUMP_H264
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
-                payload_decrypted = NULL;		
-		h264_decode_struct h264_data;
+                payload_decrypted = NULL;
+                h264_decode_struct h264_data;
                 h264_data.pts = ntp_timestamp;
                 h264_data.nal_count = nalus_count;   /*frame_type is set to  number of nal units in packet */
                 h264_data.data_len = payload_size;

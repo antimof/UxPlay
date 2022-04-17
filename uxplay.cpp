@@ -153,7 +153,7 @@ void dump_video_to_file(unsigned char *data, int datalen) {
         video_dumpfile = fopen (fn.c_str(),"w");
         if (video_dumpfile == NULL) {
             LOGE("could not open file %s for dumping h264 frames",fn.c_str());
-         }
+        }
     }
 
     if (video_dumpfile) {
