@@ -182,10 +182,12 @@ void video_renderer_start() {
     first_packet = true;
 }
 
-void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
+void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
     GstBuffer *buffer;
     assert(data_len != 0);
-    /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
+    /* first four bytes of valid  h264  video data are 0x0, 0x0, 0x0, 0x1 */
+    /* nal_count is the number of NAL units in the data: SPS, PPS, SEI NALs may precede a VCL NAL */
+    /* each NAL is byte-aligned, starts with 0x00 0x00 0x00 0x01 */
     /* first byte of invalid data (decryption failed) is 0x1 */
     if (data[0]) {
         logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
@@ -196,7 +198,7 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         }
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
-        GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
+        GST_BUFFER_DTS(buffer) = (GstClockTime) pts;
         gst_buffer_fill(buffer, 0, data, data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX

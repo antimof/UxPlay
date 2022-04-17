@@ -400,26 +400,23 @@ raop_rtp_mirror_thread(void *arg)
                 if (nalu_size != payload_size) valid_data = false;
                 if(!valid_data) {
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu marked as invalid");
+                    payload_out[0] = 1; /* mark video data as invalid h264 (failed decryption) */
                 }
 #ifdef DUMP_H264
                 fwrite(payload_decrypted, payload_size, 1, file);
 #endif
+                payload_decrypted = NULL;		
 		h264_decode_struct h264_data;
                 h264_data.pts = ntp_timestamp;
-                h264_data.frame_type = payload_decrypted[4] & 0x1f;
+                h264_data.nal_count = nalus_count;   /*frame_type is set to  number of nal units in packet */
+                h264_data.data_len = payload_size;
+                h264_data.data = payload_out;
                 if (prepend_sps_pps) {
-                    h264_data.data = payload_out;
-                    h264_data.data_len = payload_size + sps_pps_len;
+                    h264_data.data_len += sps_pps_len;
+                    h264_data.nal_count += 2;
                     if (ntp_timestamp_raw != ntp_timestamp_nal) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror: prepended sps_pps timestamp does not match that of video payload");
                     }
-                } else {
-                    h264_data.data_len = payload_size;
-                    h264_data.data = payload_decrypted;
-                }
-
-                if (!valid_data) {
-                    h264_data.data[0] = 1; /* mark video data as invalid h264 (failed decryption) */
                 }
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 free(payload_out);

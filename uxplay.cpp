@@ -132,49 +132,40 @@ void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     }
 }
 
-void dump_video_to_file(unsigned char *data, int datalen, int type) {
-
-  /* type 5  NAL's are preceded by a PPS and SPS  */
-    if (type == 5 && video_dumpfile && video_dump_limit) {
+void dump_video_to_file(unsigned char *data, int datalen) {
+    /*  SPS NAL has (data[4] & 0x1f) = 0x07  */
+    if ((data[4] & 0x1f) == 0x07  && video_dumpfile && video_dump_limit) {
+        fwrite(mark, 1, sizeof(mark), video_dumpfile);
+        fclose(video_dumpfile);
+        video_dumpfile = NULL;
+        video_dump_count = 0;                     
     }
 
-    if (video_dump_limit == 0) {
-        if (!video_dumpfile) {
-            std::string fn = video_dumpfile_name;
-            fn.append(".h264");
-            video_dumpfile = fopen (fn.c_str(),"w");
-            if (video_dumpfile == NULL) {
-                LOGE("could not open file %s for dumping h264 frames",fn.c_str());
-            }
-        }
-    } else if (type == 5) {
-        char suffix[20];
+    if (!video_dumpfile) {
         std::string fn = video_dumpfile_name;
-        video_dumpfile_count++;
-        snprintf(suffix, sizeof(suffix), ".%d.h264", video_dumpfile_count);
-        fn.append(suffix);
-        if (video_dumpfile) {
-            fwrite(mark, 1, sizeof(mark), video_dumpfile);
-            fclose(video_dumpfile);
-         }
+        if (video_dump_limit) {
+            char suffix[20];
+            video_dumpfile_count++;
+            snprintf(suffix, sizeof(suffix), ".%d", video_dumpfile_count);
+            fn.append(suffix);
+	}
+        fn.append(".h264");
         video_dumpfile = fopen (fn.c_str(),"w");
         if (video_dumpfile == NULL) {
             LOGE("could not open file %s for dumping h264 frames",fn.c_str());
-        }
+         }
     }
- 
+
     if (video_dumpfile) {
-        fwrite(data, 1, datalen, video_dumpfile);
-        if (video_dump_limit) {
+        if (video_dump_limit == 0) {
+            fwrite(data, 1, datalen, video_dumpfile);
+        } else if (video_dump_count < video_dump_limit) {
             video_dump_count++;
-            if (video_dump_count == video_dump_limit) {
-                fwrite(mark, 1, sizeof(mark), video_dumpfile);
-                fclose(video_dumpfile);
-                video_dumpfile = NULL;
-            }
+            fwrite(data, 1, datalen, video_dumpfile);
         }
     }
 }
+
 static gboolean connection_callback (gpointer loop){
     if (!connections_stopped) {
         counter = 0;
@@ -805,10 +796,10 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *da
 
 extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *data) {
     if (dump_video) {
-      dump_video_to_file(data->data, data->data_len,  data->frame_type);
+        dump_video_to_file(data->data, data->data_len);
     }
     if (use_video) {
-        video_renderer_render_buffer(ntp, data->data, data->data_len, data->pts, data->frame_type);
+        video_renderer_render_buffer(ntp, data->data, data->data_len, data->pts, data->nal_count);
     }
 }
 
