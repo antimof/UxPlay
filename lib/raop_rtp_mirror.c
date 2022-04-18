@@ -408,7 +408,7 @@ raop_rtp_mirror_thread(void *arg)
                 payload_decrypted = NULL;
                 h264_decode_struct h264_data;
                 h264_data.pts = ntp_timestamp;
-                h264_data.nal_count = nalus_count;   /*frame_type is set to  number of nal units in packet */
+                h264_data.nal_count = nalus_count;   /*nal_count will be the number of nal units in the packet */
                 h264_data.data_len = payload_size;
                 h264_data.data = payload_out;
                 if (prepend_sps_pps) {
