@@ -585,8 +585,6 @@ int main (int argc, char *argv[]) {
             video_converter.erase();
             video_converter = "videoconvert";
         } else if (arg == "-rpigl") {
-            video_parser.erase();
-            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -594,8 +592,6 @@ int main (int argc, char *argv[]) {
             videosink.erase();
             videosink = "glimagesink";
         } else if (arg == "-rpiwl" ) {
-            video_parser.erase();
-            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -603,8 +599,6 @@ int main (int argc, char *argv[]) {
             videosink.erase();
             videosink = "waylandsink";
         } else if (arg == "-rpi" ) {
-            video_parser.erase();
-            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();

@@ -96,7 +96,17 @@ static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
-static const char h264_caps[]="video/x-h264,stream-format=(string)byte-stream,alignment=(string)au";
+
+/* apple uses colorimetry=1:3:5:1 (not recognized by gstreamer)  *
+ * See .../gst-libs/gst/video/video-color.h in gst-plugins-base  *
+ * range = 1   -> GST_VIDEO_COLOR_RANGE_0_255      ("full RGB")  * 
+ * matrix = 3  -> GST_VIDEO_COLOR_MATRIX_BT709                   *
+ * transfer = 5 -> GST_VIDEO_TRANSFER_BT709                      *
+ * primaries = 1 -> GST_VIDEO_COLOR_PRIMARIES_BT709              *
+ * closest is BT709, 2:3:5:1 with                                *
+ * range = 2 -> GST_VIDEO_COLOR_RANGE_16_235 ("limited RGB")     */  
+
+static const char h264_caps[]="video/x-h264,colorimetry=bt709,stream-format=(string)byte-stream,alignment=(string)au";
 
 void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
     width_source = (unsigned short) *f_width_source;
