@@ -299,10 +299,10 @@ raop_rtp_mirror_thread(void *arg)
              * be the only ones with packet[5] = 0x10, and almost always have packet[5] = 0x10,  *
              * but occasionally have packet[5] = 0x00.                                           */
 
-            /* unencrypted SPS/PPS packets have packet[4-7] = 0x01 0x00 0x01 0x16                *
+            /* unencrypted SPS/PPS packets have packet[4:7] = 0x01 0x00 0x01 0x16                *
              * they are followed by an encrypted packet with the same timestamp in packet[8:15]  */
 
-            /* "streaming report" packages have packet4:7] = 0x05 0x00 0x00 0x00, and have no    *
+            /* "streaming report" packages have packet[4:7] = 0x05 0x00 0x00 0x00, and have no    *
              * timestamp in packet[8:15]                                                         */
 
             //unsigned short payload_type = byteutils_get_short(packet, 4) & 0xff;
@@ -352,7 +352,7 @@ raop_rtp_mirror_thread(void *arg)
 #endif
                 unsigned char* payload_out;
 		unsigned char* payload_decrypted;
-                bool prepend_sps_pps = ( sps_pps_len > 0);
+                bool prepend_sps_pps = (sps_pps_len > 0);
                 if (prepend_sps_pps) {
                     if (packet[5] != 0x10) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "Unexpected:  prepending SPS and PPS NAL units, but  packet[5] = 0x%2.2x is not 0x10", packet[5]);
