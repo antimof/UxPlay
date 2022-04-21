@@ -393,10 +393,8 @@ raop_rtp_mirror_thread(void *arg)
                     if (payload_decrypted[nalu_size] & 0x80) valid_data = false;  /* first bit of h264 nalu MUST be 0 ("forbidden_zero_bit") */
                     nalu_type = payload_decrypted[nalu_size] & 0x1f;
                     nalu_size += nc_len;
-                    if (nalu_type != 1 || nalus_count > 1) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_type = %d, nalu_size = %d,  processed bytes %d, payloadsize = %d nalus_count = %d",
-                                   nalu_type, nc_len, nalu_size, payload_size, nalus_count);
-                     }
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_type = %d, nalu_size = %d,  processed bytes %d, payloadsize = %d nalus_count = %d",
+                               nalu_type, nc_len, nalu_size, payload_size, nalus_count);
                 }
                 if (nalu_size != payload_size) valid_data = false;
                 if(!valid_data) {
