@@ -175,6 +175,7 @@ raop_rtp_mirror_thread(void *arg)
     /* SPS and PPS */
     int sps_pps_len = 0;
     unsigned char* sps_pps = NULL;  
+    unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
 
 #ifdef DUMP_H264
     // C decrypted
@@ -386,10 +387,7 @@ raop_rtp_mirror_thread(void *arg)
                         valid_data = false;
                         break;
                     }
-                    payload_decrypted[nalu_size + 0] = 0;
-                    payload_decrypted[nalu_size + 1] = 0;
-                    payload_decrypted[nalu_size + 2] = 0;
-                    payload_decrypted[nalu_size + 3] = 1;
+                    memcpy(payload_decrypted + nalu_size, nal_start_code, 4);
                     nalu_size += 4;
                     nalus_count++;
                     nalu_type = payload[nalu_size] & 0x1f;
@@ -478,15 +476,9 @@ raop_rtp_mirror_thread(void *arg)
                 sps_pps_len = sps_size + pps_size + 8;
                 sps_pps = (unsigned char*) malloc(sps_pps_len);
                 assert(sps_pps);
-                sps_pps[0] = 0;
-                sps_pps[1] = 0;
-                sps_pps[2] = 0;
-                sps_pps[3] = 1;
+                memcpy(sps_pps, nal_start_code, 4);
                 memcpy(sps_pps + 4, sequence_parameter_set, sps_size);
-                sps_pps[sps_size + 4] = 0;
-                sps_pps[sps_size + 5] = 0;
-                sps_pps[sps_size + 6] = 0;
-                sps_pps[sps_size + 7] = 1;
+                memcpy(sps_pps + sps_size + 4, nal_start_code, 4); 
                 memcpy(sps_pps + sps_size + 8, payload + sps_size + 11, pps_size);
 #ifdef DUMP_H264
                 fwrite(sps_pps, sps_pps_len, 1, file);
