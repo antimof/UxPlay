@@ -364,7 +364,7 @@ raop_rtp_mirror_thread(void *arg)
                 }
                 bool prepend_sps_pps = (raop_rtp_mirror->sps_pps_waiting || packet[5] != 0x00);
                 if (prepend_sps_pps) {
-		    assert(raop_rtp_mirror->sps_pps);
+                    assert(raop_rtp_mirror->sps_pps);
                     payload_out = (unsigned char*)  malloc(payload_size + raop_rtp_mirror->sps_pps_len);
                     payload_decrypted = payload_out + raop_rtp_mirror->sps_pps_len;
                     memcpy(payload_out, raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len);
