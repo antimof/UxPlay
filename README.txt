@@ -85,12 +85,13 @@ h264 format: gstreamer decoding is plugin agnostic, and uses accelerated
 GPU hardware h264 decoders if available; if not, software decoding is
 used.
 
-For systems with Intel integrated graphics, hardware GPU decoding with
-the gstreamer VAAPI plugin is preferable. VAAPI is open-source, and in
-addition to Intel, can support some AMD GPU's (the open-source "Nouveau"
-drivers for NVIDIA graphics are also in principle supported when VAAPI
-is supplemented with firmware extracted from the proprietary NVIDIA
-drivers).
+For systems with Intel or AMD integrated graphics, hardware GPU decoding
+with the gstreamer VAAPI plugin is preferable. VAAPI is open-source, and
+in addition to Intel and AMD graphics, the open-source "Nouveau" drivers
+for NVIDIA graphics are also in principle supported: see
+[here](https://nouveau.freedesktop.org/VideoAcceleration.html), which
+requires VAAPI to be supplemented with firmware extracted from the
+proprietary NVIDIA drivers.
 
 For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
 (included in gstreamer1.0-plugins-bad since GStreamer-1.18.0) can be
@@ -125,7 +126,10 @@ This older form of the plugin should be used with the
     as RPi OS Bullseye "Lite") use option `uxplay  -rpi` with the
     patched GStreamer. On "Desktop" operating systems, use the options
     `uxplay -rpigl` (for openGL video), or `uxplay -rpiwl` (for Wayland
-    video).
+    video); note that option `-rpigl` was working very well on systems
+    with the 5.10.x Linux kernel, but the recent upgrade of RPi OS to
+    5.15.x kernels seems to have a regression that causes unacceptable
+    latency.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
