@@ -777,7 +777,7 @@ the "legacy" protocol needed by UxPlay.
 ChangeLog
 =========
 
-1.50 2022-04-15 Added -fs fullscreen option (for Wayland or VAAPI
+1.50 2022-04-22 Added -fs fullscreen option (for Wayland or VAAPI
 plugins only), Changed -rpi to be for framebuffer ("lite") RPi systems
 and added -rpigl (OpenGL) and -rpiwl (Wayland) options for RPi Desktop
 systems. Also modified timestamps from "DTS" to "PTS" for latency
