@@ -573,7 +573,33 @@ raop_rtp_mirror_thread(void *arg)
 }
 
 static int
-raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6);
+raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
+{
+    assert(raop_rtp_mirror);
+
+    unsigned short dport = raop_rtp_mirror->mirror_data_lport;
+    int dsock = netutils_init_socket(&dport, use_ipv6, 0);
+    if (dsock == -1) {
+        goto sockets_cleanup;
+    }
+
+    /* Listen to the data socket if using TCP */
+    if (listen(dsock, 1) < 0) {
+        goto sockets_cleanup;
+    }
+
+    /* Set socket descriptors */
+    raop_rtp_mirror->mirror_data_sock = dsock;
+
+    /* Set port values */
+    raop_rtp_mirror->mirror_data_lport = dport;
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror local data port socket %d port TCP %d", dsock, dport);
+    return 0;
+
+    sockets_cleanup:
+    if (dsock != -1) closesocket(dsock);
+    return -1;
+}
 
 void
 raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport, uint8_t show_client_FPS_data)
@@ -649,33 +675,4 @@ void raop_rtp_mirror_destroy(raop_rtp_mirror_t *raop_rtp_mirror) {
         }
 	free(raop_rtp_mirror);
     }
-}
-
-static int
-raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
-{
-    assert(raop_rtp_mirror);
-
-    unsigned short dport = raop_rtp_mirror->mirror_data_lport;
-    int dsock = netutils_init_socket(&dport, use_ipv6, 0);
-    if (dsock == -1) {
-        goto sockets_cleanup;
-    }
-
-    /* Listen to the data socket if using TCP */
-    if (listen(dsock, 1) < 0) {
-        goto sockets_cleanup;
-    }
-
-    /* Set socket descriptors */
-    raop_rtp_mirror->mirror_data_sock = dsock;
-
-    /* Set port values */
-    raop_rtp_mirror->mirror_data_lport = dport;
-    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror local data port socket %d port TCP %d", dsock, dport);
-    return 0;
-
-    sockets_cleanup:
-    if (dsock != -1) closesocket(dsock);
-    return -1;
 }
