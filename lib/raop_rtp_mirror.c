@@ -40,19 +40,19 @@
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 
-struct h264codec_s {
-    unsigned char compatibility;
-    short pps_size;
-    short sps_size;
-    unsigned char level;
-    unsigned char number_of_pps;
-    unsigned char* picture_parameter_set;
-    unsigned char profile_high;
-    unsigned char reserved_3_and_sps;
-    unsigned char reserved_6_and_nal;
-    unsigned char* sequence_parameter_set;
-    unsigned char version;
-};
+//struct h264codec_s {
+//    unsigned char compatibility;
+//    short pps_size;
+//    short sps_size;
+//    unsigned char level;
+//    unsigned char number_of_pps;
+//    unsigned char* picture_parameter_set;
+//    unsigned char profile_high;
+//    unsigned char reserved_3_and_sps;
+//    unsigned char reserved_6_and_nal;
+//    unsigned char* sequence_parameter_set;
+//    unsigned char version;
+//};
 
 struct raop_rtp_mirror_s {
     logger_t *logger;
@@ -82,6 +82,12 @@ struct raop_rtp_mirror_s {
 
      /* switch for displaying client FPS data */
      uint8_t show_client_FPS_data;
+
+    /* SPS and PPS */
+    int sps_pps_len;
+    unsigned char* sps_pps;
+    bool sps_pps_waiting;
+
 };
 
 static int
@@ -126,7 +132,10 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
     }
     raop_rtp_mirror->logger = logger;
     raop_rtp_mirror->ntp = ntp;
-    
+    raop_rtp_mirror->sps_pps_len = 0;
+    raop_rtp_mirror->sps_pps = NULL;
+    raop_rtp_mirror->sps_pps_waiting = false;
+
     memcpy(&raop_rtp_mirror->callbacks, callbacks, sizeof(raop_callbacks_t));
     raop_rtp_mirror->buffer = mirror_buffer_init(logger, aeskey);
     if (!raop_rtp_mirror->buffer) {
@@ -172,9 +181,6 @@ raop_rtp_mirror_thread(void *arg)
     uint64_t ntp_timestamp_nal = 0;
     uint64_t ntp_timestamp_raw = 0;
     bool conn_started = false;
-    /* SPS and PPS */
-    int sps_pps_len = 0;
-    unsigned char* sps_pps = NULL;  
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
 
 #ifdef DUMP_H264
@@ -353,17 +359,16 @@ raop_rtp_mirror_thread(void *arg)
 #endif
                 unsigned char* payload_out;
 		unsigned char* payload_decrypted;
-                bool prepend_sps_pps = (sps_pps_len > 0);
+                if (!raop_rtp_mirror->sps_pps_waiting && packet[5] != 0x00) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "unexpected: packet[5] = %2.2x, but  not preceded  by SPS+PPS packet", packet[5]);
+                }
+                bool prepend_sps_pps = (raop_rtp_mirror->sps_pps_waiting || packet[5] != 0x00);
                 if (prepend_sps_pps) {
-                    if (packet[5] != 0x10) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "Unexpected:  prepending SPS and PPS NAL units, but  packet[5] = 0x%2.2x is not 0x10", packet[5]);
-                    }
-                    payload_out = (unsigned char*)  malloc(payload_size + sps_pps_len);
-                    payload_decrypted = payload_out + sps_pps_len;
-                    memcpy(payload_out, sps_pps, sps_pps_len);
-                    sps_pps_len = 0;
-                    free(sps_pps);
-                    sps_pps = NULL;
+		    assert(raop_rtp_mirror->sps_pps);
+                    payload_out = (unsigned char*)  malloc(payload_size + raop_rtp_mirror->sps_pps_len);
+                    payload_decrypted = payload_out + raop_rtp_mirror->sps_pps_len;
+                    memcpy(payload_out, raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len);
+                    raop_rtp_mirror->sps_pps_waiting = false;
                 } else {
                     if (packet[5] != 0x00) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "Warning: regular NAL unit, but packet[5] = 0x%2.2x is not 0x00", packet[5]);
@@ -411,7 +416,7 @@ raop_rtp_mirror_thread(void *arg)
                 h264_data.data_len = payload_size;
                 h264_data.data = payload_out;
                 if (prepend_sps_pps) {
-                    h264_data.data_len += sps_pps_len;
+                    h264_data.data_len += raop_rtp_mirror->sps_pps_len;
                     h264_data.nal_count += 2;
                     if (ntp_timestamp_raw != ntp_timestamp_nal) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror: prepended sps_pps timestamp does not match that of video payload");
@@ -471,18 +476,19 @@ raop_rtp_mirror_thread(void *arg)
                 }
 
                 // Copy the sps and pps into a buffer to prepend to the next NAL unit.
-                if (sps_pps) {
-                    free(sps_pps);
+                raop_rtp_mirror->sps_pps_len = sps_size + pps_size + 8;
+                if (raop_rtp_mirror->sps_pps) {
+                    free(raop_rtp_mirror->sps_pps);
                 }
-                sps_pps_len = sps_size + pps_size + 8;
-                sps_pps = (unsigned char*) malloc(sps_pps_len);
-                assert(sps_pps);
-                memcpy(sps_pps, nal_start_code, 4);
-                memcpy(sps_pps + 4, sequence_parameter_set, sps_size);
-                memcpy(sps_pps + sps_size + 4, nal_start_code, 4); 
-                memcpy(sps_pps + sps_size + 8, payload + sps_size + 11, pps_size);
+                raop_rtp_mirror->sps_pps = (unsigned char*) malloc(raop_rtp_mirror->sps_pps_len);
+                assert(raop_rtp_mirror->sps_pps);
+                memcpy(raop_rtp_mirror->sps_pps, nal_start_code, 4);
+                memcpy(raop_rtp_mirror->sps_pps + 4, sequence_parameter_set, sps_size);
+                memcpy(raop_rtp_mirror->sps_pps + sps_size + 4, nal_start_code, 4); 
+                memcpy(raop_rtp_mirror->sps_pps + sps_size + 8, payload + sps_size + 11, pps_size);
+                raop_rtp_mirror->sps_pps_waiting = true;
 #ifdef DUMP_H264
-                fwrite(sps_pps, sps_pps_len, 1, file);
+                fwrite(raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len, 1, file);
 #endif
 
                 // h264codec_t h264;
@@ -638,6 +644,9 @@ void raop_rtp_mirror_destroy(raop_rtp_mirror_t *raop_rtp_mirror) {
         raop_rtp_mirror_stop(raop_rtp_mirror);
         MUTEX_DESTROY(raop_rtp_mirror->run_mutex);
         mirror_buffer_destroy(raop_rtp_mirror->buffer);
+        if (raop_rtp_mirror->sps_pps) {
+            free(raop_rtp_mirror->sps_pps);
+        }
 	free(raop_rtp_mirror);
     }
 }
