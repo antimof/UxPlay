@@ -69,7 +69,7 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-#define NFORMATS 4
+#define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
 static audio_renderer_t *renderer_type[NFORMATS];
 static audio_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
