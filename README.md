@@ -129,7 +129,8 @@ now being periodically merged with the antimof tree (thank you antimof!).
 See [Troubleshooting](#troubleshooting) below for help with any difficulties.
 
 You need a C/C++ compiler (e.g. g++) with the standard development libraries installed.  Debian-based
-systems provide a package "build-essential" for use in compiling software.   You also need pkg-config: if it is is not found by "`which pkg-config`",
+systems provide a package "build-essential" for use in compiling software.   You also need pkg-config: if it is
+not found by "`which pkg-config`",
 install pkg-config or its  work-alike replacement pkgconf.   Also make sure that cmake>=3.4.1
 is installed: "`sudo apt-get install cmake`" (add ``build-essential`` and
 `pkg-config` (or ``pkgconf``)  to this if needed).
