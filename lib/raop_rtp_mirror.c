@@ -180,7 +180,6 @@ raop_rtp_mirror_thread(void *arg)
     bool conn_reset = false;
     uint64_t ntp_timestamp_nal = 0;
     uint64_t ntp_timestamp_raw = 0;
-    bool conn_started = false;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
 
 #ifdef DUMP_H264
@@ -274,23 +273,16 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             if (payload == NULL && ret == 0) {
-                if (conn_started) {
-                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, connection ended");
-                    break;
-                } else {
-                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, got %d bytes of 128 byte header",readstart);
-                    FD_CLR(stream_fd, &rfds);
-                    stream_fd = -1;
-                    continue;
-                }
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed, got %d bytes of 128 byte header",readstart);
+                FD_CLR(stream_fd, &rfds);
+                stream_fd = -1;
+                continue;
             } else if (payload == NULL && ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error  in header recv: %d %s", errno, strerror(errno));
                 if (errno == ECONNRESET) conn_reset = true;; 
                 break;
             }
-
-            conn_started = true;
 
             /*packet[0:3] contains the payload size */
             int payload_size = byteutils_get_int(packet, 0);
