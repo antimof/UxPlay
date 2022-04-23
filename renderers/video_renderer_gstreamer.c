@@ -195,10 +195,10 @@ void video_renderer_start() {
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
     GstBuffer *buffer;
     assert(data_len != 0);
-    /* first four bytes of valid  h264  video data are 0x0, 0x0, 0x0, 0x1 */
-    /* nal_count is the number of NAL units in the data: SPS, PPS, SEI NALs may precede a VCL NAL */
-    /* each NAL is byte-aligned, starts with 0x00 0x00 0x00 0x01 */
-    /* first byte of invalid data (decryption failed) is 0x1 */
+    /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
+     * nal_count is the number of NAL units in the data: short SPS, PPS, SEI NALs *
+     * may  precede a VCL NAL. Each NAL starts with 0x00 0x00 0x00 0x01 and is    *
+     * byte-aligned: the first byte of invalid data (decryption failed) is 0x01   */
     if (data[0]) {
         logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
     } else {
