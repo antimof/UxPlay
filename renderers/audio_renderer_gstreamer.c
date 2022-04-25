@@ -97,6 +97,8 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
             break;
         case 3:   /*PCM*/
             break;
+        default:
+            break;
         }
         g_string_append (launch, "audioconvert ! volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
@@ -105,7 +107,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         if (error) {
           g_error ("get_parse_launch error:\n %s\n",error->message);
           g_clear_error (&error);
-	}
+        }
         g_assert (renderer_type[i]->pipeline);
         g_string_free(launch, TRUE);
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
@@ -130,6 +132,8 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
             caps =  gst_caps_from_string(lpcm_caps);
             renderer_type[i]->ct = 1;
             format[i] = "PCM 44100/16/2 S16LE";
+            break;
+        default:
             break;
         }
         logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
