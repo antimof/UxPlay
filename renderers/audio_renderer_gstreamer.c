@@ -96,44 +96,44 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
             g_string_append(launch, "avdec_alac ! ");
             break;
         case 3:   /*PCM*/
-	    break;
+            break;
         }
         g_string_append (launch, "audioconvert ! volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
         g_string_append (launch, " sync=false");
-        renderer_type[i]->pipeline  = gst_parse_launch(launch->str,  &error);
-	if (error) {
-	  g_error ("get_parse_launch error:\n %s\n",error->message);
-	  g_clear_error (&error);
+        renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
+        if (error) {
+          g_error ("get_parse_launch error:\n %s\n",error->message);
+          g_clear_error (&error);
 	}
         g_assert (renderer_type[i]->pipeline);
         g_string_free(launch, TRUE);
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
-	switch (i) {
-	case 0:			 
-	    caps =  gst_caps_from_string(aac_eld_caps);
+        switch (i) {
+        case 0:
+            caps =  gst_caps_from_string(aac_eld_caps);
             renderer_type[i]->ct = 8;
-	    format[i] = "AAC-ELD 44100/2";
+            format[i] = "AAC-ELD 44100/2";
             break;
-	case 1:			 
-	    caps =  gst_caps_from_string(alac_caps);
+        case 1:
+            caps =  gst_caps_from_string(alac_caps);
             renderer_type[i]->ct = 2;
             format[i] = "ALAC 44100/16/2";
             break;
-	case 2:			 
-	    caps =  gst_caps_from_string(aac_lc_caps);
+        case 2:
+            caps =  gst_caps_from_string(aac_lc_caps);
             renderer_type[i]->ct = 4;
             format[i] = "AAC-LC 44100/2";
             break;
-	case 3:			 
-	    caps =  gst_caps_from_string(lpcm_caps);
+        case 3:
+            caps =  gst_caps_from_string(lpcm_caps);
             renderer_type[i]->ct = 1;
             format[i] = "PCM 44100/16/2 S16LE";
             break;
-	}
-	logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
-	g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
+        }
+        logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
+        g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
         gst_caps_unref(caps);
     }
 }
