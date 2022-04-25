@@ -60,11 +60,13 @@ UxPlay 1.50: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
 .TP
-\fB\-rpi\fR      Raspberry Pi "Lite" GPU video with KMS framebuffer.
+\fB\-v4l2\fR     Use Video4Linux2 for GPU hardware h264 video decoding.
 .TP
-\fB\-rpigl\fR    Raspberry Pi GPU video with OpenGL.
+\fB\-rpi\fR      Same as "-v4l2" (for RPi=Rasberry Pi).
 .TP
-\fB\-rpiwl\fR    Raspberry Pi GPU video with Wayland compositor.
+\fB\-rpifb\fR    Same as "-v4l2 -vs kmssink" for RPi using framebuffer.
+.TP
+\fB\-rpiwl\fR    Same as "-v4l2 -vs waylandsink" for RPi using Wayland.
 .TP
 \fB\-avdec\fR    Force software h264 video decoding with libav decoder.
 .TP

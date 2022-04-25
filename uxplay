@@ -98,6 +98,7 @@ static bool dump_audio = false;
 static unsigned char audio_type = 0x00;
 static unsigned char previous_audio_type = 0x00;
 static bool fullscreen = false;
+static unsigned int audio_delay, video_delay;
 
 void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
@@ -301,6 +302,7 @@ static void print_info (char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
+    printf("-delay n  delay audio n microsecs (+ or -) relative to video\n");
     printf("-o        Set mirror \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only with Wayland and VAAPI plugins)\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
@@ -324,7 +326,7 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
+    printf("-rpi      Same as \"-v4l2\" (for RPi, RaspBerry Pi).\n");
     printf("-rpifb    Same as \"-v4l2 -vs kmssink\" for RPi using framebuffer.\n");
     printf("-rpiwl    Same as \"-v4l2 -vs waylandsink\" for RPi using Wayland.\n");
     printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
@@ -615,6 +617,30 @@ int main (int argc, char *argv[]) {
             fullscreen = true;
 	} else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
+        } else if (arg =="-delay") {
+            if (argv[i+1]) {
+                bool delay_audio = true;
+                unsigned int delay = 0;
+	        char *val = argv[++i];
+	        if (val[0] == '-') {
+	            delay_audio = false;
+	            val++;
+                }
+	        if (!get_value(val, &delay)) {
+                    fprintf(stderr, "invalid \"-delay %s\": -delay n must have integer n\n", argv[i]);
+                    exit(1);
+	        }
+                if (delay_audio) {
+                    audio_delay = delay;
+                    video_delay = 0;
+                } else {
+                    audio_delay = 0;
+                    video_delay = delay;
+                }
+            } else {
+                fprintf(stderr, "invalid \"-delay \": -delay n must have an integer argument n\n");
+                exit(1);
+	    }
         } else if (arg == "-reset") {
             max_ntp_timeouts = 0;
             if (!get_value(argv[++i], &max_ntp_timeouts)) {
@@ -696,14 +722,14 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
     if (use_audio) {
-        audio_renderer_init(render_logger, audiosink.c_str());
+      audio_renderer_init(render_logger, audiosink.c_str(), &audio_delay);
     } else {
         LOGI("audio_disabled");
     }
 
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &video_delay);
         video_renderer_start();
     }
     
@@ -742,7 +768,7 @@ int main (int argc, char *argv[]) {
         if (use_video && close_window) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &video_delay);
             video_renderer_start();
         }
         if (reset_loop) goto reconnect;

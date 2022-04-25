@@ -1,4 +1,4 @@
-# UxPlay 1.50:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.51:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 ### Now developed at GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted).
 
@@ -18,7 +18,8 @@ Highlights:
    * **New**: Support for Raspberry Pi, with hardware video acceleration by Video4Linux2 (replacement for OpenMAX, which
      is no longer supplied in Raspberry Pi OS)
      (may require a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) to the GStreamer Video4Linux2 plugin.)
-     
+     See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
+
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code 
@@ -89,18 +90,18 @@ This older form  of the  plugin should be used with the `-vd nvdec -vs glimagesi
     usually has unacceptable latency, and hardware-accelerated decoding by  the Pi's built-in Broadcom GPU should be used.
     RPi OS (Bullseye) has abandoned the omx (OpenMAX) driver used till now for this by [RPiPlay](http://github.com/FD-/RPiPlay), in
     favor of v4l2 (Video4Linux2).  The GStreamer Video4Linux2 plugin only works with UxPlay since GStreamer-1.21.0.0 on the development branch,
-    but a (partial) backport to 1.18.4 for RPi OS (Bullseye) has  already appeared in current updates.   In case the full update has not 
-    yet appeared, or you are using a different distribution,
+    but a (partial) backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) for RPi OS (Bullseye) has  already appeared in current updates.
+    Until the promised full  update appears, or if
+    you are using a different distribution,
     you can find [patching instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) in
     the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches for
     GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.1 (used in Manjaro for RPi) are also available.
-    On a non-"Desktop" system without X11 that uses
-    framebuffer video (such as RPi OS Bullseye "Lite") use option `uxplay  -rpi` with the patched GStreamer.
-    On "Desktop" operating systems, use the options `uxplay -rpigl`
-    (for openGL video), or ``uxplay -rpiwl`` (for Wayland video); note that option `-rpigl` was working very well on
-    systems with the 5.10.x Linux kernel,
-    but the recent upgrade of RPi OS to 5.15.x kernels seems to have a regression that causes unacceptable latency.
-
+    On "Desktop" operating systems with X11, use `uxplay -v4l2` (or use ``-rpi `` as a synonym),
+    and optionally specify a videosink with "`-vs ..`");  use ``uxplay -rpiwl`` as a synonym
+    for "`-v4l2 -vs waylandsink`" on a Desktop system with Wayland.
+    On a system without X11 with
+    framebuffer video (such as RPi OS Bullseye "Lite") use `uxplay -rpifb` as a synonym
+    for "`uxplay -v4l2 -vs kmssink`".
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 Some Linux distributions such as Debian do not allow distribution of compiled
@@ -595,6 +596,10 @@ tvOS 12.2.1), so it is unclear what setting prompts the client
 to use the "legacy" protocol needed by UxPlay.
 
 # ChangeLog
+1.51 2022-04-24   Reworked options forVideo4Linux2 support (new option -v4l2) and short options -rpi, -rpifb, -rpiwl as
+                  synonyms for -v4l2,  -v4l2 -vs kmssink, and -v4l2 -vs waylandsink.  Reverted a change from 1.48 that broke
+		  reconnection after "Stop Mirroring" is sent by client.
+
 1.50 2022-04-22   Added -fs fullscreen option (for Wayland or VAAPI plugins only), Changed -rpi to be for framebuffer ("lite") RPi
                   systems and added -rpigl (OpenGL) and -rpiwl (Wayland) options for RPi Desktop systems.
                   Also modified  timestamps from "DTS" to "PTS" for latency improvement, plus internal cleanups.

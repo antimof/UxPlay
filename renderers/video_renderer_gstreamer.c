@@ -133,7 +133,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     assert(renderer);
 
     gst_init(NULL,NULL);
-    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! ");
+    GString *launch = g_string_new("appsrc name=video_source ! ");
     g_string_append(launch, "queue ! ");
     g_string_append(launch, parser);
     g_string_append(launch, " ! ");
@@ -152,7 +152,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     assert(renderer->appsrc);
     caps = gst_caps_from_string(h264_caps);
-    g_object_set(renderer->appsrc, "caps", caps, NULL);
+    g_object_set(renderer->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
     gst_caps_unref(caps);
 
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
