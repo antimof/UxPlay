@@ -514,18 +514,18 @@ streams audio in AAC audio format) is now probably unneeded, as UxPlay
 can now stream superior-quality Apple Lossless audio without video in
 Airplay non-mirror mode.
 
-**-rpi** Video settings for Raspberry Pi, for hardware h264 video
-decoding in the GPU and rendering by the framebuffer, for "Lite" or
-minimal systems not using X11 or Wayland (requires the video4linux2
-plugin from GStreamer-1.21.0 or later, or a backported patched version
-of an earlier release. (If this is unavailable, use
-`uxplay -rpi -avdec`). Uses the videosink "kmssink".
+**-v4l2** Video settings for hardware h264 video decoding in the GPU by
+Video4Linux2.
 
-**-rpigl** Similar to -rpi, but uses the OpenGL videosink "glimagesink"
-(for Raspberry Pi "Desktop" systems with X11).
+**-rpi** Equivalent to "-v4l2". Use for "Desktop" Raspberry Pi systems
+with X11.
 
-**-rpiwl** Similar to -rpi, but for Raspberry Pi "Desktop" systems using
-the Wayland video compositor (uses the videosink "waylandsink".
+**-rpifb** Equivalent to "-v4l2 -vs kmssink" (use for Raspberry Pi
+systems using the framebuffer, like RPi OS Bullseye Lite).
+
+**-rpiwl** Equivalent to "-v4l2 -vs waylandsink", for Raspberry Pi
+"Desktop" systems using the Wayland video compositor (use for Ubuntu
+21.10 for Raspberry Pi 4B).
 
 **-avdec** forces use of software h264 decoding using Gstreamer element
 avdec\_h264 (libav h264 decoder). This option should prevent
