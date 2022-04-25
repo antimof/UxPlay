@@ -604,13 +604,6 @@ int main (int argc, char *argv[]) {
             video_converter = "v4l2convert";
             videosink.erase();
             videosink = "waylandsink";
-        } else if (arg == "-rpi" ) {
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "kmssink";
         } else if (arg == "-fs" ) {
             fullscreen = true;
 	} else if (arg == "-FPSdata") {
