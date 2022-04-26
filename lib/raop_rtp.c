@@ -466,7 +466,27 @@ raop_rtp_thread_udp(void *arg)
             }
         }
 
-        if (FD_ISSET(raop_rtp->dsock, &rfds)) {
+        /* rtp data packets:                         *
+         * packet[0] 0x80    (both AAC-ELD and ALAC) *
+         * packet[1] 0x80 = 96                       *
+         * packet[2:3] (be short) seqnum             *
+         * packet[4:7] (be int)  rtp timestamp       *
+         * packet[8:11] 0x00 0x00 0x00 0x00          *
+         * packet12:]  encrypted audio payload       */
+
+        /*  consecutive AAC-ELD rtp timestamps differ by 480        *
+         *  consecutive ALAC  rtp timestamps differ by 352          *
+         *  These are the respective spf (samples per frame) values *
+         *  both have PCM uncompressed sampling rate = 441000 Hz    */
+
+        /* clock time in microseconds advances at (rtp_timestamp * 1000000)/44100  between frames */
+	
+
+        /* every AAC-ELD packet is sent three times:  0  0 1  0 1 2  1 2 3  2 3 4 ..... *
+         * (after decoding AAC-ELD into PCM, the sound frame is three times bigger)     *
+         * ALAC packets are sent once only  0 1 2 3 4 5  ...                            */
+
+	if (FD_ISSET(raop_rtp->dsock, &rfds)) {
             //logger_log(raop_rtp->logger, LOGGER_INFO, "Would have data packet in queue");
             // Receiving audio data here
             saddrlen = sizeof(saddr);
