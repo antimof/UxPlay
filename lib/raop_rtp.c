@@ -486,7 +486,7 @@ raop_rtp_thread_udp(void *arg)
          * (after decoding AAC-ELD into PCM, the sound frame is three times bigger)     *
          * ALAC packets are sent once only  0 1 2 3 4 5  ...                            */
 
-	if (FD_ISSET(raop_rtp->dsock, &rfds)) {
+        if (FD_ISSET(raop_rtp->dsock, &rfds)) {
             //logger_log(raop_rtp->logger, LOGGER_INFO, "Would have data packet in queue");
             // Receiving audio data here
             saddrlen = sizeof(saddr);
