@@ -293,15 +293,19 @@ raop_ntp_thread(void *arg)
 	        timeout_counter = 0;
                 logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d", response_len);
 
+                //local time of the server when the NTP response packet returns
                 int64_t t3 = (int64_t) raop_ntp_get_local_time(raop_ntp);
-                // Local time of the client when the NTP request packet leaves the client
+
+                // Local time of the server when the NTP request packet leaves the server
                 int64_t t0 = (int64_t) byteutils_get_ntp_timestamp(response, 8);
-                // Local time of the server when the NTP request packet arrives at the server
+
+                // Local time of the client when the NTP request packet arrives at the client
                 int64_t t1 = (int64_t) byteutils_get_ntp_timestamp(response, 16);
-                // Local time of the server when the response message leaves the server
+
+                // Local time of the client when the response message leaves the client
                 int64_t t2 = (int64_t) byteutils_get_ntp_timestamp(response, 24);
 
-                // The iOS device sends its time in micro seconds relative to an arbitrary Epoch (the last boot).
+                // The iOS client device sends its time in micro seconds relative to an arbitrary Epoch (the last boot).
                 // For a little bonus confusion, they add SECONDS_FROM_1900_TO_1970 * 1000000 us.
                 // This means we have to expect some rather huge offset, but its growth or shrink over time should be small.
 
