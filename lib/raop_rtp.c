@@ -28,6 +28,7 @@
 #include "byteutils.h"
 #include "mirror_buffer.h"
 #include "stream.h"
+#include "utils.h"
 
 #define NO_FLUSH (-42)
 
@@ -458,6 +459,9 @@ raop_rtp_thread_udp(void *arg)
                 // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC-ELD
                 // next_rtp = sync_rtp + 77175 = 441 * 175 (1.75 sec) for ALAC
                 /* subtract 44100/4  from sync_rtp */
+                char *str = utils_data_to_string(packet, packetlen, 16);
+                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_sync_clock\n%s", str);
+                free(str);
                 sync_rtp -= 11025;
                 uint64_t sync_ntp_remote = raop_ntp_timestamp_to_micro_seconds(sync_ntp_raw, true);
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);

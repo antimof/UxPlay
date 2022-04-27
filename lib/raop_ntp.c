@@ -290,11 +290,13 @@ raop_ntp_thread(void *arg)
                     break;
                 }
 	    } else {
-	        timeout_counter = 0;
-                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d", response_len);
-
                 //local time of the server when the NTP response packet returns
                 int64_t t3 = (int64_t) raop_ntp_get_local_time(raop_ntp);
+
+                timeout_counter = 0;
+                char *str = utils_data_to_string(response, response_len, 16);                   
+                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d\n%s", response_len, str);
+                free(str);
 
                 // Local time of the server when the NTP request packet leaves the server
                 int64_t t0 = (int64_t) byteutils_get_ntp_timestamp(response, 8);
