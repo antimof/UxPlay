@@ -455,7 +455,7 @@ raop_rtp_thread_udp(void *arg)
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
                 uint32_t next_rtp = byteutils_get_int_be(packet, 16);
-                // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC_EL
+                // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC-ELD
                 // next_rtp = sync_rtp + 77175 = 441 * 175 (1.75 sec) for ALAC
                 /* subtract 44100/4  from sync_rtp */
                 sync_rtp -= 11025;
