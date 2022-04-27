@@ -454,7 +454,7 @@ raop_rtp_thread_udp(void *arg)
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
-                uint32_t next_rtp = byteutils_get_int_be(packet, 16);
+                // uint32_t next_rtp = byteutils_get_int_be(packet, 16);
                 // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC-ELD
                 // next_rtp = sync_rtp + 77175 = 441 * 175 (1.75 sec) for ALAC
                 /* subtract 44100/4  from sync_rtp */
@@ -463,8 +463,8 @@ raop_rtp_thread_udp(void *arg)
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
                 raop_rtp_sync_clock(raop_rtp, sync_rtp, sync_ntp_local);
 
-                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp sync: ntp=%llu, local ntp: %llu, rtp=%u, rtp_next=%u",
-                           sync_ntp_remote, sync_ntp_local, sync_rtp, next_rtp);
+                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp sync: ntp=%llu, local ntp: %llu, rtp=%u",
+                           sync_ntp_remote, sync_ntp_local, sync_rtp);
 
             } else {
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp unknown packet");
