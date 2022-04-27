@@ -453,11 +453,11 @@ raop_rtp_thread_udp(void *arg)
             } else if (type_c == 0x54 && packetlen >= 20) {
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
-		uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
+                uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
                 uint32_t next_rtp = byteutils_get_int_be(packet, 16);
-                // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC_ELD
-		// next_rtp = sync_rtp + 77175 = 441 * 175 (1.75 sec) for ALAC
-		/* subtract 44100/4  from sync_rtp */
+                // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC_EL
+                // next_rtp = sync_rtp + 77175 = 441 * 175 (1.75 sec) for ALAC
+                /* subtract 44100/4  from sync_rtp */
                 sync_rtp -= 11025;
                 uint64_t sync_ntp_remote = raop_ntp_timestamp_to_micro_seconds(sync_ntp_raw, true);
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
