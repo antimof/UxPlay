@@ -95,6 +95,7 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
     }
     conn->raop = raop;
     conn->raop_rtp = NULL;
+    conn->raop_rtp_mirror = NULL;
     conn->raop_ntp = NULL;
     conn->fairplay = fairplay_init(raop->logger);
 
