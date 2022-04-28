@@ -430,7 +430,7 @@ raop_rtp_mirror_thread(void *arg)
                 // The sps_pps is not encrypted
                 ntp_timestamp_nal = byteutils_get_long(packet, 8);
                 /* use the initial raw video timestamp for setting audio timing offset */ 
-               if (raop_rtp_mirror->ntp_timestamp_raw == 0) {
+                if (raop_rtp_mirror->ntp_timestamp_raw == 0) {
                      raop_rtp_mirror->ntp_timestamp_raw = ntp_timestamp_nal;
                 }
                 float width = byteutils_get_float(packet, 16);
