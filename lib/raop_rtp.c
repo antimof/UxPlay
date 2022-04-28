@@ -477,7 +477,7 @@ raop_rtp_thread_udp(void *arg)
 
         /* rtp data packets:                         *
          * packet[0] 0x80    (both AAC-ELD and ALAC) *
-         * packet[1] 0x80 = 96                       *
+         * packet[1] 0x60 = 96                       *
          * packet[2:3] (be short) seqnum             *
          * packet[4:7] (be int)  rtp timestamp       *
          * packet[8:11] 0x00 0x00 0x00 0x00          *
