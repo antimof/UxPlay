@@ -87,14 +87,14 @@ struct raop_rtp_mirror_s {
     int sps_pps_len;
     unsigned char* sps_pps;
     bool sps_pps_waiting;
-    uint64_t ntp_timestamp_raw_sps_pps;
+    uint64_t ntp_timestamp_raw;
 };
 
-uint64_t sps_pps_video_ntp_timestamp_remote(raop_rtp_mirror_t *raop_rtp_mirror) {
+uint64_t  raop_rtp_mirror_timestamp_raw(raop_rtp_mirror_t *raop_rtp_mirror) {
     if(raop_rtp_mirror) {
-        return raop_rtp_mirror->ntp_timestamp_raw_sps_pps;
+        return raop_rtp_mirror->ntp_timestamp_raw;
     } else {
-      return 0;
+        return 0;
     }
 }
 
@@ -143,7 +143,7 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
     raop_rtp_mirror->sps_pps_len = 0;
     raop_rtp_mirror->sps_pps = NULL;
     raop_rtp_mirror->sps_pps_waiting = false;
-    raop_rtp_mirror->ntp_timestamp_raw_sps_pps = 0;
+    raop_rtp_mirror->ntp_timestamp_raw = 0;
 
     memcpy(&raop_rtp_mirror->callbacks, callbacks, sizeof(raop_callbacks_t));
     raop_rtp_mirror->buffer = mirror_buffer_init(logger, aeskey);
@@ -187,7 +187,7 @@ raop_rtp_mirror_thread(void *arg)
     unsigned char* payload = NULL;
     unsigned int readstart = 0;
     bool conn_reset = false;
-    uint64_t ntp_timestamp_raw = 0;
+    uint64_t ntp_timestamp_raw = 0, ntp_timestamp_nal = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
 
 #ifdef DUMP_H264
@@ -418,7 +418,7 @@ raop_rtp_mirror_thread(void *arg)
                 if (prepend_sps_pps) {
                     h264_data.data_len += raop_rtp_mirror->sps_pps_len;
                     h264_data.nal_count += 2;
-                    if (ntp_timestamp_raw != raop_rtp_mirror->ntp_timestamp_raw_sps_pps) {
+                    if (ntp_timestamp_raw != ntp_timestamp_nal) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror: prepended sps_pps timestamp does not match that of video payload");
                     }
                 }
@@ -428,7 +428,11 @@ raop_rtp_mirror_thread(void *arg)
             case 0x01:
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
-                raop_rtp_mirror->ntp_timestamp_raw_sps_pps = byteutils_get_long(packet, 8);
+                ntp_timestamp_nal = byteutils_get_long(packet, 8);
+                /* use the initial raw video timestamp for setting audio timing offset */ 
+               if (raop_rtp_mirror->ntp_timestamp_raw == 0) {
+                     raop_rtp_mirror->ntp_timestamp_raw = ntp_timestamp_nal;
+                }
                 float width = byteutils_get_float(packet, 16);
                 float height = byteutils_get_float(packet, 20);
                 float width_source = byteutils_get_float(packet, 40);
