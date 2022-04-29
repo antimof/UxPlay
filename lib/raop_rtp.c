@@ -445,11 +445,8 @@ raop_rtp_thread_udp(void *arg)
                 /* Handle resent data packet */
                 const int offset = 4;
                 uint32_t rtp_timestamp = byteutils_get_int_be(packet + offset, 4);
-                uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, rtp_timestamp);
-                uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
-                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: ntp = %llu, now = %llu, latency=%lld, rtp=%u",
-                           ntp_timestamp, ntp_now, ((int64_t) ntp_now) - ((int64_t) ntp_timestamp), rtp_timestamp);
-                int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, ntp_timestamp, 1);
+                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: rtp=%u", rtp_timestamp);
+                int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, rtp_timestamp, 1);
                 assert(result >= 0);
             } else if (type_c == 0x54 && packetlen >= 20) {
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
@@ -508,27 +505,29 @@ raop_rtp_thread_udp(void *arg)
             // Len = 16 appears if there is no time
             if (packetlen >= 12) {
                 int no_resend = (raop_rtp->control_rport == 0);// false
-
                 uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
-                uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, rtp_timestamp);
-                uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
-                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: ntp = %llu, now = %llu, latency=%lld, rtp=%u",
-                           ntp_timestamp, ntp_now, ((int64_t) ntp_now) - ((int64_t) ntp_timestamp), rtp_timestamp);
-
-                int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, ntp_timestamp, 1);
-                assert(result >= 0);
-
+                if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
+                    unsigned short seqnum = byteutils_get_short_be(packet,2);
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp timing packet, seqnum=%u rtp=%u", seqnum, rtp_timestamp);
+                } else {
+                     int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_timestamp, 1);
+                    assert(result >= 0);
+                }
                 // Render continuous buffer entries
                 void *payload = NULL;
                 unsigned int payload_size;
-                uint64_t timestamp;
+                uint32_t timestamp;
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &timestamp, no_resend))) {
+                    uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, timestamp);
                     aac_decode_struct aac_data;
                     aac_data.data_len = payload_size;
                     aac_data.data = payload;
-                    aac_data.pts = timestamp;
+                    aac_data.pts = ntp_timestamp;
                     raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &aac_data);
                     free(payload);
+                    uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: ntp = %llu, now = %llu, latency=%lld, rtp=%u",
+                               ntp_timestamp, ntp_now, ((int64_t) ntp_now) - ((int64_t) ntp_timestamp), rtp_timestamp);
                 }
 
                 /* Handle possible resend requests */

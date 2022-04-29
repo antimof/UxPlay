@@ -206,7 +206,7 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 }
 
 int
-raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint64_t timestamp, int use_seqnum) {
+raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint32_t timestamp, int use_seqnum) {
     assert(raop_buffer);
 
     /* Check packet data length is valid */
@@ -266,7 +266,7 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
 }
 
 void *
-raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint64_t *timestamp, int no_resend) {
+raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint32_t *timestamp, int no_resend) {
     assert(raop_buffer);
 
     /* Calculate number of entries in the current buffer */
