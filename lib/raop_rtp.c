@@ -35,6 +35,8 @@
 #define RAOP_RTP_SAMPLE_RATE (44100.0 / 1000000.0)
 #define RAOP_RTP_SYNC_DATA_COUNT 8
 
+#define DELAY 500000 //this is empirical, there is about a 0.5 sec delay in initial audio timing before  a clock sync event
+
 typedef struct raop_rtp_sync_data_s {
     uint64_t ntp_time; // The local wall clock time at the time of rtp_time
     uint32_t rtp_time; // The remote rtp clock time corresponding to ntp_time
@@ -402,7 +404,7 @@ raop_rtp_thread_udp(void *arg)
     uint64_t ntp_start_time = 0;
     bool first_packet = true;
     assert(raop_rtp);
-
+    int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set; resend code is present in initial Shairplay code, but appears to have been never used */
     while(1) {
         fd_set rfds;
         struct timeval tv;
@@ -507,19 +509,18 @@ raop_rtp_thread_udp(void *arg)
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
 
             // Len = 16 appears if there is no time
-            if (packetlen >= 16) {
-                int no_resend = (raop_rtp->control_rport == 0);// false
+            if ( packetlen >= 12) {
                 uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4) - rtp_start_time;
-                if (first_packet) {
-                    rtp_start_time = rtp_timestamp;
-                    rtp_timestamp = 0;
-                    ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
-                    first_packet = false;
-                }
                 if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
-                    unsigned short seqnum = byteutils_get_short_be(packet,2);
-                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp timing packet, seqnum=%u rtp=%u", seqnum, rtp_timestamp);
+                    /* skip packet */
                 } else {
+                    if (first_packet) {
+                        ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp) + DELAY;   /* DELAY = 500000 (0.5 sec) is empirical choice */
+                        logger_log(raop_rtp->logger, LOGGER_DEBUG, "first audio packet, using DELAY= %d", DELAY);
+                        rtp_start_time = rtp_timestamp;
+                        rtp_timestamp = 0;
+                        first_packet = false;
+                    }
                     int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_timestamp, 1);
                     assert(result >= 0);
                 }
@@ -528,6 +529,7 @@ raop_rtp_thread_udp(void *arg)
                 unsigned int payload_size;
                 uint32_t timestamp;
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &timestamp, no_resend))) {
+                    /* rpt_timestamp wraps around to zero after about 27 hours */
                     if (timestamp < rtp_prev) {
                         const uint64_t shift = 0x100000000UL;
                         ntp_start_time += (uint64_t) (((double) (shift))/raop_rtp->rtp_sync_scale); 
