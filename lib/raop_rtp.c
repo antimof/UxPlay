@@ -375,7 +375,7 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint32_t rtp_time, uint64_t ntp_t
     int64_t total_offsets = 0;
     for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; ++i) {
         if (raop_rtp->sync_data[i].ntp_time == 0) continue;
-        total_offsets += (int64_t) (((double) raop_rtp->sync_data[i].rtp_time) / raop_rtp->rtp_sync_scale) - raop_rtp->sync_data[i].ntp_time;
+        total_offsets += (int64_t) (((double) (raop_rtp->sync_data[i].rtp_time - 11025)) / raop_rtp->rtp_sync_scale) - raop_rtp->sync_data[i].ntp_time;
         valid_data_count++;
     }
     int64_t avg_offset = total_offsets / valid_data_count;
@@ -397,6 +397,9 @@ raop_rtp_thread_udp(void *arg)
     unsigned int packetlen;
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
+    uint32_t rtp_start_time = 0;
+    uint64_t ntp_start_time = 0;
+    bool first_packet = true;
     assert(raop_rtp);
 
     while(1) {
@@ -450,19 +453,19 @@ raop_rtp_thread_udp(void *arg)
                 assert(result >= 0);
             } else if (type_c == 0x54 && packetlen >= 20) {
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
-                uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
+                uint32_t sync_rtp = byteutils_get_int_be(packet, 4) - rtp_start_time;
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
-                // uint32_t next_rtp = byteutils_get_int_be(packet, 16);
+                // uint32_t next_rtp = byteutils_get_int_be(packet, 16) - rtp_start_time;
                 // next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC-ELD
                 // next_rtp = sync_rtp + 77175 = 441 * 175 (1.75 sec) for ALAC
                 /* subtract 44100/4  from sync_rtp */
                 char *str = utils_data_to_string(packet, packetlen, 16);
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_sync_clock\n%s", str);
                 free(str);
-                sync_rtp -= 11025;
+                //sync_rtp -= 11025;  this shift is moved to raop_rtp_sync_clock
                 uint64_t sync_ntp_remote = raop_ntp_timestamp_to_micro_seconds(sync_ntp_raw, true);
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
-                raop_rtp_sync_clock(raop_rtp, sync_rtp, sync_ntp_local);
+                raop_rtp_sync_clock(raop_rtp, sync_rtp, sync_ntp_local - ntp_start_time);
 
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp sync: ntp=%llu, local ntp: %llu, rtp=%u",
                            sync_ntp_remote, sync_ntp_local, sync_rtp);
@@ -503,10 +506,16 @@ raop_rtp_thread_udp(void *arg)
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
 
             // Len = 16 appears if there is no time
-            if (packetlen >= 12) {
+            if (packetlen >= 16) {
                 int no_resend = (raop_rtp->control_rport == 0);// false
-                uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
-                if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
+                uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4) - rtp_start_time;
+                if (first_packet) {
+                    rtp_start_time = rtp_timestamp;
+                    rtp_timestamp = 0;
+                    ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
+                    first_packet = false;
+                }
+		if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
                     unsigned short seqnum = byteutils_get_short_be(packet,2);
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp timing packet, seqnum=%u rtp=%u", seqnum, rtp_timestamp);
                 } else {
@@ -518,7 +527,7 @@ raop_rtp_thread_udp(void *arg)
                 unsigned int payload_size;
                 uint32_t timestamp;
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &timestamp, no_resend))) {
-                    uint64_t ntp_timestamp = raop_rtp_convert_rtp_time(raop_rtp, timestamp);
+                    uint64_t ntp_timestamp =  ntp_start_time + raop_rtp_convert_rtp_time(raop_rtp, timestamp);
                     aac_decode_struct aac_data;
                     aac_data.data_len = payload_size;
                     aac_data.data = payload;
