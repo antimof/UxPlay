@@ -398,6 +398,7 @@ raop_rtp_thread_udp(void *arg)
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
     uint32_t rtp_start_time = 0;
+    uint32_t rtp_prev = 0;
     uint64_t ntp_start_time = 0;
     bool first_packet = true;
     assert(raop_rtp);
@@ -515,11 +516,11 @@ raop_rtp_thread_udp(void *arg)
                     ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
                     first_packet = false;
                 }
-		if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
+                if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
                     unsigned short seqnum = byteutils_get_short_be(packet,2);
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp timing packet, seqnum=%u rtp=%u", seqnum, rtp_timestamp);
                 } else {
-                     int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_timestamp, 1);
+                    int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_timestamp, 1);
                     assert(result >= 0);
                 }
                 // Render continuous buffer entries
@@ -527,6 +528,11 @@ raop_rtp_thread_udp(void *arg)
                 unsigned int payload_size;
                 uint32_t timestamp;
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &timestamp, no_resend))) {
+                    if (timestamp < rtp_prev) {
+                        const uint64_t shift = 0x100000000UL;
+                        ntp_start_time += (uint64_t) (((double) (shift))/raop_rtp->rtp_sync_scale); 
+                    }
+                    rtp_prev = timestamp;
                     uint64_t ntp_timestamp =  ntp_start_time + raop_rtp_convert_rtp_time(raop_rtp, timestamp);
                     aac_decode_struct aac_data;
                     aac_data.data_len = payload_size;
