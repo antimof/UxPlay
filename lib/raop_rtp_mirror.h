@@ -28,6 +28,4 @@ void raop_rtp_init_mirror_aes(raop_rtp_mirror_t *raop_rtp_mirror, uint64_t *stre
 void raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport,  uint8_t show_client_FPS_data);
 void raop_rtp_mirror_stop(raop_rtp_mirror_t *raop_rtp_mirror);
 void raop_rtp_mirror_destroy(raop_rtp_mirror_t *raop_rtp_mirror);
-uint64_t raop_rtp_mirror_timestamp_raw(raop_rtp_mirror_t *raop_rtp_mirror);
-
 #endif //RAOP_RTP_MIRROR_H
