@@ -470,23 +470,23 @@ raop_handler_setup(raop_conn_t *conn,
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
                     unsigned short remote_cport = 0;
+                    unsigned char ct;
                     uint64_t uint_val = 0;
                     plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
                     plist_get_uint_val(req_stream_control_port_node, &uint_val);
-                    //remote_cport = (unsigned short) uint_val;   /* must != 0 to activate audio resend requests, leave off till tested */
+                    remote_cport = (unsigned short) uint_val;   /* must != 0 to activate audio resend requests */
+
+                    plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
+                    plist_get_uint_val(req_stream_ct_node, &uint_val);
+                    ct = (unsigned char) uint_val;
 
                     if (conn->raop->callbacks.audio_get_format) {
-		        /* get audio compression type */
+		        /* get additional audio format parameters  */
                         uint64_t audioFormat;
-                        unsigned char ct;
                         unsigned short spf;
                         bool isMedia; 
                         bool usingScreen;
                         uint8_t bool_val = 0;
-
-                        plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
-                        plist_get_uint_val(req_stream_ct_node, &uint_val);
-                        ct = (unsigned char) uint_val;
 
                         plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
                         plist_get_uint_val(req_stream_spf_node, &uint_val);
@@ -515,7 +515,7 @@ raop_handler_setup(raop_conn_t *conn,
                     }
 
                     if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport);
+                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport, ct);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");

@@ -105,6 +105,9 @@ struct raop_rtp_s {
     struct sockaddr_storage control_saddr;
     socklen_t control_saddr_len;
     unsigned short control_seqnum;
+
+    /* audio compression type: ct = 2 (ALAC), ct = 8 (AAC_ELD) (ct = 4 would be AAC-MAIN) */
+    unsigned char ct;
 };
 
 static int
@@ -404,7 +407,6 @@ raop_rtp_thread_udp(void *arg)
     uint64_t ntp_start_time = 0;
     bool first_packet = true;
     assert(raop_rtp);
-    int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set; resend code is present in initial Shairplay code, but appears to have been never used */
     while(1) {
         fd_set rfds;
         struct timeval tv;
@@ -510,6 +512,7 @@ raop_rtp_thread_udp(void *arg)
 
             // Len = 16 appears if there is no time
             if ( packetlen >= 12) {
+                int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set */
                 uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4) - rtp_start_time;
                 if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
                     /* skip packet */
@@ -569,7 +572,7 @@ raop_rtp_thread_udp(void *arg)
 // Start rtp service, three udp ports
 void
 raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_rport,
-                     unsigned short *control_lport, unsigned short *data_lport)
+                     unsigned short *control_lport, unsigned short *data_lport, unsigned char ct)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
     int use_ipv6 = 0;
@@ -583,6 +586,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
         MUTEX_UNLOCK(raop_rtp->run_mutex);
         return;
     }
+
+    raop_rtp->ct = ct;
 
     /* Initialize ports and sockets */
     raop_rtp->control_lport = *control_lport;
