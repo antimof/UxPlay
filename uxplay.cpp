@@ -806,7 +806,7 @@ extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) 
     }
 }
 
-extern "C" void audio_process (void *cls, raop_ntp_t *ntp, aac_decode_struct *data) {
+extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *data) {
     if (dump_audio) {
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
     }

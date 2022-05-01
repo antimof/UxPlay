@@ -129,7 +129,8 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
     return 0;
 }
 
-raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport) {
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr,
+                          int remote_addr_len, unsigned short timing_rport) {
     raop_ntp_t *raop_ntp;
 
     assert(logger);
@@ -295,7 +296,8 @@ raop_ntp_thread(void *arg)
 
                 timeout_counter = 0;
                 char *str = utils_data_to_string(response, response_len, 16);                   
-                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t=%d packetlen = %d\n%s", response[1] &~0x80, response_len, str);
+                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t=%d packetlen = %d\n%s",
+                           response[1] &~0x80, response_len, str);
                 free(str);
 
                 // Local time of the server when the NTP request packet leaves the server
