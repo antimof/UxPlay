@@ -266,7 +266,7 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
 }
 
 void *
-raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint32_t *timestamp, int no_resend) {
+raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint32_t *timestamp, unsigned short *seqnum, int no_resend) {
     assert(raop_buffer);
 
     /* Calculate number of entries in the current buffer */
@@ -299,6 +299,7 @@ raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint32_t *
 
     /* Return entry payload buffer */
     *timestamp = entry->timestamp;
+    *seqnum = entry->seqnum;
     *length = entry->payload_size;
     entry->payload_size = 0;
     void* data = entry->payload_data;
@@ -312,7 +313,7 @@ void raop_buffer_handle_resends(raop_buffer_t *raop_buffer, raop_resend_cb_t res
 
     if (seqnum_cmp(raop_buffer->first_seqnum, raop_buffer->last_seqnum) < 0) {
         int seqnum, count;
-
+        logger_log(raop_buffer->logger, LOGGER_DEBUG, "raop_buffer_handle_resends first_seqnum=%u last seqnum=%u", raop_buffer->first_seqnum, raop_buffer->last_seqnum);
         for (seqnum = raop_buffer->first_seqnum; seqnum_cmp(seqnum, raop_buffer->last_seqnum) < 0; seqnum++) {
             raop_buffer_entry_t *entry = &raop_buffer->entries[seqnum % RAOP_BUFFER_LENGTH];
             if (entry->filled) {

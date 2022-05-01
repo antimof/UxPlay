@@ -271,7 +271,7 @@ raop_ntp_thread(void *arg)
         byteutils_put_ntp_timestamp(request, 24, send_time);
         int send_len = sendto(raop_ntp->tsock, (char *)request, sizeof(request), 0,
                               (struct sockaddr *) &raop_ntp->remote_saddr, raop_ntp->remote_saddr_len);
-        logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp send_len = %d, now = %llu", send_len, send_time);
+        logger_log(raop_ntp->logger, LOGGER_DEBUG, "\nraop_ntp send_len = %d, now = %llu", send_len, send_time);
         if (send_len < 0) {
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
@@ -295,7 +295,7 @@ raop_ntp_thread(void *arg)
 
                 timeout_counter = 0;
                 char *str = utils_data_to_string(response, response_len, 16);                   
-                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d\n%s", response_len, str);
+                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t=%d packetlen = %d\n%s", response[1] &~0x80, response_len, str);
                 free(str);
 
                 // Local time of the server when the NTP request packet leaves the server

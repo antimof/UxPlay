@@ -32,6 +32,7 @@
 #include "utils.h"
 #include "plist/plist.h"
 
+#define SEC 1000000
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
 #define SOL_TCP IPPROTO_TCP
@@ -342,8 +343,9 @@ raop_rtp_mirror_thread(void *arg)
                 uint64_t ntp_timestamp = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
 
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror video ntp = %llu, now = %llu, latency = %lld",
-                           ntp_timestamp, ntp_now, ((int64_t) ntp_now) - ((int64_t) ntp_timestamp));
+                int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror video ntp = %8.6f, now = %8.6f, latency = %8.6f",
+                           ((double) ntp_timestamp) / SEC, ((double) ntp_now) / SEC, ((double) latency) / SEC);
 
 #ifdef DUMP_H264
                 fwrite(payload, payload_size, 1, file_source);
