@@ -492,7 +492,7 @@ raop_rtp_thread_udp(void *arg)
 
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
-		if (have_synced == false) {
+                if (have_synced == false) {
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "first audio rtp sync");
                     have_synced = true;
                 }
@@ -556,7 +556,7 @@ raop_rtp_thread_udp(void *arg)
                     if (no_data) {
                         no_data = false;
                         if (have_synced == false) {
-			    /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timesamp */
+                            /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timesamp */
                             int64_t ntp_now = (int64_t) raop_ntp_get_local_time(raop_rtp->ntp);
                             int64_t ntp_time = ((int64_t) ntp_now) - ntp_start_time;
                             int64_t latency = 0;
@@ -570,9 +570,9 @@ raop_rtp_thread_udp(void *arg)
                             default:
                                 break;
                             }
-			    ntp_time -= latency;
+                            ntp_time -= latency;
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "First audio packet received, have_synced = false, using assumed latency %8.6f",
-				       ((double)latency) / SEC);                    
+                                      ((double)latency) / SEC);                    
                             raop_rtp->rtp_sync_offset = (int64_t) ((double) rtp_timestamp) / raop_rtp->rtp_sync_scale; 
                             raop_rtp->rtp_sync_offset -= ntp_time;
                             int64_t ntp_timestamp =  ntp_start_time - raop_rtp->rtp_sync_offset;
@@ -580,7 +580,7 @@ raop_rtp_thread_udp(void *arg)
                             latency =  ntp_now - ntp_timestamp;
                             unsigned short seqnum = byteutils_get_short_be(packet, 2);
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "initial  audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u (not from sync)",
-				       ((double) ntp_now ) / SEC, ((double) ntp_timestamp) / SEC, ((double) latency) / SEC, rtp_timestamp, seqnum);
+                                      ((double) ntp_now ) / SEC, ((double) ntp_timestamp) / SEC, ((double) latency) / SEC, rtp_timestamp, seqnum);
                         }  else {
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "First audio packet received, have_synced = true");
                         }
