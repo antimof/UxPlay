@@ -26,17 +26,17 @@
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
 /* ct = 1; linear PCM (uncompressed): 44100/16/2, S16LE */
-static const char lpcm[]="audio/x-raw,rate=(int)44100,channels=(int)2,format=S16LE,layout=interleaved";
+static const char lpcm_caps[]="audio/x-raw,rate=(int)44100,channels=(int)2,format=S16LE,layout=interleaved";
 
 /* ct = 2; codec_data is ALAC magic cookie:  44100/16/2 spf = 352 */    
-static const char alac[] = "audio/x-alac,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)"
+static const char alac_caps[] = "audio/x-alac,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)"
                            "00000024""616c6163""00000000""00000160""0010280a""0e0200ff""00000000""00000000""0000ac44";
 
 /* ct = 4; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1:  AAC-LC 44100/2 spf = 1024 */
-static const char aac_lc[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)1210";
+static const char aac_lc_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)1210";
 
 /* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 480 */
-static const char aac_eld[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
+static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
 
 typedef struct audio_renderer_s {
     GstElement *appsrc; 
@@ -69,7 +69,7 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-#define NFORMATS 4
+#define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
 static audio_renderer_t *renderer_type[NFORMATS];
 static audio_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
@@ -85,7 +85,8 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
         assert(renderer_type[i]);
-        GString *launch = g_string_new("appsrc name=audio_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! queue ! ");
+        GString *launch = g_string_new("appsrc name=audio_source ! ");
+        g_string_append(launch, "queue ! ");
         switch (i) {
         case 0:    /* AAC-ELD */
         case 2:    /* AAC-LC */
@@ -95,44 +96,48 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
             g_string_append(launch, "avdec_alac ! ");
             break;
         case 3:   /*PCM*/
-	    break;
+            break;
+        default:
+            break;
         }
         g_string_append (launch, "audioconvert ! volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
         g_string_append (launch, " sync=false");
-        renderer_type[i]->pipeline  = gst_parse_launch(launch->str,  &error);
-	if (error) {
-	  g_error ("get_parse_launch error:\n %s\n",error->message);
-	  g_clear_error (&error);
-	}
+        renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
+        if (error) {
+          g_error ("get_parse_launch error:\n %s\n",error->message);
+          g_clear_error (&error);
+        }
         g_assert (renderer_type[i]->pipeline);
         g_string_free(launch, TRUE);
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
-	switch (i) {
-	case 0:			 
-	    caps =  gst_caps_from_string(aac_eld);
+        switch (i) {
+        case 0:
+            caps =  gst_caps_from_string(aac_eld_caps);
             renderer_type[i]->ct = 8;
-	    format[i] = "AAC-ELD 44100/2";
+            format[i] = "AAC-ELD 44100/2";
             break;
-	case 1:			 
-	    caps =  gst_caps_from_string(alac);
+        case 1:
+            caps =  gst_caps_from_string(alac_caps);
             renderer_type[i]->ct = 2;
             format[i] = "ALAC 44100/16/2";
             break;
-	case 2:			 
-	    caps =  gst_caps_from_string(aac_lc);
+        case 2:
+            caps =  gst_caps_from_string(aac_lc_caps);
             renderer_type[i]->ct = 4;
             format[i] = "AAC-LC 44100/2";
             break;
-	case 3:			 
-	    caps =  gst_caps_from_string(lpcm);
+        case 3:
+            caps =  gst_caps_from_string(lpcm_caps);
             renderer_type[i]->ct = 1;
             format[i] = "PCM 44100/16/2 S16LE";
             break;
-	}
-	logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
-	g_object_set(renderer_type[i]->appsrc, "caps", caps, NULL);
+        default:
+            break;
+        }
+        logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
+        g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
         gst_caps_unref(caps);
     }
 }
@@ -186,7 +191,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     
     buffer = gst_buffer_new_and_alloc(data_len);
     assert(buffer != NULL);
-    GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
+    GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
     gst_buffer_fill(buffer, 0, data, data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/

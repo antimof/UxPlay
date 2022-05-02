@@ -129,7 +129,8 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
     return 0;
 }
 
-raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr, int remote_addr_len, unsigned short timing_rport) {
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr,
+                          int remote_addr_len, unsigned short timing_rport) {
     raop_ntp_t *raop_ntp;
 
     assert(logger);
@@ -271,7 +272,7 @@ raop_ntp_thread(void *arg)
         byteutils_put_ntp_timestamp(request, 24, send_time);
         int send_len = sendto(raop_ntp->tsock, (char *)request, sizeof(request), 0,
                               (struct sockaddr *) &raop_ntp->remote_saddr, raop_ntp->remote_saddr_len);
-        logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp send_len = %d, now = %llu", send_len, send_time);
+        logger_log(raop_ntp->logger, LOGGER_DEBUG, "\nraop_ntp send_len = %d, now = %llu", send_len, send_time);
         if (send_len < 0) {
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
@@ -290,18 +291,25 @@ raop_ntp_thread(void *arg)
                     break;
                 }
 	    } else {
-	        timeout_counter = 0;
-                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t packetlen = %d", response_len);
-
+                //local time of the server when the NTP response packet returns
                 int64_t t3 = (int64_t) raop_ntp_get_local_time(raop_ntp);
-                // Local time of the client when the NTP request packet leaves the client
+
+                timeout_counter = 0;
+                char *str = utils_data_to_string(response, response_len, 16);                   
+                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t=%d packetlen = %d\n%s",
+                           response[1] &~0x80, response_len, str);
+                free(str);
+
+                // Local time of the server when the NTP request packet leaves the server
                 int64_t t0 = (int64_t) byteutils_get_ntp_timestamp(response, 8);
-                // Local time of the server when the NTP request packet arrives at the server
+
+                // Local time of the client when the NTP request packet arrives at the client
                 int64_t t1 = (int64_t) byteutils_get_ntp_timestamp(response, 16);
-                // Local time of the server when the response message leaves the server
+
+                // Local time of the client when the response message leaves the client
                 int64_t t2 = (int64_t) byteutils_get_ntp_timestamp(response, 24);
 
-                // The iOS device sends its time in micro seconds relative to an arbitrary Epoch (the last boot).
+                // The iOS client device sends its time in micro seconds relative to an arbitrary Epoch (the last boot).
                 // For a little bonus confusion, they add SECONDS_FROM_1900_TO_1970 * 1000000 us.
                 // This means we have to expect some rather huge offset, but its growth or shrink over time should be small.
 

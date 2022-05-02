@@ -96,7 +96,17 @@ static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
-static const char h264_caps[]="video/x-h264,stream-format=(string)byte-stream,alignment=(string)au";
+
+/* apple uses colorimetry=1:3:5:1 (not recognized by gstreamer)  *
+ * See .../gst-libs/gst/video/video-color.h in gst-plugins-base  *
+ * range = 1   -> GST_VIDEO_COLOR_RANGE_0_255      ("full RGB")  * 
+ * matrix = 3  -> GST_VIDEO_COLOR_MATRIX_BT709                   *
+ * transfer = 5 -> GST_VIDEO_TRANSFER_BT709                      *
+ * primaries = 1 -> GST_VIDEO_COLOR_PRIMARIES_BT709              *
+ * closest is BT709, 2:3:5:1 with                                *
+ * range = 2 -> GST_VIDEO_COLOR_RANGE_16_235 ("limited RGB")     */  
+
+static const char h264_caps[]="video/x-h264,colorimetry=bt709,stream-format=(string)byte-stream,alignment=(string)au";
 
 void video_renderer_size(float *f_width_source, float *f_height_source, float *f_width, float *f_height) {
     width_source = (unsigned short) *f_width_source;
@@ -123,7 +133,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     assert(renderer);
 
     gst_init(NULL,NULL);
-    GString *launch = g_string_new("appsrc name=video_source stream-type=0 format=GST_FORMAT_TIME is-live=true ! ");
+    GString *launch = g_string_new("appsrc name=video_source ! ");
     g_string_append(launch, "queue ! ");
     g_string_append(launch, parser);
     g_string_append(launch, " ! ");
@@ -142,7 +152,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     assert(renderer->appsrc);
     caps = gst_caps_from_string(h264_caps);
-    g_object_set(renderer->appsrc, "caps", caps, NULL);
+    g_object_set(renderer->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
     gst_caps_unref(caps);
 
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
@@ -182,11 +192,13 @@ void video_renderer_start() {
     first_packet = true;
 }
 
-void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int type) {
+void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
     GstBuffer *buffer;
     assert(data_len != 0);
-    /* first four bytes of valid video data are 0x0, 0x0, 0x0, 0x1 */
-    /* first byte of invalid data (decryption failed) is 0x1 */
+    /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
+     * nal_count is the number of NAL units in the data: short SPS, PPS, SEI NALs *
+     * may  precede a VCL NAL. Each NAL starts with 0x00 0x00 0x00 0x01 and is    *
+     * byte-aligned: the first byte of invalid data (decryption failed) is 0x01   */
     if (data[0]) {
         logger_log(logger, LOGGER_ERR, "*** ERROR decryption of video packet failed ");
     } else {
@@ -196,7 +208,7 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         }
         buffer = gst_buffer_new_and_alloc(data_len);
         assert(buffer != NULL);
-        GST_BUFFER_DTS(buffer) = (GstClockTime)pts;
+        GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
         gst_buffer_fill(buffer, 0, data, data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
