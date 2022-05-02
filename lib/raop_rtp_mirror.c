@@ -344,8 +344,8 @@ raop_rtp_mirror_thread(void *arg)
 
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
                 int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror video ntp = %8.6f, now = %8.6f, latency = %8.6f",
-                           ((double) ntp_timestamp) / SEC, ((double) ntp_now) / SEC, ((double) latency) / SEC);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f",
+                           ((double) ntp_now) / SEC, ((double) ntp_timestamp) / SEC, ((double) latency) / SEC);
 
 #ifdef DUMP_H264
                 fwrite(payload, payload_size, 1, file_source);
@@ -392,9 +392,11 @@ raop_rtp_mirror_thread(void *arg)
                     if (payload_decrypted[nalu_size] & 0x80) valid_data = false;  /* first bit of h264 nalu MUST be 0 ("forbidden_zero_bit") */
                     nalu_type = payload_decrypted[nalu_size] & 0x1f;
                     nalu_size += nc_len;
-                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_type = %d, nalu_size = %d,  processed bytes %d, payloadsize = %d nalus_count = %d",
-                               nalu_type, nc_len, nalu_size, payload_size, nalus_count);
-                }
+                    if (nalu_type != 1) {
+                         logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu_type = %d, nalu_size = %d,  processed bytes %d, payloadsize = %d nalus_count = %d",
+                                    nalu_type, nc_len, nalu_size, payload_size, nalus_count);
+                    }
+                 }
                 if (nalu_size != payload_size) valid_data = false;
                 if(!valid_data) {
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "nalu marked as invalid");
