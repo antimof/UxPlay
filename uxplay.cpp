@@ -811,7 +811,7 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
     }
     if (use_audio) {
-        audio_renderer_render_buffer(ntp, data->data, data->data_len, data->ntp_time);
+        audio_renderer_render_buffer(ntp, data->data, data->data_len, data->ntp_time, data->rtp_time, data->have_synced);
     }
 }
 

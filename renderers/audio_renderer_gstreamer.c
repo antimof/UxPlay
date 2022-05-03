@@ -177,7 +177,8 @@ void  audio_renderer_start(unsigned char *ct) {
     
 }
 
-void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts) {
+void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time,
+                                  uint64_t rtp_time, bool rtp_and_ntp_have_synced) {
     GstBuffer *buffer;
     bool valid;
     if (data_len == 0 || renderer == NULL) return;
@@ -191,7 +192,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     
     buffer = gst_buffer_new_and_alloc(data_len);
     assert(buffer != NULL);
-    GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
+    GST_BUFFER_PTS(buffer) = (GstClockTime) ntp_time;
     gst_buffer_fill(buffer, 0, data, data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/
