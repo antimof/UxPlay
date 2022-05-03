@@ -368,9 +368,9 @@ raop_handler_setup(raop_conn_t *conn,
         uint64_t ekey_len = 0;
         plist_get_data_val(req_ekey_node, &ekey, &ekey_len);
         memcpy(eaeskey,ekey,72);
-	free(ekey);
+        free(ekey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey_len = %llu", ekey_len);
-	// eaeskey is 72 bytes, aeskey is 16 bytes
+        // eaeskey is 72 bytes, aeskey is 16 bytes
         str = utils_data_to_string((unsigned char *) eaeskey, ekey_len, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
         free (str);
@@ -397,7 +397,7 @@ raop_handler_setup(raop_conn_t *conn,
         if  (old_protocol) {    /* some windows AirPlay-client emulators use old AirPlay 1 protocol with unhashed AES key */
             logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
         } else {
-	    memcpy(eaeskey, aeskey, 16);
+            memcpy(eaeskey, aeskey, 16);
             sha_ctx_t *ctx = sha_init();
             sha_update(ctx, eaeskey, 16);
             sha_update(ctx, ecdh_secret, 32);
