@@ -585,7 +585,7 @@ int main (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-	} else if (arg == "-v4l2" || arg == "rpi") {
+	} else if (arg == "-v4l2" || arg == "-rpi") {
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
