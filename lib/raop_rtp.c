@@ -615,7 +615,7 @@ raop_rtp_thread_udp(void *arg)
                     audio_data.data = payload;
                     audio_data.ntp_time = (uint64_t) ntp_timestamp;
                     audio_data.rtp_time = (uint64_t) rtp_time;
-		    audio_data.have_synced = have_synced;
+                    audio_data.have_synced = have_synced;
                     raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
                     free(payload);
                     uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
