@@ -1,4 +1,4 @@
-UxPlay 1.51: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.52: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 ### Now developed at GitHub site <https://github.com/FDH2/UxPlay> (where user issues should be posted).
@@ -776,6 +776,10 @@ the "legacy" protocol needed by UxPlay.
 
 ChangeLog
 =========
+
+1.52 2022-05-02 Cleaned up initial audio sync code, and reformatted
+streaming debug output (readable aligned timestamps with decimal points
+in seconds).
 
 1.51 2022-04-24 Reworked options forVideo4Linux2 support (new option
 -v4l2) and short options -rpi, -rpifb, -rpiwl as synonyms for -v4l2,

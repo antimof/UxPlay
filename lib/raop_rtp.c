@@ -579,8 +579,9 @@ raop_rtp_thread_udp(void *arg)
                             ntp_timestamp += (int64_t) ((double) rtp_timestamp) / raop_rtp->rtp_sync_scale;
                             latency =  ntp_now - ntp_timestamp;
                             unsigned short seqnum = byteutils_get_short_be(packet, 2);
-                            logger_log(raop_rtp->logger, LOGGER_DEBUG, "initial  audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u (not from sync)",
-                                      ((double) ntp_now ) / SEC, ((double) ntp_timestamp) / SEC, ((double) latency) / SEC, rtp_timestamp, seqnum);
+                            logger_log(raop_rtp->logger, LOGGER_DEBUG,
+                                       "initial  audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u (not from sync)",
+                                       ((double) ntp_now ) / SEC, ((double) ntp_timestamp) / SEC, ((double) latency) / SEC, rtp_timestamp, seqnum);
                         }  else {
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "First audio packet received, have_synced = true");
                         }

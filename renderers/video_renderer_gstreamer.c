@@ -264,7 +264,16 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
         gboolean flushing;
         gst_message_parse_error (message, &err, &debug);
         logger_log(logger, LOGGER_INFO, "GStreamer error: %s", err->message);
-        g_error_free (err);
+        if (strstr(err->message,"Internal data stream error")) {
+            logger_log(logger, LOGGER_INFO,
+                     "*** This is a generic GStreamer error that usually means that GStreamer\n"
+                     "*** was unable to construct a working video pipeline.  If you are using\n"
+                     "*** the default autovideosink for automated selection of the videosink,\n "
+                     "*** GStreamer may be trying to use non-functional hardware h264 video decoding.\n"
+                     "*** Try using option -avdec to force software decoding or use -vs <videosink>\n"
+                     "*** to select a videosink of your choice (see \"man uxplay\")");
+        }
+	g_error_free (err);
         g_free (debug);
         gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
 	flushing = TRUE;
