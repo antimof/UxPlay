@@ -349,6 +349,7 @@ raop_handler_setup(raop_conn_t *conn,
 
         unsigned char aesiv[16];
         unsigned char aeskey[16];
+        unsigned char eaeskey[72];
 
         logger_log(conn->raop->logger, LOGGER_DEBUG, "SETUP 1");
 
@@ -357,6 +358,7 @@ raop_handler_setup(raop_conn_t *conn,
         uint64_t eiv_len = 0;
         plist_get_data_val(req_eiv_node, &eiv, &eiv_len);
         memcpy(aesiv, eiv, 16);
+        free(eiv);	
         logger_log(conn->raop->logger, LOGGER_DEBUG, "eiv_len = %llu", eiv_len);
         char* str = utils_data_to_string(aesiv, 16, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
@@ -365,13 +367,15 @@ raop_handler_setup(raop_conn_t *conn,
         char* ekey = NULL;
         uint64_t ekey_len = 0;
         plist_get_data_val(req_ekey_node, &ekey, &ekey_len);
+        memcpy(eaeskey,ekey,72);
+	free(ekey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey_len = %llu", ekey_len);
-        // ekey is 72 bytes, aeskey is 16 bytes
-        str = utils_data_to_string((unsigned char *) ekey, ekey_len, 16);
+	// eaeskey is 72 bytes, aeskey is 16 bytes
+        str = utils_data_to_string((unsigned char *) eaeskey, ekey_len, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
         free (str);
 
-        int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) ekey, aeskey);
+        int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) eaeskey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
         str = utils_data_to_string(aeskey, 16, 16);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
@@ -393,8 +397,7 @@ raop_handler_setup(raop_conn_t *conn,
         if  (old_protocol) {    /* some windows AirPlay-client emulators use old AirPlay 1 protocol with unhashed AES key */
             logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
         } else {
-            unsigned char eaeskey[64] = {};
-            memcpy(eaeskey, aeskey, 16);
+	    memcpy(eaeskey, aeskey, 16);
             sha_ctx_t *ctx = sha_init();
             sha_update(ctx, eaeskey, 16);
             sha_update(ctx, ecdh_secret, 32);
