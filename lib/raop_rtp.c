@@ -511,7 +511,7 @@ raop_rtp_thread_udp(void *arg)
                     break;
                 case 0x02:
                 default:
-                    shift = 0;   /* not needed fopr ALAC (audio only) */
+                    shift = 0;   /* not needed for ALAC (audio only) */
                     break;
                 }
                 raop_rtp_sync_clock(raop_rtp, sync_ntp_local, ntp_start_time, sync_rtp, shift);
