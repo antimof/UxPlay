@@ -105,7 +105,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         g_string_append (launch, " sync=false");
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
         if (error) {
-          g_error ("get_parse_launch error:\n %s\n",error->message);
+          g_error ("get_parse_launch error (audio %d):\n %s\n", i, error->message);
           g_clear_error (&error);
         }
         g_assert (renderer_type[i]->pipeline);

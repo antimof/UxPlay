@@ -146,6 +146,10 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " name=video_sink sync=false");
     logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline will be:\n\"%s\"", launch->str);
     renderer->pipeline = gst_parse_launch(launch->str, &error);
+    if (error) {
+        g_error ("get_parse_launch error (video) :\n %s\n",error->message);
+        g_clear_error (&error);
+    }
     g_assert (renderer->pipeline);
     g_string_free(launch, TRUE);
 
