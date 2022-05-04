@@ -336,6 +336,7 @@ void raop_buffer_flush(raop_buffer_t *raop_buffer, int next_seq) {
     for (int i = 0; i < RAOP_BUFFER_LENGTH; i++) {
         if (raop_buffer->entries[i].payload_data) {
             free(raop_buffer->entries[i].payload_data);
+            raop_buffer->entries[i].payload_data = NULL;   
             raop_buffer->entries[i].payload_size = 0;
         }
         raop_buffer->entries[i].filled = 0;
