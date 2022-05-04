@@ -548,6 +548,8 @@ raop_handler_setup(raop_conn_t *conn,
     }
 
     plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+    plist_free(res_root_node);
+    plist_free(req_root_node);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
 }
 
