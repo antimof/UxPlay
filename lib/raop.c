@@ -279,6 +279,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 }
 	    }
         }
+        plist_free(req_root_node);
         if (conn->raop->callbacks.conn_teardown) {
              conn->raop->callbacks.conn_teardown(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
         }
