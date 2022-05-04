@@ -506,10 +506,12 @@ raop_rtp_thread_udp(void *arg)
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
                 int64_t shift;
                 switch (raop_rtp->ct) {
-                case 0x08:                    /*AAC-ELD */
+                case 0x08:                   /*AAC-ELD */
                     shift = -11025;           /* 44100/4 */
                     break;
+                case 0x02:
                 default:
+                    shift = 0;   /* not needed fopr ALAC (audio only) */
                     break;
                 }
                 raop_rtp_sync_clock(raop_rtp, sync_ntp_local, ntp_start_time, sync_rtp, shift);
