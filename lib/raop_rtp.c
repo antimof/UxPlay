@@ -762,7 +762,13 @@ raop_rtp_remote_control_id(raop_rtp_t *raop_rtp, const char *dacp_id, const char
 
     /* Set dacp stuff in thread instead */
     MUTEX_LOCK(raop_rtp->run_mutex);
+    if (raop_rtp->dacp_id) {
+      free(raop_rtp->dacp_id);
+    }
     raop_rtp->dacp_id = strdup(dacp_id);
+    if (raop_rtp->active_remote_header) {
+      free(raop_rtp->active_remote_header);
+    }
     raop_rtp->active_remote_header = strdup(active_remote_header);
     MUTEX_UNLOCK(raop_rtp->run_mutex);
 }
