@@ -186,6 +186,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                     plist_to_xml(req_root_node, &plist_xml, &plist_len);
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
                     free(plist_xml);
+                    plist_free(req_root_node);
                 } else if (data_is_text) {
                     char *data_str = utils_data_to_text((char *) request_data, request_datalen);
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", data_str);                    
