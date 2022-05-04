@@ -365,9 +365,6 @@ conn_destroy(void *ptr) {
         conn->raop->callbacks.conn_destroy(conn->raop->callbacks.cls);
     }
 
-    if (conn->raop_ntp) {
-        raop_ntp_destroy(conn->raop_ntp);
-    }
     if (conn->raop_rtp) {
         /* This is done in case TEARDOWN was not called */
         raop_rtp_destroy(conn->raop_rtp);
@@ -376,7 +373,10 @@ conn_destroy(void *ptr) {
         /* This is done in case TEARDOWN was not called */
         raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
     }
-    
+    if (conn->raop_ntp) {
+        raop_ntp_destroy(conn->raop_ntp);
+    }
+
     if (conn->raop->callbacks.video_flush) {
         conn->raop->callbacks.video_flush(conn->raop->callbacks.cls);
     }
