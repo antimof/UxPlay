@@ -170,7 +170,7 @@ raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, co
     raop_rtp->dacp_id = NULL;
     raop_rtp->active_remote_header = NULL;
     raop_rtp->metadata = NULL;
-    raop_rpt->coverart = NULL;
+    raop_rtp->coverart = NULL;
 
     memcpy(&raop_rtp->callbacks, callbacks, sizeof(raop_callbacks_t));
     raop_rtp->buffer = raop_buffer_init(logger, aeskey, aesiv);
