@@ -365,7 +365,7 @@ raop_rtp_mirror_thread(void *arg)
                  * prepending it to the current NAL, and the sps_pps_waiting flag will be set to false after
                  * it has been prepended.    It is not clear if the case packet[5] = 0x10 will occur when
                  * raop_rtp_mirror->sps_pps = false, but if it does, the current code will prepend the stored
-                 * PPS + NSPS NAL to the current encrypted NAL, and issue a warning message */
+                 * PPS + SPS NAL to the current encrypted NAL, and issue a warning message */
 
                 bool prepend_sps_pps = (raop_rtp_mirror->sps_pps_waiting || packet[5] != 0x00);
                 if (prepend_sps_pps) {
