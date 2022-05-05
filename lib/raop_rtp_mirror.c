@@ -364,10 +364,6 @@ raop_rtp_mirror_thread(void *arg)
                     memcpy(payload_out, raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len);
                     raop_rtp_mirror->sps_pps_waiting = false;
                 } else {
-                    if (packet[5] != 0x00) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "Warning: regular NAL unit, but packet[5] = 0x%2.2x is not 0x00", packet[5]);
-                    }
-                    assert(packet[5] == 0);
                     payload_out = (unsigned char*)  malloc(payload_size);
                     payload_decrypted = payload_out;
                 }
