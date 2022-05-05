@@ -777,9 +777,9 @@ the "legacy" protocol needed by UxPlay.
 ChangeLog
 =========
 
-1.52 2022-05-02 Cleaned up initial audio sync code, and reformatted
+1.52 2022-05-05 Cleaned up initial audio sync code, and reformatted
 streaming debug output (readable aligned timestamps with decimal points
-in seconds).
+in seconds). Eliminate memory leaks (found by valgrind).
 
 1.51 2022-04-24 Reworked options forVideo4Linux2 support (new option
 -v4l2) and short options -rpi, -rpifb, -rpiwl as synonyms for -v4l2,
