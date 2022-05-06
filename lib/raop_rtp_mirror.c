@@ -356,6 +356,17 @@ raop_rtp_mirror_thread(void *arg)
                 if (!raop_rtp_mirror->sps_pps_waiting && packet[5] != 0x00) {
                     logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "unexpected: packet[5] = %2.2x, but  not preceded  by SPS+PPS packet", packet[5]);
                 }
+                /* if a previous unencrypted packet contains an SPS (type 7) and PPS (type 8) NAL which has not 
+                 * yet been sent, it should be prepended to the current NAL.    In this case packet[5] is usually 
+                 * 0x10; however, the M1 Macs have increased the h264 level, and now the encrypted packet after the
+                 * unencrypted SPS+PPS packet may contain a SEI (type 6) NAL prepended to the next VCL NAL, with
+                 * packet[5] = 0x00.   Now the flag raop_rtp_mirror->sps_pps_waiting = true will signal that a 
+                 * previous packet contained a SPS NAL + a PPS NAL, that has not yet been sent.   This will trigger
+                 * prepending it to the current NAL, and the sps_pps_waiting flag will be set to false after
+                 * it has been prepended.    It is not clear if the case packet[5] = 0x10 will occur when
+                 * raop_rtp_mirror->sps_pps = false, but if it does, the current code will prepend the stored
+                 * PPS + SPS NAL to the current encrypted NAL, and issue a warning message */
+
                 bool prepend_sps_pps = (raop_rtp_mirror->sps_pps_waiting || packet[5] != 0x00);
                 if (prepend_sps_pps) {
                     assert(raop_rtp_mirror->sps_pps);
@@ -364,10 +375,6 @@ raop_rtp_mirror_thread(void *arg)
                     memcpy(payload_out, raop_rtp_mirror->sps_pps, raop_rtp_mirror->sps_pps_len);
                     raop_rtp_mirror->sps_pps_waiting = false;
                 } else {
-                    if (packet[5] != 0x00) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "Warning: regular NAL unit, but packet[5] = 0x%2.2x is not 0x00", packet[5]);
-                    }
-                    assert(packet[5] == 0);
                     payload_out = (unsigned char*)  malloc(payload_size);
                     payload_decrypted = payload_out;
                 }

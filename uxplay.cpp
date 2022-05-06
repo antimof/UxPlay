@@ -44,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.51"
+#define VERSION "1.52"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -585,7 +585,7 @@ int main (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-	} else if (arg == "-v4l2" || arg == "rpi") {
+	} else if (arg == "-v4l2" || arg == "-rpi") {
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -811,7 +811,7 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
     }
     if (use_audio) {
-        audio_renderer_render_buffer(ntp, data->data, data->data_len, data->pts);
+        audio_renderer_render_buffer(ntp, data->data, data->data_len, data->ntp_time, data->rtp_time, data->have_synced);
     }
 }
 

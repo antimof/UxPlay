@@ -1,4 +1,4 @@
-UxPlay 1.51: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+UxPlay 1.52: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 ======================================================================
 
 ### Now developed at GitHub site <https://github.com/FDH2/UxPlay> (where user issues should be posted).
@@ -7,7 +7,7 @@ Highlights:
 
 -   GPLv3, open source.
 -   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-    Lossless ALAC) protocols from current iOS/iPadOS 15.2 client
+    Lossless ALAC) protocols from current iOS/iPadOS 15.4 client
     devices.
 -   macOS computers (2011 or later) can act either as AirPlay clients,
     or as the server running UxPlay (tested on macOS 10.15 Catalina and
@@ -203,13 +203,16 @@ packaging for a distribution, use the cmake option
     `sudo make uninstall` in the same directory in which this was run)
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
-    needed are: "plugins-base", "libav" (for sound), "plugins-good" (for
-    v4l2 hardware h264 decoding) and "plugins-bad" (for h264 decoding).
-    Also needed may be "gl" for OpenGL support, and "x" for X11 support,
-    although these may already be installed; "vaapi" is needed for
-    hardware-accelerated h264 video decoding by Intel graphics (not for
-    NVIDIA). Also install "tools" to get the utility gst-inspect-1.0 for
-    examining the GStreamer installation.
+    needed are: "**plugins-base**", "**libav**" (for sound),
+    "**plugins-good**" (for v4l2 hardware h264 decoding) and
+    "**plugins-bad**" (for h264 decoding). Also needed may be "**gl**"
+    for OpenGL support (which may be useful, and should be used with
+    h264 decoding by the NVIDIA GPU), and "**x**" for X11 support,
+    although these may already be installed; "**vaapi**" is needed for
+    hardware-accelerated h264 video decoding by Intel or AMD graphics
+    (but not for use with NVIDIA using proprietary drivers). Also
+    install "**tools**" to get the utility gst-inspect-1.0 for examining
+    the GStreamer installation.
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
@@ -235,9 +238,7 @@ connect when it is selected, there may be a firewall on the server that
 prevents UxPlay from receiving client connection requests unless some
 network ports are opened. See [Troubleshooting](#troubleshooting) below
 for help with this or other problems. See [Usage](#usage) for run-time
-options. For OpenGL support (option -vs glimagesink), needed for
-Raspberry Pi and NVIDIA GPU-based video decoding, make sure
-gstreamer1.0-gl is installed.
+options.
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
@@ -776,6 +777,10 @@ the "legacy" protocol needed by UxPlay.
 
 ChangeLog
 =========
+
+1.52 2022-05-05 Cleaned up initial audio sync code, and reformatted
+streaming debug output (readable aligned timestamps with decimal points
+in seconds). Eliminate memory leaks (found by valgrind).
 
 1.51 2022-04-24 Reworked options forVideo4Linux2 support (new option
 -v4l2) and short options -rpi, -rpifb, -rpiwl as synonyms for -v4l2,

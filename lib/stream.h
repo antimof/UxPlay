@@ -16,6 +16,7 @@
 #define AIRPLAYSERVER_STREAM_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
     int nal_count;
@@ -27,7 +28,9 @@ typedef struct {
 typedef struct {
     unsigned char *data;
     int data_len;
-    uint64_t pts;
+    uint64_t ntp_time;
+    uint64_t rtp_time;
+    bool have_synced;
 } audio_decode_struct;
 
 #endif //AIRPLAYSERVER_STREAM_H

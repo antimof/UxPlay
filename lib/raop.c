@@ -186,6 +186,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                     plist_to_xml(req_root_node, &plist_xml, &plist_len);
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
                     free(plist_xml);
+                    plist_free(req_root_node);
                 } else if (data_is_text) {
                     char *data_str = utils_data_to_text((char *) request_data, request_datalen);
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", data_str);                    
@@ -278,6 +279,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 }
 	    }
         }
+        plist_free(req_root_node);
         if (conn->raop->callbacks.conn_teardown) {
              conn->raop->callbacks.conn_teardown(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
         }
@@ -334,6 +336,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 char * plist_xml;
                 uint32_t plist_len;
                 plist_to_xml(res_root_node, &plist_xml, &plist_len);
+                plist_free(res_root_node);
                 logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
                 free(plist_xml);
             } else if (data_is_text) {
@@ -362,9 +365,6 @@ conn_destroy(void *ptr) {
         conn->raop->callbacks.conn_destroy(conn->raop->callbacks.cls);
     }
 
-    if (conn->raop_ntp) {
-        raop_ntp_destroy(conn->raop_ntp);
-    }
     if (conn->raop_rtp) {
         /* This is done in case TEARDOWN was not called */
         raop_rtp_destroy(conn->raop_rtp);
@@ -373,7 +373,10 @@ conn_destroy(void *ptr) {
         /* This is done in case TEARDOWN was not called */
         raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
     }
-    
+    if (conn->raop_ntp) {
+        raop_ntp_destroy(conn->raop_ntp);
+    }
+
     if (conn->raop->callbacks.video_flush) {
         conn->raop->callbacks.video_flush(conn->raop->callbacks.cls);
     }

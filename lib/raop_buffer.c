@@ -28,6 +28,7 @@
 #include "stream.h"
 #include "global.h"
 #include "utils.h"
+#include "byteutils.h"
 
 #define RAOP_BUFFER_LENGTH 32
 
@@ -221,7 +222,7 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
     /* Get correct seqnum for the packet */
     unsigned short seqnum;
     if (use_seqnum) {
-        seqnum = (data[2] << 8) | data[3];
+        seqnum = byteutils_get_short_be(data, 2);
     } else {
         seqnum = raop_buffer->first_seqnum;
     }
@@ -335,6 +336,7 @@ void raop_buffer_flush(raop_buffer_t *raop_buffer, int next_seq) {
     for (int i = 0; i < RAOP_BUFFER_LENGTH; i++) {
         if (raop_buffer->entries[i].payload_data) {
             free(raop_buffer->entries[i].payload_data);
+            raop_buffer->entries[i].payload_data = NULL;   
             raop_buffer->entries[i].payload_size = 0;
         }
         raop_buffer->entries[i].filled = 0;

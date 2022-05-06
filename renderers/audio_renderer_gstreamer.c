@@ -104,12 +104,13 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         g_string_append (launch, audiosink);
         g_string_append (launch, " sync=false");
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
-        if (error) {
-          g_error ("get_parse_launch error:\n %s\n",error->message);
+	if (error) {
+          g_error ("gst_parse_launch error (audio %d):\n %s\n", i+1, error->message);
           g_clear_error (&error);
         }
-        g_assert (renderer_type[i]->pipeline);
         g_string_free(launch, TRUE);
+	g_assert (renderer_type[i]->pipeline);
+ 
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
         switch (i) {
@@ -177,7 +178,8 @@ void  audio_renderer_start(unsigned char *ct) {
     
 }
 
-void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts) {
+void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time,
+                                  uint64_t rtp_time, bool rtp_and_ntp_have_synced) {
     GstBuffer *buffer;
     bool valid;
     if (data_len == 0 || renderer == NULL) return;
@@ -191,7 +193,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
     
     buffer = gst_buffer_new_and_alloc(data_len);
     assert(buffer != NULL);
-    GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
+    GST_BUFFER_PTS(buffer) = (GstClockTime) ntp_time;
     gst_buffer_fill(buffer, 0, data, data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/

@@ -26,12 +26,14 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "../lib/raop_ntp.h"
 
 void audio_renderer_init(logger_t *logger, const char* audiosink);
 void audio_renderer_start(unsigned char* compression_type);
 void audio_renderer_stop();
-void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts);
+void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len,
+                                  uint64_t ntp_time, uint64_t rtp_time,  bool have_synced);
 void audio_renderer_set_volume(float volume);
 void audio_renderer_flush();
 void audio_renderer_destroy();
