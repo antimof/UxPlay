@@ -203,13 +203,15 @@ packaging for a distribution, use the cmake option
     `sudo make uninstall` in the same directory in which this was run)
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
-    needed are: "plugins-base", "libav" (for sound), "plugins-good" (for
-    v4l2 hardware h264 decoding) and "plugins-bad" (for h264 decoding).
-    Also needed may be "gl" for OpenGL support, and "x" for X11 support,
-    although these may already be installed; "vaapi" is needed for
+    needed are: "**plugins-base**", "**libav**" (for sound),
+    "**plugins-good**" (for v4l2 hardware h264 decoding) and
+    "**plugins-bad**" (for h264 decoding). Also needed may be "**gl**"
+    for OpenGL support (which may be useful, and should be used with
+    h264 decoding by the NVIDIA GPU), and "**x**" for X11 support,
+    although these may already be installed; "**vaapi**" is needed for
     hardware-accelerated h264 video decoding by Intel graphics (not for
-    NVIDIA). Also install "tools" to get the utility gst-inspect-1.0 for
-    examining the GStreamer installation.
+    NVIDIA). Also install "**tools**" to get the utility gst-inspect-1.0
+    for examining the GStreamer installation.
 
 *If you intend to modify the code, use a separate "build" directory:
 replace* "`cmake  [ ] .`" *by*
@@ -235,9 +237,7 @@ connect when it is selected, there may be a firewall on the server that
 prevents UxPlay from receiving client connection requests unless some
 network ports are opened. See [Troubleshooting](#troubleshooting) below
 for help with this or other problems. See [Usage](#usage) for run-time
-options. For OpenGL support (option -vs glimagesink), needed for
-Raspberry Pi and NVIDIA GPU-based video decoding, make sure
-gstreamer1.0-gl is installed.
+options.
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
