@@ -449,7 +449,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    packets dumped to a file to _n_ or less.    To change the name _audiodump_, use -admp [n] _filename_.
 
 **-d**  Enable debug output.   Note:  this does not show GStreamer error or debug messages.   To see GStreamer error
-    error and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
+    and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
     To see GStreamer debug messages, set GST_DEBUG=4; increase this to see even more of the GStreamer inner workings.
 
 # Troubleshooting

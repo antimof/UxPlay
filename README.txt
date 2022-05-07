@@ -577,8 +577,8 @@ audio), where x = 1,2,3... increases each time the audio format changes.
 less. To change the name *audiodump*, use -admp \[n\] *filename*.
 
 **-d** Enable debug output. Note: this does not show GStreamer error or
-debug messages. To see GStreamer error error and warning messages, set
-the environment variable GST\_DEBUG with "export GST\_DEBUG=2" before
+debug messages. To see GStreamer error and warning messages, set the
+environment variable GST\_DEBUG with "export GST\_DEBUG=2" before
 running uxplay. To see GStreamer debug messages, set GST\_DEBUG=4;
 increase this to see even more of the GStreamer inner workings.
 
