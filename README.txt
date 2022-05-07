@@ -335,7 +335,7 @@ or MacPorts (see later).
 
 Next install OpenSSL and libplist: these can be built from source (see
 above), in which case you may need to install the standard development
-tools auutoconf, automake, libtool, which can be done with MacPorts,
+tools autoconf, automake, libtool, which can be done with MacPorts,
 HomeBrew, or Fink. Only the static forms of the two libraries will used
 for the macOS build, so you can uninstall them ("sudo make uninstall")
 after you have built UxPlay. It may be easier to get them using MacPorts

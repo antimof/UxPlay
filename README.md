@@ -253,7 +253,7 @@ install (they install to /Library/FrameWorks/GStreamer.framework).
 It is recommended you use GStreamer.framework rather than install Gstreamer with Homebrew or MacPorts (see later).
 
 Next install OpenSSL and libplist:  these can be built from source (see above), in which case you may need to install
-the standard development tools auutoconf, automake, libtool, which can be done with MacPorts, HomeBrew, or Fink.
+the standard development tools autoconf, automake, libtool, which can be done with MacPorts, HomeBrew, or Fink.
 Only the static forms of the two libraries will used for the macOS build, so you can uninstall them ("sudo 
 make uninstall") after you have built UxPlay. It may be  easier to get them using
 MacPorts "sudo port install openssl libplist-devel" or Homebrew "brew install openssl libplist" (but not Fink).
