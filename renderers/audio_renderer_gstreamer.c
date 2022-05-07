@@ -51,7 +51,7 @@ static gboolean check_plugins (void)
     int i;
     gboolean ret;
     GstRegistry *registry;
-    const gchar *needed[] = { "app", "libav", "playback", "autodetect", NULL};
+    const gchar *needed[] = { "app", "libav", "playback", "autodetect", "videoparsersbad",  NULL};
 
     registry = gst_registry_get ();
     ret = TRUE;
@@ -69,6 +69,11 @@ static gboolean check_plugins (void)
     return ret;
 }
 
+void  gstreamer_init(){
+    gst_init(NULL,NULL);
+    assert(check_plugins ());
+}
+
 #define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
 static audio_renderer_t *renderer_type[NFORMATS];
 static audio_renderer_t *renderer = NULL;
@@ -79,8 +84,6 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     logger = render_logger;
-    gst_init(NULL,NULL);
-    assert(check_plugins ());
 
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));

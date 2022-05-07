@@ -132,7 +132,6 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
 
-    gst_init(NULL,NULL);
     GString *launch = g_string_new("appsrc name=video_source ! ");
     g_string_append(launch, "queue ! ");
     g_string_append(launch, parser);
