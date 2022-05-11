@@ -245,8 +245,8 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 
 First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
-Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.1.
-install `gstreamer-1.0-1.20.1-universal.pkg` and ``gstreamer-1.0-devel-1.20.1-universal.pkg``.  (If
+Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.2.
+install `gstreamer-1.0-1.20.2-universal.pkg` and ``gstreamer-1.0-devel-1.20.2-universal.pkg``.  (If
 you have an Intel-architecture Mac, and  have problems with the "universal" packages, you can also
 use `gstreamer-1.0-1.18.6-x86_64.pkg` and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to
 install (they install to /Library/FrameWorks/GStreamer.framework).
@@ -285,6 +285,7 @@ First make sure that pkgconfig is installed  (Homebrew: "brew install pkgconfig"
 
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
 to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.
+**You may need to set the environment variable GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0 to point to the Homebrew GStreamer installation.**
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 **The MacPorts GStreamer is built to use X11**, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs

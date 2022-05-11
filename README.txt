@@ -324,8 +324,8 @@ download from <https://cmake.org/download/>.
 First get the latest macOS release of GStreamer-1.0 from
 <https://gstreamer.freedesktop.org/download/>. Install both the macOS
 runtime and development installer packages. Assuming that the latest
-release is 1.20.1. install `gstreamer-1.0-1.20.1-universal.pkg` and
-`gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have an
+release is 1.20.2. install `gstreamer-1.0-1.20.2-universal.pkg` and
+`gstreamer-1.0-devel-1.20.2-universal.pkg`. (If you have an
 Intel-architecture Mac, and have problems with the "universal" packages,
 you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
@@ -378,7 +378,10 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good
     gst-plugins-bad gst-libav". This appears to be functionally
     equivalent to using GStreamer.framework, but causes a large number
-    of extra packages to be installed by Homebrew as dependencies.
+    of extra packages to be installed by Homebrew as dependencies. **You
+    may need to set the environment variable
+    GST\_PLUGIN\_PATH=/usr/local/lib/gstreamer-1.0 to point to the
+    Homebrew GStreamer installation.**
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
     gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
