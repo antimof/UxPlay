@@ -6,6 +6,7 @@ if (APPLE )
   set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig/" ) # MacPorts
   message( "PKG_CONFIG_PATH (Apple, renderers) = " $ENV{PKG_CONFIG_PATH} )
   find_program( PKG_CONFIG_EXECUTABLE  pkg-config  PATHS /Library/FrameWorks/GStreamer.framework/Commands )
+  set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_EXECUTABLE} --define-prefix )
 endif()
 
 find_package( PkgConfig REQUIRED )
