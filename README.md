@@ -427,7 +427,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-reset n** sets a limit of n consective timeout failures of the client to respond to ntp requests
    from the server (these are sent every 3 seconds to check if the client is still present).   After
    n failures, the client will be presumed to be offline, and the connection will be reset to allow a new
-   connection.   The default value of n is 10; the value n = 0 means "no limit" on timeouts.
+   connection.   The default value of n is 5; the value n = 0 means "no limit" on timeouts.
 
 **-nc** maintains previous UxPlay < 1.45 behavior that does **not close** the video window when the the client
    sends the "Stop Mirroring" signal. _This option is currently used by default in macOS,
