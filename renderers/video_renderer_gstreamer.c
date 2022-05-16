@@ -132,7 +132,6 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     renderer = calloc(1, sizeof(video_renderer_t));
     assert(renderer);
 
-    gst_init(NULL,NULL);
     GString *launch = g_string_new("appsrc name=video_source ! ");
     g_string_append(launch, "queue ! ");
     g_string_append(launch, parser);
@@ -271,8 +270,8 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
         if (strstr(err->message,"Internal data stream error")) {
             logger_log(logger, LOGGER_INFO,
                      "*** This is a generic GStreamer error that usually means that GStreamer\n"
-                     "*** was unable to construct a working video pipeline.  If you are using\n"
-                     "*** the default autovideosink for automated selection of the videosink,\n "
+                     "*** was unable to construct a working video pipeline.\n"
+                     "*** If you are letting the default autovideosink select the videosink,\n"
                      "*** GStreamer may be trying to use non-functional hardware h264 video decoding.\n"
                      "*** Try using option -avdec to force software decoding or use -vs <videosink>\n"
                      "*** to select a videosink of your choice (see \"man uxplay\")");

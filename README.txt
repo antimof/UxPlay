@@ -324,8 +324,8 @@ download from <https://cmake.org/download/>.
 First get the latest macOS release of GStreamer-1.0 from
 <https://gstreamer.freedesktop.org/download/>. Install both the macOS
 runtime and development installer packages. Assuming that the latest
-release is 1.20.1. install `gstreamer-1.0-1.20.1-universal.pkg` and
-`gstreamer-1.0-devel-1.20.1-universal.pkg`. (If you have an
+release is 1.20.2. install `gstreamer-1.0-1.20.2-universal.pkg` and
+`gstreamer-1.0-devel-1.20.2-universal.pkg`. (If you have an
 Intel-architecture Mac, and have problems with the "universal" packages,
 you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
@@ -335,7 +335,7 @@ or MacPorts (see later).
 
 Next install OpenSSL and libplist: these can be built from source (see
 above), in which case you may need to install the standard development
-tools auutoconf, automake, libtool, which can be done with MacPorts,
+tools autoconf, automake, libtool, which can be done with MacPorts,
 HomeBrew, or Fink. Only the static forms of the two libraries will used
 for the macOS build, so you can uninstall them ("sudo make uninstall")
 after you have built UxPlay. It may be easier to get them using MacPorts
@@ -378,7 +378,10 @@ pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good
     gst-plugins-bad gst-libav". This appears to be functionally
     equivalent to using GStreamer.framework, but causes a large number
-    of extra packages to be installed by Homebrew as dependencies.
+    of extra packages to be installed by Homebrew as dependencies. **You
+    may need to set the environment variable
+    GST\_PLUGIN\_PATH=/usr/local/lib/gstreamer-1.0 to point to the
+    Homebrew GStreamer installation.**
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
     gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
@@ -546,7 +549,7 @@ displays streamed video.
 to respond to ntp requests from the server (these are sent every 3
 seconds to check if the client is still present). After n failures, the
 client will be presumed to be offline, and the connection will be reset
-to allow a new connection. The default value of n is 10; the value n = 0
+to allow a new connection. The default value of n is 5; the value n = 0
 means "no limit" on timeouts.
 
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
@@ -577,8 +580,8 @@ audio), where x = 1,2,3... increases each time the audio format changes.
 less. To change the name *audiodump*, use -admp \[n\] *filename*.
 
 **-d** Enable debug output. Note: this does not show GStreamer error or
-debug messages. To see GStreamer error error and warning messages, set
-the environment variable GST\_DEBUG with "export GST\_DEBUG=2" before
+debug messages. To see GStreamer error and warning messages, set the
+environment variable GST\_DEBUG with "export GST\_DEBUG=2" before
 running uxplay. To see GStreamer debug messages, set GST\_DEBUG=4;
 increase this to see even more of the GStreamer inner workings.
 

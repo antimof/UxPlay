@@ -245,15 +245,15 @@ this can be done with package managers [MacPorts](http://www.macports.org),
 
 First get the latest macOS release of GStreamer-1.0
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
-Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.1.
-install `gstreamer-1.0-1.20.1-universal.pkg` and ``gstreamer-1.0-devel-1.20.1-universal.pkg``.  (If
+Install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.2.
+install `gstreamer-1.0-1.20.2-universal.pkg` and ``gstreamer-1.0-devel-1.20.2-universal.pkg``.  (If
 you have an Intel-architecture Mac, and  have problems with the "universal" packages, you can also
 use `gstreamer-1.0-1.18.6-x86_64.pkg` and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to
 install (they install to /Library/FrameWorks/GStreamer.framework).
 It is recommended you use GStreamer.framework rather than install Gstreamer with Homebrew or MacPorts (see later).
 
 Next install OpenSSL and libplist:  these can be built from source (see above), in which case you may need to install
-the standard development tools auutoconf, automake, libtool, which can be done with MacPorts, HomeBrew, or Fink.
+the standard development tools autoconf, automake, libtool, which can be done with MacPorts, HomeBrew, or Fink.
 Only the static forms of the two libraries will used for the macOS build, so you can uninstall them ("sudo 
 make uninstall") after you have built UxPlay. It may be  easier to get them using
 MacPorts "sudo port install openssl libplist-devel" or Homebrew "brew install openssl libplist" (but not Fink).
@@ -285,6 +285,7 @@ First make sure that pkgconfig is installed  (Homebrew: "brew install pkgconfig"
 
 (a) with Homebrew: "brew install gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav".   This appears to be functionally equivalent
 to using GStreamer.framework, but causes a large number of extra packages to be installed by Homebrew as dependencies.
+**You may need to set the environment variable GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0 to point to the Homebrew GStreamer installation.**
 
 (b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad gstreamer1-gst-libav".
 **The MacPorts GStreamer is built to use X11**, so uxplay must be run from an XQuartz terminal, can use ZOOMFIX, and needs
@@ -426,7 +427,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
 **-reset n** sets a limit of n consective timeout failures of the client to respond to ntp requests
    from the server (these are sent every 3 seconds to check if the client is still present).   After
    n failures, the client will be presumed to be offline, and the connection will be reset to allow a new
-   connection.   The default value of n is 10; the value n = 0 means "no limit" on timeouts.
+   connection.   The default value of n is 5; the value n = 0 means "no limit" on timeouts.
 
 **-nc** maintains previous UxPlay < 1.45 behavior that does **not close** the video window when the the client
    sends the "Stop Mirroring" signal. _This option is currently used by default in macOS,
@@ -449,7 +450,7 @@ Also: image transforms that had been added to RPiPlay have been ported to UxPlay
    packets dumped to a file to _n_ or less.    To change the name _audiodump_, use -admp [n] _filename_.
 
 **-d**  Enable debug output.   Note:  this does not show GStreamer error or debug messages.   To see GStreamer error
-    error and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
+    and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
     To see GStreamer debug messages, set GST_DEBUG=4; increase this to see even more of the GStreamer inner workings.
 
 # Troubleshooting
