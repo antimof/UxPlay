@@ -45,7 +45,8 @@ AirPlay-client software emulator, AirMyPC.
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server**  is also running
-(only DNS-SD "Service Discovery" service is strictly necessary, it is not necessary that the local network also be of the ".local" mDNS-based type). 
+(only DNS-SD "Service Discovery" service is strictly necessary, it is not necessary
+that the local network also be of the ".local" mDNS-based type). 
 On Linux and BSD Unix servers, this is usually provided by [Avahi](https://www.avahi.org),
 through the avahi-daemon service, and is included in  most Linux distributions (this
 service can also be provided by macOS, iOS or Windows servers).
@@ -54,8 +55,9 @@ Connections to the UxPlay server by
 iOS/MacOS  clients can be initiated both in AirPlay Mirror mode (which streams
 lossily-compressed AAC audio while mirroring the client screen,
 or in the alternative AirPlay Audio mode which streams
-Apple Lossless (ALAC) audio without screen mirroring (the accompanying metadata and cover art in
-this mode is not displayed).  _Switching between these two modes during an active  connection is
+Apple Lossless (ALAC) audio without screen mirroring (the accompanying cover art in
+this mode is not displayed, but metadata is displayed in the terminal).
+_Switching between these two modes during an active  connection is
 possible: in Mirror mode, close the mirror window and start an Audio mode connection,
 switch back by initiating a Mirror mode connection._  **Note that Apple DRM
 (as in Apple TV app content on the client) cannot be decrypted by UxPlay,
@@ -81,7 +83,8 @@ NVIDIA's CUDA driver `libcuda.so` is installed.
 This plugin should be used with options
 `uxplay -vd nvh264dec -vs glimagesink`.     For GStreamer-1.16.3
 or earlier, the
-plugin is called `nvdec`, and must be built by the user: see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+plugin is called `nvdec`, and must be built by the user:
+see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 This older form  of the  plugin should be used with the `-vd nvdec -vs glimagesink`  uxplay options.
 
 *  **GPU Support for Raspberry Pi**
@@ -141,7 +144,8 @@ Make sure that your distribution provides OpenSSL 1.1.1 or later, and libplist 2
 need to build and install these from source (see below).
 
 In a terminal window, change directories to the source directory of the
-downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay" for "git clone" downloads), then follow the instructions below:
+downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag for zipfile downloads, "UxPlay"
+for "git clone" downloads), then follow the instructions below:
 
 **Note:** By default UxPlay will be built with optimization for the computer it is built on; when this is
 not the case, as when you are packaging for a distribution, use the cmake option `-DNO_MARCH_NATIVE=ON`.
@@ -162,17 +166,21 @@ for GStreamer-1.18.x or earlier**.
     is needed for hardware-accelerated h264 video decoding by Intel or AMD  graphics (but not for use with NVIDIA using proprietary drivers).
     Also install "**tools**" to get the utility gst-inspect-1.0 for examining the GStreamer installation.
 
-_If you intend to modify the code, use a separate "build" directory: replace_  "```cmake  [ ] . ```" _by_  "```mkdir build ; cd build ; cmake [ ] ..```"; _you can then clean
-the build directory with_ "```rm -rf build/* ```" _(run from within the UxPlay source directory) without affecting the source directories which contain your modifications_.
+_If you intend to modify the code, use a separate "build" directory:
+replace_  "`cmake  [ ] .`" _by_  "``mkdir build ; cd build ; cmake [ ] ..``"; _you can then clean
+the build directory with_ "`rm -rf build/* `" _(run from within the UxPlay source directory) without affecting
+the source directories which contain your modifications_.
 
-The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to somewhere like `/usr/local/share/man/man1` and README
+The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to
+somewhere like `/usr/local/share/man/man1` and README
 files to somewhere like `/usr/local/share/doc/uxplay`).
 It can also be found in the build directory after the build
 processs.
 
 **Finally, run uxplay in a terminal window**.   If it is not seen by the iOS client's drop-down "Screen Mirroring" panel,
 check that your DNS-SD server (usually avahi-daemon) is running: do this in a terminal window with ```systemctl status avahi-daemon```.
-If this shows the avahi-daemon is not running, control it with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or avahi-daemon.service). 
+If this shows the avahi-daemon is not running, control it with ```sudo systemctl [start,stop,enable,disable] avahi-daemon```
+(or avahi-daemon.service). 
 If UxPlay is seen,  but the client fails to connect when it is selected, there may be a firewall on the server that  prevents
 UxPlay from receiving client connection requests unless some network ports are opened. See [Troubleshooting](#troubleshooting) below for
 help with this or other problems.   See [Usage](#usage) for run-time options.
@@ -189,7 +197,8 @@ GStreamer packages  (you may need to use versions from [Packman](https://ftp.gwd
 gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
 
 * **Arch Linux**
-(sudo pacman -Syu) openssl libplist avahi  gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+ gstreamer-vaapi for Intel graphics). (**Also available as a package in AUR**).
+(sudo pacman -Syu) openssl libplist avahi  gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+ gstreamer-vaapi
+for Intel graphics). (**Also available as a package in AUR**).
 
  * **FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
 (\* = core, good,  bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics).
@@ -235,7 +244,8 @@ and then run "sudo ldconfig".
 _Note: A native AirPlay Server feature is included in  macOS 12 Monterey, but is restricted to recent hardware.
 UxPlay can run  on older macOS systems that will not be able to run Monterey, or can run Monterey  but not AirPlay._
 
-These instructions for macOS asssume that the Xcode command-line developer tools are installed (if Xcode is installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
+These instructions for macOS asssume that the Xcode command-line developer tools are installed (if Xcode is
+installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
 It is also assumed that CMake >= 3.13 is installed:
 this can be done with package managers [MacPorts](http://www.macports.org),
@@ -591,8 +601,9 @@ to use a "legacy" protocol for pairing with the server (see
 the _"Notes on AirPlay protocol versions"_ at the end of this README).
 However, UxPlay still works if it declares itself as an AppleTV6,2 with
 sourceVersion 380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running
-tvOS 12.2.1), so it is unclear what setting prompts the client
-to use the "legacy" protocol needed by UxPlay.
+tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (listed as
+"SupportsLegacyPairing") of the
+"features" plist code (reported to the client by the AirPlay server) to be set.
 
 # ChangeLog
 1.52 2022-05-05   Cleaned up initial audio sync code, and reformatted streaming debug output (readable aligned timestamps with

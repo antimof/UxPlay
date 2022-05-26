@@ -68,14 +68,14 @@ Connections to the UxPlay server by iOS/MacOS clients can be initiated
 both in AirPlay Mirror mode (which streams lossily-compressed AAC audio
 while mirroring the client screen, or in the alternative AirPlay Audio
 mode which streams Apple Lossless (ALAC) audio without screen mirroring
-(the accompanying metadata and cover art in this mode is not displayed).
-*Switching between these two modes during an active connection is
-possible: in Mirror mode, close the mirror window and start an Audio
-mode connection, switch back by initiating a Mirror mode connection.*
-**Note that Apple DRM (as in Apple TV app content on the client) cannot
-be decrypted by UxPlay, and (unlike with a true AppleTV), the client
-cannot run a http connection on the server instead of streaming content
-from one on the client.**
+(the accompanying cover art in this mode is not displayed, but metadata
+is displayed in the terminal). *Switching between these two modes during
+an active connection is possible: in Mirror mode, close the mirror
+window and start an Audio mode connection, switch back by initiating a
+Mirror mode connection.* **Note that Apple DRM (as in Apple TV app
+content on the client) cannot be decrypted by UxPlay, and (unlike with a
+true AppleTV), the client cannot run a http connection on the server
+instead of streaming content from one on the client.**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
@@ -775,8 +775,9 @@ to use a "legacy" protocol for pairing with the server (see the *"Notes
 on AirPlay protocol versions"* at the end of this README). However,
 UxPlay still works if it declares itself as an AppleTV6,2 with
 sourceVersion 380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running
-tvOS 12.2.1), so it is unclear what setting prompts the client to use
-the "legacy" protocol needed by UxPlay.
+tvOS 12.2.1); it seems that the use of "legacy" protocol just requires
+bit 27 (listed as "SupportsLegacyPairing") of the "features" plist code
+(reported to the client by the AirPlay server) to be set.
 
 ChangeLog
 =========

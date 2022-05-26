@@ -873,6 +873,45 @@ extern "C" void video_report_size(void *cls, float *width_source, float *height_
     video_renderer_size(width_source, height_source, width, height);
 }
 
+extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
+    unsigned char mark[]={ 0x00, 0x00, 0x00 }; /*daap seperator mark */
+    if (buflen > 4) {
+        printf("==============Audio Metadata=============\n");
+        const unsigned char *metadata = (const unsigned char *) buffer;
+        const char *tag = (const char *) buffer;
+        int len;
+        metadata += 4;
+        for (int i = 4; i < buflen ; i++) {
+            if (memcmp (metadata, mark, 3) == 0 && (len = (int) *(metadata +3))) { 
+                bool found_text = true;
+                if (strcmp (tag, "asal") == 0) {
+                    printf("Album: ");
+                } else if (strcmp (tag, "asar") == 0) {
+                    printf("Artist: ");
+                } else if (strcmp (tag, "ascp") == 0) {
+                    printf("Composer: ");
+                } else if (strcmp (tag, "asgn") == 0) {
+                    printf("Genre: ");
+                } else if (strcmp (tag, "minm") == 0) {
+                    printf("Title: ");
+                } else {
+                    found_text = false;
+                }
+                if (found_text) {
+                    const unsigned char *text = metadata + 4;
+                    for (int j = 0; j < len ; j++) {
+                        printf("%c", *text);
+                        text++;
+                    }
+                    printf("\n");
+                }
+            }
+            metadata++;
+            tag++;
+        }
+    }
+}
+
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {
@@ -912,7 +951,8 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_cbs.audio_set_volume = audio_set_volume;
     raop_cbs.audio_get_format = audio_get_format;
     raop_cbs.video_report_size = video_report_size;
-
+    raop_cbs.audio_set_metadata = audio_set_metadata;
+    
     /* set max number of connections = 2 */
     raop = raop_init(2, &raop_cbs);
     if (raop == NULL) {
