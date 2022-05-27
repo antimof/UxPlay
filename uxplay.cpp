@@ -881,8 +881,8 @@ extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
         const char *tag = (const char *) buffer;
         int len;
         metadata += 4;
-        for (int i = 4; i < buflen ; i++) {
-            if (memcmp (metadata, mark, 3) == 0 && (len = (int) *(metadata +3))) { 
+        for (int i = 4; i < buflen; i++) {
+            if (memcmp (metadata, mark, 3) == 0 && (len = (int) *(metadata + 3))) { 
                 bool found_text = true;
                 if (strcmp (tag, "asal") == 0) {
                     printf("Album: ");
@@ -899,7 +899,7 @@ extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
                 }
                 if (found_text) {
                     const unsigned char *text = metadata + 4;
-                    for (int j = 0; j < len ; j++) {
+                    for (int j = 0; j < len; j++) {
                         printf("%c", *text);
                         text++;
                     }
