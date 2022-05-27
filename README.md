@@ -69,7 +69,9 @@ Apple Lossless (ALAC) audio without screen mirroring (the accompanying cover art
 this mode is not displayed, but metadata is displayed in the terminal).
 _Switching between these two modes during an active  connection is
 possible: in Mirror mode, close the mirror window and start an Audio mode connection,
-switch back by initiating a Mirror mode connection._  **Note that Apple DRM
+switch back by initiating a Mirror mode connection._
+
+* **Note that Apple DRM
 (as found in Apple TV app content on the client) cannot be decrypted by UxPlay,
 and (unlike a true AppleTV), the UxPlay server does not allow the Apple
 client to run a http connection on the server that directly streams
