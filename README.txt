@@ -125,8 +125,8 @@ This older form of the NVIDIA plugin should be used with the
     GStreamer-1.22 release, but a (partial) backport (as
     `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) for RPi OS (Bullseye)
     has already appeared in its current updates. Until the promised full
-    update appears, or if you are using a different distribution,you can
-    find [patching instructions for
+    update appears, or if you are using a different distribution, you
+    can find [patching instructions for
     GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
     for GStreamer-1.18.5 (for Ubuntu 21.10), 1.18.6, 1.20.0, 1.20.1 (for
