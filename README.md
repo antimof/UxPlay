@@ -1,6 +1,6 @@
 # UxPlay 1.52:  AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
-### Now developed at a new GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where user issues should be posted).
+### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
 
 Highlights:
