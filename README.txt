@@ -125,18 +125,11 @@ This older form of the NVIDIA plugin should be used with the
     (partial) backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`)
     for RPi OS (Bullseye) has already appeared in its current updates.
     Until the promised full update appears, or if you are using a
-    different distribution, you can find [patching
-    instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
+    different distribution, you can find [patching instructions for
+    GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
-    for GStreamer-1.18.5 (for Ubuntu 21.10) and GStreamer-1.20.1 (for
-    Ubuntu 22.04 and Manjaro) are also available. If `uxplay` by itself
-    does not work on your RPi system, use `uxplay -v4l2` (or use `-rpi`
-    as a synonym), on your RPi Desktop X11 system, and optionally
-    specify a videosink with "`-vs ..`"); use `uxplay -rpiwl` as a
-    synonym for "`-v4l2 -vs waylandsink`" on a Desktop system with
-    Wayland (this applies to Ubuntu). On a system without X11 that uses
-    framebuffer video (such as RPi OS Bullseye "Lite") use
-    `uxplay -rpifb` as a synonym for "`uxplay -v4l2 -vs kmssink`".
+    for GStreamer-1.18.5 (for Ubuntu 21.10), 1.18.6, 1.20.0, 1.20.1 (for
+    Ubuntu 22.04 and Manjaro) and 1.20.2 are also available.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
@@ -252,6 +245,14 @@ decoding (e.g., VAAPI). Try "`uxplay -avdec`" to force software video
 decoding; if this works you can then try to fix accelerated hardware
 video decoding if you need it. See [Usage](#usage) for more run-time
 options.
+
+**Raspberry Pi**: If "`uxplay`" by itself does not work, use
+"`uxplay -v4l2`" (or use "`-rpi`" as a synonym for "`-v4l2`") on your
+desktop X11 system, and optionally specify a videosink with "`-vs ..`";
+use "`uxplay -rpiwl`" as a synonym for "`-v4l2 -vs waylandsink`" on a
+desktop system with Wayland (this applies to Ubuntu). On a system
+without X11 that uses framebuffer video (such as RPi OS Bullseye "Lite")
+use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`".
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
