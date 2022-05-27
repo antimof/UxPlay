@@ -110,13 +110,14 @@ the `-vd nvdec -vs glimagesink`  uxplay options.
     the Pi's built-in Broadcom GPU should be used.  RPi OS (Bullseye) has
     abandoned the unmaintained 32-bit-only omx (OpenMAX) driver used for this
     by [RPiPlay](http://github.com/FD-/RPiPlay), in favor of v4l2
-    (Video4Linux2).  A GStreamer Video4Linux2 plugin that works with UxPlay
-    is now in the GStreamer-1.21.0.0 development branch, and will only be
-    available in the forthcoming GStreamer-1.22 release, but a (partial)
-    backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) for RPi OS
-    (Bullseye) has  already appeared in its current updates. Until the
-    promised full update appears, or if you are using a different distribution,
-    you can find [patching instructions for GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
+    (Video4Linux2).  Fixes to the GStreamer v4l2 plugin that allow it to
+    work with UxPlay on RPi are now in the GStreamer-1.21 development
+    branch, and will only be available in the upcoming GStreamer-1.22 release,
+    but a (partial)  backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`)
+    for RPi OS (Bullseye) has already appeared in its current updates. Until
+    the promised full update appears, or if you are using a different
+    distribution,you can find
+    [patching instructions for GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches for
     GStreamer-1.18.5 (for Ubuntu 21.10), 1.18.6, 1.20.0, 1.20.1
     (for Ubuntu 22.04 and Manjaro) and 1.20.2 are also available.
