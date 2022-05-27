@@ -7,25 +7,24 @@ Highlights:
 
    * GPLv3, open source.
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless
-     ALAC) protocols 
-     from current iOS/iPadOS 15.4 client devices.
-   * macOS computers (2011 or later) can act either as AirPlay clients, or
-     as the server running UxPlay (tested
-     on macOS 10.15 Catalina and 12.3 Monterey).  Using AirPlay, UxPlay can
-     emulate a second display for macOS clients.  Both Intel and "Apple
-     Silicon"  M1 Macs are now fully supported in both roles.
-   * Support for older 32-bit iOS clients (such as iPad 2nd gen, iPhone 4S,
-     when upgraded to iOS 9.3.5 or later), and a Windows AirPlay-client
-     emulator, AirMyPC.
+     ALAC) streaming protocols 
+     from current iOS/iPadOS 15.4 clients.
+   * macOS computers (2011 or later, both Intel and "Apple Silicon" M1
+     systems) can act either as AirPlay clients, or
+     as the server running UxPlay. Using AirPlay, UxPlay can
+     emulate a second display for macOS clients.
+   * Support for older iOS clients (such as 32-bit iPad 2nd gen. and
+     iPhone 4S, when upgraded to iOS 9.3.5 or later), and a
+     Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer, with options to select different output "videosinks"
-     and  "audiosinks".
+     and  "audiosinks", and fully-configurable streaming pipelines.
    * Support for server behind a firewall.
    * **New**: Support for Raspberry Pi, with hardware video acceleration by
      Video4Linux2 (replacement for 32-bit-only OpenMAX, which is no longer
-     supplied in Raspberry Pi OS). (For GStreamer < 1.22,
+     supported by Raspberry Pi OS). (For GStreamer < 1.22,
      a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
-     to the GStreamer Video4Linux2 plugin (available in the
-     [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki)) is required, unless
+     to the GStreamer Video4Linux2 plugin, available in the
+     [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless
      your distribution has made a backport of changes from the
      development version.)
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
@@ -73,8 +72,9 @@ possible: in Mirror mode, close the mirror window and start an Audio mode connec
 switch back by initiating a Mirror mode connection._  **Note that Apple DRM
 (as found in Apple TV app content on the client) cannot be decrypted by UxPlay,
 and (unlike a true AppleTV), the UxPlay server does not allow the Apple
-client to directly run a http connection on the server instead of
-streaming content from the http conection on the client.**
+client to run a http connection on the server that directly streams
+content from the internet to the server, instead of 
+streaming it to the client, and then re-streaming to the server.**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
@@ -106,23 +106,23 @@ the `-vd nvdec -vs glimagesink`  uxplay options.
     of h264 video (by adding `-avdec` to the uxplay options) but this 
     usually has unacceptable latency, and hardware-accelerated decoding by
     the Pi's built-in Broadcom GPU should be used.  RPi OS (Bullseye) has
-    abandoned the omx (OpenMAX) driver used till now for this
+    abandoned the unmaintained 32-bit-only omx (OpenMAX) driver used for this
     by [RPiPlay](http://github.com/FD-/RPiPlay), in favor of v4l2
     (Video4Linux2).  A GStreamer Video4Linux2 plugin that works with UxPlay
     is now in the GStreamer-1.21.0.0 development branch, and will only be
-    available in the forthcoming GStreamer-1.22 release ,but a (partial)
+    available in the forthcoming GStreamer-1.22 release, but a (partial)
     backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) for RPi OS
     (Bullseye) has  already appeared in its current updates. Until the
     promised full update appears, or if you are using a different distribution,
     you can find [patching instructions](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches for
-    GStreamer-1.18.5 (used in Ubuntu 21.10 for RPi) and GStreamer-1.20.1
-    (used in Ubuntu 22.04 and Manjaro for RPi) are also available.
-    On "Desktop" operating systems with X11, if just using `uxplay` does not
-    work well, use `uxplay -v4l2` (or  use ``-rpi `` as a synonym),
-    and optionally specify a videosink with "`-vs ..`");
-    use ``uxplay -rpiwl`` as a synonym for "`-v4l2 -vs waylandsink`" on a
-    Desktop system with Wayland (this applies to Ubuntu).   On a system
+    GStreamer-1.18.5 (for Ubuntu 21.10) and GStreamer-1.20.1
+    (for Ubuntu 22.04 and Manjaro) are also available.  If `uxplay` by itself
+    does not work on your RPi system, use `uxplay -v4l2` (or  use ``-rpi ``
+    as a synonym), on your RPi Desktop X11 system, and optionally specify a
+    videosink with "`-vs ..`"); use ``uxplay -rpiwl`` as a synonym
+    for "`-v4l2 -vs waylandsink`" on a Desktop system with Wayland (this
+    applies to Ubuntu).   On a system
     without X11 that uses framebuffer video (such as RPi OS Bullseye "Lite")
     use `uxplay -rpifb` as a synonym for "`uxplay -v4l2 -vs kmssink`".
 
@@ -612,6 +612,17 @@ Some extra GStreamer packages for special plugins may need to be installed (or r
 reported that after reinstalling Lubuntu 18.4, UxPlay would not  work until gstreamer1.0-x was installed, presumably for Wayland's X11-compatibility mode).
 Different distributions may break up GStreamer 1.x into packages in different ways; the packages listed above in the build instructions should bring in 
 other required GStreamer packages as dependencies, but will not install all possible plugins.
+
+The GStreamer video pipeline, which is shown in the initial output from `uxplay -d`,
+has the default form
+
+```
+appsrc name=video_source ! queue ! h264parse ! decodebin ! videoconvert ! autovideosink name=video_sink sync=false
+```
+
+The pipeline is fully configurable: default  elements "h264parse", "decodebin", "videoconvert", and "autovideosink" can respectively be replaced by using  uxplay
+options `-vp`, ``-vd``, ```-vc```, and ````-vs````, if there is any need to
+modify it (entries can be given in quotes "..." to include options).
 
 ### 5.  Mirror screen freezes:
 
