@@ -244,12 +244,14 @@ avahi-daemon.service). If UxPlay is seen, but the client fails to
 connect when it is selected, there may be a firewall on the server that
 prevents UxPlay from receiving client connection requests unless some
 network ports are opened. See [Troubleshooting](#troubleshooting) below
-for help with this or other problems. One common problem involves
-GStreamer attempting to use incorrectly configured or absent accelerated
-hardware h264 video decoding (e.g., VAAPI). Try `uxplay -avdec` to force
-software video decoding; if this works you can then try to fix
-accelerated hardware video decoding if you need it. See [Usage](#usage)
-for run-time options.
+for help with this or other problems.
+
+One common problem involves GStreamer attempting to use
+incorrectly-configured or absent accelerated hardware h264 video
+decoding (e.g., VAAPI). Try "`uxplay -avdec`" to force software video
+decoding; if this works you can then try to fix accelerated hardware
+video decoding if you need it. See [Usage](#usage) for more run-time
+options.
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
