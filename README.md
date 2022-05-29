@@ -114,8 +114,8 @@ the `-vd nvdec -vs glimagesink`  uxplay options.
     (Video4Linux2).  Fixes to the GStreamer v4l2 plugin that allow it to
     work with UxPlay on RPi are now in the GStreamer development
     branch, and will be available in the upcoming GStreamer-1.22 release,
-    but a (partial) backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`)
-    has already appeared in RPi OS updates. Until the promised full update
+    A (partial) backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`)
+    has already appeared in RPi OS updates. Until the full update
     appears, or if you are using a different distribution, you can find
     [patching instructions for GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
