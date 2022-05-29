@@ -107,10 +107,9 @@ For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
 used for accelerated video decoding on the NVIDIA GPU after NVIDIA's
 CUDA driver `libcuda.so` is installed. This plugin should be used with
 options `uxplay -vd nvh264dec -vs glimagesink`. For GStreamer-1.16.3 or
-earlier, the plugin is called `nvdec`, and must be built by the user:
-see [these
-instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins),
-and replace `nvh264dec` by `nvdec` when using.
+earlier, replace `nvh264dec` by the older plugin`nvdec`, which must be
+built by the user: see [these
+instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 
 -   **GPU Support for Raspberry Pi**
 
