@@ -144,7 +144,7 @@ distributions treat OpenSSL as a "System Library" which the GPL allows
 linking to.
 
 For "GPL-strict" distributions, UxPlay can be built using OpenSSL-
-3.0.0, which has anew [GPLv3-compatible
+3.0.0, which has a new [GPLv3-compatible
 license](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/).
 
 Getting UxPlay:
