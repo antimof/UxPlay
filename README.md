@@ -99,9 +99,7 @@ This plugin should be used with options
 `uxplay -vd nvh264dec -vs glimagesink`.     For GStreamer-1.16.3
 or earlier, the
 plugin is called `nvdec`, and must be built by the user:
-see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
-This older form  of the  NVIDIA  plugin should be used with
-the `-vd nvdec -vs glimagesink`  uxplay options.
+see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins), and replace `nvh264dec` by `nvdec` when using.
 
 *  **GPU Support for Raspberry Pi**
 
