@@ -16,8 +16,9 @@ Highlights:
 -   Support for older iOS clients (such as 32-bit iPad 2nd gen. and
     iPhone 4S, when upgraded to iOS 9.3.5 or later), and a Windows
     AirPlay-client emulator, AirMyPC.
--   Uses GStreamer, with options to select different output "videosinks"
-    and "audiosinks", and fully-configurable video streaming pipeline.
+-   Uses GStreamer for audio and video rendering (with options to select
+    different hardware-appropriate output "videosinks" and "audiosinks",
+    and a fully-user-configurable video streaming pipeline).
 -   Support for server behind a firewall.
 -   **New**: Support for Raspberry Pi, with hardware video acceleration
     by Video4Linux2 (replacement for 32-bit-only OpenMAX, which is no
