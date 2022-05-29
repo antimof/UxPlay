@@ -131,9 +131,7 @@ This older form of the NVIDIA plugin should be used with the
     can find [patching instructions for
     GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
-    for GStreamer-1.18.5 (for Ubuntu 21.10), 1.18.6, 1.20.0, 1.20.1 (for
-    Ubuntu 22.04) and 1.20.2 (for Manjaro RPi 4 22.04) are also
-    available.
+    are available for all GStreamer releases 1.18.4 and later.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
