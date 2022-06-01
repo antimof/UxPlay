@@ -105,7 +105,7 @@ h264 decoders if available; if not, software decoding is used.
    must be built by the user:
    See [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 
-*  **Support for the Raspberry Pi Broadcom GPU**
+*  **Video4Linux2 support for the Raspberry Pi Broadcom GPU**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
     of h264 video (by adding `-avdec` to the uxplay options) but this 
