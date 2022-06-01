@@ -86,29 +86,33 @@ This means that video and audio are supported "out of the box", using a choice o
 AirPlay streams video in h264 format: gstreamer decoding is plugin agnostic, and uses accelerated GPU hardware
 h264 decoders if available; if not, software decoding is used. 
 
-For systems with Intel or AMD  integrated graphics, hardware GPU decoding with the gstreamer VAAPI plugin is preferable. VAAPI is
-open-source, and in addition to Intel and AMD graphics, the open-source "Nouveau" drivers for NVIDIA
-graphics are also in principle supported: see [here](https://nouveau.freedesktop.org/VideoAcceleration.html),
-which requires  VAAPI to be supplemented with firmware extracted from the proprietary NVIDIA drivers.
+* **VAAPI for Intel and AMD integrated graphics, NVIDIA with "Nouveau" open-source driver**
 
-For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
-(included in gstreamer1.0-plugins-bad since GStreamer-1.18.0)
-can be used for accelerated video decoding on the NVIDIA GPU after
-NVIDIA's CUDA driver `libcuda.so` is installed.
-This plugin should be used with options
-`uxplay -vd nvh264dec -vs glimagesink`.     For GStreamer-1.16.3
-or earlier, replace `nvh264dec` by the older plugin`nvdec`, which
-must be built by the user:
-see [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+   With an Intel or AMD GPU,  hardware decoding with the gstreamer open-source VAAPI gstreamer plugin is preferable.
+   The open-source "Nouveau" drivers for NVIDIA
+   graphics are also in principle supported: see [here](https://nouveau.freedesktop.org/VideoAcceleration.html),
+   but this requires  VAAPI to be supplemented with firmware extracted from the proprietary NVIDIA drivers.
 
-*  **GPU Support for Raspberry Pi**
+* **NVIDIA with proprietary drivers**
+
+   The `nvh264dec` plugin
+   (included in gstreamer1.0-plugins-bad since GStreamer-1.18.0)
+   can be used for accelerated video decoding on the NVIDIA GPU after
+   NVIDIA's CUDA driver `libcuda.so` is installed.
+   This plugin should be used with options
+   `uxplay -vd nvh264dec -vs glimagesink`.     For GStreamer-1.16.3
+   or earlier, replace `nvh264dec` by the older plugin`nvdec`, which
+   must be built by the user:
+   See [these instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+
+*  **Support for the Raspberry Pi Broadcom GPU**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
     of h264 video (by adding `-avdec` to the uxplay options) but this 
-    usually has unacceptable latency, and hardware-accelerated decoding by
-    the Pi's built-in Broadcom GPU should be used.  RPi OS (Bullseye) has
-    stopped supporting  the unmaintained 32-bit-only omx (OpenMAX) driver
-    used for this by [RPiPlay](http://github.com/FD-/RPiPlay), in favor of v4l2
+    usually has unacceptable latency, and hardware-accelerated GPU decoding 
+    should be used.  The unmaintained 32-bit-only omx (OpenMAX) driver
+    used for this by [RPiPlay](http://github.com/FD-/RPiPlay) is no longer
+    officially supported by RPi OS (Bullseye): the replacement is v4l2
     (Video4Linux2).  Fixes to the GStreamer v4l2 plugin that allow it to
     work with UxPlay on RPi are now in the GStreamer development
     branch, and will be available in the upcoming GStreamer-1.22 release,
