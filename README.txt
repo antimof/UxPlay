@@ -250,13 +250,16 @@ decoding; if this works you can then try to fix accelerated hardware
 video decoding if you need it. See [Usage](#usage) for more run-time
 options.
 
-**Raspberry Pi**: If "`uxplay`" by itself does not work, use
-"`uxplay -v4l2`" (or use "`-rpi`" as a synonym for "`-v4l2`") on your
-desktop X11 system, and optionally specify a videosink with "`-vs ..`";
-use "`uxplay -rpiwl`" as a synonym for "`-v4l2 -vs waylandsink`" on a
-desktop system with Wayland (this applies to Ubuntu). On a system
-without X11 that uses framebuffer video (such as RPi OS Bullseye "Lite")
-use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`".
+**Raspberry Pi**: For GStreamer-1.20 or earlier, see [patching
+instructions for
+GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
+If "`uxplay`" by itself does not work, use "`uxplay -v4l2`" (or use
+"`-rpi`" as a synonym for "`-v4l2`") on your desktop X11 system, and
+optionally specify a videosink with "`-vs ..`"; use "`uxplay -rpiwl`" as
+a synonym for "`-v4l2 -vs waylandsink`" on a desktop system with Wayland
+(this applies to Ubuntu). On a system without X11 that uses framebuffer
+video (such as RPi OS Bullseye "Lite") use "`uxplay -rpifb`" as a
+synonym for "`uxplay -v4l2 -vs kmssink`".
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
