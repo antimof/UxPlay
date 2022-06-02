@@ -47,9 +47,8 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/
 (iPhones, iPads, MacBooks) in a window
 on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
-on a host running Linux, macOS, or other unix.  UxPlay supports a "legacy" form of Apple's AirPlay Mirror protocol introduced
-in iOS 12; client devices running iOS/iPadOS 9.3.5 or later are supported, as is a (non-free) Windows-based
-AirPlay-client software emulator, AirMyPC.
+on a host running Linux, macOS, or other unix.  UxPlay supports a "legacy" form of Apple's AirPlay 2 protocol introduced
+in iOS 12, and some features are missing.
 (Details of what is publically known about Apple's AirPlay2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
 [here](https://emanuelecozzi.net/docs/airplay2)).
@@ -108,20 +107,19 @@ h264 decoders if available; if not, software decoding is used.
 *  **Video4Linux2 support for the Raspberry Pi Broadcom GPU**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
-    of h264 video (by adding `-avdec` to the uxplay options) but this 
+    of h264 video but this 
     usually has unacceptable latency, and hardware-accelerated GPU decoding 
-    should be used.  The unmaintained 32-bit-only omx (OpenMAX) driver
-    used for this by [RPiPlay](http://github.com/FD-/RPiPlay) is no longer
-    officially supported by RPi OS (Bullseye): the replacement is v4l2
-    (Video4Linux2).  Fixes to the GStreamer v4l2 plugin that allow it to
+    should be used.  Distributions such as  RPi OS (Bullseye) release have
+    dropped support for unmaintained 32-bit-only OpenMax (omx) GPU decoding (used by RPiPlay), in
+    favor of Video4Linux2 (v4l2). Fixes to the GStreamer v4l2 plugin that allow it to
     work with UxPlay on RPi are now in the GStreamer development
-    branch, and will be available in the upcoming GStreamer-1.22 release,
+    branch, and will appear in the upcoming GStreamer-1.22 release.
     A (partial) backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`)
     has already appeared in RPi OS updates. Until the full update
     appears, or if you are using a different distribution, you can find
     [patching instructions for GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
-    are available for all GStreamer releases 1.18.4 and later.
+    are available GStreamer releases 1.18.4 and later.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 Some Linux distributions such as Debian do not allow distribution of compiled
@@ -236,7 +234,8 @@ on your desktop X11 system, and optionally specify a videosink with "`-vs ..`";
 use "``uxplay -rpiwl``" as a synonym  for "`-v4l2 -vs waylandsink`" on a
 desktop system with Wayland (this applies to Ubuntu).   On a system
 without X11 that uses framebuffer video (such as RPi OS Bullseye "Lite")
-use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`".
+use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`". You can test UxPlay
+with software-only  video decoding using option `-avdec`.
 
  * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
