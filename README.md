@@ -750,14 +750,13 @@ xdotool, if it is installed, with: ``` xdotool selectwindow set_window --name <n
 by clicking on it with the mouse.
 
 However, if "`cmake -DZOOMFIX=ON .`"  is run before compiling,
-the mirrored window is now visible to screen-sharing applications, without this procedure.
-(This applies only to X11 windows produced by videosinks ``ximagesink`` and ``xvimagesink``, which are often 
-selected by default.) To compile with ZOOMFIX=ON, the X11 development libraries must be installed.
+the mirrored window is visible to screen-sharing applications, without this procedure.
+To compile with ZOOMFIX=ON, the X11 development libraries must be installed. (Without ZOOMFIX,
+UxPlay has no dependence on X11).
 
-_(ZOOMFIX will not be needed once the upcoming  gstreamer-1.20 is available,
-since starting with that release, the GStreamer X11 mirror window will be natively
-visible for screen-sharing, but it make take some time for distributions to supply this version.)_ Thanks to David Ventura
-https://github.com/DavidVentura/UxPlay for the fix and also for getting the fix into  gstreamer-1.20.
+**ZOOMFIX is not needed in GStreamer-1.20 or later.**
+Thanks to David Ventura
+https://github.com/DavidVentura/UxPlay for the fix and also for getting a fix into  gstreamer-1.20.
 
 
 # Disclaimer
