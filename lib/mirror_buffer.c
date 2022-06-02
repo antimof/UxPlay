@@ -102,7 +102,7 @@ void mirror_buffer_decrypt(mirror_buffer_t *mirror_buffer, unsigned char* input,
                     input + mirror_buffer->nextDecryptCount, encryptlen);
     // Copy to output
     memcpy(output + mirror_buffer->nextDecryptCount, input + mirror_buffer->nextDecryptCount, encryptlen);
-    int outputlength = mirror_buffer->nextDecryptCount + encryptlen;
+    // int outputlength = mirror_buffer->nextDecryptCount + encryptlen;
     // Processing remaining length
     int restlen = (inputLen - mirror_buffer->nextDecryptCount) % 16;
     int reststart = inputLen - restlen;
@@ -114,7 +114,7 @@ void mirror_buffer_decrypt(mirror_buffer_t *mirror_buffer, unsigned char* input,
         for (int j = 0; j < restlen; j++) {
             output[reststart + j] = mirror_buffer->og[j];
         }
-        outputlength += restlen;
+        //outputlength += restlen;
         mirror_buffer->nextDecryptCount = 16 - restlen;// Difference 16-6=10 bytes
     }
 }
