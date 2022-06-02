@@ -200,8 +200,8 @@ packaging for a distribution, use the cmake option
     "ZOOMFIX" X11 display-name fix in the next step)
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
-    applications such as Zoom, see [Improvements](#improvements) \#3
-    below). **ZOOMFIX is only needed for GStreamer-1.18.x or earlier**.
+    applications such as Zoom, see [ZOOMFIX](###ZOOMFIX) below).
+    **ZOOMFIX is only needed for GStreamer-1.18.x or earlier**.
 5.  `make`
 6.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
@@ -904,101 +904,32 @@ made the first time the GStreamer window was created by uxplay, and not
 if the server was relaunched after the GStreamer window was closed, with
 uxplay still running. Corrected in v. 1.34
 
-Improvements
-============
+### ZOOMFIX compile-time option
 
-1.  Updates of the RAOP (AirPlay protocol) collection of codes
-    maintained at https://github.com/FD-/RPiPlay.git so it is current as
-    of 2021-08-01, adding all changes since the original release of
-    UxPlay by antimof. This involved crypto updates, replacement of the
-    included plist library by the system-installed version, and a change
-    over to a library llhttp for http parsing.
+In GStreamer-1.18.6 and earlier, if UxPlay is using an X11 window for
+screen mirroring, this window is not visible to screen-sharing apps like
+ZOOM. OpenGL-based windows (use `-vs glimagesink` or `-vs gtksink`,
+*etc.*) do not have this problem.
 
-2.  Added -s, -o -p, -m, -r, -f, -fps, -vs, -as and -t options.
+A workaround is to manually make the X11 window visible to
+screen-sharing apps with the X11 utility xdotool, if it is installed,
+with: `xdotool selectwindow set_window --name <name>` (where `<name>` is
+your choice of name), and then select the uxplay window by clicking on
+it with the mouse.
 
-3.  If "`cmake -DZOOMFIX=ON .`" is run before compiling, the mirrored
-    window is now visible to screen-sharing applications such as Zoom.
-    (This applies only to X11 windows produced by videosinks
-    `ximagesink` and `xvimagesink`, which are often selected by
-    default.) To compile with ZOOMFIX=ON, the X11 development libraries
-    must be installed. *(ZOOMFIX will not be needed once the upcoming
-    gstreamer-1.20 is available, since starting with that release, the
-    GStreamer X11 mirror window will be natively visible for
-    screen-sharing, but it make take some time for distributions to
-    supply this version.)* Thanks to David Ventura
-    https://github.com/DavidVentura/UxPlay for the fix and also for
-    getting it into gstreamer-1.20. \[If uxplay was compiled after cmake
-    was run without -DZOOMFIX=ON, and your gstreamer version is older
-    than 1.20, you can still manually make the X11 window visible to
-    screen-sharing apps with the X11 utility xdotool, if it is
-    installed, with: `xdotool selectwindow set_window --name <name>`
-    (where `<name>` is your choice of name), and then select the uxplay
-    window by clicking on it with the mouse.\]
+However, if "`cmake -DZOOMFIX=ON .`" is run before compiling, the
+mirrored window is now visible to screen-sharing applications, without
+this procedure. (This applies only to X11 windows produced by videosinks
+`ximagesink` and `xvimagesink`, which are often selected by default.) To
+compile with ZOOMFIX=ON, the X11 development libraries must be
+installed.
 
-4.  The AirPlay server now terminates correctly when the gstreamer
-    display window is closed, and is relaunched with the same settings
-    to wait for a new connection. The program uxplay terminates when
-    Ctrl-C is typed in the terminal window. The **-t *timeout*** option
-    relaunches the server after *timeout* seconds of inactivity to allow
-    new connections to be made.
-
-5.  In principle, multiple instances of uxplay can be run simultaneously
-    using the **-m** (generate random MAC address) option to give each a
-    different ("local" as opposed to "universal") MAC address. If the
-    **-p \[n\]** option is used, they also need separate network port
-    choices. (However, there may be a large latency, and running two
-    instances of uxplay simultaneously on the same computer may not be
-    very useful; using the **-fps** option to force streaming framerates
-    below 30fps could be helpful.)
-
-6.  Without the **-p** \[n\] option, uxplay makes a random dynamic
-    assignment of network ports. This will not work if most ports are
-    closed by a firewall. With e.g., **-p 45000** you should open both
-    TCP and UDP on ports 45000, 45001, 45002. Minimum allowed port is
-    1024, maximum is 65535. The option "**-p**" with no argument uses a
-    "legacy" set of ports TCP 7100, 7000, 7001, and UDP 7011,
-    6000, 6001. Finer control is also possible: "**-p udp n1,n2,n3 -p
-    tcp n4,n5,n6**" sets all six ports individually.
-
-7.  The default resolution setting is 1920x1080 width x height pixels.
-    To change this, use "**-s wxh**" where w and h are positive decimals
-    with 4 or less digits. It seems that the width and height may be
-    negotiated with the AirPlay client, so this may not be the actual
-    screen geometry that displays.
-
-8.  The title on the GStreamer display window is now is the AirPlay
-    server name. (This works for X11 windows created by gstreamer
-    videosinks ximagesink, xvimagesink, but not OpenGL windows created
-    by glimagesink.)
-
-9.  The avahi\_compat "nag" warning on startup is suppressed, by placing
-    "AVAHI\_COMPAT\_NOWARN=1" into the runtime environment when uxplay
-    starts. (This uses a call to putenv() in a form that is believed to
-    be safe against memory leaks, at least in modern Linux; if for any
-    reason you don't want this fix, comment out the line in
-    CMakeLists.txt that activates it when uxplay is compiled.) On macOS,
-    Avahi is not used.
-
-10. UxPlay now builds on macOS.
-
-11. The hostname of the server running uxplay is now appended to the
-    AirPlay server name, which is now displayed as *name*\@hostname,
-    where *name* is "UxPlay", (or whatever is set with the **-n**
-    option).
-
-12. Added support for audio-only streaming with original (non-Mirror)
-    AirPlay protocol, with Apple Lossless (ALAC) audio.
-
-13. Added suppport for the older AirPlay protocol used by third-party
-    Windows-based AirPlay mirror emulators such as AirMyPC.
-
-14. Made the video pipeline fully configurable with options -vp, -vd,
-    -vc, for accelerated hardware support (e.g. NVIDIA).
-
-15. Added Raspberry Pi support (accelerated hardware decoding) with -rpi
-    option.
-
-16. Added options to dump audio and/or video to file.
+*(ZOOMFIX will not be needed once the upcoming gstreamer-1.20 is
+available, since starting with that release, the GStreamer X11 mirror
+window will be natively visible for screen-sharing, but it make take
+some time for distributions to supply this version.)* Thanks to David
+Ventura https://github.com/DavidVentura/UxPlay for the fix and also for
+getting the fix into gstreamer-1.20.
 
 Disclaimer
 ==========
