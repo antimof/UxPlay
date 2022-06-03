@@ -275,7 +275,7 @@ software-only video decoding using option `-avdec`.
     gstreamer-plugins-base-devel gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
     graphics); you may need to use the version of
-    gstreamer-plugins-libav from
+    gstreamer-plugins-libav for OpenSUSE from
     [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
     "Essentials".
 
