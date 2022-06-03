@@ -44,7 +44,8 @@ UxPlay is tested on a number of systems, including (among others) Debian
 10.11 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 and 22.04, Linux Mint
 20.3, Pop!\_OS 21.10 (NVIDIA edition), Rocky Linux 8.6 (a CentOS
 successor), OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1),
-FreeBSD 13.1.
+FreeBSD 13.1. On Raspberry Pi, it is tested on Raspberry Pi OS
+(Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
 of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
