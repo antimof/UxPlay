@@ -276,7 +276,8 @@ software-only video decoding using option `-avdec`.
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
     graphics); you may need to use the version of
     gstreamer-plugins-libav from
-    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/).
+    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
+    "Essentials".
 
 -   **Arch Linux** (sudo pacman -Syu) openssl libplist avahi
     gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+
