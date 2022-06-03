@@ -41,7 +41,7 @@ main [UxPlay site](https://github.com/FDH2/UxPlay)).
 
 UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 22.04,
 Linux Mint 20.3, Pop!\_OS 21.10 (NVIDIA edition),
-Rocky Linux 8.6 (a CentOS successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.
+Rocky Linux 8.6 (a CentOS successor), OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
 (iPhones, iPads, MacBooks) in a window
@@ -245,8 +245,9 @@ gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugi
  * **OpenSUSE:**
 (sudo zypper install) libopenssl-devel libplist-devel
 avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX).  The required
-GStreamer packages  (you may need to use versions from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
-gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics).
+GStreamer packages are: gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics);
+you may need to use the version of gstreamer-plugins-libav from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/).
+
 
 * **Arch Linux**
 (sudo pacman -Syu) openssl libplist avahi  gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+ gstreamer-vaapi
