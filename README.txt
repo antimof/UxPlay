@@ -120,7 +120,7 @@ used.
     of h264 video but this usually has unacceptable latency, and
     hardware-accelerated GPU decoding should be used. Distributions such
     as RPi OS (Bullseye) release have recently dropped support for
-    32-bit-only OpenMax (omx) GPU decoding (used by RPiPlay), in favor
+    32-bit-only OpenMAX (omx) GPU decoding (used by RPiPlay), in favor
     of Video4Linux2 (v4l2). Fixes to the GStreamer v4l2 plugin that
     allow it to work with UxPlay on RPi are now in the GStreamer
     development branch, and will appear in the upcoming GStreamer-1.22
