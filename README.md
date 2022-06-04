@@ -587,8 +587,9 @@ the client sends the "Stop Mirroring" signal, try the no-close option "-nc" that
 To troubleshoot GStreamer execute  "export GST_DEBUG=2"
 to set the GStreamer debug-level environment-variable in the terminal
 where you will run uxplay, so that you see warning and error messages;
-(replace "2" by "4" to see much (much) more of what is happening inside
-GStreamer).   Run "gst-inspect-1.0" to see which GStreamer plugins are
+see [GStreamer debugging tools](https://gstreamer.freedesktop.org/documentation/tutorials/basic/debugging-tools.html)
+for how to see much more of what is happening inside
+GStreamer.   Run "gst-inspect-1.0" to see which GStreamer plugins are
 installed on your system.
 
 Some extra GStreamer packages for special plugins may need to be installed (or reinstalled: a user using a Wayland display system as an alternative to X11
