@@ -20,14 +20,14 @@ Highlights:
      to select different hardware-appropriate output "videosinks" and
      "audiosinks", and a fully-user-configurable video streaming pipeline).
    * Support for server behind a firewall.
-   * **New**: Support for Raspberry Pi, with hardware video acceleration by
-     Video4Linux2 (the replacement for 32-bit-only OpenMAX, now unsupported by
+   * **New**: Support for Raspberry Pi, with hardware video acceleration using
+     Video4Linux2 (the replacement for 32-bit-only OpenMAX, no longer supported by
      recent Raspberry Pi distributions). (For GStreamer < 1.22,
      a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
      to the GStreamer Video4Linux2 plugin, available in the
      [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless
      your distribution has made a backport of changes from the
-     development version.)
+     development branch.)
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
