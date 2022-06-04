@@ -13,7 +13,7 @@ Highlights:
     UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
     clients.
 -   Support for older iOS clients (such as 32-bit iPad 2nd gen. and
-    iPhone 4S, when upgraded to iOS 9.3.5 or later), and a Windows
+    iPhone 4S, when upgraded to iOS 9.3.5 or later), plus a Windows
     AirPlay-client emulator, AirMyPC.
 -   Uses GStreamer plugins for audio and video rendering (with options
     to select different hardware-appropriate output "videosinks" and
@@ -21,8 +21,9 @@ Highlights:
     pipeline).
 -   Support for server behind a firewall.
 -   **New**: Support for Raspberry Pi, with hardware video acceleration
-    using Video4Linux2 (as a replacement for OpenMAX). (For GStreamer \<
-    1.22, a
+    using Video4Linux2 (which supports both 32- and 64-bit systems,
+    unlike deprecated OpenMAX (omx), which it replaces). (For GStreamer
+    \< 1.22, a
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to the GStreamer Video4Linux2 plugin, available in the [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless your
@@ -119,10 +120,10 @@ used.
     of h264 video but this usually has unacceptable latency, and
     hardware-accelerated GPU decoding should be used. UxPlay accesses
     the GPU using the GStreamer plugin for Video4Linux2 (v4l2), which
-    replaces unmaintained 32-bit-only OpenMAX (omx) used by RPiPlay.
-    Fixes to the v4l2 plugin that allow it to work with UxPlay on RPi
-    are now in the GStreamer development branch, and will appear in the
-    upcoming GStreamer-1.22 release. A (partial) backport (as
+    replaces unmaintained 32-bit-only OpenMby RPiPlay. Fixes to the v4l2
+    plugin that allow it to work with UxPlay on RPi are now in the
+    GStreamer development branch, and will appear in the upcoming
+    GStreamer-1.22 release. A (partial) backport (as
     `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) has already appeared in
     RPi OS updates. Until the full update appears, or for other
     distributions, you can find [patching instructions for
