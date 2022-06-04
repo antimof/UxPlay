@@ -21,9 +21,8 @@ Highlights:
     pipeline).
 -   Support for server behind a firewall.
 -   **New**: Support for Raspberry Pi, with hardware video acceleration
-    using Video4Linux2 (the replacement for 32-bit-only OpenMAX, no
-    longer supported by recent Raspberry Pi distributions). (For
-    GStreamer \< 1.22, a
+    using Video4Linux2 (as a replacement for OpenMAX). (For GStreamer \<
+    1.22, a
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to the GStreamer Video4Linux2 plugin, available in the [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless your
@@ -119,11 +118,11 @@ used.
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
     of h264 video but this usually has unacceptable latency, and
     hardware-accelerated GPU decoding should be used. UxPlay accesses
-    the GPU using the GStreamer plugin for Video4Linux2 (v4l2), which is
-    the replacement for 32-bit-only OpenMAX (omx) used by RPiPlay. Fixes
-    to the v4l2 plugin that allow it to work with UxPlay on RPi are now
-    in the GStreamer development branch, and will appear in the upcoming
-    GStreamer-1.22 release. A (partial) backport (as
+    the GPU using the GStreamer plugin for Video4Linux2 (v4l2), which
+    replaces unmaintained 32-bit-only OpenMAX (omx) used by RPiPlay.
+    Fixes to the v4l2 plugin that allow it to work with UxPlay on RPi
+    are now in the GStreamer development branch, and will appear in the
+    upcoming GStreamer-1.22 release. A (partial) backport (as
     `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) has already appeared in
     RPi OS updates. Until the full update appears, or for other
     distributions, you can find [patching instructions for
