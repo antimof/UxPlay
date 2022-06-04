@@ -788,10 +788,9 @@ _[adapted from fdraschbacher's notes on  RPiPlay antecedents]_
 The code in this repository accumulated from various sources over time. Here
 is an attempt at listing the various authors and the components they created:
 
-UxPlay was initially created by **antimof** from RPiPlay, by replacing its Raspberry-Pi-specific  video and audio rendering system with GStreamer rendering for
-Desktop Linux (antimof's work on code in `renderers/` was later backported to RPiPlay).
-
-
+UxPlay was initially created by **antimof** from RPiPlay, by replacing its Raspberry-Pi-specific OpenMAX  video 
+and audio rendering system with GStreamer rendering for
+desktop Linux systems (antimof's work on code in `renderers/` was later backported to RPiPlay).
 
 The previous authors of code included in UxPlay by inheritance from RPiPlay include:
 
