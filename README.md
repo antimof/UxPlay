@@ -113,7 +113,7 @@ if not, software decoding is used.
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
     of h264 video but this usually has unacceptable latency, and hardware-accelerated
     GPU decoding should be used.  UxPlay accesses the GPU using the GStreamer
-    plugin for Video4Linux2 (v4l2), which replaces unmaintained  32-bit-only  OpenMby
+    plugin for Video4Linux2 (v4l2), which replaces unmaintained  32-bit-only  OpenMax used by
     RPiPlay. Fixes to the v4l2 plugin that allow it to
     work with UxPlay on RPi are now in the GStreamer development branch, and will appear
     in the upcoming GStreamer-1.22 release.
