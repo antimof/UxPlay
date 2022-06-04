@@ -31,17 +31,19 @@ Highlights:
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
-It was initially developed by555555555555555
+It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code 
 from [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [AirplayServer](https://github.com/KqsMea8/AirplayServer),
-[shairplay](https://github.com/juhovh/shairplay), and [playfair](https://github.com/EstebanKubata/playfair).   (The antimof site is no longer involved in
+[shairplay](https://github.com/juhovh/shairplay), and [playfair](https://github.com/EstebanKubata/playfair).
+(The antimof site is no longer involved in
 development, but periodically posts updates pulled from the new
 main [UxPlay site](https://github.com/FDH2/UxPlay)). 
 
-UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye", Ubuntu 20.04 and 22.04,
-Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition),
-Rocky Linux 8.6 (a CentOS successor), OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.   On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
+UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye",
+Ubuntu 20.04 and 22.04, Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS successor),
+OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.
+On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
 (iPhones, iPads, MacBooks) in a window

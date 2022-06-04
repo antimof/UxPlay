@@ -32,7 +32,7 @@ Highlights:
     reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
-Linux, macOS, and \*BSD. It was initially developed by555555555555555
+Linux, macOS, and \*BSD. It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code from
 [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [AirplayServer](https://github.com/KqsMea8/AirplayServer),
