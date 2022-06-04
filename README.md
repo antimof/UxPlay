@@ -8,7 +8,7 @@ Highlights:
    * GPLv3, open source.
    * Support for both AirPlay Mirror and AirPlay Audio-only (Apple Lossless
      ALAC) streaming protocols 
-     from current iOS/iPadOS 15.4 clients.
+     from current iOS/iPadOS 15.5 clients.
    * macOS computers (2011 or later, both Intel and "Apple Silicon" M1
      systems) can act either as AirPlay clients, or
      as the server running UxPlay. Using AirPlay, UxPlay can
