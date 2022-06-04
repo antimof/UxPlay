@@ -25,9 +25,9 @@ to select different hardware-appropriate output “videosinks” and
 pipeline).</li>
 <li>Support for server behind a firewall.</li>
 <li><strong>New</strong>: Support for Raspberry Pi, with hardware video
-acceleration by Video4Linux2 (replacement for 32-bit-only OpenMAX, which
-is no longer supported by Raspberry Pi OS). (For GStreamer &lt; 1.22, a
-<a
+acceleration by Video4Linux2 (the replacement for 32-bit-only OpenMAX,
+now unsupported by recent Raspberry Pi distributions). (For GStreamer
+&lt; 1.22, a <a
 href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">patch</a>
 to the GStreamer Video4Linux2 plugin, available in the <a
 href="https://github.com/FDH2/UxPlay/wiki">UxPlay Wiki</a>, is required,
@@ -37,7 +37,7 @@ href="https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-report
 reports</a>.</li>
 </ul>
 <p>This project is a GPLv3 open source unix AirPlay2 Mirror server for
-Linux, macOS, and *BSD. It was initially developed by <a
+Linux, macOS, and *BSD. It was initially developed by555555555555555 <a
 href="http://github.com/antimof/Uxplay">antimof</a> using code from <a
 href="https://github.com/FD-/RPiPlay">RPiPlay</a>, which in turn derives
 from <a
@@ -58,7 +58,7 @@ audio) of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a
 window on the server display (with the possibility of sharing that
 window on screen-sharing applications such as Zoom) on a host running
 Linux, macOS, or other unix. UxPlay supports Apple’s AirPlay 2 protocol
-using “Legacy Pairing”, and some features are missing. (Details of what
+using “Legacy Pairing”, but some features are missing. (Details of what
 is publically known about Apple’s AirPlay 2 protocol can be found <a
 href="https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol">here</a>
 and <a href="https://emanuelecozzi.net/docs/airplay2">here</a>).</p>
@@ -92,7 +92,7 @@ the server.</strong></li>
 id="possibility-for-using-hardware-accelerated-h264-video-decoding-if-available.">Possibility
 for using hardware-accelerated h264 video-decoding, if available.</h3>
 <p>UxPlay uses <a href="https://gstreamer.freedesktop.org">GStreamer</a>
-Plugins for rendering audio and video, This means that video and audio
+“plugins” for rendering audio and video. This means that video and audio
 are supported “out of the box”, using a choice of plugins. AirPlay
 streams video in h264 format: gstreamer decoding is plugin agnostic, and
 uses accelerated GPU hardware h264 decoders if available; if not,
@@ -100,10 +100,9 @@ software decoding is used.</p>
 <ul>
 <li><p><strong>VAAPI for Intel and AMD integrated graphics, NVIDIA with
 “Nouveau” open-source driver</strong></p>
-<p>With an Intel or AMD GPU, hardware decoding with the gstreamer
-open-source VAAPI gstreamer plugin is preferable. The open-source
-“Nouveau” drivers for NVIDIA graphics are also in principle supported:
-see <a
+<p>With an Intel or AMD GPU, hardware decoding with the open-source
+VAAPI gstreamer plugin is preferable. The open-source “Nouveau” drivers
+for NVIDIA graphics are also in principle supported: see <a
 href="https://nouveau.freedesktop.org/VideoAcceleration.html">here</a>,
 but this requires VAAPI to be supplemented with firmware extracted from
 the proprietary NVIDIA drivers.</p></li>

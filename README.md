@@ -21,8 +21,8 @@ Highlights:
      "audiosinks", and a fully-user-configurable video streaming pipeline).
    * Support for server behind a firewall.
    * **New**: Support for Raspberry Pi, with hardware video acceleration by
-     Video4Linux2 (replacement for 32-bit-only OpenMAX, which is no longer
-     supported by Raspberry Pi OS). (For GStreamer < 1.22,
+     Video4Linux2 (the replacement for 32-bit-only OpenMAX, now unsupported by
+     recent Raspberry Pi distributions). (For GStreamer < 1.22,
      a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
      to the GStreamer Video4Linux2 plugin, available in the
      [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless
@@ -31,7 +31,7 @@ Highlights:
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
-It was initially developed by
+It was initially developed by555555555555555
 [antimof](http://github.com/antimof/Uxplay) using code 
 from [RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
 [AirplayServer](https://github.com/KqsMea8/AirplayServer),
@@ -47,7 +47,8 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/
 (iPhones, iPads, MacBooks) in a window
 on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
-on a host running Linux, macOS, or other unix.  UxPlay supports Apple's AirPlay 2 protocol using "Legacy Pairing", and some features are missing.
+on a host running Linux, macOS, or other unix.  UxPlay supports Apple's AirPlay 2
+protocol using "Legacy Pairing", but some features are missing.
 (Details of what is publically known about Apple's AirPlay 2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
 [here](https://emanuelecozzi.net/docs/airplay2)).
@@ -79,17 +80,19 @@ streaming it to the client, and then re-streaming to the server.**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
-UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) Plugins for rendering audio and video,
-This means that video and audio are supported "out of the box", using a choice of plugins.
-AirPlay streams video in h264 format: gstreamer decoding is plugin agnostic, and uses accelerated GPU hardware
-h264 decoders if available; if not, software decoding is used. 
+UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) "plugins" for rendering
+audio and video.  This means that video and audio are supported "out of the box",
+using a choice of plugins.  AirPlay streams video in h264 format: gstreamer decoding
+is plugin agnostic, and uses accelerated GPU hardware h264 decoders if available;
+if not, software decoding is used. 
 
 * **VAAPI for Intel and AMD integrated graphics, NVIDIA with "Nouveau" open-source driver**
 
-   With an Intel or AMD GPU,  hardware decoding with the gstreamer open-source VAAPI gstreamer plugin is preferable.
-   The open-source "Nouveau" drivers for NVIDIA
-   graphics are also in principle supported: see [here](https://nouveau.freedesktop.org/VideoAcceleration.html),
-   but this requires  VAAPI to be supplemented with firmware extracted from the proprietary NVIDIA drivers.
+   With an Intel or AMD GPU,  hardware decoding with the open-source VAAPI gstreamer
+   plugin is preferable.   The open-source "Nouveau" drivers for NVIDIA graphics are
+   also in principle supported:
+   see [here](https://nouveau.freedesktop.org/VideoAcceleration.html), but this requires
+   VAAPI to be supplemented with firmware extracted from the proprietary NVIDIA drivers.
 
 * **NVIDIA with proprietary drivers**
 
@@ -106,13 +109,12 @@ h264 decoders if available; if not, software decoding is used.
 *  **Video4Linux2 support for the Raspberry Pi Broadcom GPU**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
-    of h264 video but this 
-    usually has unacceptable latency, and hardware-accelerated GPU decoding 
-    should be used.  Distributions such as  RPi OS (Bullseye) release have
-    recently dropped support for 32-bit-only OpenMAX (omx) GPU decoding (used by RPiPlay), in
-    favor of Video4Linux2 (v4l2). Fixes to the GStreamer v4l2 plugin that allow it to
-    work with UxPlay on RPi are now in the GStreamer development
-    branch, and will appear in the upcoming GStreamer-1.22 release.
+    of h264 video but this usually has unacceptable latency, and hardware-accelerated
+    GPU decoding should be used.  Distributions such as RPi OS (Bullseye) release have
+    recently dropped support for 32-bit-only OpenMAX (omx) GPU decoding (used by RPiPlay),
+    in favor of Video4Linux2 (v4l2). Fixes to the GStreamer v4l2 plugin that allow it to
+    work with UxPlay on RPi are now in the GStreamer development branch, and will appear
+    in the upcoming GStreamer-1.22 release.
     A (partial) backport (as `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`)
     has already appeared in RPi OS updates. Until the full update
     appears, or for other distributions, you can find
