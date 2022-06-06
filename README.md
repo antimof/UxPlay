@@ -249,7 +249,7 @@ with software-only  video decoding using option `-avdec`.
    export DISPLAY=:0
    nohup uxplay [options] > FILE &
 ```
-  Sound and video will play on the remote host, UxPlay will still keep running if the ssh session is closed.  
+  Sound and video will play on the remote host; "nohup" will keep uplay running if the ssh session is closed.  
   Terminal output is saved to FILE (which can be /dev/null to discard it).
 
 ### Non-Debian-based Linux or \*BSD
