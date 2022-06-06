@@ -148,6 +148,7 @@ now being periodically merged with the antimof tree (thank you antimof!).
 
 ## Building UxPlay on  Linux (or \*BSD):
 
+### Debian-based systems:
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS,
 see below). See [Troubleshooting](#troubleshooting) below for help with
 any difficulties.
@@ -241,7 +242,19 @@ without X11 that uses framebuffer video (such as RPi OS Bullseye "Lite")
 use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`". You can test UxPlay
 with software-only  video decoding using option `-avdec`.
 
- * **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
+* Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using ssh:
+
+```
+   ssh user@remote_host
+   export DISPLAY=:0
+   nohup uxplay [options] > FILE &
+```
+  Sound and video will play on the remote host, UxPlay will still keep running if the ssh session is closed.  
+  Terminal output is saved to FILE (which can be /dev/null to discard it).
+
+### Non-Debian-based Linux or \*BSD
+
+* **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo yum install) openssl-devel libplist-devel avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on repository)
 (+libX11-devel for ZOOMFIX). The required GStreamer packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
 gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics). 
