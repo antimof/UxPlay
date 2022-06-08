@@ -6,7 +6,7 @@ Highlights:
 
 -   GPLv3, open source.
 -   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-    Lossless ALAC) streaming protocols from current iOS/iPadOS 15.4
+    Lossless ALAC) streaming protocols from current iOS/iPadOS 15.5
     clients.
 -   macOS computers (2011 or later, both Intel and "Apple Silicon" M1
     systems) can act either as AirPlay clients, or as the server running
@@ -120,9 +120,9 @@ used.
     of h264 video but this usually has unacceptable latency, and
     hardware-accelerated GPU decoding should be used. UxPlay accesses
     the GPU using the GStreamer plugin for Video4Linux2 (v4l2), which
-    replaces unmaintained 32-bit-only OpenMby RPiPlay. Fixes to the v4l2
-    plugin that allow it to work with UxPlay on RPi are now in the
-    GStreamer development branch, and will appear in the upcoming
+    replaces unmaintained 32-bit-only OpenMax used by RPiPlay. Fixes to
+    the v4l2 plugin that allow it to work with UxPlay on RPi are now in
+    the GStreamer development branch, and will appear in the upcoming
     GStreamer-1.22 release. A (partial) backport (as
     `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) has already appeared in
     RPi OS updates. Until the full update appears, or for other
@@ -158,6 +158,8 @@ but the pull requests are now being periodically merged with the antimof
 tree (thank you antimof!).
 
 ## Building UxPlay on Linux (or \*BSD):
+
+### Debian-based systems:
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
 macOS, see below). See [Troubleshooting](#troubleshooting) below for
@@ -260,6 +262,22 @@ a synonym for "`-v4l2 -vs waylandsink`" on a desktop system with Wayland
 framebuffer video (such as RPi OS Bullseye "Lite") use "`uxplay -rpifb`"
 as a synonym for "`uxplay -v4l2 -vs kmssink`". You can test UxPlay with
 software-only video decoding using option `-avdec`.
+
+-   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
+    ssh:
+
+```{=html}
+<!-- -->
+```
+       ssh user@remote_host
+       export DISPLAY=:0
+       nohup uxplay [options] > FILE &
+
+Sound and video will play on the remote host; "nohup" will keep uplay
+running if the ssh session is closed.\
+Terminal output is saved to FILE (which can be /dev/null to discard it).
+
+### Non-Debian-based Linux or \*BSD
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
@@ -698,10 +716,12 @@ option "-nc" that leaves the video window open.
 
 To troubleshoot GStreamer execute "export GST_DEBUG=2" to set the
 GStreamer debug-level environment-variable in the terminal where you
-will run uxplay, so that you see warning and error messages; (replace
-"2" by "4" to see much (much) more of what is happening inside
-GStreamer). Run "gst-inspect-1.0" to see which GStreamer plugins are
-installed on your system.
+will run uxplay, so that you see warning and error messages; see
+[GStreamer debugging
+tools](https://gstreamer.freedesktop.org/documentation/tutorials/basic/debugging-tools.html)
+for how to see much more of what is happening inside GStreamer. Run
+"gst-inspect-1.0" to see which GStreamer plugins are installed on your
+system.
 
 Some extra GStreamer packages for special plugins may need to be
 installed (or reinstalled: a user using a Wayland display system as an
@@ -948,8 +968,8 @@ Here is an attempt at listing the various authors and the components
 they created:
 
 UxPlay was initially created by **antimof** from RPiPlay, by replacing
-its Raspberry-Pi-specific video and audio rendering system with
-GStreamer rendering for Desktop Linux (antimof's work on code in
+its Raspberry-Pi-adapted OpenMAX video and audio rendering system with
+GStreamer rendering for desktop Linux systems (antimof's work on code in
 `renderers/` was later backported to RPiPlay).
 
 The previous authors of code included in UxPlay by inheritance from

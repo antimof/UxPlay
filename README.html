@@ -10,7 +10,7 @@ href="https://github.com/FDH2/UxPlay">https://github.com/FDH2/UxPlay</a>
 <ul>
 <li>GPLv3, open source.</li>
 <li>Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-Lossless ALAC) streaming protocols from current iOS/iPadOS 15.4
+Lossless ALAC) streaming protocols from current iOS/iPadOS 15.5
 clients.</li>
 <li>macOS computers (2011 or later, both Intel and “Apple Silicon” M1
 systems) can act either as AirPlay clients, or as the server running
@@ -122,10 +122,10 @@ GPU</strong></p>
 h264 video but this usually has unacceptable latency, and
 hardware-accelerated GPU decoding should be used. UxPlay accesses the
 GPU using the GStreamer plugin for Video4Linux2 (v4l2), which replaces
-unmaintained 32-bit-only OpenMby RPiPlay. Fixes to the v4l2 plugin that
-allow it to work with UxPlay on RPi are now in the GStreamer development
-branch, and will appear in the upcoming GStreamer-1.22 release. A
-(partial) backport (as
+unmaintained 32-bit-only OpenMax used by RPiPlay. Fixes to the v4l2
+plugin that allow it to work with UxPlay on RPi are now in the GStreamer
+development branch, and will appear in the upcoming GStreamer-1.22
+release. A (partial) backport (as
 <code>gstreamer1.0-plugins-good-1.18.4-2+~rpt1</code>) has already
 appeared in RPi OS updates. Until the full update appears, or for other
 distributions, you can find <a
@@ -159,6 +159,7 @@ but the pull requests are now being periodically merged with the antimof
 tree (thank you antimof!).</p>
 <h2 id="building-uxplay-on-linux-or-bsd">Building UxPlay on Linux (or
 *BSD):</h2>
+<h3 id="debian-based-systems">Debian-based systems:</h3>
 <p>(Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
 macOS, see below). See <a href="#troubleshooting">Troubleshooting</a>
 below for help with any difficulties.</p>
@@ -261,6 +262,19 @@ framebuffer video (such as RPi OS Bullseye “Lite”) use
 “<code>uxplay -rpifb</code>” as a synonym for
 “<code>uxplay -v4l2 -vs kmssink</code>”. You can test UxPlay with
 software-only video decoding using option <code>-avdec</code>.</p>
+<ul>
+<li>Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
+ssh:</li>
+</ul>
+<pre><code>   ssh user@remote_host
+   export DISPLAY=:0
+   nohup uxplay [options] &gt; FILE &amp;</code></pre>
+<p>Sound and video will play on the remote host; “nohup” will keep uplay
+running if the ssh session is closed.<br />
+Terminal output is saved to FILE (which can be /dev/null to discard
+it).</p>
+<h3 id="non-debian-based-linux-or-bsd">Non-Debian-based Linux or
+*BSD</h3>
 <ul>
 <li><p><strong>Red Hat, Fedora, CentOS (now continued as Rocky Linux or
 Alma Linux):</strong> (sudo yum install) openssl-devel libplist-devel
@@ -667,9 +681,10 @@ option “-nc” that leaves the video window open.</p>
 (missing plugins, etc.):</h3>
 <p>To troubleshoot GStreamer execute “export GST_DEBUG=2” to set the
 GStreamer debug-level environment-variable in the terminal where you
-will run uxplay, so that you see warning and error messages; (replace
-“2” by “4” to see much (much) more of what is happening inside
-GStreamer). Run “gst-inspect-1.0” to see which GStreamer plugins are
+will run uxplay, so that you see warning and error messages; see <a
+href="https://gstreamer.freedesktop.org/documentation/tutorials/basic/debugging-tools.html">GStreamer
+debugging tools</a> for how to see much more of what is happening inside
+GStreamer. Run “gst-inspect-1.0” to see which GStreamer plugins are
 installed on your system.</p>
 <p>Some extra GStreamer packages for special plugins may need to be
 installed (or reinstalled: a user using a Wayland display system as an
@@ -885,10 +900,10 @@ antecedents]</em></p>
 time. Here is an attempt at listing the various authors and the
 components they created:</p>
 <p>UxPlay was initially created by <strong>antimof</strong> from
-RPiPlay, by replacing its Raspberry-Pi-specific video and audio
-rendering system with GStreamer rendering for Desktop Linux (antimof’s
-work on code in <code>renderers/</code> was later backported to
-RPiPlay).</p>
+RPiPlay, by replacing its Raspberry-Pi-adapted OpenMAX video and audio
+rendering system with GStreamer rendering for desktop Linux systems
+(antimof’s work on code in <code>renderers/</code> was later backported
+to RPiPlay).</p>
 <p>The previous authors of code included in UxPlay by inheritance from
 RPiPlay include:</p>
 <ul>
