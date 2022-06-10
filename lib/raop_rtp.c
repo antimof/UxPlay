@@ -425,7 +425,8 @@ raop_rtp_thread_udp(void *arg)
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
     bool have_synced = false;
-    bool no_data = true;
+    bool no_data_yet = true;
+    char no_data[] = {0x00, 0x34, 0x68, 0x00};
     /* the 44.1 kHZ rtp_time epoch is about 27 hours */
     bool have_rtp_time = false;
     int64_t rtp_time;  /* will only change by small amounts to track rtp epoch changes  */
@@ -439,8 +440,7 @@ raop_rtp_thread_udp(void *arg)
     while(1) {
         fd_set rfds;
         struct timeval tv;
-        int nfds, ret;
-
+        int nfds, ret;	
         /* Check if we are still running and process callbacks */
         if (raop_rtp_process_events(raop_rtp, NULL)) {
             break;
@@ -481,9 +481,9 @@ raop_rtp_thread_udp(void *arg)
             if (type_c == 0x56) {
                 /* Handle resent data packet */
                 const int offset = 4;
-                if (packetlen - offset > 12) {
+                if (packetlen > offset + 12) {
                     uint32_t rtp_timestamp = byteutils_get_int_be(packet + offset, 4);
-                    if (packetlen - offset == 16 && packet[offset + 12] == 0x00 && packet[offset + 13] == 0x68 && packet[offset + 14] == 0x34 && packet[offset + 15] == 0x00) {
+                    if (packetlen == offset + 16 && !memcmp(&packet[offset + 12], no_data, 4)) {
                         /* skip packet */
                     } else {
                         logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: rtp=%u", rtp_timestamp);
@@ -568,11 +568,11 @@ raop_rtp_thread_udp(void *arg)
             if (packetlen >= 12) {
                 int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set */
                 uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
-                if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
+                if (packetlen == 16 && !memcmp(&packet[12], no_data, 4)) {
                     /* skip packet */
                 } else {
-                    if (no_data) {
-                        no_data = false;
+                    if (no_data_yet) {
+                        no_data_yet = false;
                         if (have_synced == false) {
                             /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timesamp */
                             int64_t ntp_now = (int64_t) raop_ntp_get_local_time(raop_rtp->ntp);
