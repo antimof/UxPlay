@@ -481,10 +481,21 @@ raop_rtp_thread_udp(void *arg)
             if (type_c == 0x56) {
                 /* Handle resent data packet */
                 const int offset = 4;
-                uint32_t rtp_timestamp = byteutils_get_int_be(packet + offset, 4);
-                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: rtp=%u", rtp_timestamp);
-                int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, rtp_timestamp, 1);
-                assert(result >= 0);
+                if (packetlen - offset > 12) {
+                    uint32_t rtp_timestamp = byteutils_get_int_be(packet + offset, 4);
+                    if (packetlen - offset == 16 && packet[offset + 12] == 0x00 && packet[offset + 13] == 0x68 && packet[offset + 14] == 0x34 && packet[offset + 15] == 0x00) {
+                        /* skip packet */
+                    } else {
+                        logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: rtp=%u", rtp_timestamp);
+                        int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, rtp_timestamp, 1);
+                        assert(result >= 0);
+                    }
+                } else {
+                   /* unrecognized type_c = 0x56 packets  with length 8 have been reported */
+                   char *str = utils_data_to_string(packet, packetlen, 16);
+                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received short type_c = 0x%2x packet with length %d:\n%s", type_c, packetlen, str);
+                   free (str);
+                }
             } else if (type_c == 0x54 && packetlen >= 20) {
                 /* packet[0] = 0x90 (first sync ?) or 0x80 (subsequent ones)      *
                  * packet[1:3] = 0xd4,  0xd4 && ~0x80 = type 54                   *
@@ -550,11 +561,11 @@ raop_rtp_thread_udp(void *arg)
             packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0,
                                  (struct sockaddr *)&saddr, &saddrlen);
             // rtp payload type
-            //int type_d = packet[1] & ~0x80;
+            int type_d = packet[1] & ~0x80;
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
 
             // Len = 16 appears if there is no time
-            if ( packetlen >= 12) {
+            if (packetlen >= 12) {
                 int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set */
                 uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
                 if (packetlen == 16 && packet[12] == 0x00 && packet[13] == 0x68 && packet[14] == 0x34 && packet[15] == 0x00) {
@@ -635,8 +646,11 @@ raop_rtp_thread_udp(void *arg)
                 if (!no_resend) {
                     raop_buffer_handle_resends(raop_rtp->buffer, raop_rtp_resend_callback, raop_rtp);
                 }
+            } else {
+                   char *str = utils_data_to_string(packet, packetlen, 16);
+                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received short type_d = 0x%2x  packet with length %d:\n%s", type_d, packetlen, str);
+                   free (str);
             }
-
         }
     }
 
