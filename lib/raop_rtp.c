@@ -425,9 +425,8 @@ raop_rtp_thread_udp(void *arg)
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
     bool have_synced = false;
-    bool audio_stream_started = false;
+    bool audio_data_started = false;
     unsigned char empty_packet_marker[] = {0x00, 0x34, 0x68, 0x00};
-    const int resend_offset = 4;    
     /* the 44.1 kHZ rtp_time epoch is about 27 hours */
     bool have_rtp_time = false;
     int64_t rtp_time;  /* will only change by small amounts to track rtp epoch changes  */
@@ -479,12 +478,15 @@ raop_rtp_thread_udp(void *arg)
             raop_rtp->control_saddr_len = saddrlen;
             int type_c = packet[1] & ~0x80;
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "\nraop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
-            if (type_c == 0x56 && packetlen >= resend_offset + 4) {
-                /* Handle resent data packet */
-                unsigned short seqnum = byteutils_get_short_be(packet, resend_offset + 2);
-                if (packetlen > resend_offset + 12) {
-                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: seqnum=%u", seqnum);
-                    int result = raop_buffer_enqueue(raop_rtp->buffer, packet + resend_offset, packetlen - resend_offset, 1);
+
+            if (type_c == 0x56 && packetlen >= 8) {
+	        /* Handle resent data packet, which begins at offset 4 of these packets */
+                unsigned char *resent_packet =  &packet[4];
+                unsigned int resent_packetlen = packetlen - 4;
+                unsigned short seqnum = byteutils_get_short_be(resent_packet, 2);
+                if (resent_packetlen > 12) {
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent packet: seqnum=%u", seqnum);
+                    int result = raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, 1);
                     assert(result >= 0);
                 } else {
                    /* type_c = 0x56 packets  with length 8 have been reported */
@@ -532,23 +534,37 @@ raop_rtp_thread_udp(void *arg)
             }
         }
 
-        /* rtp un-resent audio data packets:                   *
-         * packet[0] 0x80    (both AAC-ELD and ALAC)           *
-         * packet[1] 0x60 = 96                                 *
-         * packet[2:3] seqnum (big-endian unsigned short)      *
-         * packet[4:7] rtp timestamp (big-endian unsigned int) *
-         * packet[8:11] 0x00 0x00 0x00 0x00                    *
-         * packet[12:packetlen - 1] encrypted audio payload    */
-
-        /* consecutive AAC-ELD rtp timestamps differ by spf = 480 *
-         * consecutive ALAC rtp timestamps differ by spf = 352    *
-         * both have PCM uncompressed sampling rate = 441000 Hz   */
+        /* rtp audio data packets:
+         * packet[0] 0x80
+         * packet[1] 0x60 = 96
+         * packet[2:3] seqnum (big-endian unsigned short)
+         * packet[4:7] rtp timestamp (big-endian unsigned int)
+         * packet[8:11] 0x00 0x00 0x00 0x00
+         * packet[12:packetlen - 1] encrypted audio payload
+         * For (AAC-ELD only), the payload of initial packets at the start of
+         * the stream may be replaced by a 4-byte "no_data_marker" 0x00 0x68 0x34 0x00 */
+	
+        /* consecutive AAC-ELD rtp timestamps differ by spf = 480
+         * consecutive ALAC rtp timestamps differ by spf = 352
+         * both have PCM uncompressed sampling rate = 441000 Hz */
 
         /* clock time in microseconds advances at (rtp_timestamp * 1000000)/44100 between frames */
 	
-        /* every AAC-ELD packet is sent three times:  0  0 1  0 1 2  1 2 3  2 3 4 ... *
-         * (after decoding AAC-ELD into PCM, the sound frame is three times bigger)   *
-         * ALAC packets are sent once only  0 1 2 3 4 5  ...                          */
+        /* every AAC-ELD packet is sent three times:  0  0 1  0 1 2  1 2 3  2 3 4 ... 
+         * (after decoding AAC-ELD into PCM, the sound frame is three times bigger)
+         * ALAC packets are sent once only  0 1 2 3 4 5  ...  */
+
+        /* When the AAC-ELD audio stream starts, the initial packets are length-16 packets with
+         * a four-byte "no_data_marker" 0x00 0x68 0x34 0x00 replacing the payload.
+         * The 12-byte packetheader contains  a secnum and rtp_timestamp, and each  packets is sent
+         * three times; the secnum and rtp_timestamp increment according to the same pattern as 
+         * AAC-ELD packets with audio content.*/
+
+	 /* When the ALAC audio stream starts, the initial packets are length-44 packets with 
+	  * the same 32-byte encrypted payload which after decryption is the beginning of a
+          * 32-byte ALAC packet, presumably with format information, but not actual audio data.
+          * The secnum and rtp_timestamp in the packet header increment according to the same
+          * pattern as ALAC packets with audio content */
 
         if (FD_ISSET(raop_rtp->dsock, &rfds)) {
             //logger_log(raop_rtp->logger, LOGGER_INFO, "Would have data packet in queue");
@@ -564,8 +580,8 @@ raop_rtp_thread_udp(void *arg)
                 if (packetlen == 16 && !memcmp(&packet[12], empty_packet_marker, 4)) {
                     /* skip packet: these marked empty packets occur before first time syncronization */
                 } else {
-                    if (!audio_stream_started) {
-                        audio_stream_started = true;
+                    if (!audio_data_started) {
+                        audio_data_started = true;
                         if (have_synced == false) {
                             /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timesamp */
                             uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
