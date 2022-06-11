@@ -482,12 +482,12 @@ raop_rtp_thread_udp(void *arg)
                 /* Handle resent data packet */
                 const int offset = 4;
                 if (packetlen > offset + 12) {
-                    uint32_t rtp_timestamp = byteutils_get_int_be(packet + offset, 4);
+                    unsigned short seqnum = byteutils_get_short_be(packet + offset, 2);
                     if (packetlen == offset + 16 && !memcmp(&packet[offset + 12], no_data, 4)) {
                         /* skip packet */
                     } else {
-                        logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: rtp=%u", rtp_timestamp);
-                        int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, rtp_timestamp, 1);
+                        logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: seqnum=%u", seqnum);
+                        int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, 1);
                         assert(result >= 0);
                     }
                 } else {
@@ -604,7 +604,7 @@ raop_rtp_thread_udp(void *arg)
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "First audio packet received, have_synced = true");
                         }
                     }
-                    int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_timestamp, 1);
+                    int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, 1);
                     assert(result >= 0);
                 }
                 // Render continuous buffer entries
