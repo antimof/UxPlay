@@ -425,8 +425,9 @@ raop_rtp_thread_udp(void *arg)
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
     bool have_synced = false;
-    bool no_data_yet = true;
-    char no_data[] = {0x00, 0x34, 0x68, 0x00};
+    bool audio_stream_started = false;
+    unsigned char empty_packet_marker[] = {0x00, 0x34, 0x68, 0x00};
+    const int resend_offset = 4;    
     /* the 44.1 kHZ rtp_time epoch is about 27 hours */
     bool have_rtp_time = false;
     int64_t rtp_time;  /* will only change by small amounts to track rtp epoch changes  */
@@ -478,33 +479,28 @@ raop_rtp_thread_udp(void *arg)
             raop_rtp->control_saddr_len = saddrlen;
             int type_c = packet[1] & ~0x80;
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "\nraop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
-            if (type_c == 0x56) {
+            if (type_c == 0x56 && packetlen >= resend_offset + 4) {
                 /* Handle resent data packet */
-                const int offset = 4;
-                if (packetlen > offset + 12) {
-                    unsigned short seqnum = byteutils_get_short_be(packet + offset, 2);
-                    if (packetlen == offset + 16 && !memcmp(&packet[offset + 12], no_data, 4)) {
-                        /* skip packet */
-                    } else {
-                        logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: seqnum=%u", seqnum);
-                        int result = raop_buffer_enqueue(raop_rtp->buffer, packet + offset, packetlen - offset, 1);
-                        assert(result >= 0);
-                    }
+                unsigned short seqnum = byteutils_get_short_be(packet, resend_offset + 2);
+                if (packetlen > resend_offset + 12) {
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent: seqnum=%u", seqnum);
+                    int result = raop_buffer_enqueue(raop_rtp->buffer, packet + resend_offset, packetlen - resend_offset, 1);
+                    assert(result >= 0);
                 } else {
-                   /* unrecognized type_c = 0x56 packets  with length 8 have been reported */
+                   /* type_c = 0x56 packets  with length 8 have been reported */
                    char *str = utils_data_to_string(packet, packetlen, 16);
-                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received short type_c = 0x%2x packet with length %d:\n%s", type_c, packetlen, str);
+                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received empty resent packet with length %d, seqnum=%u:\n%s", packetlen, seqnum, str);
                    free (str);
                 }
             } else if (type_c == 0x54 && packetlen >= 20) {
-                /* packet[0] = 0x90 (first sync ?) or 0x80 (subsequent ones)      *
-                 * packet[1:3] = 0xd4,  0xd4 && ~0x80 = type 54                   *
-                 * packet[2:3] = 0x00 0x04                                        *
-                 * packet[4:7] : sync_rtp big-endian uint32_t)                    *
-                 * packet[8:15]: remote ntp timestamp (uint64 big-endian)         *
-                 * packet[16:20]: next_rtp big-endian uint32_t)                   *
-                 * next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC-ELD *
-                 * next_rtp = sync_rtp + 77175  = 441 * 175 (1.75 sec) for ALAC   */
+                /* packet[0] = 0x90 (first sync ?) or 0x80 (subsequent ones)
+                 * packet[1] = 0xd4,  (0xd4 && ~0x80 = type 0x54)
+                 * packet[2:3] = 0x00 0x04
+                 * packet[4:7] : sync_rtp (big-endian uint32_t)
+                 * packet[8:15]: remote ntp timestamp (big-endian uint64_t)  
+                 * packet[16:20]: next_rtp (big-endian uint32_t)
+                 * next_rtp = sync_rtp + 7497 =  441 *  17 (0.17 sec) for AAC-ELD
+                 * next_rtp = sync_rtp + 77175  = 441 * 175 (1.75 sec) for ALAC */
 
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
@@ -561,20 +557,18 @@ raop_rtp_thread_udp(void *arg)
             packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0,
                                  (struct sockaddr *)&saddr, &saddrlen);
             // rtp payload type
-            int type_d = packet[1] & ~0x80;
+            //int type_d = packet[1] & ~0x80;
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
-
-            // Len = 16 appears if there is no time
             if (packetlen >= 12) {
                 int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set */
-                uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
-                if (packetlen == 16 && !memcmp(&packet[12], no_data, 4)) {
-                    /* skip packet */
+                if (packetlen == 16 && !memcmp(&packet[12], empty_packet_marker, 4)) {
+                    /* skip packet: these marked empty packets occur before first time syncronization */
                 } else {
-                    if (no_data_yet) {
-                        no_data_yet = false;
+                    if (!audio_stream_started) {
+                        audio_stream_started = true;
                         if (have_synced == false) {
                             /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timesamp */
+                            uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
                             int64_t ntp_now = (int64_t) raop_ntp_get_local_time(raop_rtp->ntp);
                             int64_t ntp_time = ((int64_t) ntp_now) - ntp_start_time;
                             int64_t latency = 0;
@@ -648,7 +642,7 @@ raop_rtp_thread_udp(void *arg)
                 }
             } else {
                    char *str = utils_data_to_string(packet, packetlen, 16);
-                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received short type_d = 0x%2x  packet with length %d:\n%s", type_d, packetlen, str);
+                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received short type_d = 0x%2x  packet with length %d:\n%s", packet[1] & ~0x80, packetlen, str);
                    free (str);
             }
         }
