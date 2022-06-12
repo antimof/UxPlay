@@ -403,9 +403,9 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, uint64_t ntp_s
         }
         total_offsets += (int64_t) (rtp_offset / raop_rtp-> rtp_sync_scale);
         if (raop_rtp->sync_data[i].ntp_time > ntp_start_time) {
-	  total_offsets -= (int64_t)(raop_rtp->sync_data[i].ntp_time - ntp_start_time);
+            total_offsets -= (int64_t)(raop_rtp->sync_data[i].ntp_time - ntp_start_time);
         } else {
-	  total_offsets += (int64_t) (ntp_start_time - raop_rtp->sync_data[i].ntp_time);
+            total_offsets += (int64_t) (ntp_start_time - raop_rtp->sync_data[i].ntp_time);
         }
         valid_data_count++;
     }
@@ -587,7 +587,8 @@ raop_rtp_thread_udp(void *arg)
                             switch (raop_rtp->ct) {
                             case 0x02:  
                                 latency = -DELAY_ALAC;   /* DELAY = 2000000 (2.0 sec) is empirical choice for ALAC */
-                                break;                            case 0x08:
+                                break;
+                            case 0x08:
                                 latency = -DELAY_AAC;   /* DELAY = 500000 (0.5 sec) is empirical choice for AAC-ELD */
                                 break;
                             default:
@@ -600,13 +601,6 @@ raop_rtp_thread_udp(void *arg)
                             raop_rtp->rtp_sync_offset -= ntp_time;
                             int64_t ntp_timestamp = (int64_t) ((double) rtp_timestamp) / raop_rtp->rtp_sync_scale;
                             ntp_timestamp -= raop_rtp->rtp_sync_offset; 
-                            latency = ((int64_t) (ntp_now - ntp_start_time)) - ntp_timestamp;
-                            unsigned short seqnum = byteutils_get_short_be(packet, 2);
-                            logger_log(raop_rtp->logger, LOGGER_INFO,
-                                       "initial  audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u (not from sync)",
-                                       ((double) ntp_now ) / SEC, ((double) (ntp_start_time + ntp_timestamp)) /  SEC, ((double) latency) / SEC, rtp_timestamp, seqnum);
-                        }  else {
-                            logger_log(raop_rtp->logger, LOGGER_DEBUG, "First audio packet received, have_synced = true");
                         }
                     }
                     int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, 1);
@@ -625,13 +619,13 @@ raop_rtp_thread_udp(void *arg)
                      }
                     /* the 44.1 kHZ rtp_time epoch is about 27 hours;
                      * this code handles epoch straddling by uint32_t time pairs  */
-		    diff1 = timestamp - prev_rtp_timestamp;
-		    diff2 = prev_rtp_timestamp - timestamp;
-		    if (diff1 < diff2) {
-		      rtp_time += (int64_t) diff1;
-		    } else {
-		      rtp_time -= (int64_t) diff2;
-		    }
+                    diff1 = timestamp - prev_rtp_timestamp;
+                    diff2 = prev_rtp_timestamp - timestamp;
+                    if (diff1 < diff2) {
+                        rtp_time += (int64_t) diff1;
+                    } else {
+                        rtp_time -= (int64_t) diff2;
+                    }
                     prev_rtp_timestamp = timestamp;
                     int64_t ntp_timestamp = (int64_t) ((double) rtp_time) / raop_rtp->rtp_sync_scale;
                     ntp_timestamp -= raop_rtp->rtp_sync_offset;
@@ -656,7 +650,7 @@ raop_rtp_thread_udp(void *arg)
                 }
             } else {
                    char *str = utils_data_to_string(packet, packetlen, 16);
-                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received short type_d = 0x%2x  packet with length %d:\n%s", packet[1] & ~0x80, packetlen, str);
+                   logger_log(raop_rtp->logger, LOGGER_DEBUG, "Received short type_d = 0x%2x  packet with length %d:\n%s", packet[1] & ~0x80, packetlen, str);
                    free (str);
             }
         }
