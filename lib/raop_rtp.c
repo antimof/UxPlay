@@ -409,7 +409,7 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, uint64_t ntp_s
 }
 
 
-uint64_t rtp32_to_64time(uint32_t *rtp32,  uint64_t *rtp64_time) {
+uint64_t rtp32_to_64time(const uint32_t *rtp32, const  uint64_t *rtp64_time) {
     uint32_t rtp32_time = (uint32_t) (*rtp64_time);
     uint64_t rtp64;
 
