@@ -648,7 +648,7 @@ raop_rtp_thread_udp(void *arg)
                     audio_data.data_len = payload_size;
                     audio_data.data = payload;
                     audio_data.ntp_time = ntp_start_time + elapsed_time;
-		    audio_data.ntp_time -= raop_rtp->rtp_sync_offset;
+                    audio_data.ntp_time -= raop_rtp->rtp_sync_offset;
                     audio_data.rtp_time = rtp64_timestamp;
                     raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
                     free(payload);
