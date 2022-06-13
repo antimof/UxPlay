@@ -1,4 +1,4 @@
-# UxPlay 1.52: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.53: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -791,6 +791,10 @@ bit 27 (listed as "SupportsLegacyPairing") of the "features" plist code
 (reported to the client by the AirPlay server) to be set.
 
 # ChangeLog
+
+1.53 2022-06-13 Internal changes to audio sync code, revised
+documentation, minor bugfix (fix assertion crash when resent audio
+packets are empty).
 
 1.52 2022-05-05 Cleaned up initial audio sync code, and reformatted
 streaming debug output (readable aligned timestamps with decimal points

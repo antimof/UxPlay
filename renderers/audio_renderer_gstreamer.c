@@ -182,7 +182,7 @@ void  audio_renderer_start(unsigned char *ct) {
 }
 
 void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time,
-                                  uint64_t rtp_time, bool rtp_and_ntp_have_synced) {
+                                  uint64_t rtp_time) {
     GstBuffer *buffer;
     bool valid;
     if (data_len == 0 || renderer == NULL) return;

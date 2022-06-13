@@ -409,7 +409,7 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, uint64_t ntp_s
 }
 
 
-uint64_t rtp32_to_64time(const uint32_t *rtp32, const  uint64_t *rtp64_time) {
+uint64_t rtp32_to_64time(const uint32_t *rtp32, const uint64_t *rtp64_time) {
     uint32_t rtp32_time = (uint32_t) (*rtp64_time);
     uint64_t rtp64;
 
@@ -502,12 +502,13 @@ raop_rtp_thread_udp(void *arg)
                 uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
                 uint64_t timestamp_64 = rtp32_to_64time(&timestamp, &rtp64_time);
                 if (resent_packetlen > 12) {
-                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent packet: seqnum=%u", seqnum);
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp resent audio packet: seqnum=%u", seqnum);
                     assert(raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, timestamp_64, 1) >= 0);
                 } else {
                    /* type_c = 0x56 packets  with length 8 have been reported */
                    char *str = utils_data_to_string(packet, packetlen, 16);
-                   logger_log(raop_rtp->logger, LOGGER_INFO, "Received empty resent packet with length %d, seqnum=%u:\n%s", packetlen, seqnum, str);
+                   logger_log(raop_rtp->logger, LOGGER_DEBUG, "Received empty resent audio packet length %d, seqnum=%u:\n%s",
+                              packetlen, seqnum, str);
                    free (str);
                 }
             } else if (type_c == 0x54 && packetlen >= 20) {
@@ -550,7 +551,9 @@ raop_rtp_thread_udp(void *arg)
                 free(str);
                 raop_rtp_sync_clock(raop_rtp, sync_ntp_local, ntp_start_time, sync_rtp64, shift);		
             } else {
-                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp unknown packet");
+                char *str = utils_data_to_string(packet, packetlen, 16);
+                logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp unknown udp control packet\n%s", str);
+                free(str);
             }
         }
 
