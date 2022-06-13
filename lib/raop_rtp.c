@@ -404,7 +404,8 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, uint64_t ntp_s
     int64_t correction = avg_offset - raop_rtp->rtp_sync_offset;
     raop_rtp->rtp_sync_offset = avg_offset;
 
-    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp sync correction=%lld, rtp_sync_offset = %8.6f ", correction, ((double) raop_rtp->rtp_sync_offset) /SEC);
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp sync correction=%lld, rtp_sync_offset = %8.6f ",
+               correction, ((double) raop_rtp->rtp_sync_offset) /SEC);
 }
 
 
@@ -498,8 +499,8 @@ raop_rtp_thread_udp(void *arg)
                 unsigned char *resent_packet =  &packet[4];
                 unsigned int resent_packetlen = packetlen - 4;
                 unsigned short seqnum = byteutils_get_short_be(resent_packet, 2);
-		uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
-		uint64_t timestamp_64 = rtp32_to_64time(&timestamp, &rtp64_time);
+                uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
+                uint64_t timestamp_64 = rtp32_to_64time(&timestamp, &rtp64_time);
                 if (resent_packetlen > 12) {
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio resent packet: seqnum=%u", seqnum);
                     assert(raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, timestamp_64, 1) >= 0);
@@ -630,8 +631,8 @@ raop_rtp_thread_udp(void *arg)
                         sync_adjustment = 0.0;
                     }
                     rtp_count++;
-		    offset -= initial_offset;
-		    rtp_timestamp -= rtp_start_time;
+                    offset -= initial_offset;
+                    rtp_timestamp -= rtp_start_time;
                     sync_adjustment += ((double) offset) + (((double) rtp_timestamp) / raop_rtp->rtp_sync_scale);
                     raop_rtp->rtp_sync_offset = initial_offset + (int64_t) (sync_adjustment / rtp_count);
                 }
@@ -640,21 +641,20 @@ raop_rtp_thread_udp(void *arg)
                 void *payload = NULL;
                 unsigned int payload_size;
                 unsigned short seqnum;
-		uint64_t rtp64_timestamp;
+                uint64_t rtp64_timestamp;
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &rtp64_timestamp, &seqnum, no_resend))) {
                     uint64_t elapsed_time =  (uint64_t) (((double) (rtp64_timestamp - (uint64_t) rtp_start_time)) / raop_rtp->rtp_sync_scale);
                     audio_decode_struct audio_data; 
                     audio_data.data_len = payload_size;
                     audio_data.data = payload;
-                    audio_data.ntp_time = ntp_start_time;
-		    audio_data.ntp_time = ntp_start_time + elapsed_time;
+                    audio_data.ntp_time = ntp_start_time + elapsed_time;
 		    audio_data.ntp_time -= raop_rtp->rtp_sync_offset;
                     audio_data.rtp_time = rtp64_timestamp;
                     raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
                     free(payload);
                     uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
-                    int64_t latency = raop_rtp->rtp_sync_offset +  (int64_t) (ntp_now - ntp_start_time);
-		    latency -= (int64_t) elapsed_time;
+                    int64_t latency = raop_rtp->rtp_sync_offset + (int64_t) (ntp_now - ntp_start_time);
+                    latency -= (int64_t) elapsed_time;
                     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%lu seqnum = %u",
                                ((double) ntp_now ) / SEC, ((double) audio_data.ntp_time) / SEC, ((double) latency) / SEC, rtp64_timestamp, seqnum);
                 }
