@@ -525,7 +525,11 @@ raop_rtp_thread_udp(void *arg)
 
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
-                assert(rtp_clock_started);
+                if (!rtp_clock_started) {
+                    rtp_clock_started = true;
+                    rtp_start_time = sync_rtp;
+                    rtp64_time = (uint64_t) rtp_start_time;
+                }
                 uint64_t sync_rtp64 = rtp32_to_64time(&sync_rtp, &rtp64_time) - (uint64_t) rtp_start_time;
 
                 if (have_synced == false) {
@@ -606,13 +610,13 @@ raop_rtp_thread_udp(void *arg)
                 if (!rtp_clock_started) {
                     rtp_clock_started = true;
                     rtp_start_time = rtp_timestamp;
-                    rtp64_time = (uint64_t) rtp_timestamp;
+                    rtp64_time = (uint64_t) rtp_start_time;
                 } else {
                      rtp64_time = rtp32_to_64time(&rtp_timestamp, &rtp64_time);
                 }
                 
                 if (have_synced == false) {
-                    /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timesamp */
+                    /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timestamp */
                     uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
                     int64_t offset = -(int64_t) (ntp_now - ntp_start_time);
                     if (!have_set_delay) {
@@ -662,7 +666,7 @@ raop_rtp_thread_udp(void *arg)
                     uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
                     int64_t latency = raop_rtp->rtp_sync_offset + (int64_t) (ntp_now - ntp_start_time);
                     latency -= (int64_t) elapsed_time;
-                    logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%lu seqnum = %u",
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%lu seqnum = %u",
                                ((double) ntp_now ) / SEC, ((double) audio_data.ntp_time) / SEC, ((double) latency) / SEC, rtp64_timestamp, seqnum);
                 }
 
