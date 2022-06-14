@@ -37,7 +37,7 @@
 #define SEC 1000000
 
 #define DELAY_AAC 500000 //empirical, matches audio latency of about -0.5 sec after first clock sync event
-#define DELAY_ALAC 2000000 //empirical, matches audio lantency of about -2.0 sec after first clock sync event
+#define DELAY_ALAC 2000000 //empirical, matches audio latency of about -2.0 sec after first clock sync event
 
 typedef struct raop_rtp_sync_data_s {
     uint64_t ntp_time;  // The local wall clock time at the time of rtp_time
