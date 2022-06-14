@@ -52,7 +52,6 @@ struct raop_rtp_s {
     raop_ntp_t *ntp;
     double rtp_sync_scale;
     int64_t rtp_sync_offset;
-    uint32_t rtp_sync_epoch;
     raop_rtp_sync_data_t sync_data[RAOP_RTP_SYNC_DATA_COUNT];
     int sync_data_index;
 
@@ -159,7 +158,6 @@ raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, co
     raop_rtp->rtp_sync_offset = 0;
     raop_rtp->rtp_sync_scale = RAOP_RTP_SAMPLE_RATE;
     raop_rtp->sync_data_index = 0;
-    raop_rtp->rtp_sync_epoch = 0;
     for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; ++i) {
         raop_rtp->sync_data[i].ntp_time = 0;
         raop_rtp->sync_data[i].rtp_time = 0;
