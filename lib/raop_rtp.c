@@ -56,7 +56,9 @@ struct raop_rtp_s {
     int sync_data_index;
     uint64_t ntp_start_time;
     uint64_t rtp_start_time;
+    uint64_t rtp_time;
     bool rtp_clock_started;
+    
   
     // Transmission Stats, could be used if a playout buffer is needed
     // float interarrival_jitter; // As defined by RTP RFC 3550, Section 6.4.1
@@ -412,27 +414,28 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, int64_t ntp_time_since_start,
                correction, ((double) raop_rtp->rtp_sync_offset) /SEC);
 }
 
-uint32_t rtp32_to_64time (const uint32_t *rtp32, uint64_t *rtp64_time) {
+uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
     /* convert from 32-bit to 64-bit rtp time:
      * the rtp_time 32-bit epoch at 44.1kHz has length of about 27 hours
      * using 64-bit rtp time avoids any epoch issues.
      * initial call sets epoch to 1; subsequent calls maintain consistent epoch.
-     * (assumes successive calls are close in time)
-     * return value is current epoch. */
+     * (assumes successive calls are close in time) */
        
-    if (*rtp64_time) {
-        uint32_t diff1 = *rtp32 -  ((uint32_t) *rtp64_time);
-        uint32_t diff2 = ((uint32_t) *rtp64_time) - *rtp32;
-        if (diff1  <= diff2) {
-            *rtp64_time += (uint64_t) diff1;
+    if (raop_rtp->rtp_clock_started) {
+        uint32_t diff1 = *rtp32 -  ((uint32_t) raop_rtp->rtp_time);
+        uint32_t diff2 = ((uint32_t) raop_rtp->rtp_time) - *rtp32;
+        if (diff1 <= diff2) {
+            raop_rtp->rtp_time += (uint64_t) diff1;
         } else {
-            *rtp64_time -= (uint64_t) diff2;
+            raop_rtp->rtp_time -= (uint64_t) diff2;
         }
     } else {
-        *rtp64_time = (0x01ULL << 32 ) + (uint64_t) *rtp32;
+        raop_rtp->rtp_time = (0x01ULL << 32 ) + (uint64_t) *rtp32;
+        raop_rtp->rtp_start_time = raop_rtp->rtp_time;
+        raop_rtp->rtp_clock_started = true;
     }
-    //assert(*rtp32 == (uint32_t) *rtp64_time);
-    return (uint32_t) (*rtp64_time >> 32);
+    //assert(*rtp32 == (uint32_t) raop_rtp->rtp_time);
+    return  raop_rtp->rtp_time;
 }
 
 static THREAD_RETVAL
@@ -449,13 +452,9 @@ raop_rtp_thread_udp(void *arg)
     int rtp_count = 0;
     int64_t initial_offset = 0;
     double sync_adjustment = 0;
-    bool have_set_delay = false;
     int64_t delay = 0;
     unsigned short seqnum1 = 0, seqnum2 = 0;
     bool offset_estimate_initialized  = false;
-    
-    /* store rtp time as 64 bits with epoch tracking */
-    uint64_t rtp64_time = 0;
 
     assert(raop_rtp);
     raop_rtp->ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
@@ -510,14 +509,10 @@ raop_rtp_thread_udp(void *arg)
                 unsigned int resent_packetlen = packetlen - 4;
                 unsigned short seqnum = byteutils_get_short_be(resent_packet, 2);
                 uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
-                rtp32_to_64time(&timestamp, &rtp64_time);
-                if (!raop_rtp->rtp_clock_started) {
-                    raop_rtp->rtp_clock_started = true;
-                    raop_rtp->rtp_start_time = rtp64_time;
-		}
+                uint64_t rtp_time = rtp64_time(raop_rtp, &timestamp);
                 if (resent_packetlen > 12) {
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp resent audio packet: seqnum=%u", seqnum);
-                    assert(raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, rtp64_time, 1) >= 0);
+                    assert(raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, rtp_time, 1) >= 0);
                 } else {
                     /* type_c = 0x56 packets  with length 8 have been reported */
                     char *str = utils_data_to_string(packet, packetlen, 16);
@@ -538,12 +533,8 @@ raop_rtp_thread_udp(void *arg)
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 int64_t sync_rtp64, sync_ntp;
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
-                rtp32_to_64time(&sync_rtp, &rtp64_time);
-                if (!raop_rtp->rtp_clock_started) {
-                    raop_rtp->rtp_clock_started = true;
-                    raop_rtp->rtp_start_time = rtp64_time;
-                }
-                sync_rtp64 = ((int64_t) rtp64_time) - ((int64_t) raop_rtp->rtp_start_time);
+		uint64_t rtp_time = rtp64_time(raop_rtp, &sync_rtp);
+                sync_rtp64 = ((int64_t) rtp_time) - ((int64_t) raop_rtp->rtp_start_time);
 
                 if (have_synced == false) {
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "first audio rtp sync");
@@ -621,18 +612,15 @@ raop_rtp_thread_udp(void *arg)
             if (packetlen >= 12) {
                 int no_resend = (raop_rtp->control_rport == 0); /* true when control_rport is not set */
                 uint32_t rtp_timestamp =  byteutils_get_int_be(packet, 4);
-                rtp32_to_64time(&rtp_timestamp, &rtp64_time);                                   
-                if (!raop_rtp->rtp_clock_started) {
-                    raop_rtp->rtp_clock_started = true;
-                    raop_rtp->rtp_start_time = rtp64_time;
-                } 
+                uint64_t rtp_time = rtp64_time(raop_rtp, &rtp_timestamp);
                 if (have_synced == false) {
                     /* until the first rtp sync occurs, we don't know the exact client ntp timestamp that matches the client rtp timestamp */
                     int64_t sync_ntp =  ((int64_t) raop_ntp_get_local_time(raop_rtp->ntp)) - ((int64_t) raop_rtp->ntp_start_time) ;
-                    int64_t sync_rtp = ((int64_t) rtp64_time) - ((int64_t) raop_rtp->rtp_start_time);
+                    int64_t sync_rtp = ((int64_t) rtp_time) - ((int64_t) raop_rtp->rtp_start_time);
                     int64_t offset;
                     unsigned short seqnum = byteutils_get_short_be(packet,2);
-                    if (!have_set_delay) {
+                    if (!offset_estimate_initialized) {
+                        offset_estimate_initialized = true;
                         switch (raop_rtp->ct) {
                         case 0x02:  
                             delay = DELAY_ALAC;   /* DELAY = 2000000 (2.0 sec) is empirical choice for ALAC */
@@ -647,18 +635,14 @@ raop_rtp_thread_udp(void *arg)
                         default:
                             break;
                         }
-                        have_set_delay = true;
-                    }
-                    sync_ntp += delay;
-                    offset = -sync_ntp;
-                    if (!offset_estimate_initialized) {
-                        offset_estimate_initialized = true;
-                        initial_offset = offset;
-                        raop_rtp->rtp_sync_offset = offset;
+			initial_offset = delay - sync_ntp;
+                        raop_rtp->rtp_sync_offset = initial_offset;
                         sync_adjustment = 0;
                         seqnum1 = seqnum;
                         seqnum2 = seqnum;
                     }
+                    sync_ntp += delay;
+                    offset = -sync_ntp;
                     if (seqnum2 != seqnum) {  /* for AAC-ELD  only use copy 3 of the 3 copies of each  frame */
                         rtp_count++;
                         offset -= initial_offset;
@@ -670,7 +654,7 @@ raop_rtp_thread_udp(void *arg)
                     seqnum2 = seqnum1;
                     seqnum1 = seqnum;
                 }
-                assert(raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp64_time, 1) >= 0);
+                assert(raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_time, 1) >= 0);
                 // Render continuous buffer entries
                 void *payload = NULL;
                 unsigned int payload_size;
