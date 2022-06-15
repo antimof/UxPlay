@@ -667,12 +667,14 @@ raop_rtp_thread_udp(void *arg)
                     audio_data.ntp_time = raop_rtp->ntp_start_time + (uint64_t) elapsed_time;
                     audio_data.ntp_time -= raop_rtp->rtp_sync_offset;
                     audio_data.rtp_time = rtp64_timestamp;
+                    audio_data.seqnum = seqnum;
                     raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
                     free(payload);
                     uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
                     int64_t latency =  ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time); 
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u",
-                               ((double) ntp_now ) / SEC, ((double) audio_data.ntp_time) / SEC, ((double) latency) / SEC, (uint32_t) rtp64_timestamp, seqnum);
+                               ((double) ntp_now ) / SEC, ((double) audio_data.ntp_time) / SEC, ((double) latency) / SEC, (uint32_t) rtp64_timestamp,
+                               seqnum);
                 }
 
                 /* Handle possible resend requests */

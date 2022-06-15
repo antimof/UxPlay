@@ -30,6 +30,7 @@ typedef struct {
     int data_len;
     uint64_t ntp_time;
     uint64_t rtp_time;
+    unsigned short seqnum;
 } audio_decode_struct;
 
 #endif //AIRPLAYSERVER_STREAM_H
