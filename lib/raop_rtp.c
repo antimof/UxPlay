@@ -58,8 +58,7 @@ struct raop_rtp_s {
     uint64_t rtp_start_time;
     uint64_t rtp_time;
     bool rtp_clock_started;
-    
-  
+
     // Transmission Stats, could be used if a playout buffer is needed
     // float interarrival_jitter; // As defined by RTP RFC 3550, Section 6.4.1
     // unsigned int last_packet_transit_time;
@@ -420,7 +419,7 @@ uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
      * using 64-bit rtp time avoids any epoch issues.
      * initial call sets epoch to 1; subsequent calls maintain consistent epoch.
      * (assumes successive calls are close in time) */
-       
+
     if (raop_rtp->rtp_clock_started) {
         uint32_t diff1 = *rtp32 -  ((uint32_t) raop_rtp->rtp_time);
         uint32_t diff2 = ((uint32_t) raop_rtp->rtp_time) - *rtp32;
@@ -533,7 +532,7 @@ raop_rtp_thread_udp(void *arg)
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
                 int64_t sync_rtp64, sync_ntp;
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
-		uint64_t rtp_time = rtp64_time(raop_rtp, &sync_rtp);
+                uint64_t rtp_time = rtp64_time(raop_rtp, &sync_rtp);
                 sync_rtp64 = ((int64_t) rtp_time) - ((int64_t) raop_rtp->rtp_start_time);
 
                 if (have_synced == false) {
@@ -583,7 +582,7 @@ raop_rtp_thread_udp(void *arg)
          * both have PCM uncompressed sampling rate = 441000 Hz */
 
         /* clock time in microseconds advances at (rtp_timestamp * 1000000)/44100 between frames */
-	
+
         /* every AAC-ELD packet is sent three times:  0  0 1  0 1 2  1 2 3  2 3 4 ... 
          * (after decoding AAC-ELD into PCM, the sound frame is three times bigger)
          * ALAC packets are sent once only  0 1 2 3 4 5  ...  */
@@ -635,7 +634,7 @@ raop_rtp_thread_udp(void *arg)
                         default:
                             break;
                         }
-			initial_offset = delay - sync_ntp;
+                        initial_offset = delay - sync_ntp;
                         raop_rtp->rtp_sync_offset = initial_offset;
                         sync_adjustment = 0;
                         seqnum1 = seqnum;
