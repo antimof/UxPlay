@@ -39,8 +39,11 @@
 #define DELAY_AAC 500000 //empirical, matches audio latency of about -0.5 sec after first clock sync event
 #define DELAY_ALAC 2000000 //empirical, matches audio latency of about -2.0 sec after first clock sync event
 
+/* note: it is unclear what will happen in the unlikely event that this code is running at the time of the unix-time 
+ * epoch event on 2038-01-19 at 3:14:08 UTC ! (but Apple will surely have removed AirPlay "legacy pairing" by then!) */
+
 typedef struct raop_rtp_sync_data_s {
-    uint64_t ntp_time;  // The local wall clock time in use at the time of rtp_time
+    uint64_t ntp_time;  // The local wall clock time (unix time in usec) at the time of rtp_time
     int64_t rtp_time;   // The remote rtp clock time corresponding to ntp_time, relative to rtp_start_time
 } raop_rtp_sync_data_t;
 
