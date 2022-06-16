@@ -40,8 +40,8 @@
 #define DELAY_ALAC 2000000 //empirical, matches audio latency of about -2.0 sec after first clock sync event
 
 typedef struct raop_rtp_sync_data_s {
-    int64_t ntp_time;  // The local wall clock time in usec at the time of rtp_time, relative to ntp_start_time
-    int64_t rtp_time;  // The remote rtp clock time corresponding to ntp_time, relative to rtp_start_time
+    uint64_t ntp_time;  // The local wall clock time in use at the time of rtp_time
+    int64_t rtp_time;   // The remote rtp clock time corresponding to ntp_time, relative to rtp_start_time
 } raop_rtp_sync_data_t;
 
 struct raop_rtp_s {
@@ -385,32 +385,33 @@ raop_rtp_process_events(raop_rtp_t *raop_rtp, void *cb_data)
     return 0;
 }
 
-void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, int64_t ntp_time_since_start,
-                         int64_t rtp_time_since_start,  int shift) {
-
-    raop_rtp->sync_data_index = (raop_rtp->sync_data_index + 1) % RAOP_RTP_SYNC_DATA_COUNT;
-    raop_rtp->sync_data[raop_rtp->sync_data_index].rtp_time = rtp_time_since_start;
-    raop_rtp->sync_data[raop_rtp->sync_data_index].ntp_time = ntp_time_since_start;
-
+void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, int64_t rtp_time_since_rtp_start_time,  int shift) {
+    int latest;
     uint32_t valid_data_count = 0;
     valid_data_count = 0;
     double total_offsets = 0;
-    int64_t rtp_offset;
-    for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; ++i) {
+    int64_t rtp_offset, avg_offset, correction;
+
+    raop_rtp->sync_data_index = (raop_rtp->sync_data_index + 1) % RAOP_RTP_SYNC_DATA_COUNT;
+    latest = raop_rtp->sync_data_index;
+    raop_rtp->sync_data[latest].rtp_time = rtp_time_since_rtp_start_time;
+    raop_rtp->sync_data[latest].ntp_time = ntp_time;
+
+    for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; i++) {
         if (raop_rtp->sync_data[i].ntp_time == 0) continue;
-        rtp_offset = ((int64_t) raop_rtp->sync_data[i].rtp_time) - ((int64_t) raop_rtp->sync_data[0].rtp_time) + shift;
+        rtp_offset = ((int64_t) raop_rtp->sync_data[i].rtp_time) - ((int64_t) raop_rtp->sync_data[latest].rtp_time);
         total_offsets += ((double) rtp_offset) / raop_rtp-> rtp_sync_scale;
-        total_offsets -= (double) raop_rtp->sync_data[i].ntp_time;
+        total_offsets -= (double) (((int64_t) raop_rtp->sync_data[i].ntp_time) - ((int64_t) raop_rtp->sync_data[latest].ntp_time));
         valid_data_count++;
     }
     total_offsets = (total_offsets / valid_data_count);
-    total_offsets += ((double) raop_rtp->sync_data[0].rtp_time) / raop_rtp->rtp_sync_scale;    
-    int64_t avg_offset = (int64_t)  total_offsets ;
-    int64_t correction = avg_offset - raop_rtp->rtp_sync_offset;
+    total_offsets += ((double) (raop_rtp->sync_data[latest].rtp_time + ((int64_t) shift))) / raop_rtp->rtp_sync_scale;
+    avg_offset = (int64_t) total_offsets;
+    avg_offset -= ((int64_t) raop_rtp->sync_data[latest].ntp_time) - ((int64_t) raop_rtp->ntp_start_time);
+    correction = avg_offset - raop_rtp->rtp_sync_offset;
     raop_rtp->rtp_sync_offset = avg_offset;
-
     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp sync correction=%lld, rtp_sync_offset = %8.6f ",
-               correction, ((double) raop_rtp->rtp_sync_offset) /SEC);
+               correction, ((double) raop_rtp->rtp_sync_offset) / SEC);
 }
 
 uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
@@ -433,7 +434,7 @@ uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
         raop_rtp->rtp_start_time = raop_rtp->rtp_time;
         raop_rtp->rtp_clock_started = true;
     }
-    //assert(*rtp32 == (uint32_t) raop_rtp->rtp_time);
+    assert(*rtp32 == (uint32_t) raop_rtp->rtp_time);
     return  raop_rtp->rtp_time;
 }
 
@@ -457,6 +458,11 @@ raop_rtp_thread_udp(void *arg)
 
     assert(raop_rtp);
     raop_rtp->ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
+    raop_rtp->rtp_clock_started = false;
+    for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; i++) {
+        raop_rtp->sync_data[i].ntp_time = 0;
+    }
+
     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp start_time = %8.6f (raop_rtp audio)",
                ((double) raop_rtp->ntp_start_time) / SEC);
 
@@ -530,7 +536,7 @@ raop_rtp_thread_udp(void *arg)
                  * next_rtp = sync_rtp + 77175  = 441 * 175 (1.75 sec) for ALAC */
 
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
-                int64_t sync_rtp64, sync_ntp;
+                int64_t sync_rtp64;
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
                 uint64_t rtp_time = rtp64_time(raop_rtp, &sync_rtp);
                 sync_rtp64 = ((int64_t) rtp_time) - ((int64_t) raop_rtp->rtp_start_time);
@@ -542,7 +548,6 @@ raop_rtp_thread_udp(void *arg)
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
                 uint64_t sync_ntp_remote = raop_ntp_timestamp_to_micro_seconds(sync_ntp_raw, true);
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
-                sync_ntp = ((int64_t) sync_ntp_local) - ((int64_t) raop_rtp->ntp_start_time);
                 int64_t shift;
                 switch (raop_rtp->ct) {
                 case 0x08:                   /*AAC-ELD */
@@ -559,7 +564,7 @@ raop_rtp_thread_udp(void *arg)
                            ((double) sync_ntp_remote) / SEC, ((double)sync_ntp_local) / SEC,
                            ((double) raop_rtp->ntp_start_time) / SEC, sync_rtp, str);
                 free(str);
-                raop_rtp_sync_clock(raop_rtp, sync_ntp, sync_rtp64, shift);		
+                raop_rtp_sync_clock(raop_rtp, sync_ntp_local, sync_rtp64, shift);		
             } else {
                 char *str = utils_data_to_string(packet, packetlen, 16);
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp unknown udp control packet\n%s", str);
@@ -634,7 +639,7 @@ raop_rtp_thread_udp(void *arg)
                         default:
                             break;
                         }
-                        initial_offset = delay - sync_ntp;
+                        initial_offset = -(sync_ntp + delay);
                         raop_rtp->rtp_sync_offset = initial_offset;
                         sync_adjustment = 0;
                         seqnum1 = seqnum;
