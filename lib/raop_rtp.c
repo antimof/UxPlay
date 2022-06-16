@@ -44,7 +44,7 @@
 
 typedef struct raop_rtp_sync_data_s {
     uint64_t ntp_time;  // The local wall clock time (unix time in usec) at the time of rtp_time
-    int64_t rtp_time;   // The remote rtp clock time corresponding to ntp_time, relative to rtp_start_time
+    uint64_t rtp_time;   // The remote rtp clock time corresponding to ntp_time
 } raop_rtp_sync_data_t;
 
 struct raop_rtp_s {
@@ -388,7 +388,7 @@ raop_rtp_process_events(raop_rtp_t *raop_rtp, void *cb_data)
     return 0;
 }
 
-void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, int64_t rtp_time_since_rtp_start_time,  int shift) {
+void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, uint64_t rtp_time,  int shift) {
     int latest;
     uint32_t valid_data_count = 0;
     valid_data_count = 0;
@@ -397,7 +397,7 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, int64_t rtp_ti
 
     raop_rtp->sync_data_index = (raop_rtp->sync_data_index + 1) % RAOP_RTP_SYNC_DATA_COUNT;
     latest = raop_rtp->sync_data_index;
-    raop_rtp->sync_data[latest].rtp_time = rtp_time_since_rtp_start_time;
+    raop_rtp->sync_data[latest].rtp_time = rtp_time;
     raop_rtp->sync_data[latest].ntp_time = ntp_time;
 
     for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; i++) {
@@ -408,7 +408,8 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, int64_t rtp_ti
         valid_data_count++;
     }
     total_offsets = (total_offsets / valid_data_count);
-    total_offsets += ((double) (raop_rtp->sync_data[latest].rtp_time + ((int64_t) shift))) / raop_rtp->rtp_sync_scale;
+    rtp_offset =  ((int64_t) raop_rtp->sync_data[latest].rtp_time) - ((int64_t) raop_rtp->rtp_start_time) + ((int64_t) shift);
+    total_offsets +=  ((double) rtp_offset) / raop_rtp->rtp_sync_scale;
     avg_offset = (int64_t) total_offsets;
     avg_offset -= ((int64_t) raop_rtp->sync_data[latest].ntp_time) - ((int64_t) raop_rtp->ntp_start_time);
     correction = avg_offset - raop_rtp->rtp_sync_offset;
@@ -539,10 +540,9 @@ raop_rtp_thread_udp(void *arg)
                  * next_rtp = sync_rtp + 77175  = 441 * 175 (1.75 sec) for ALAC */
 
                 // The unit for the rtp clock is 1 / sample rate = 1 / 44100
-                int64_t sync_rtp64;
                 uint32_t sync_rtp = byteutils_get_int_be(packet, 4);
-                uint64_t rtp_time = rtp64_time(raop_rtp, &sync_rtp);
-                sync_rtp64 = ((int64_t) rtp_time) - ((int64_t) raop_rtp->rtp_start_time);
+                uint64_t sync_rtp64 = rtp64_time(raop_rtp, &sync_rtp);
+ 
 
                 if (have_synced == false) {
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "first audio rtp sync");
