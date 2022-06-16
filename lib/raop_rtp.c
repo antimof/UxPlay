@@ -437,7 +437,7 @@ uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
         raop_rtp->rtp_start_time = raop_rtp->rtp_time;
         raop_rtp->rtp_clock_started = true;
     }
-    assert(*rtp32 == (uint32_t) raop_rtp->rtp_time);
+    //assert(*rtp32 == (uint32_t) raop_rtp->rtp_time);
     return  raop_rtp->rtp_time;
 }
 
