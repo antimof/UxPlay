@@ -207,14 +207,16 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 }
 
 int
-raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint32_t timestamp, int use_seqnum) {
+raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint64_t timestamp, int use_seqnum) {
+    unsigned char empty_packet_marker[] = { 0x00, 0x68, 0x34, 0x00 };
     assert(raop_buffer);
 
     /* Check packet data length is valid */
     if (datalen < 12 || datalen > RAOP_PACKET_LEN) {
         return -1;
     }
-    if (datalen == 16 && data[12] == 0x0 && data[13] == 0x68 && data[14] == 0x34 && data[15] == 0x0) {
+    /* before time is synchronized, some empty data packets are sent */
+    if (datalen == 16 && !memcmp(&data[12], empty_packet_marker, 4)) {
         return 0;
     }
     int payload_size = datalen - 12;
@@ -267,7 +269,7 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
 }
 
 void *
-raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint32_t *timestamp, unsigned short *seqnum, int no_resend) {
+raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint64_t *timestamp, unsigned short *seqnum, int no_resend) {
     assert(raop_buffer);
 
     /* Calculate number of entries in the current buffer */

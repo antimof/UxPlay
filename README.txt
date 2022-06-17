@@ -1,5 +1,4 @@
-UxPlay 1.52: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
-======================================================================
+# UxPlay 1.53: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -7,26 +6,29 @@ Highlights:
 
 -   GPLv3, open source.
 -   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-    Lossless ALAC) streaming protocols from current iOS/iPadOS 15.4
+    Lossless ALAC) streaming protocols from current iOS/iPadOS 15.5
     clients.
 -   macOS computers (2011 or later, both Intel and "Apple Silicon" M1
     systems) can act either as AirPlay clients, or as the server running
     UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
     clients.
 -   Support for older iOS clients (such as 32-bit iPad 2nd gen. and
-    iPhone 4S, when upgraded to iOS 9.3.5 or later), and a Windows
+    iPhone 4S, when upgraded to iOS 9.3.5 or later), plus a Windows
     AirPlay-client emulator, AirMyPC.
--   Uses GStreamer, with options to select different output "videosinks"
-    and "audiosinks", and fully-configurable video streaming pipeline.
+-   Uses GStreamer plugins for audio and video rendering (with options
+    to select different hardware-appropriate output "videosinks" and
+    "audiosinks", and a fully-user-configurable video streaming
+    pipeline).
 -   Support for server behind a firewall.
 -   **New**: Support for Raspberry Pi, with hardware video acceleration
-    by Video4Linux2 (replacement for 32-bit-only OpenMAX, which is no
-    longer supported by Raspberry Pi OS). (For GStreamer \< 1.22, a
+    using Video4Linux2 (which supports both 32- and 64-bit systems,
+    unlike deprecated OpenMAX (omx), which it replaces). (For GStreamer
+    \< 1.22, a
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to the GStreamer Video4Linux2 plugin, available in the [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless your
     distribution has made a backport of changes from the development
-    version.) See [success
+    branch.) See [success
     reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
@@ -41,19 +43,18 @@ pulled from the new main [UxPlay site](https://github.com/FDH2/UxPlay)).
 
 UxPlay is tested on a number of systems, including (among others) Debian
 10.11 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 and 22.04, Linux Mint
-20.3, Pop!\_OS 21.10 (NVIDIA edition), Rocky Linux 8.5 (a CentOS
-successor), OpenSUSE 15.3, Arch Linux 5.16.8, macOS 12.3 (Intel and M1),
-FreeBSD 13.0.
+20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS
+successor), OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1),
+FreeBSD 13.1. On Raspberry Pi, it is tested on Raspberry Pi OS
+(Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
 of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
 the server display (with the possibility of sharing that window on
 screen-sharing applications such as Zoom) on a host running Linux,
-macOS, or other unix. UxPlay supports a "legacy" form of Apple's AirPlay
-Mirror protocol introduced in iOS 12; client devices running iOS/iPadOS
-9.3.5 or later are supported, as is a (non-free) Windows-based
-AirPlay-client software emulator, AirMyPC. (Details of what is
-publically known about Apple's AirPlay2 protocol can be found
+macOS, or other unix. UxPlay supports Apple's AirPlay 2 protocol using
+"Legacy Pairing", but some features are missing. (Details of what is
+publically known about Apple's AirPlay 2 protocol can be found
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)).
 
@@ -85,70 +86,65 @@ Mirror mode connection.*
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
-UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) Plugins for
-rendering audio and video, This means that video and audio are supported
+UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) "plugins" for
+rendering audio and video. This means that video and audio are supported
 "out of the box", using a choice of plugins. AirPlay streams video in
 h264 format: gstreamer decoding is plugin agnostic, and uses accelerated
 GPU hardware h264 decoders if available; if not, software decoding is
 used.
 
-For systems with Intel or AMD integrated graphics, hardware GPU decoding
-with the gstreamer VAAPI plugin is preferable. VAAPI is open-source, and
-in addition to Intel and AMD graphics, the open-source "Nouveau" drivers
-for NVIDIA graphics are also in principle supported: see
-[here](https://nouveau.freedesktop.org/VideoAcceleration.html), which
-requires VAAPI to be supplemented with firmware extracted from the
-proprietary NVIDIA drivers.
+-   **VAAPI for Intel and AMD integrated graphics, NVIDIA with "Nouveau"
+    open-source driver**
 
-For NVIDIA graphics with the proprietary drivers, the `nvh264dec` plugin
-(included in gstreamer1.0-plugins-bad since GStreamer-1.18.0) can be
-used for accelerated video decoding on the NVIDIA GPU after NVIDIA's
-CUDA driver `libcuda.so` is installed. This plugin should be used with
-options `uxplay -vd nvh264dec -vs glimagesink`. For GStreamer-1.16.3 or
-earlier, the plugin is called `nvdec`, and must be built by the user:
-see [these
-instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
-This older form of the NVIDIA plugin should be used with the
-`-vd nvdec -vs glimagesink` uxplay options.
+    With an Intel or AMD GPU, hardware decoding with the open-source
+    VAAPI gstreamer plugin is preferable. The open-source "Nouveau"
+    drivers for NVIDIA graphics are also in principle supported: see
+    [here](https://nouveau.freedesktop.org/VideoAcceleration.html), but
+    this requires VAAPI to be supplemented with firmware extracted from
+    the proprietary NVIDIA drivers.
 
--   **GPU Support for Raspberry Pi**
+-   **NVIDIA with proprietary drivers**
+
+    The `nvh264dec` plugin (included in gstreamer1.0-plugins-bad since
+    GStreamer-1.18.0) can be used for accelerated video decoding on the
+    NVIDIA GPU after NVIDIA's CUDA driver `libcuda.so` is installed.
+    (This plugin should be used with options
+    `uxplay -vd nvh264dec -vs glimagesink`.) For GStreamer-1.16.3 or
+    earlier, replace `nvh264dec` by the older plugin `nvdec`, which must
+    be built by the user: See [these
+    instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+
+-   **Video4Linux2 support for the Raspberry Pi Broadcom GPU**
 
     Raspberry Pi (RPi) computers can run UxPlay with software decoding
-    of h264 video (by adding `-avdec` to the uxplay options) but this
-    usually has unacceptable latency, and hardware-accelerated decoding
-    by the Pi's built-in Broadcom GPU should be used. RPi OS (Bullseye)
-    has abandoned the unmaintained 32-bit-only omx (OpenMAX) driver used
-    for this by [RPiPlay](http://github.com/FD-/RPiPlay), in favor of
-    v4l2 (Video4Linux2). Fixes to the GStreamer v4l2 plugin that allow
-    it to work with UxPlay on RPi are now in the GStreamer-1.21
-    development branch, and will only be available in the upcoming
-    GStreamer-1.22 release, but a (partial) backport (as
-    `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) for RPi OS (Bullseye)
-    has already appeared in its current updates. Until the promised full
-    update appears, or if you are using a different distribution, you
-    can find [patching instructions for
+    of h264 video but this usually has unacceptable latency, and
+    hardware-accelerated GPU decoding should be used. UxPlay accesses
+    the GPU using the GStreamer plugin for Video4Linux2 (v4l2), which
+    replaces unmaintained 32-bit-only OpenMax used by RPiPlay. Fixes to
+    the v4l2 plugin that allow it to work with UxPlay on RPi are now in
+    the GStreamer development branch, and will appear in the upcoming
+    GStreamer-1.22 release. A (partial) backport (as
+    `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) has already appeared in
+    RPi OS updates. Until the full update appears, or for other
+    distributions, you can find [patching instructions for
     GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
-    in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki). Patches
-    for GStreamer-1.18.5 (for Ubuntu 21.10), 1.18.6, 1.20.0, 1.20.1 (for
-    Ubuntu 22.04) and 1.20.2 (for Manjaro RPi 4 22.04) are also
-    available.
+    in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki) for
+    GStreamer 1.18.4 and later.
 
 ### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
 
 Some Linux distributions such as Debian do not allow distribution of
-compiled GPL code linked to OpenSSL-1.1.1 because its "dual
-OpenSSL/SSLeay" license has some incompatibilities with GPL, unless all
-code authors have explicitly given an "exception" to allow such linking
-(the historical origins of UxPlay make this impossible to obtain). Other
-distributions treat OpenSSL as a "System Library" which the GPL allows
-linking to.
+compiled GPL code linked to OpenSSL-1.1.1 because its license has some
+incompatibilities with GPL code, unless all authors have given an
+"exception" to allow such linking (the historical origins of UxPlay make
+this impossible to obtain). Other distributions treat OpenSSL as a
+"System Library" to which the GPL allows linking.
 
 For "GPL-strict" distributions, UxPlay can be built using OpenSSL-
-3.0.0, which has anew [GPLv3-compatible
+3.0.0, which has a new [GPLv3-compatible
 license](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/).
 
-Getting UxPlay:
-===============
+# Getting UxPlay:
 
 Either download and unzip
 [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip),
@@ -161,8 +157,9 @@ https://github.com/antimof/UxPlay ; that original project is inactive,
 but the pull requests are now being periodically merged with the antimof
 tree (thank you antimof!).
 
-Building UxPlay on Linux (or \*BSD):
-------------------------------------
+## Building UxPlay on Linux (or \*BSD):
+
+### Debian-based systems:
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
 macOS, see below). See [Troubleshooting](#troubleshooting) below for
@@ -179,7 +176,11 @@ cmake\>=3.4.1 is installed: "`sudo apt-get install cmake`" (add
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and
 libplist 2.0 or later. (This means Debian 10 "Buster", Ubuntu 18.04 or
 later.) If it does not, you may need to build and install these from
-source (see below).
+source (see instructions at the end of this README). If you have a
+non-standard OpenSSL installation, you may need to set the environment
+variable OPENSSL_ROOT_DIR (*e.g.* ,
+"`export OPENSSL_ROOT_DIR=/usr/local/lib64`" if that is where it is
+installed).
 
 In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag
@@ -198,8 +199,9 @@ packaging for a distribution, use the cmake option
     "ZOOMFIX" X11 display-name fix in the next step)
 4.  `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix
     to make X11 mirror display windows visible to screen-sharing
-    applications such as Zoom, see [Improvements](#improvements) \#3
-    below). **ZOOMFIX is only needed for GStreamer-1.18.x or earlier**.
+    applications such as Zoom, see [ZOOMFIX compile-time
+    option](#zoomfix-compile-time-option) below). **ZOOMFIX is only
+    needed for GStreamer-1.18.x or earlier**.
 5.  `make`
 6.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run)
@@ -229,11 +231,12 @@ The above script installs the executable file "`uxplay`" to
 `/usr/local/share/doc/uxplay`). It can also be found in the build
 directory after the build processs.
 
-**Finally, run uxplay in a terminal window**. If it is not seen by the
-iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
-server (usually avahi-daemon) is running: do this in a terminal window
-with `systemctl status avahi-daemon`. If this shows the avahi-daemon is
-not running, control it with
+**Finally, run uxplay in a terminal window**. Use Ctrl-C (or close the
+window) to terminate it when done. If it is not seen by the iOS client's
+drop-down "Screen Mirroring" panel, check that your DNS-SD server
+(usually avahi-daemon) is running: do this in a terminal window with
+`systemctl status avahi-daemon`. If this shows the avahi-daemon is not
+running, control it with
 `sudo systemctl [start,stop,enable,disable] avahi-daemon` (or
 avahi-daemon.service). If UxPlay is seen, but the client fails to
 connect when it is selected, there may be a firewall on the server that
@@ -248,17 +251,37 @@ decoding; if this works you can then try to fix accelerated hardware
 video decoding if you need it. See [Usage](#usage) for more run-time
 options.
 
-**Raspberry Pi**: If "`uxplay`" by itself does not work, use
-"`uxplay -v4l2`" (or use "`-rpi`" as a synonym for "`-v4l2`") on your
-desktop X11 system, and optionally specify a videosink with "`-vs ..`";
-use "`uxplay -rpiwl`" as a synonym for "`-v4l2 -vs waylandsink`" on a
-desktop system with Wayland (this applies to Ubuntu). On a system
-without X11 that uses framebuffer video (such as RPi OS Bullseye "Lite")
-use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`".
+**Raspberry Pi**: GStreamer-1.18.4 or later required for hardware video
+decoding; for 1.20 or earlier, also see [patching instructions for
+GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
+If "`uxplay`" by itself does not work, use "`uxplay -v4l2`" (or use
+"`-rpi`" as a synonym for "`-v4l2`") on your desktop X11 system, and
+optionally specify a videosink with "`-vs ..`"; use "`uxplay -rpiwl`" as
+a synonym for "`-v4l2 -vs waylandsink`" on a desktop system with Wayland
+(this applies to recent Ubuntu). On a system without X11 that uses
+framebuffer video (such as RPi OS Bullseye "Lite") use "`uxplay -rpifb`"
+as a synonym for "`uxplay -v4l2 -vs kmssink`". You can test UxPlay with
+software-only video decoding using option `-avdec`.
+
+-   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
+    ssh:
+
+```{=html}
+<!-- -->
+```
+       ssh user@remote_host
+       export DISPLAY=:0
+       nohup uxplay [options] > FILE &
+
+Sound and video will play on the remote host; "nohup" will keep uplay
+running if the ssh session is closed.\
+Terminal output is saved to FILE (which can be /dev/null to discard it).
+
+### Non-Debian-based Linux or \*BSD
 
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
-    avahi-compat-libdns\_sd-devel (some from the "PowerTools" add-on
+    avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on
     repository) (+libX11-devel for ZOOMFIX). The required GStreamer
     packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
     gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
@@ -266,11 +289,13 @@ use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`".
 
 -   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
     avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
-    required GStreamer packages (you may need to use versions from
-    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)) are:
-    gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
+    required GStreamer packages are: gstreamer-devel
+    gstreamer-plugins-base-devel gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
-    graphics).
+    graphics); you may need to use the version of
+    gstreamer-plugins-libav for OpenSUSE from
+    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
+    "Essentials".
 
 -   **Arch Linux** (sudo pacman -Syu) openssl libplist avahi
     gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+
@@ -281,47 +306,11 @@ use "`uxplay -rpifb`" as a synonym for "`uxplay -v4l2 -vs kmssink`".
     gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-\* (\* =
     core, good, bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi
     for Intel graphics). Either avahi-libdns or mDNSResponder must also
-    be installed to provide the dns\_sd library. OpenSSL is already
+    be installed to provide the dns_sd library. OpenSSL is already
     installed as a System Library. "ZOOMFIX" is untested; don't try to
     use it on FreeBSD unless you need it.
 
-### Building OpenSSL \>= 1.1.1 from source.
-
-If you need to do this, note that you may be able to use a newer version
-(OpenSSL-3.0.1 is known to work). You will need the standard development
-toolset (autoconf, automake, libtool). Download the source code from
-<https://www.openssl.org/source/>. Install the downloaded openssl by
-opening a terminal in your Downloads directory, and unpacking the source
-distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd openssl-3.0.1").
-Then build/install with "./config ; make ; sudo make install\_dev". This
-will typically install the needed library `libcrypto.*`, either in
-/usr/local/lib or /usr/local/lib64. *(Ignore the following for builds on
-MacOS:)* Assuming the library was placed in /usr/local/lib64, you must
-"export OPENSSL\_ROOT\_DIR=/usr/local/lib64" before running cmake. On
-some systems like Debian or Ubuntu, you may also need to add a missing
-entry `/usr/local/lib64` in /etc/ld.so.conf (or place a file containing
-"/usr/local/lib64/libcrypto.so" in /etc/ld.so.conf.d) and then run "sudo
-ldconfig".
-
-### Bulding libplist \>= 2.0.0 from source.
-
-*(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can
-avoid this step by installing libplist-dev and libplist3 from Debian 10
-or Ubuntu 18.04.)* As well as the usual build tools (autoconf, automake,
-libtool), you may need to also install some libpython\*-dev package.
-Download the latest source from
-<https://github.com/libimobiledevice/libplist>: get
-[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
-then ("unzip libplist-master.zip ; cd libplist-master"), build/install
-("./autogen.sh ; make ; sudo make install"). This will probably install
-libplist-2.0.\* in /usr/local/lib. *(Ignore the following for builds on
-MacOS:)* On some systems like Debian or Ubuntu, you may also need to add
-a missing entry `/usr/local/lib` in /etc/ld.so.conf (or place a file
-containing "/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d) and
-then run "sudo ldconfig".
-
-Building UxPlay on macOS: **(Now tested on both Intel X86\_64 and "Apple Silicon" M1 Macs)**
---------------------------------------------------------------------------------------------
+## Building UxPlay on macOS: **(Intel X86_64 and "Apple Silicon" M1 Macs)**
 
 *Note: A native AirPlay Server feature is included in macOS 12 Monterey,
 but is restricted to recent hardware. UxPlay can run on older macOS
@@ -337,28 +326,36 @@ with package managers [MacPorts](http://www.macports.org),
 [Fink](http://finkproject.org) or [Homebrew](http://brew.sh), or by a
 download from <https://cmake.org/download/>.
 
-First get the latest macOS release of GStreamer-1.0 from
-<https://gstreamer.freedesktop.org/download/>. Install both the macOS
-runtime and development installer packages. Assuming that the latest
-release is 1.20.2. install `gstreamer-1.0-1.20.2-universal.pkg` and
+First install OpenSSL and libplist: static versions of these libaries
+will be used, so they can be uninstalled after UxPlay is built. These
+are available in MacPorts and Homebrew, or they can easily be built from
+source (see instructions at the end of this README; this requires
+development tools autoconf, automake, libtool, which can be installed
+using MacPorts, HomeBrew, or Fink).
+
+Next get the latest macOS release of GStreamer-1.0.
+
+-   recommended: install the "official" GStreamer release for macOS from
+    <https://gstreamer.freedesktop.org/download/>. The alternative is to
+    install it from Homebrew (MacPorts also supplies it, but compiled to
+    use X11).
+
+**For the "official" release**: install both the macOS runtime and
+development installer packages. Assuming that the latest release is
+1.20.2. install `gstreamer-1.0-1.20.2-universal.pkg` and
 `gstreamer-1.0-devel-1.20.2-universal.pkg`. (If you have an
 Intel-architecture Mac, and have problems with the "universal" packages,
 you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
-install to /Library/FrameWorks/GStreamer.framework). It is recommended
-you use GStreamer.framework rather than install Gstreamer with Homebrew
-or MacPorts (see later).
+install to /Library/FrameWorks/GStreamer.framework).
 
-Next install OpenSSL and libplist: these can be built from source (see
-above), in which case you may need to install the standard development
-tools autoconf, automake, libtool, which can be done with MacPorts,
-HomeBrew, or Fink. Only the static forms of the two libraries will used
-for the macOS build, so you can uninstall them ("sudo make uninstall")
-after you have built UxPlay. It may be easier to get them using MacPorts
-"sudo port install openssl libplist-devel" or Homebrew "brew install
-openssl libplist" (but not Fink). if you don't have MacPorts or Homebrew
-installed, you can just install one of them before building uxplay, and
-uninstall afterwards if it is not wanted.
+**For Homebrew**: pkgconfig is needed ("brew install pkgconfig"). Then
+"brew install gst-plugins-base gst-plugins-good gst-plugins-bad
+gst-libav". This appears to be functionally equivalent to using
+GStreamer.framework, but causes a large number of extra packages to be
+installed by Homebrew as dependencies. **You may need to set the
+environment variable GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0 to
+point to the Homebrew GStreamer installation.**
 
 Finally, build and install uxplay (without ZOOMFIX): open a terminal and
 change into the UxPlay source directory ("UxPlay-master" for zipfile
@@ -367,16 +364,16 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
 
 -   On macOS with this installation of GStreamer, the only videosinks
     available seem to be glimagesink (default choice made by
-    autovideosink) and osxvideosink. (It seems that vaapisink is not
-    supported on macOS). The window title does not show the Airplay
-    server name, but the window is visible to screen-sharing apps (e.g.,
-    Zoom). The only available audiosink seems to be osxaudiosink.
+    autovideosink) and osxvideosink. The window title does not show the
+    Airplay server name, but the window is visible to screen-sharing
+    apps (e.g., Zoom). The only available audiosink seems to be
+    osxaudiosink.
 
--   On macOS, the option -t *timeout* is currently suppressed, and the
-    option -nc is always used, whether or not it is selected. This is a
-    workaround until a problem with GStreamer videosinks on macOS is
-    fixed: if the GStreamer pipeline is destroyed while the mirror
-    window is still open, a segfault occurs.
+-   The option -t *timeout* is currently suppressed, and the option -nc
+    is always used, whether or not it is selected. This is a workaround
+    for a problem with GStreamer videosinks on macOS: if the GStreamer
+    pipeline is destroyed while the mirror window is still open, a
+    segfault occurs.
 
 -   In the case of glimagesink, the resolution settings "-s wxh" do not
     affect the (small) initial OpenGL mirror window size, but the window
@@ -385,38 +382,24 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     aspect ratio (stretched image); in this case the aspect ratio
     changes when the window width is changed by dragging its side.
 
-***Other ways (Homebrew, MacPorts) to install GStreamer on macOS (not
-recommended):***
+***Using GStreamer installed from MacPorts (not recommended):***
 
-First make sure that pkgconfig is installed (Homebrew: "brew install
-pkgconfig" ; MacPorts: "sudo port install pkgconfig" ).
+To install: "sudo port install pkgconfig"; "sudo port install
+gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
+gstreamer1-gst-plugins-bad gstreamer1-gst-libav". **The MacPorts
+GStreamer is built to use X11**, so uxplay must be run from an XQuartz
+terminal, can use ZOOMFIX, and needs option "-vs ximagesink". On an
+unibody (non-retina) MacBook Pro, the default resolution wxh = 1920x1080
+was too large, but using option "-s 800x600" worked. The MacPorts
+GStreamer pipeline seems fragile against attempts to change the X11
+window size, or to rotations that switch a connected client between
+portrait and landscape mode while uxplay is running. Using the MacPorts
+X11 GStreamer seems only possible if the image size is left unchanged
+from the initial "-s wxh" setting (also use the iPad/iPhone setting that
+locks the screen orientation against switching between portrait and
+landscape mode as the device is rotated).
 
-(a) with Homebrew: "brew install gst-plugins-base gst-plugins-good
-    gst-plugins-bad gst-libav". This appears to be functionally
-    equivalent to using GStreamer.framework, but causes a large number
-    of extra packages to be installed by Homebrew as dependencies. **You
-    may need to set the environment variable
-    GST\_PLUGIN\_PATH=/usr/local/lib/gstreamer-1.0 to point to the
-    Homebrew GStreamer installation.**
-
-(b) with MacPorts: "sudo port install gstreamer1-gst-plugins-base
-    gstreamer1-gst-plugins-good gstreamer1-gst-plugins-bad
-    gstreamer1-gst-libav". **The MacPorts GStreamer is built to use
-    X11**, so uxplay must be run from an XQuartz terminal, can use
-    ZOOMFIX, and needs option "-vs ximagesink". On an older unibody
-    MacBook Pro, the default resolution wxh = 1920x1080 was too large
-    for the non-retina display, but using option "-s 800x600" worked;
-    However, the GStreamer pipeline is fragile against attempts to
-    change the X11 window size, or to rotations that switch a connected
-    client between portrait and landscape mode while uxplay is running.
-    Using the MacPorts X11 GStreamer is only viable if the image size is
-    left unchanged from the initial "-s wxh" setting (also use the
-    iPad/iPhone setting that locks the screen orientation against
-    switching between portrait and landscape mode as the device is
-    rotated).
-
-Usage
-=====
+# Usage
 
 Options:
 
@@ -431,8 +414,8 @@ range \[1024-65535\].
 If the -p option is not used, the ports are chosen dynamically
 (randomly), which will not work if a firewall is running.
 
-**-n server\_name** (Default: UxPlay); server\_name\@\_hostname\_ will
-be the name that appears offering AirPlay services to your iPad, iPhone
+**-n server_name** (Default: UxPlay); server_name@\_hostname\_ will be
+the name that appears offering AirPlay services to your iPad, iPhone
 etc, where *hostname* is the name of the server running uxplay. This
 will also now be the name shown above the mirror display (X11) window.
 
@@ -448,7 +431,7 @@ determining the streaming format; the width is dynamically adjusted to
 the shape of the image (portrait or landscape format, depending on how
 an iPad is held, for example).
 
-**-s wxh\@r** As above, but also informs the AirPlay client about the
+**-s wxh@r** As above, but also informs the AirPlay client about the
 screen refresh rate of the display. Default is r=60 (60 Hz); r must be a
 whole number less than 256.
 
@@ -481,7 +464,7 @@ updated by the client at 1 second intervals.
 
 **-m** generates a random MAC address to use instead of the true
 hardware MAC number of the computer's network card. (Different
-server\_name, MAC addresses, and network ports are needed for each
+server_name, MAC addresses, and network ports are needed for each
 running uxplay if you attempt to run two instances of uxplay on the same
 computer.) If UxPlay fails to find the true MAC address of a network
 card, (more specifically, the MAC address used by the first active
@@ -504,7 +487,7 @@ default is h264parse. Using quotes "..." allows options to be added.
 
 **-vd *decoder*** chooses the GStreamer pipeline's h264 decoder element,
 instead of letting decodebin pick it for you. Software decoding is done
-by avdec\_h264; various hardware decoders include: vaapi264dec, nvdec,
+by avdec_h264; various hardware decoders include: vaapi264dec, nvdec,
 nvh264dec, v4l2h264dec (these require that the appropriate hardware is
 available). Using quotes "..." allows some parameters to be included
 with the decoder name.
@@ -548,7 +531,7 @@ systems using the framebuffer, like RPi OS Bullseye Lite).
 21.10 for Raspberry Pi 4B).
 
 **-avdec** forces use of software h264 decoding using Gstreamer element
-avdec\_h264 (libav h264 decoder). This option should prevent
+avdec_h264 (libav h264 decoder). This option should prevent
 autovideosink choosing a hardware-accelerated videosink plugin such as
 vaapisink.
 
@@ -597,12 +580,11 @@ less. To change the name *audiodump*, use -admp \[n\] *filename*.
 
 **-d** Enable debug output. Note: this does not show GStreamer error or
 debug messages. To see GStreamer error and warning messages, set the
-environment variable GST\_DEBUG with "export GST\_DEBUG=2" before
-running uxplay. To see GStreamer debug messages, set GST\_DEBUG=4;
-increase this to see even more of the GStreamer inner workings.
+environment variable GST_DEBUG with "export GST_DEBUG=2" before running
+uxplay. To see GStreamer debug messages, set GST_DEBUG=4; increase this
+to see even more of the GStreamer inner workings.
 
-Troubleshooting
-===============
+# Troubleshooting
 
 Note: `uxplay` is run from a terminal command line, and informational
 messages are written to the terminal.
@@ -614,8 +596,8 @@ linking to "usr/local/lib/libcrypto.a" and "zlib". This was because (in
 addition to the standard ubuntu installation of libssl-dev), the user
 was unaware that a second installation with libcrypto in /usr/local was
 present. Solution: when more than one installation of OpenSSL is
-present, set the environment variable OPEN\_SSL\_ROOT\_DIR to point to
-the correct one; on 64-bit Ubuntu, this is done by running
+present, set the environment variable OPEN_SSL_ROOT_DIR to point to the
+correct one; on 64-bit Ubuntu, this is done by running
 `export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/` before running
 cmake.
 
@@ -692,7 +674,7 @@ reinstall it.)
 There are some reports of other GStreamer problems with
 hardware-accelerated Intel HD graphics. One user (on Debian) solved this
 with "sudo apt install intel-media-va-driver-non-free". This is a driver
-for 8'th (or later) generation \"\*-lake\" Intel chips, that seems to be
+for 8'th (or later) generation "\*-lake" Intel chips, that seems to be
 related to VAAPI accelerated graphics.
 
 If you *do* have Intel HD graphics, and have installed the vaapi plugin,
@@ -703,7 +685,7 @@ before running uxplay, or set this in the default environment.
 
 You can try to fix audio problems by using the "-as *audiosink*" option
 to choose the GStreamer audiosink , rather than have autoaudiosink pick
-one for you. The command "gst-inspect-1.0 \| grep Sink \| grep Audio" \"
+one for you. The command "gst-inspect-1.0 \| grep Sink \| grep Audio" "
 will show you which audiosinks are available on your system. (Replace
 "Audio" by "Video" to see videosinks). Some possible audiosinks are
 pulsesink, alsasink, osssink, oss4sink, and osxaudiosink (macOS).
@@ -732,12 +714,14 @@ option "-nc" that leaves the video window open.
 
 ### 4. GStreamer issues (missing plugins, etc.):
 
-To troubleshoot GStreamer execute "export GST\_DEBUG=2" to set the
+To troubleshoot GStreamer execute "export GST_DEBUG=2" to set the
 GStreamer debug-level environment-variable in the terminal where you
-will run uxplay, so that you see warning and error messages; (replace
-"2" by "4" to see much (much) more of what is happening inside
-GStreamer). Run "gst-inspect-1.0" to see which GStreamer plugins are
-installed on your system.
+will run uxplay, so that you see warning and error messages; see
+[GStreamer debugging
+tools](https://gstreamer.freedesktop.org/documentation/tutorials/basic/debugging-tools.html)
+for how to see much more of what is happening inside GStreamer. Run
+"gst-inspect-1.0" to see which GStreamer plugins are installed on your
+system.
 
 Some extra GStreamer packages for special plugins may need to be
 installed (or reinstalled: a user using a Wayland display system as an
@@ -806,8 +790,11 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires
 bit 27 (listed as "SupportsLegacyPairing") of the "features" plist code
 (reported to the client by the AirPlay server) to be set.
 
-ChangeLog
-=========
+# ChangeLog
+
+1.53 2022-06-13 Internal changes to audio sync code, revised
+documentation, minor bugfix (fix assertion crash when resent audio
+packets are empty).
 
 1.52 2022-05-05 Cleaned up initial audio sync code, and reformatted
 streaming debug output (readable aligned timestamps with decimal points
@@ -852,7 +839,7 @@ first client to disconnect).
 "stop mirroring". (A new "no close" option "-nc" is added for users who
 wish to retain previous behavior that does not close the video window).
 
-1.44 2021-12-13 Omit hash of aeskey with ecdh\_secret for an AirMyPC
+1.44 2021-12-13 Omit hash of aeskey with ecdh_secret for an AirMyPC
 client; make an internal rearrangement of where this hash is done. Fully
 report all initial communications between client and server in -d debug
 mode. Replace decodebin in GStreamer video pipeline by h264-specific
@@ -892,111 +879,73 @@ connections were active in previous *timeout* seconds (to renew Bonjour
 registration).
 
 1.341 2021-09-04 fixed: render logger was not being destroyed by
-stop\_server()
+stop_server()
 
 1.34 2021-08-27 Fixed "ZOOMFIX": the X11 window name fix was only being
 made the first time the GStreamer window was created by uxplay, and not
 if the server was relaunched after the GStreamer window was closed, with
 uxplay still running. Corrected in v. 1.34
 
-Improvements
-============
+### ZOOMFIX compile-time option
 
-1.  Updates of the RAOP (AirPlay protocol) collection of codes
-    maintained at https://github.com/FD-/RPiPlay.git so it is current as
-    of 2021-08-01, adding all changes since the original release of
-    UxPlay by antimof. This involved crypto updates, replacement of the
-    included plist library by the system-installed version, and a change
-    over to a library llhttp for http parsing.
+In GStreamer-1.18.6 and earlier, if UxPlay is using an X11 window for
+screen mirroring, this window is not visible to screen-sharing apps like
+ZOOM. OpenGL-based windows (use `-vs glimagesink` or `-vs gtksink`,
+*etc.*) do not have this problem.
 
-2.  Added -s, -o -p, -m, -r, -f, -fps, -vs, -as and -t options.
+A workaround is to manually make the X11 window visible to
+screen-sharing apps with the X11 utility xdotool, if it is installed,
+with: `xdotool selectwindow set_window --name <name>` (where `<name>` is
+your choice of name), and then select the uxplay window by clicking on
+it with the mouse.
 
-3.  If "`cmake -DZOOMFIX=ON .`" is run before compiling, the mirrored
-    window is now visible to screen-sharing applications such as Zoom.
-    (This applies only to X11 windows produced by videosinks
-    `ximagesink` and `xvimagesink`, which are often selected by
-    default.) To compile with ZOOMFIX=ON, the X11 development libraries
-    must be installed. *(ZOOMFIX will not be needed once the upcoming
-    gstreamer-1.20 is available, since starting with that release, the
-    GStreamer X11 mirror window will be natively visible for
-    screen-sharing, but it make take some time for distributions to
-    supply this version.)* Thanks to David Ventura
-    https://github.com/DavidVentura/UxPlay for the fix and also for
-    getting it into gstreamer-1.20. \[If uxplay was compiled after cmake
-    was run without -DZOOMFIX=ON, and your gstreamer version is older
-    than 1.20, you can still manually make the X11 window visible to
-    screen-sharing apps with the X11 utility xdotool, if it is
-    installed, with: `xdotool selectwindow set_window --name <name>`
-    (where `<name>` is your choice of name), and then select the uxplay
-    window by clicking on it with the mouse.\]
+However, if "`cmake -DZOOMFIX=ON .`" is run before compiling, the
+mirrored window is visible to screen-sharing applications, without this
+procedure. To compile with ZOOMFIX=ON, the X11 development libraries
+must be installed. (Without ZOOMFIX, UxPlay has no dependence on X11).
 
-4.  The AirPlay server now terminates correctly when the gstreamer
-    display window is closed, and is relaunched with the same settings
-    to wait for a new connection. The program uxplay terminates when
-    Ctrl-C is typed in the terminal window. The **-t *timeout*** option
-    relaunches the server after *timeout* seconds of inactivity to allow
-    new connections to be made.
+**ZOOMFIX is not needed in GStreamer-1.20 or later.** Thanks to David
+Ventura https://github.com/DavidVentura/UxPlay for the fix and also for
+getting a fix into gstreamer-1.20.
 
-5.  In principle, multiple instances of uxplay can be run simultaneously
-    using the **-m** (generate random MAC address) option to give each a
-    different ("local" as opposed to "universal") MAC address. If the
-    **-p \[n\]** option is used, they also need separate network port
-    choices. (However, there may be a large latency, and running two
-    instances of uxplay simultaneously on the same computer may not be
-    very useful; using the **-fps** option to force streaming framerates
-    below 30fps could be helpful.)
+### Building OpenSSL \>= 1.1.1 from source.
 
-6.  Without the **-p** \[n\] option, uxplay makes a random dynamic
-    assignment of network ports. This will not work if most ports are
-    closed by a firewall. With e.g., **-p 45000** you should open both
-    TCP and UDP on ports 45000, 45001, 45002. Minimum allowed port is
-    1024, maximum is 65535. The option "**-p**" with no argument uses a
-    "legacy" set of ports TCP 7100, 7000, 7001, and UDP 7011,
-    6000, 6001. Finer control is also possible: "**-p udp n1,n2,n3 -p
-    tcp n4,n5,n6**" sets all six ports individually.
+If you need to do this, note that you may be able to use a newer version
+(OpenSSL-3.0.1 is known to work). You will need the standard development
+toolset (autoconf, automake, libtool). Download the source code from
+<https://www.openssl.org/source/>. Install the downloaded openssl by
+opening a terminal in your Downloads directory, and unpacking the source
+distribution: ("tar -xvzf openssl-3.0.1.tar.gz ; cd openssl-3.0.1").
+Then build/install with "./config ; make ; sudo make install_dev". This
+will typically install the needed library `libcrypto.*`, either in
+/usr/local/lib or /usr/local/lib64.
 
-7.  The default resolution setting is 1920x1080 width x height pixels.
-    To change this, use "**-s wxh**" where w and h are positive decimals
-    with 4 or less digits. It seems that the width and height may be
-    negotiated with the AirPlay client, so this may not be the actual
-    screen geometry that displays.
+*(Ignore the following for builds on MacOS:)* On some systems like
+Debian or Ubuntu, you may also need to add a missing entry
+`/usr/local/lib64` in /etc/ld.so.conf (or place a file containing
+"/usr/local/lib64/libcrypto.so" in /etc/ld.so.conf.d) and then run "sudo
+ldconfig".
 
-8.  The title on the GStreamer display window is now is the AirPlay
-    server name. (This works for X11 windows created by gstreamer
-    videosinks ximagesink, xvimagesink, but not OpenGL windows created
-    by glimagesink.)
+### Building libplist \>= 2.0.0 from source.
 
-9.  The avahi\_compat "nag" warning on startup is suppressed, by placing
-    "AVAHI\_COMPAT\_NOWARN=1" into the runtime environment when uxplay
-    starts. (This uses a call to putenv() in a form that is believed to
-    be safe against memory leaks, at least in modern Linux; if for any
-    reason you don't want this fix, comment out the line in
-    CMakeLists.txt that activates it when uxplay is compiled.) On macOS,
-    Avahi is not used.
+*(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can
+avoid this step by installing libplist-dev and libplist3 from Debian 10
+or Ubuntu 18.04.)* As well as the usual build tools (autoconf, automake,
+libtool), you may need to also install some libpython\*-dev package.
+Download the latest source from
+<https://github.com/libimobiledevice/libplist>: get
+[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
+then ("unzip libplist-master.zip ; cd libplist-master"), build/install
+("./autogen.sh ; make ; sudo make install"). This will probably install
+libplist-2.0.\* in /usr/local/lib.
 
-10. UxPlay now builds on macOS.
+*(Ignore the following for builds on MacOS:)* On some systems like
+Debian or Ubuntu, you may also need to add a missing entry
+`/usr/local/lib` in /etc/ld.so.conf (or place a file containing
+"/usr/local/lib/libplist-2.0.so" in /etc/ld.so.conf.d) and then run
+"sudo ldconfig".
 
-11. The hostname of the server running uxplay is now appended to the
-    AirPlay server name, which is now displayed as *name*\@hostname,
-    where *name* is "UxPlay", (or whatever is set with the **-n**
-    option).
-
-12. Added support for audio-only streaming with original (non-Mirror)
-    AirPlay protocol, with Apple Lossless (ALAC) audio.
-
-13. Added suppport for the older AirPlay protocol used by third-party
-    Windows-based AirPlay mirror emulators such as AirMyPC.
-
-14. Made the video pipeline fully configurable with options -vp, -vd,
-    -vc, for accelerated hardware support (e.g. NVIDIA).
-
-15. Added Raspberry Pi support (accelerated hardware decoding) with -rpi
-    option.
-
-16. Added options to dump audio and/or video to file.
-
-Disclaimer
-==========
+# Disclaimer
 
 All the resources in this repository are written using only freely
 available information from the internet. The code and related resources
@@ -1014,8 +963,7 @@ closed-source) available for purchase, it is my understanding that an
 open source implementation of the same functionality wouldn't violate
 any of Apple's rights either.
 
-UxPlay authors
-==============
+# UxPlay authors
 
 *\[adapted from fdraschbacher's notes on RPiPlay antecedents\]*
 
@@ -1024,10 +972,12 @@ Here is an attempt at listing the various authors and the components
 they created:
 
 UxPlay was initially created by **antimof** from RPiPlay, by replacing
-its Raspberry-Pi-specific video and audio rendering system with
-GStreamer rendering for Desktop Linux (antimof's work on code in
-`renderers/` was later backported to RPiPlay). The previous authors of
-code included in UxPlay by inheritance from RPiPlay include:
+its Raspberry-Pi-adapted OpenMAX video and audio rendering system with
+GStreamer rendering for desktop Linux systems (antimof's work on code in
+`renderers/` was later backported to RPiPlay).
+
+The previous authors of code included in UxPlay by inheritance from
+RPiPlay include:
 
 -   **EstebanKubata**: Created a FairPlay library called
     [PlayFair](https://github.com/EstebanKubata/playfair). Located in
@@ -1045,12 +995,15 @@ code included in UxPlay by inheritance from RPiPlay include:
     made RPiPlay possible, by the AirplayServer author. All code in
     `lib/` concerning mirroring is dsafa22's work. License: GNU
     LGPLv2.1+
--   **Florian Draschbacher** and contributors: adapted dsafa22's Android
-    project for the Raspberry Pi, with extensive cleanups, debugging and
-    improvements. The project [RPiPlay](https://github.com/FD-/RPiPlay)
-    is basically a port of dsafa22's code to the Raspberry Pi, utilizing
-    OpenMAX and OpenSSL for better performance on the Pi. License GPL
-    v3.
+-   **Florian Draschbacher** (FD-) and contributors: adapted dsafa22's
+    Android project for the Raspberry Pi, with extensive cleanups,
+    debugging and improvements. The project
+    [RPiPlay](https://github.com/FD-/RPiPlay) is basically a port of
+    dsafa22's code to the Raspberry Pi, utilizing OpenMAX and OpenSSL
+    for better performance on the Pi. License GPL v3. FD- has written an
+    interesting note on the history of [Airplay protocol
+    versions](http://github.com/FD-/RPiPlay#airplay-protocol-versions),
+    available at the RPiPlay github repository.
 
 Independent of UxPlay, but used by it and bundled with it:
 
@@ -1058,143 +1011,3 @@ Independent of UxPlay, but used by it and bundled with it:
     contributors: Created an http parsing library called
     [llhttp](https://github.com/nodejs/llhttp). Located at
     `lib/llhttp/`. License: MIT
-
-Notes on AirPlay protocol versions by Florian Draschbacher, RPiPlay creator
----------------------------------------------------------------------------
-
-(From the https://github.com/FD-/RPiPlay.git repository.)
-
-For multiple reasons, it's very difficult to clearly define the protocol
-names and versions of the components that make up the AirPlay streaming
-system. In fact, it seems like the AirPlay version number used for
-marketing differs from that used in the actual implementation. In order
-to tidy up this whole mess a bit, I did a little research that I'd like
-to summarize here:
-
-The very origin of the AirPlay protocol suite was launched as AirTunes
-sometime around 2004. It allowed to stream audio from iTunes to an
-AirPort Express station. Internally, the name of the protocol that was
-used was RAOP, or Remote Audio Output Protocol. It seems already back
-then, the protocol involved AES encryption. A public key was needed for
-encrypting the audio sent to an AirPort Express, and the private key was
-needed for receiving the protocol (ie used in the AirPort Express to
-decrypt the stream). Already in 2004, the public key was
-reverse-engineered, so that [third-party sender
-applications](http://nanocr.eu/2004/08/11/reversing-airtunes/) were
-developed.
-
-Some time [around
-2008](https://weblog.rogueamoeba.com/2008/01/10/a-tour-of-airfoil-3/),
-the protocol was revised and named AirTunes 2. It seems the changes
-primarily concerned timing. By 2009, the new protocol was
-[reverse-engineered and
-documented](https://git.zx2c4.com/Airtunes2/about/).
-
-When the Apple TV 2nd generation was introduced in 2010, it received
-support for the AirTunes protocol. However, because this device allowed
-playback of visual content, the protocol was extended and renamed
-AirPlay. It was now possible to stream photo slideshows and videos.
-Shortly after the release of the Apple TV 2nd generation, AirPlay
-support for iOS was included in the iOS 4.2 update. It seems like at
-that point, the audio stream was still actually using the same AirTunes
-2 protocol as described above. The video and photo streams were added as
-a whole new protocol based on HTTP, pretty much independent from the
-audio stream. Soon, the first curious developers began to [investigate
-how it
-worked](https://web.archive.org/web/20101211213705/http://www.tuaw.com/2010/12/08/dear-aunt-tuaw-can-i-airplay-to-my-mac/).
-Their conclusion was that visual content is streamed unencrypted.
-
-In April 2011, a talented hacker [extracted the AirPlay private
-key](http://www.macrumors.com/2011/04/11/apple-airplay-private-key-exposed-opening-door-to-airport-express-emulators/)
-from an AirPort Express. This meant that finally, third-party developers
-were able to also build AirPlay receiver (server) programs.
-
-For iOS 5, released in 2011, Apple added a new protocol to the AirPlay
-suite: AirPlay mirroring. [Initial
-investigators](https://www.aorensoftware.com/blog/2011/08/20/exploring-airplay-mirroring-internals/)
-found this new protocol used encryption in order to protect the
-transferred video data.
-
-By 2012, most of AirPlay's protocols had been reverse-engineered and
-[documented](https://nto.github.io/AirPlay.html) (see also [updated
-version](https://openairplay.github.io/airplay-spec)). At this point,
-audio still used the AirTunes 2 protocol from around 2008, video, photos
-and mirroring still used their respective protocols in an unmodified
-form, so you could still speak of AirPlay 1 (building upon AirTunes 2).
-The Airplay server running on the Apple TV reported as version 130. The
-setup of AirPlay mirroring used the xml format, in particular a
-stream.xml file. Additionally, it seems like the actual audio data is
-using the ALAC codec for audio-only (AirTunes 2) streaming and AAC for
-mirror audio. At least these different formats were used in [later iOS
-versions](https://github.com/espes/Slave-in-the-Magic-Mirror/issues/12#issuecomment-372380451).
-
-Sometime before iOS 9, the protocol for mirroring was slightly modified:
-Instead of the "stream.xml" API endpoint, the same information could
-also be querried in binary plist form, just by changing the API endpoint
-to "stream", without any extension. I wasn't able to figure out which of
-these was actually used by what specific client / server versions.
-
-For iOS 9, Apple made [considerable
-changes](https://9to5mac.com/2015/09/11/apple-ios-9-airplay-improvements-screen-mirroring/)
-to the AirPlay protocol in 2015, including audio and mirroring.
-Apparently, the audio protocol was only slightly modified, and a [minor
-change](https://github.com/juhovh/shairplay/issues/43) restored
-compatibility. For mirroring, an [additional pairing
-phase](https://github.com/juhovh/shairplay/issues/43#issuecomment-142115959)
-was added to the connection establishment procedure, consisting of
-pair-setup and pair-verify calls. Seemingly, these were added in order
-to simplify usage with devices that are connected frequently. Pair-setup
-is used only the first time an iOS device connects to an AirPlay
-receiver. The generated cryptographic binding can be used for
-pair-verify in later sessions. Additionally, the stream / stream.xml
-endpoint was replaced with the info endpoint (only available as binary
-plist AFAICT). As of iOS 12, the protocol introduced with iOS 9 was
-still supported with only slight modifications, albeit as a legacy mode.
-While iOS 9 used two SETUP calls (one for general connection and
-mirroring video, and one for audio), iOS 12 legacy mode uses 3 SETUP
-calls (one for general connection (timing and events), one for mirroring
-video, one for audio).
-
-The release of tvOS 10.2 broke many third-party AirPlay sender (client)
-programs in 2017. The reason was that it was now mandatory to perform
-device verification via a pin in order to stream content to an Apple TV.
-The functionality had been in the protocol before, but was not
-mandatory. Some discussion about the new scheme can be found
-[here](https://github.com/postlund/pyatv/issues/79). A full
-specification of the pairing and authentication protocol was made
-available on
-[GitHub](https://htmlpreview.github.io/?https://github.com/philippe44/RAOP-Player/blob/master/doc/auth_protocol.html).
-At that point, tvOS 10.2 reported as AirTunes/320.20.
-
-In tvOS 11, the reported server version was [increased to
-350.92.4](https://github.com/ejurgensen/forked-daapd/issues/377#issuecomment-309213273).
-
-iOS 11.4 added AirPlay 2 in 2018. Although extensively covered by the
-media, it's not entirely clear what changes specifically Apple has made
-protocol-wise.
-
-From captures of the traffic between an iOS device running iOS 12.2 and
-an AppleTV running tvOS 12.2.1, one can see that the communication on
-the main mirroring HTTP connection is encrypted after the initial
-handshake. This could theoretically be part of the new AirPlay 2
-protocol. The AppleTV running tvOS 12.2.1 identifies as
-AirTunes/380.20.1. When connecting from the same iOS device to an
-AppleTV 3rd generation (reporting as AirTunes/220.68), the communication
-is still visible in plain. From the log messages that the iOS device
-produces when connected to an AppleTV 3rd generation, it becomes
-apparent that the iOS device is treating this plain protocol as the
-legacy protocol (as originally introduced with iOS 9). Further research
-showed that at the moment, all available third-party AirPlay mirroring
-receivers (servers) are using this legacy protocol, including the open
-source implementation of dsafa22, which is the base for RPiPlay. Given
-Apple considers this a legacy protocol, it can be expected to be removed
-entirely in the future. This means that all third-party AirPlay
-receivers will have to be updated to the new (fully encrypted) protocol
-at some point.
-
-More specifically, the encryption starts after the pair-verify handshake
-completed, so the fp-setup handshake is already happening encrypted.
-Judging from the encryption scheme for AirPlay video (aka HLS Relay),
-likely two AES GCM 128 ciphers are used on the socket communication (one
-for sending, one for receiving). However, I have no idea how the keys
-are derived from the handshake data.
