@@ -517,9 +517,9 @@ raop_rtp_thread_udp(void *arg)
                 unsigned char *resent_packet =  &packet[4];
                 unsigned int resent_packetlen = packetlen - 4;
                 unsigned short seqnum = byteutils_get_short_be(resent_packet, 2);
-                uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
-                uint64_t rtp_time = rtp64_time(raop_rtp, &timestamp);
-                if (resent_packetlen > 12) {
+                if (resent_packetlen >= 12) {
+                    uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
+                    uint64_t rtp_time = rtp64_time(raop_rtp, &timestamp);
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp resent audio packet: seqnum=%u", seqnum);
                     assert(raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, rtp_time, 1) >= 0);
                 } else {
