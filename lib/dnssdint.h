@@ -20,7 +20,10 @@
 #define RAOP_VN "65537"
 #define RAOP_PK "b07727d6f6cd6e08b58ede525ec3cdeaa252ad9f683feb212ef8a205246554e7"
 
-#define AIRPLAY_FEATURES "0x5A7FFEE6"
+
+#define AIRPLAY_FEATURES_1 "0x5A7FFEE6"  /* first 32 bits of features */
+#define AIRPLAY_FEATURES_2 "0x0"         /* second 32 bits of features */
+#define AIRPLAY_FEATURES  AIRPLAY_FEATURES_1 "," AIRPLAY_FEATURES_2 
 #define AIRPLAY_SRCVERS GLOBAL_VERSION /*defined in global.h */
 #define AIRPLAY_FLAGS "0x4"
 #define AIRPLAY_VV "2"
