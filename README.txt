@@ -1,13 +1,14 @@
-# UxPlay 1.53: AirPlay/AirPlay-Mirror server for Linux, macOS, and Unix.
+# UxPlay 1.54: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix.
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
 Highlights:
 
 -   GPLv3, open source.
--   Support for both AirPlay Mirror and AirPlay Audio-only (Apple
-    Lossless ALAC) streaming protocols from current iOS/iPadOS 15.5
-    clients.
+-   Originally supported only AirPlay Mirror protocol, now has added
+    support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
+    current iOS/iPadOS 15.5 clients. **There is no support for Airplay2
+    video-streaming protocol, and none is planned.**
 -   macOS computers (2011 or later, both Intel and "Apple Silicon" M1
     systems) can act either as AirPlay clients, or as the server running
     UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
@@ -21,9 +22,9 @@ Highlights:
     pipeline).
 -   Support for server behind a firewall.
 -   **New**: Support for Raspberry Pi, with hardware video acceleration
-    using Video4Linux2 (which supports both 32- and 64-bit systems,
-    unlike deprecated OpenMAX (omx), which it replaces). (For GStreamer
-    \< 1.22, a
+    using Video4Linux2 (vl42), which supports both 32- and 64-bit
+    systems, unlike deprecated OpenMAX (omx), which is being dropped by
+    RPi distributions in favor of v4l2. (For GStreamer \< 1.22, a
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to the GStreamer Video4Linux2 plugin, available in the [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless your
@@ -34,8 +35,8 @@ Highlights:
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
 Linux, macOS, and \*BSD. It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code from
-[RPiPlay](https://github.com/FD-/RPiPlay), which in turn derives from
-[AirplayServer](https://github.com/KqsMea8/AirplayServer),
+OpenMAX-based [RPiPlay](https://github.com/FD-/RPiPlay), which in turn
+derives from [AirplayServer](https://github.com/KqsMea8/AirplayServer),
 [shairplay](https://github.com/juhovh/shairplay), and
 [playfair](https://github.com/EstebanKubata/playfair). (The antimof site
 is no longer involved in development, but periodically posts updates
@@ -52,9 +53,10 @@ Its main use is to act like an AppleTV for screen-mirroring (with audio)
 of iOS/iPadOS/macOS clients (iPhones, iPads, MacBooks) in a window on
 the server display (with the possibility of sharing that window on
 screen-sharing applications such as Zoom) on a host running Linux,
-macOS, or other unix. UxPlay supports Apple's AirPlay 2 protocol using
+macOS, or other unix. UxPlay supports Apple's AirPlay2 protocol using
 "Legacy Pairing", but some features are missing. (Details of what is
 publically known about Apple's AirPlay 2 protocol can be found
+[here](https://openairplay.github.io/airplay-spec/),
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
 and [here](https://emanuelecozzi.net/docs/airplay2)).
 
@@ -68,21 +70,31 @@ included in most Linux distributions (this service can also be provided
 by macOS, iOS or Windows servers).
 
 Connections to the UxPlay server by iOS/MacOS clients can be initiated
-both in AirPlay Mirror mode (which streams lossily-compressed AAC audio
-while mirroring the client screen, or in the alternative AirPlay Audio
-mode which streams Apple Lossless (ALAC) audio without screen mirroring
-(the accompanying cover art in this mode is not displayed, but metadata
-is displayed in the terminal). *Switching between these two modes during
-an active connection is possible: in Mirror mode, close the mirror
-window and start an Audio mode connection, switch back by initiating a
-Mirror mode connection.*
+both in **AirPlay Mirror** mode (which streams lossily-compressed AAC
+audio while mirroring the client screen, or in the alternative **AirPlay
+Audio** mode which streams Apple Lossless (ALAC) audio without screen
+mirroring. In **Audio** mode, metadata is displayed in the uxplay
+terminal; if UxPlay option `-ca <name>` is used, the accompanying cover
+art is also output to a periodically-updated file `<name>`, and can be
+viewed with a (reloading) graphics viewer of your choice such as `feh`:
+run "`uxplay -ca <name> &`" in the background, then run
+"`feh -R 1 <name>`" in the foreground; terminate with
+"`ctrl-C fg ctrl-C`". *Switching between* **Mirror** *and* **Audio**
+*modes during an active connection is possible: in* **Mirror** *mode,
+stop mirroring (or close the mirror window) and start an* **Audio**
+*mode connection, switch back by initiating a* **Mirror** *mode
+connection; cover-art display stops/restarts as you leave/re-enter*
+**Audio** *mode.*
 
--   **Note that Apple DRM (as found in Apple TV app content on the
+-   **Note that Apple video-DRM (as found in AppleTV.app content on the
     client) cannot be decrypted by UxPlay, and (unlike a true AppleTV),
     the UxPlay server does not allow the Apple client to run a http
     connection on the server that directly streams content from the
     internet to the server, instead of streaming it to the client, and
-    then re-streaming to the server.**
+    then re-streaming to the server. Unlike AppleTV.app, DRM-free apps
+    like youtube.app can be viewed and listened to in Mirror mode, but
+    using the youtube.app icon for AirPlay video will only send ALAC
+    sound without the accompanying video.**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
@@ -204,7 +216,7 @@ packaging for a distribution, use the cmake option
     needed for GStreamer-1.18.x or earlier**.
 5.  `make`
 6.  `sudo make install` (you can afterwards uninstall with
-    `sudo make uninstall` in the same directory in which this was run)
+    `sudo make uninstall` in the same directory in which this was run).
 7.  Install GStreamer plugins that you need:
     `sudo apt-get install gstreamer1.0-<plugin>`; values of `<plugin>`
     needed are: "**plugins-base**", "**libav**" (for sound),
@@ -244,11 +256,13 @@ prevents UxPlay from receiving client connection requests unless some
 network ports are opened. See [Troubleshooting](#troubleshooting) below
 for help with this or other problems.
 
-One common problem involves GStreamer attempting to use
+**One common problem involves GStreamer attempting to use
 incorrectly-configured or absent accelerated hardware h264 video
 decoding (e.g., VAAPI). Try "`uxplay -avdec`" to force software video
 decoding; if this works you can then try to fix accelerated hardware
-video decoding if you need it. See [Usage](#usage) for more run-time
+video decoding if you need it, or just uninstall the GStreamer VAAPI
+plugin. If your system uses the Wayland compositor for graphics, use
+"`uxplay -vs waylandsink`".** See [Usage](#usage) for more run-time
 options.
 
 **Raspberry Pi**: GStreamer-1.18.4 or later required for hardware video
@@ -292,8 +306,8 @@ Terminal output is saved to FILE (which can be /dev/null to discard it).
     required GStreamer packages are: gstreamer-devel
     gstreamer-plugins-base-devel gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
-    graphics); you may need to use the version of
-    gstreamer-plugins-libav for OpenSUSE from
+    graphics); in some cases, you may need to use gstreamer packages for
+    OpenSUSE from
     [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
     "Essentials".
 
@@ -403,17 +417,6 @@ landscape mode as the device is rotated).
 
 Options:
 
-**-p** allows you to select the network ports used by UxPlay (these need
-to be opened if the server is behind a firewall). By itself, -p sets
-"legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011. -p n (e.g. -p
-35000) sets TCP and UDP ports n, n+1, n+2. -p n1,n2,n3 (comma-separated
-values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1. -p
-tcp n or -p udp n sets just the TCP or UDP ports. Ports must be in the
-range \[1024-65535\].
-
-If the -p option is not used, the ports are chosen dynamically
-(randomly), which will not work if a firewall is running.
-
 **-n server_name** (Default: UxPlay); server_name@\_hostname\_ will be
 the name that appears offering AirPlay services to your iPad, iPhone
 etc, where *hostname* is the name of the server running uxplay. This
@@ -446,41 +449,21 @@ reason to use it.
 **-fs** uses fullscreen mode, but only works with Wayland or VAAPI
 plugins.
 
-**-fps n** sets a maximum frame rate (in frames per second) for the
-AirPlay client to stream video; n must be a whole number less than 256.
-(The client may choose to serve video at any frame rate lower than this;
-default is 30 fps.) A setting below 30 fps might be useful to reduce
-latency if you are running more than one instance of uxplay at the same
-time. *This setting is only an advisory to the client device, so setting
-a high value will not force a high framerate.* (You can test using "-vs
-fpsdisplaysink" to see what framerate is being received, or use the
-option -FPSdata which displays video-stream performance data
-continuously sent by the client during video-streaming.)
+**-p** allows you to select the network ports used by UxPlay (these need
+to be opened if the server is behind a firewall). By itself, -p sets
+"legacy" ports TCP 7100, 7000, 7001, UDP 6000, 6001, 7011. -p n (e.g. -p
+35000) sets TCP and UDP ports n, n+1, n+2. -p n1,n2,n3 (comma-separated
+values) sets each port separately; -p n1,n2 sets ports n1,n2,n2+1. -p
+tcp n or -p udp n sets just the TCP or UDP ports. Ports must be in the
+range \[1024-65535\].
 
-**-FPSdata** Turns on monitoring of regular reports about video
-streaming performance that are sent by the client. These will be
-displayed in the terminal window if this option is used. The data is
-updated by the client at 1 second intervals.
+If the -p option is not used, the ports are chosen dynamically
+(randomly), which will not work if a firewall is running.
 
-**-m** generates a random MAC address to use instead of the true
-hardware MAC number of the computer's network card. (Different
-server_name, MAC addresses, and network ports are needed for each
-running uxplay if you attempt to run two instances of uxplay on the same
-computer.) If UxPlay fails to find the true MAC address of a network
-card, (more specifically, the MAC address used by the first active
-network interface detected) a random MAC address will be used even if
-option **-m** was not specifed. (Note that a random MAC address will be
-different each time UxPlay is started).
-
-Also: image transforms that had been added to RPiPlay have been ported
-to UxPlay:
-
-**-f {H\|V\|I}** implements "videoflip" image transforms: H = horizontal
-flip (right-left flip, or mirror image); V = vertical flip ; I = 180
-degree rotation or inversion (which is the combination of H with V).
-
-**-r {R\|L}** 90 degree Right (clockwise) or Left (counter-clockwise)
-rotations; these are carried out after any **-f** transforms.
+**-avdec** forces use of software h264 decoding using Gstreamer element
+avdec_h264 (libav h264 decoder). This option should prevent
+autovideosink choosing a hardware-accelerated videosink plugin such as
+vaapisink.
 
 **-vp *parser*** choses the GStreamer pipeline's h264 parser element,
 default is h264parse. Using quotes "..." allows options to be added.
@@ -530,11 +513,6 @@ systems using the framebuffer, like RPi OS Bullseye Lite).
 "Desktop" systems using the Wayland video compositor (use for Ubuntu
 21.10 for Raspberry Pi 4B).
 
-**-avdec** forces use of software h264 decoding using Gstreamer element
-avdec_h264 (libav h264 decoder). This option should prevent
-autovideosink choosing a hardware-accelerated videosink plugin such as
-vaapisink.
-
 **-as *audiosink*** chooses the GStreamer audiosink, instead of letting
 autoaudiosink pick it for you. Some audiosink choices are: pulsesink,
 alsasink, osssink, oss4sink, and osxaudiosink (for macOS). Using quotes
@@ -544,12 +522,25 @@ name. (Some choices of audiosink might not work on your system.)
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
 
-**-reset n** sets a limit of n consective timeout failures of the client
-to respond to ntp requests from the server (these are sent every 3
-seconds to check if the client is still present). After n failures, the
-client will be presumed to be offline, and the connection will be reset
-to allow a new connection. The default value of n is 5; the value n = 0
-means "no limit" on timeouts.
+**-ca *filename*** provides a file (where *filename* can include a full
+path) used for output of "cover art" (from Apple Music, *etc.*,) in
+audio-only ALAC mode. This file is overwritten with the latest cover art
+as it arrives. Cover art (jpeg format) is discarded if this option is
+not used. Use with a image viewer that reloads the image if it changes,
+or regularly (*e.g.* once per second.). To achieve this, run
+"`uxplay -ca [path/to/]filename &`" in the background, then run the the
+image viewer in the foreground. Example, using `feh` as the viewer: run
+"`feh -R 1 [path/to/]filename`" (in the same terminal window in which
+uxplay was put into the background). To quit, use `ctrl-C fg ctrl-C` to
+terminate the image viewer, bring `uxplay` into the foreground, and
+terminate it too.
+
+**-reset n** sets a limit of n consecutive timeout failures of the
+client to respond to ntp requests from the server (these are sent every
+3 seconds to check if the client is still present). After n failures,
+the client will be presumed to be offline, and the connection will be
+reset to allow a new connection. The default value of n is 5; the value
+n = 0 means "no limit" on timeouts.
 
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
 close** the video window when the the client sends the "Stop Mirroring"
@@ -557,6 +548,40 @@ signal. *This option is currently used by default in macOS, as the
 window created in macOS by GStreamer does not terminate correctly (it
 causes a segfault) if it is still open when the GStreamer pipeline is
 closed.*
+
+**-FPSdata** Turns on monitoring of regular reports about video
+streaming performance that are sent by the client. These will be
+displayed in the terminal window if this option is used. The data is
+updated by the client at 1 second intervals.
+
+**-fps n** sets a maximum frame rate (in frames per second) for the
+AirPlay client to stream video; n must be a whole number less than 256.
+(The client may choose to serve video at any frame rate lower than this;
+default is 30 fps.) A setting below 30 fps might be useful to reduce
+latency if you are running more than one instance of uxplay at the same
+time. *This setting is only an advisory to the client device, so setting
+a high value will not force a high framerate.* (You can test using "-vs
+fpsdisplaysink" to see what framerate is being received, or use the
+option -FPSdata which displays video-stream performance data
+continuously sent by the client during video-streaming.)
+
+**-f {H\|V\|I}** implements "videoflip" image transforms: H = horizontal
+flip (right-left flip, or mirror image); V = vertical flip ; I = 180
+degree rotation or inversion (which is the combination of H with V).
+
+**-r {R\|L}** 90 degree Right (clockwise) or Left (counter-clockwise)
+rotations; these image transforms are carried out after any **-f**
+transforms.
+
+**-m** generates a random MAC address to use instead of the true
+hardware MAC number of the computer's network card. (Different
+server_name, MAC addresses, and network ports are needed for each
+running uxplay if you attempt to run two instances of uxplay on the same
+computer.) If UxPlay fails to find the true MAC address of a network
+card, (more specifically, the MAC address used by the first active
+network interface detected) a random MAC address will be used even if
+option **-m** was not specifed. (Note that a random MAC address will be
+different each time UxPlay is started).
 
 **-t *timeout*** will cause the server to relaunch (without stopping
 uxplay) if no connections have been present during the previous
@@ -764,19 +789,19 @@ causes UxPlay to reset the connection. When the connection is reset, the
 "frozen" mirror screen of the previous connection is left in place, and
 will be taken over by a new client connection when it is made.
 
-### 6. Failure to decrypt ALL video and audio streams from old or non-Apple clients:
+### 6. Protocol issues, such as failure to decrypt ALL video and audio streams from old or non-Apple clients:
 
-This triggers an unending stream of error messages, and means that the
-audio decryption key (also used in video decryption) was not correctly
-extracted from data sent by the client. This should not happen for iOS
-9.3 or later clients. However, if a client uses the same older version
-of the protocol that is used by the Windows-based AirPlay client
-emulator *AirMyPC*, the protocol can be switched to the older version by
-the setting `OLD_PROTOCOL_CLIENT_USER_AGENT_LIST` in lib/global.h.
-UxPlay reports the client's "User Agent" string when it connects. If
-some other client also fails to decrypt all audio and video, try adding
-its "User Agent" string in place of "xxx" in the entry "AirMyPC/2.0;xxx"
-in global.h and rebuild uxplay.
+A protocol failure may trigger an unending stream of error messages, and
+means that the audio decryption key (also used in video decryption) was
+not correctly extracted from data sent by the client. This should not
+happen for iOS 9.3 or later clients. However, if a client uses the same
+older version of the protocol that is used by the Windows-based AirPlay
+client emulator *AirMyPC*, the protocol can be switched to the older
+version by the setting `OLD_PROTOCOL_CLIENT_USER_AGENT_LIST` in
+`UxPlay/lib/global.h`. UxPlay reports the client's "User Agent" string
+when it connects. If some other client also fails to decrypt all audio
+and video, try adding its "User Agent" string in place of "xxx" in the
+entry "AirMyPC/2.0;xxx" in global.h and rebuild uxplay.
 
 Note that Uxplay declares itself to be an AppleTV3,2 with a
 sourceVersion 220.68; this can also be changed in global.h. It had been
@@ -788,12 +813,18 @@ UxPlay still works if it declares itself as an AppleTV6,2 with
 sourceVersion 380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running
 tvOS 12.2.1); it seems that the use of "legacy" protocol just requires
 bit 27 (listed as "SupportsLegacyPairing") of the "features" plist code
-(reported to the client by the AirPlay server) to be set.
+(reported to the client by the AirPlay server) to be set. The "features"
+code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # ChangeLog
 
+1.54 2022-06-25 Add support for "Cover Art" display in Audio-only (ALAC)
+mode. Reverted a change that caused VAAPI to crash with AMD POLARIS
+graphics cards. Minor internal changes to plist code and uxplay option
+parsing.
+
 1.53 2022-06-13 Internal changes to audio sync code, revised
-documentation, minor bugfix (fix assertion crash when resent audio
+documentation, Minor bugfix (fix assertion crash when resent audio
 packets are empty).
 
 1.52 2022-05-05 Cleaned up initial audio sync code, and reformatted

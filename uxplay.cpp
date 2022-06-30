@@ -44,7 +44,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.53"
+#define VERSION "1.54"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -98,6 +98,28 @@ static bool dump_audio = false;
 static unsigned char audio_type = 0x00;
 static unsigned char previous_audio_type = 0x00;
 static bool fullscreen = false;
+static std::string coverart_filename = "";
+static bool do_append_hostname = true;
+static bool use_random_hw_addr = false;
+static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
+static bool debug_log = DEFAULT_DEBUG_LOG;
+
+/* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
+static const unsigned char empty_image[] = {
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,  0x01, 0x03, 0x00, 0x00, 0x00, 0x25, 0xdb, 0x56,
+    0xca, 0x00, 0x00, 0x00, 0x03, 0x50, 0x4c, 0x54,  0x45, 0x00, 0x00, 0x00, 0xa7, 0x7a, 0x3d, 0xda,
+    0x00, 0x00, 0x00, 0x01, 0x74, 0x52, 0x4e, 0x53,  0x00, 0x40, 0xe6, 0xd8, 0x66, 0x00, 0x00, 0x00,
+    0x0a, 0x49, 0x44, 0x41, 0x54, 0x08, 0xd7, 0x63,  0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0xe2,
+    0x21, 0xbc, 0x33, 0x00, 0x00, 0x00, 0x00, 0x49,  0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82 };
+
+size_t write_coverart(const char *filename, const void *image, size_t len) {
+    FILE *fp = fopen(filename, "wb");
+    size_t count = fwrite(image, 1, len, fp);
+    fclose(fp);
+    return count;
+}
+  
 
 void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
@@ -301,17 +323,13 @@ static void print_info (char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
-    printf("-o        Set mirror \"overscanned\" mode on (not usually needed)\n");
+    printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only with Wayland and VAAPI plugins)\n");
-    printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
-    printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
-    printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
     printf("          \"-p tcp n\" or \"-p udp n\" sets TCP or UDP ports separately\n");
-    printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
-    printf("-t n      Relaunch server if no connection existed in last n seconds\n");
+    printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
     printf("-vp ...   Choose the GSteamer h264 parser: default \"h264parse\"\n");
     printf("-vd ...   Choose the GStreamer h264 decoder; default \"decodebin\"\n");
     printf("          choices: (software) avdec_h264; (hardware) v4l2h264dec,\n");
@@ -327,13 +345,18 @@ static void print_info (char *name) {
     printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
     printf("-rpifb    Same as \"-v4l2 -vs kmssink\" for RPi using framebuffer.\n");
     printf("-rpiwl    Same as \"-v4l2 -vs waylandsink\" for RPi using Wayland.\n");
-    printf("-avdec    Force software h264 video decoding with libav decoder\n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
+    printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");  
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
+    printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
+    printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
+    printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
+    printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
+    printf("-t n      Relaunch server if no connection existed in last n seconds\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
     printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
     printf("          x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n\n");
@@ -467,21 +490,7 @@ static void append_hostname(std::string &server_name) {
     }
 }
 
-int main (int argc, char *argv[]) {
-    std::vector<char> server_hw_addr;
-    bool do_append_hostname = true;
-    bool use_random_hw_addr = false;
-    bool debug_log = DEFAULT_DEBUG_LOG;
-    unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
-
-#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
-    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
-    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
-    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
-    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
-#endif
-
-
+void parse_arguments (int argc, char *argv[]) {    
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
@@ -659,12 +668,33 @@ int main (int argc, char *argv[]) {
                     audio_dumpfile_name.append(argv[i]);
                 }
             }
+        } else if (arg  == "-ca" ) {
+            if (option_has_value(i, argc, arg, argv[i+1])) {
+                coverart_filename.erase();
+                coverart_filename.append(argv[++i]);
+            } else {
+                LOGE("option -ca must be followed by a filename for cover-art output");
+                exit(1);
+            }
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
     }
+}
 
+int main (int argc, char *argv[]) {
+    std::vector<char> server_hw_addr;
+
+#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
+    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
+    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
+    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
+    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
+#endif
+
+    parse_arguments (argc, argv);
+    
     if (audiosink == "0") {
         use_audio = false;
     }
@@ -723,6 +753,11 @@ int main (int argc, char *argv[]) {
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();
 
+    if (coverart_filename.length()) {
+        LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());
+        write_coverart(coverart_filename.c_str(), (const void *) empty_image, sizeof(empty_image));
+    }
+
     connections_stopped = true;
     relaunch:
     if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
@@ -775,6 +810,9 @@ int main (int argc, char *argv[]) {
     if (video_dumpfile) {
         fwrite(mark, 1, sizeof(mark), video_dumpfile);
         fclose(video_dumpfile);
+    }
+    if (coverart_filename.length()) {
+	remove (coverart_filename.c_str());
     }
 }
 
@@ -873,12 +911,22 @@ extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *
     if (use_audio) {
         audio_renderer_start(ct);
     }
+
+    if (coverart_filename.length()) {
+        write_coverart(coverart_filename.c_str(), (const void *) empty_image, sizeof(empty_image));
+    }
 }
 
 extern "C" void video_report_size(void *cls, float *width_source, float *height_source, float *width, float *height) {
     video_renderer_size(width_source, height_source, width, height);
 }
 
+extern "C" void audio_set_coverart(void *cls, const void *buffer, int buflen) {
+    if (buffer && coverart_filename.length()) {
+        write_coverart(coverart_filename.c_str(), buffer, buflen);
+        LOGI("coverart size %d written to %s", buflen,  coverart_filename.c_str());
+    }
+}
 extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     unsigned char mark[]={ 0x00, 0x00, 0x00 }; /*daap seperator mark */
     if (buflen > 4) {
@@ -958,6 +1006,7 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_cbs.audio_get_format = audio_get_format;
     raop_cbs.video_report_size = video_report_size;
     raop_cbs.audio_set_metadata = audio_set_metadata;
+    raop_cbs.audio_set_coverart = audio_set_coverart;
     
     /* set max number of connections = 2 */
     raop = raop_init(2, &raop_cbs);

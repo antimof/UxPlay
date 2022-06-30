@@ -1,4 +1,4 @@
-.TH UXPLAY "1" "June 2022" "1.53" "User Commands"
+.TH UXPLAY "1" "June 2022" "1.54" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
@@ -16,15 +16,9 @@ UxPlay 1.53: An open\-source AirPlay mirroring server based on RPiPlay
 .B
 \fB\-s\fR wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]
 .TP
-\fB\-o\fR        Set mirror "overscanned" mode on (not usually needed)
+\fB\-o\fR        Set display "overscanned" mode on (not usually needed)
 .TP
 \fB-fs\fR       Full-screen (only with Wayland and VAAPI plugins)
-.TP
-\fB\-fps\fR n    Set maximum allowed streaming framerate, default 30
-.TP
-\fB\-f\fR {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg
-.TP
-\fB\-r\fR {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)
 .TP
 \fB\-p\fR        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100
 .TP
@@ -35,9 +29,12 @@ UxPlay 1.53: An open\-source AirPlay mirroring server based on RPiPlay
    "\-p tcp n" or "\-p udp n" sets TCP or UDP ports separately.
 .PP
 .TP
-\fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
-.TP
-\fB\-t\fR n      Relaunch server if no connection existed in last n seconds
+\fB\-avdec\fR    Force software h264 video decoding with libav decoder.
+
+
+
+
+
 .TP
 \fB\-vp\fI prs \fR  Choose GStreamer h264 parser; default "h264parse"
 .TP
@@ -68,8 +65,6 @@ UxPlay 1.53: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-rpiwl\fR    Same as "-v4l2 -vs waylandsink" for RPi using Wayland.
 .TP
-\fB\-avdec\fR    Force software h264 video decoding with libav decoder.
-.TP
 \fB\-as\fI sink\fR  Choose the GStreamer audiosink; default "autoaudiosink"
 .IP
    choices:pulsesink,alsasink,osssink,oss4sink,osxaudiosink,..
@@ -77,11 +72,23 @@ UxPlay 1.53: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
 .TP
-\fB\-reset\fR n  Reset after 3n seconds client silence (default 10, 0=never).
+\fB\-ca\fI fn \fR   In Airplay Audio (ALAC) mode, write cover-art to file fn.
+.TP
+\fB\-reset\fR n  Reset after 3n seconds client silence (default 5, 0=never).
 .TP
 \fB\-nc\fR       Do not close video window when client stops mirroring
 .TP
 \fB\-FPSdata\fR  Show video-streaming performance reports sent by client.
+.TP
+\fB\-fps\fR n    Set maximum allowed streaming framerate, default 30
+.TP
+\fB\-f\fR {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg
+.TP
+\fB\-r\fR {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)
+.TP
+\fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
+.TP
+\fB\-t\fR n      Relaunch server if no connection existed in last n seconds
 .TP
 \fB\-vdmp\fR [n] Dump h264 video output to "fn.h264"; fn="videodump", change
 .IP
