@@ -47,12 +47,15 @@ raop_handler_info(raop_conn_t *conn,
     int pk_len = 0;
     char *pk = utils_parse_hex(AIRPLAY_PK, strlen(AIRPLAY_PK), &pk_len);
 
+    uint64_t features = ((uint64_t) strtoul(AIRPLAY_FEATURES_2, NULL, 16)) << 32;
+    features += (uint64_t) strtoul(AIRPLAY_FEATURES_1, NULL, 16);
+
     plist_t r_node = plist_new_dict();
 
     plist_t txt_airplay_node = plist_new_data(airplay_txt, airplay_txt_len);
     plist_dict_set_item(r_node, "txtAirPlay", txt_airplay_node);
 
-    plist_t features_node = plist_new_uint((uint64_t) 0x1E << 32 | 0x5A7FFFF7);
+    plist_t features_node = plist_new_uint(features);
     plist_dict_set_item(r_node, "features", features_node);
 
     plist_t name_node = plist_new_string(name);
