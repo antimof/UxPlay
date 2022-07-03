@@ -44,13 +44,14 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.54"
+#define VERSION "1.55"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 #define NTP_TIMEOUT_LIMIT 5
+#define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
 
 static std::string server_name = DEFAULT_NAME;
 static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
@@ -103,6 +104,7 @@ static bool do_append_hostname = true;
 static bool use_random_hw_addr = false;
 static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
+static bool bt709_fix = false;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -342,9 +344,10 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
-    printf("-rpifb    Same as \"-v4l2 -vs kmssink\" for RPi using framebuffer.\n");
-    printf("-rpiwl    Same as \"-v4l2 -vs waylandsink\" for RPi using Wayland.\n");
+    printf("-bt709    A workaround (bt709 color) that may be needed with -v4l2\n"); 
+    printf("-rpi      Same as \"-v4l2 -bt709\" (for RPi=Raspberry Pi).\n");
+    printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
+    printf("-rpiwl    Same as \"-rpi -vs waylandsink\" for RPi using Wayland.\n");
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
@@ -594,16 +597,16 @@ void parse_arguments (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-	} else if (arg == "-v4l2" || arg == "-rpi") {
-            video_parser.erase();
-            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+        } else if (arg == "-v4l2" || arg == "-rpi") {
+            if (arg == "-rpi") {
+                bt709_fix = true;
+            }
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
-	} else if (arg == "-rpifb") {
-            video_parser.erase();
-            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+        } else if (arg == "-rpifb") {
+            bt709_fix = true;
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -611,8 +614,7 @@ void parse_arguments (int argc, char *argv[]) {
             videosink.erase();
             videosink = "kmssink";
         } else if (arg == "-rpiwl" ) {
-            video_parser.erase();
-            video_parser = "h264parse ! capssetter caps=\"video/x-h264, colorimetry=bt709\"";
+            bt709_fix = true;;
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -676,6 +678,8 @@ void parse_arguments (int argc, char *argv[]) {
                 LOGE("option -ca must be followed by a filename for cover-art output");
                 exit(1);
             }
+        } else if (arg == "-bt709" ) {
+            bt709_fix = true;
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
@@ -717,7 +721,12 @@ int main (int argc, char *argv[]) {
     if (fullscreen && use_video) {
         videosink.append(" fullscreen=true");
     }
-    
+
+    if (bt709_fix && use_video) {
+        video_parser.append(" ! ");
+        video_parser.append(BT709_FIX);
+    }
+
     if (do_append_hostname) append_hostname(server_name);
     
     render_logger = logger_init();
