@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.54-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix.">UxPlay
-1.54: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and
+id="uxplay-1.55-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix.">UxPlay
+1.55: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and
 Unix.</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -267,20 +267,40 @@ accelerated hardware video decoding if you need it, or just uninstall
 the GStreamer VAAPI plugin. If your system uses the Wayland compositor
 for graphics, use “<code>uxplay -vs waylandsink</code>”.</strong> See <a
 href="#usage">Usage</a> for more run-time options.</p>
-<p><strong>Raspberry Pi</strong>: GStreamer-1.18.4 or later required for
-hardware video decoding; for 1.20 or earlier, also see <a
-href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">patching
-instructions for GStreamer</a>. If “<code>uxplay</code>” by itself does
-not work, use “<code>uxplay -v4l2</code>” (or use “<code>-rpi</code>” as
-a synonym for “<code>-v4l2</code>”) on your desktop X11 system, and
-optionally specify a videosink with “<code>-vs ..</code>”; use
-“<code>uxplay -rpiwl</code>” as a synonym for
-“<code>-v4l2 -vs waylandsink</code>” on a desktop system with Wayland
-(this applies to recent Ubuntu). On a system without X11 that uses
-framebuffer video (such as RPi OS Bullseye “Lite”) use
-“<code>uxplay -rpifb</code>” as a synonym for
-“<code>uxplay -v4l2 -vs kmssink</code>”. You can test UxPlay with
-software-only video decoding using option <code>-avdec</code>.</p>
+<h3
+id="special-instructions-for-raspberry-pi-only-tested-on-model-4b"><strong>Special
+instructions for Raspberry Pi (only tested on model 4B)</strong>:</h3>
+<ul>
+<li><p>For good performance, the Raspberry Pi needs the GStreamer
+Video4linux2 plugin to use its Broadcom GPU hardware for decoding h264
+video. You can also test UxPlay with software-only video decoding using
+option <code>-avdec</code>.</p></li>
+<li><p>The upcoming GStreamer-1.22 release will work well, but older
+releases of GStreamer will not work unless patched with backports of the
+improvements from GStreamer-1.22. Patches for GStreamer-1.18.4 and later
+are <a
+href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">available
+with instructions in the UxPlay Wiki</a>.</p></li>
+<li><p>Currently, a workaround implemented in UxPlay-1.55 as the new
+uxplay option <code>-bt709</code> is needed because Apple are using an
+uncommon “full-range color” variant of the “bt709” color standard used
+for digital TV broadcasting, which is currently not recognized by the
+Video4Linux2 plugin. It is planned to eventually add support for Apple’s
+variant “bt709” color to GStreamer; after this has been done, this
+option will no longer be needed (and updated patches for backports will
+be provided in the UxPlay Wiki).</p></li>
+</ul>
+<p>The basic uxplay options for R Pi are
+<code>uxplay -bt709 -v4l2 [-vs &lt;videosink&gt;]</code>. On a system
+without X11 (like R Pi OS Lite) with framebuffer video, use
+<code>&lt;videosink&gt;</code> = <code>kmssink</code>. With the Wayland
+video compositor (as in recent Ubuntu for R Pi) use
+<code>&lt;videosink&gt;</code> = <code>waylandsink</code>. For
+convenience, these options are also available combined in options
+<code>-rpi</code>,<code>-rpifb</code>, <code>-rpiwl</code>, respectively
+provided for X11, framebuffer, and Wayland systems. You may find the
+simple “uxplay -bt709”, (which lets GStreamer try to find the best video
+solution by itself) provides the best results.</p>
 <ul>
 <li>Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
 ssh:</li>
@@ -487,13 +507,19 @@ This feature (which streams audio in AAC audio format) is now probably
 unneeded, as UxPlay can now stream superior-quality Apple Lossless audio
 without video in Airplay non-mirror mode.</p>
 <p><strong>-v4l2</strong> Video settings for hardware h264 video
-decoding in the GPU by Video4Linux2.</p>
-<p><strong>-rpi</strong> Equivalent to “-v4l2”. Use for “Desktop”
+decoding in the GPU by Video4Linux2. Equivalent to
+<code>-vd v4l2h264dec -vc v4l2convert</code>.</p>
+<p><strong>-bt709</strong> A workaround for the failure of the current
+Video4Linux2 plugin to recognize Apple’s use of an uncommon (but
+permitted) “full-range color” variant of the bt709 color standard for
+digital TV. This will no longer be needed if GStreamer is updated to
+recognize the Apple variant.</p>
+<p><strong>-rpi</strong> Equivalent to “-v4l2 -bt709”. Use for “Desktop”
 Raspberry Pi systems with X11.</p>
-<p><strong>-rpifb</strong> Equivalent to “-v4l2 -vs kmssink” (use for
+<p><strong>-rpifb</strong> Equivalent to “-rpi -vs kmssink” (use for
 Raspberry Pi systems using the framebuffer, like RPi OS Bullseye
 Lite).</p>
-<p><strong>-rpiwl</strong> Equivalent to “-v4l2 -vs waylandsink”, for
+<p><strong>-rpiwl</strong> Equivalent to “-rpi -vs waylandsink”, for
 Raspberry Pi “Desktop” systems using the Wayland video compositor (use
 for Ubuntu 21.10 for Raspberry Pi 4B).</p>
 <p><strong>-as <em>audiosink</em></strong> chooses the GStreamer
@@ -783,6 +809,10 @@ protocol just requires bit 27 (listed as “SupportsLegacyPairing”) of the
 be set. The “features” code and other settings are set in
 <code>UxPlay/lib/dnssdint.h</code>.</p>
 <h1 id="changelog">ChangeLog</h1>
+<p>1.55 2022-07-04 Remove the bt709 fix from -v4l2 and create a new
+-bt709 option (previous “-v4l2” is now “-v4l2 -bt709”. This allows the
+currently-required -bt709 option to be used on its own on RPi without
+-v4l2 (sometimes this give better results).</p>
 <p>1.54 2022-06-25 Add support for “Cover Art” display in Audio-only
 (ALAC) mode. Reverted a change that caused VAAPI to crash with AMD
 POLARIS graphics cards. Minor internal changes to plist code and uxplay
