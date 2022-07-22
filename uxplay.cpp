@@ -369,7 +369,8 @@ static void print_info (char *name) {
     printf("          x increases when audio format changes. If n is given, <= n\n");
     printf("          audio packets are dumped. \"aud\"= unknown format.\n");
     printf("-d        Enable debug logging\n");
-    printf("-v or -h  Displays this help and version information\n");
+    printf("-v        Displays version information\n");
+    printf("-h        Displays this help\n");
 }
 
 bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
@@ -557,8 +558,11 @@ void parse_arguments (int argc, char *argv[]) {
             use_audio = false;
         } else if (arg == "-d") {
             debug_log = !debug_log;
-        } else if (arg == "-h" || arg == "-v") {
+        } else if (arg == "-h") {
             print_info(argv[0]);
+            exit(0);
+        } else if (arg == "-v") {
+            printf("UxPlay version %s; for help, use option \"-h\"\n", VERSION);
             exit(0);
         } else if (arg == "-vp") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
