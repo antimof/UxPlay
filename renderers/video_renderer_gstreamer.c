@@ -18,7 +18,6 @@
  */
 
 #include "video_renderer.h"
-#include <assert.h>
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 
@@ -130,7 +129,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     appname = NULL;
 
     renderer = calloc(1, sizeof(video_renderer_t));
-    assert(renderer);
+    g_assert(renderer);
 
     GString *launch = g_string_new("appsrc name=video_source ! ");
     g_string_append(launch, "queue ! ");
@@ -153,13 +152,13 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_free(launch, TRUE);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
-    assert(renderer->appsrc);
+    g_assert(renderer->appsrc);
     caps = gst_caps_from_string(h264_caps);
     g_object_set(renderer->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
     gst_caps_unref(caps);
 
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
-    assert(renderer->sink);
+    g_assert(renderer->sink);
 
 #ifdef X_DISPLAY_FIX
     renderer->server_name = server_name;
@@ -172,7 +171,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     }
     if (x_display_fix) {
         renderer->gst_window = calloc(1, sizeof(X11_Window_t));
-        assert(renderer->gst_window);
+        g_assert(renderer->gst_window);
         get_X11_Display(renderer->gst_window);
     }
 #endif
@@ -197,7 +196,7 @@ void video_renderer_start() {
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
     GstBuffer *buffer;
-    assert(data_len != 0);
+    g_assert(data_len != 0);
     /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
      * nal_count is the number of NAL units in the data: short SPS, PPS, SEI NALs *
      * may  precede a VCL NAL. Each NAL starts with 0x00 0x00 0x00 0x01 and is    *
@@ -210,7 +209,7 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
             first_packet = false;
         }
         buffer = gst_buffer_new_and_alloc(data_len);
-        assert(buffer != NULL);
+        g_assert(buffer != NULL);
         GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
         gst_buffer_fill(buffer, 0, data, data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);

@@ -26,7 +26,6 @@
 #include <fstream>
 #include <sys/utsname.h>
 #include <glib-unix.h>
-#include <assert.h>
 
 #include <sys/socket.h>
 #include <ifaddrs.h>

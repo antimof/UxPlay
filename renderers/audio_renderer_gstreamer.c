@@ -17,7 +17,6 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-#include <assert.h>
 #include <math.h>
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
@@ -71,7 +70,7 @@ static gboolean check_plugins (void)
 
 void  gstreamer_init(){
     gst_init(NULL,NULL);
-    assert(check_plugins ());
+    g_assert(check_plugins ());
 }
 
 #define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
@@ -87,7 +86,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
 
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
-        assert(renderer_type[i]);
+        g_assert(renderer_type[i]);
         GString *launch = g_string_new("appsrc name=audio_source ! ");
         g_string_append(launch, "queue ! ");
         switch (i) {
@@ -112,7 +111,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
           g_clear_error (&error);
         }
         g_string_free(launch, TRUE);
-	g_assert (renderer_type[i]->pipeline);
+        g_assert (renderer_type[i]->pipeline);
  
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
@@ -195,7 +194,7 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
      * first byte of AAC_LC should be 0xff (ADTS) (but has never been  seen).                          */
     
     buffer = gst_buffer_new_and_alloc(data_len);
-    assert(buffer != NULL);
+    g_assert(buffer != NULL);
     GST_BUFFER_PTS(buffer) = (GstClockTime) ntp_time;
     gst_buffer_fill(buffer, 0, data, data_len);
     switch (renderer->ct){
