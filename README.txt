@@ -164,14 +164,18 @@ or (if git is installed): "git clone https://github.com/FDH2/UxPlay".
 You can also download a recent or earlier version listed in
 [Releases](https://github.com/FDH2/UxPlay/releases).
 
-\*Current UxPlay is also a pull request on the original site
-https://github.com/antimof/UxPlay ; that original project is inactive,
-but the pull requests are now being periodically merged with the antimof
-tree (thank you antimof!).
+-   Current UxPlay is also a pull request on the original site
+    https://github.com/antimof/UxPlay ; that original project is
+    inactive, but the pull requests are now being periodically merged
+    with the antimof tree (thank you antimof!).
 
 ## Building UxPlay on Linux (or \*BSD):
 
 ### Debian-based systems:
+
+-   Note that the current Debian "testing" distribution (for eventual
+    release as Debian 12/Bookworm) now includes uxplay, so future
+    Debian-based distributions may offer a pre-built uxplay package.
 
 (Instructions for Debian/Ubuntu; adapt these for other Linuxes; for
 macOS, see below). See [Troubleshooting](#troubleshooting) below for
