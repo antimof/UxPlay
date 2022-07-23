@@ -244,8 +244,9 @@ source directories which contain your modifications</em>.</p>
 <p>The above script installs the executable file “<code>uxplay</code>”
 to <code>/usr/local/bin</code>, (and installs a manpage to somewhere
 like <code>/usr/local/share/man/man1</code> and README files to
-somewhere like <code>/usr/local/share/doc/uxplay</code>). It can also be
-found in the build directory after the build processs.</p>
+somewhere like <code>/usr/local/share/doc/uxplay</code>). The uxplay
+executable can also be found in the build directory after the build
+processs, if you wish to test before installing.</p>
 <p><strong>Finally, run uxplay in a terminal window</strong>. Use Ctrl-C
 (or close the window) to terminate it when done. If it is not seen by
 the iOS client’s drop-down “Screen Mirroring” panel, check that your
@@ -478,7 +479,7 @@ options to be added.</p>
 <p><strong>-vd <em>decoder</em></strong> chooses the GStreamer
 pipeline’s h264 decoder element, instead of letting decodebin pick it
 for you. Software decoding is done by avdec_h264; various hardware
-decoders include: vaapi264dec, nvdec, nvh264dec, v4l2h264dec (these
+decoders include: vaapih264dec, nvdec, nvh264dec, v4l2h264dec (these
 require that the appropriate hardware is available). Using quotes “…”
 allows some parameters to be included with the decoder name.</p>
 <p><strong>-vc <em>converter</em></strong> chooses the GStreamer
@@ -810,7 +811,7 @@ be set. The “features” code and other settings are set in
 <code>UxPlay/lib/dnssdint.h</code>.</p>
 <h1 id="changelog">ChangeLog</h1>
 <p>1.55 2022-07-04 Remove the bt709 fix from -v4l2 and create a new
--bt709 option (previous “-v4l2” is now “-v4l2 -bt709”. This allows the
+-bt709 option (previous “-v4l2” is now “-v4l2 -bt709”). This allows the
 currently-required -bt709 option to be used on its own on RPi without
 -v4l2 (sometimes this give better results).</p>
 <p>1.54 2022-06-25 Add support for “Cover Art” display in Audio-only

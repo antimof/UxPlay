@@ -240,8 +240,9 @@ modifications*.
 The above script installs the executable file "`uxplay`" to
 `/usr/local/bin`, (and installs a manpage to somewhere like
 `/usr/local/share/man/man1` and README files to somewhere like
-`/usr/local/share/doc/uxplay`). It can also be found in the build
-directory after the build processs.
+`/usr/local/share/doc/uxplay`). The uxplay executable can also be found
+in the build directory after the build processs, if you wish to test
+before installing.
 
 **Finally, run uxplay in a terminal window**. Use Ctrl-C (or close the
 window) to terminate it when done. If it is not seen by the iOS client's
@@ -490,7 +491,7 @@ default is h264parse. Using quotes "..." allows options to be added.
 
 **-vd *decoder*** chooses the GStreamer pipeline's h264 decoder element,
 instead of letting decodebin pick it for you. Software decoding is done
-by avdec_h264; various hardware decoders include: vaapi264dec, nvdec,
+by avdec_h264; various hardware decoders include: vaapih264dec, nvdec,
 nvh264dec, v4l2h264dec (these require that the appropriate hardware is
 available). Using quotes "..." allows some parameters to be included
 with the decoder name.
@@ -845,7 +846,7 @@ code and other settings are set in `UxPlay/lib/dnssdint.h`.
 # ChangeLog
 
 1.55 2022-07-04 Remove the bt709 fix from -v4l2 and create a new -bt709
-option (previous "-v4l2" is now "-v4l2 -bt709". This allows the
+option (previous "-v4l2" is now "-v4l2 -bt709"). This allows the
 currently-required -bt709 option to be used on its own on RPi without
 -v4l2 (sometimes this give better results).
 
