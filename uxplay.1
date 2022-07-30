@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "July 2022" "1.55" "User Commands"
+.TH UXPLAY "1" "August 2022" "1.56" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.55: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.56: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -54,9 +54,11 @@ UxPlay 1.55: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-v4l2\fR     Use Video4Linux2 for GPU hardware h264 video decoding.
 .TP
-\fB\-bt709\fR    A workaround (bt709 color) that may be needed with -v4l2.
+\fB\-bt709\fR    A workaround (bt709 color) that may be needed with -rpi.
 .TP
-\fB\-rpi\fR      Same as "-v4l2 -bt709" (for RPi=Rasberry Pi).
+\fB\-rpi\fR      Same as "-v4l2" (for RPi=Rasberry Pi).
+.TP
+\fB\-rpigl\fR    Same as "-v4l2 -vs glimagesink" for RPi.
 .TP
 \fB\-rpifb\fR    Same as "-rpi -vs kmssink" for RPi using framebuffer.
 .TP
