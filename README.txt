@@ -1,4 +1,4 @@
-# UxPlay 1.55: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix.
+# UxPlay 1.56: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix.
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -283,24 +283,22 @@ options.
     and later are [available with instructions in the UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
 
--   Currently, a workaround implemented in UxPlay-1.55 as the new uxplay
-    option `-bt709` is needed because Apple are using an uncommon
-    "full-range color" variant of the "bt709" color standard used for
-    digital TV broadcasting, which is currently not recognized by the
-    Video4Linux2 plugin. It is planned to eventually add support for
-    Apple's variant "bt709" color to GStreamer; after this has been
-    done, this option will no longer be needed (and updated patches for
-    backports will be provided in the UxPlay Wiki).
+The basic uxplay options for R Pi are `uxplay -v4l2 [-vs <videosink>]`.
+The choice `<videosink>` = `glimagesink` is sometimes useful. On a
+system without X11 (like R Pi OS Lite) with framebuffer video, use
+`<videosink>` = `kmssink`. With the Wayland video compositor (as in
+recent Ubuntu for R Pi) use `<videosink>` = `waylandsink`. For
+convenience, these options are also available combined in options
+`-rpi`, `-rpigl` `-rpifb`, `-rpiwl`, respectively provided for X11, X11
+with OpenGL, framebuffer, and Wayland systems. You may find the simple
+"uxplay", (which lets GStreamer try to find the best video solution by
+itself) provides the best results.
 
-The basic uxplay options for R Pi are
-`uxplay -bt709 -v4l2 [-vs <videosink>]`. On a system without X11 (like R
-Pi OS Lite) with framebuffer video, use `<videosink>` = `kmssink`. With
-the Wayland video compositor (as in recent Ubuntu for R Pi) use
-`<videosink>` = `waylandsink`. For convenience, these options are also
-available combined in options `-rpi`,`-rpifb`, `-rpiwl`, respectively
-provided for X11, framebuffer, and Wayland systems. You may find the
-simple "uxplay -bt709", (which lets GStreamer try to find the best video
-solution by itself) provides the best results.
+-   **If you are not using the latest patches from the wiki, you will
+    also need to add the `-bt709` option**: previously the GStreamer
+    v4l2 plugin could not recognise Apple's color format (an unusual
+    "full-range" variant of the bt709 HDTV standard), which -bt709
+    fixes.
 
 -   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
     ssh:
@@ -528,14 +526,16 @@ Airplay non-mirror mode.
 **-v4l2** Video settings for hardware h264 video decoding in the GPU by
 Video4Linux2. Equivalent to `-vd v4l2h264dec -vc v4l2convert`.
 
-**-bt709** A workaround for the failure of the current Video4Linux2
-plugin to recognize Apple's use of an uncommon (but permitted)
-"full-range color" variant of the bt709 color standard for digital TV.
-This will no longer be needed if GStreamer is updated to recognize the
-Apple variant.
+**-bt709** A workaround for the failure of the older Video4Linux2 plugin
+to recognize Apple's use of an uncommon (but permitted) "full-range
+color" variant of the bt709 color standard for digital TV. This is no
+longer needed by GStreamer-1.20.4 and backports from it.
 
-**-rpi** Equivalent to "-v4l2 -bt709". Use for "Desktop" Raspberry Pi
-systems with X11.
+**-rpi** Equivalent to "-v4l2". Use for "Desktop" Raspberry Pi systems
+with X11.
+
+**-rpigl** Equivalent to "-v4l2 -vs glimagesink". Sometimes better for
+"Desktop" Raspberry Pi systems with X11.
 
 **-rpifb** Equivalent to "-rpi -vs kmssink" (use for Raspberry Pi
 systems using the framebuffer, like RPi OS Bullseye Lite).
@@ -848,6 +848,9 @@ bit 27 (listed as "SupportsLegacyPairing") of the "features" plist code
 code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # ChangeLog
+
+1.56 2022-07-30 Remove -bt709 from -rpi, -rpiwl, -rpifb as GStreamer is
+now fixed.
 
 1.55 2022-07-04 Remove the bt709 fix from -v4l2 and create a new -bt709
 option (previous "-v4l2" is now "-v4l2 -bt709"). This allows the

@@ -43,7 +43,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.55"
+#define VERSION "1.56"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -343,8 +343,9 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    A workaround (bt709 color) that may be needed with -v4l2\n"); 
-    printf("-rpi      Same as \"-v4l2 -bt709\" (for RPi=Raspberry Pi).\n");
+    printf("-bt709    A workaround (bt709 color) that may be needed with -rpi\n"); 
+    printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
+    printf("-rpigl    Same as \"-rpi -vs glimagesink\" for RPi.\n");
     printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
     printf("-rpiwl    Same as \"-rpi -vs waylandsink\" for RPi using Wayland.\n");
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
@@ -602,22 +603,30 @@ void parse_arguments (int argc, char *argv[]) {
             video_converter = "videoconvert";
         } else if (arg == "-v4l2" || arg == "-rpi") {
             if (arg == "-rpi") {
-                bt709_fix = true;
+                printf("*** -rpi no longer includes -bt709: add it if needed\n");
             }
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
         } else if (arg == "-rpifb") {
-            bt709_fix = true;
+            printf("*** -rpifb no longer includes -bt709: add it if needed\n");
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
             videosink.erase();
             videosink = "kmssink";
+        } else if (arg == "-rpigl") {
+            printf("*** -rpigl does not include -bt709: add it if needed\n");
+            video_decoder.erase();
+            video_decoder = "v4l2h264dec";
+            video_converter.erase();
+            video_converter = "v4l2convert";
+            videosink.erase();
+            videosink = "glimagesink";
         } else if (arg == "-rpiwl" ) {
-            bt709_fix = true;;
+            printf("*** -rpiwl no longer includes -bt709: add it if needed\n");
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
