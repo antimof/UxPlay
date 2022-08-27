@@ -459,7 +459,7 @@ raop_rtp_thread_udp(void *arg)
     int64_t delay = 0;
     unsigned short seqnum1 = 0, seqnum2 = 0;
     bool offset_estimate_initialized  = false;
-
+	int assertret = 0;
     assert(raop_rtp);
     raop_rtp->ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
     raop_rtp->rtp_clock_started = false;
@@ -521,7 +521,8 @@ raop_rtp_thread_udp(void *arg)
                     uint32_t timestamp = byteutils_get_int_be(resent_packet, 4);
                     uint64_t rtp_time = rtp64_time(raop_rtp, &timestamp);
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp resent audio packet: seqnum=%u", seqnum);
-                    assert(raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, rtp_time, 1) >= 0);
+					assertret = (raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, rtp_time, 1) >= 0);
+                    assert(assertret);
                 } else {
                     /* type_c = 0x56 packets  with length 8 have been reported */
                     char *str = utils_data_to_string(packet, packetlen, 16);
@@ -657,11 +658,12 @@ raop_rtp_thread_udp(void *arg)
                         raop_rtp->rtp_sync_offset = initial_offset + (int64_t) (sync_adjustment / rtp_count);
                         //logger_log(raop_rtp->logger, LOGGER_DEBUG, "initial estimate of rtp_sync_offset %d secnum = %u:  %8.6f",
                         //           rtp_count, seqnum,  ((double) raop_rtp->rtp_sync_offset) / SEC);
-		    }
+		            }
                     seqnum2 = seqnum1;
                     seqnum1 = seqnum;
                 }
-                assert(raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_time, 1) >= 0);
+				assertret = (raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, rtp_time, 1) >= 0);
+                assert(assertret);
                 // Render continuous buffer entries
                 void *payload = NULL;
                 unsigned int payload_size;
