@@ -65,7 +65,7 @@ static logger_t *render_logger = NULL;
 static bool relaunch_video = false;
 static bool relaunch_server = false;
 static bool reset_loop = false;
-static uint open_connections = 0;
+static unsigned int open_connections = 0;
 static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
