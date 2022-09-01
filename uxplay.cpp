@@ -24,15 +24,21 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <sys/utsname.h>
-#include <glib-unix.h>
 
+#ifdef _WIN32  /*modifications for Windows compilation */
+#include <glib.h>
+#include <unordered_map>
+#include <windows.h>
+#else
+#include <glib-unix.h>
+#include <sys/utsname.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
-#ifdef __linux__
-#include <netpacket/packet.h>
-#else
-#include <net/if_dl.h>
+# ifdef __linux__
+# include <netpacket/packet.h>
+# else
+# include <net/if_dl.h>
+# endif
 #endif
 
 #include "log.h"
@@ -225,6 +231,28 @@ static gboolean  sigterm_callback(gpointer loop) {
     return TRUE;
 }
 
+
+#ifdef _WIN32
+struct signal_handler {
+    GSourceFunc handler;
+    gpointer user_data;
+};
+
+static std::unordered_map<gint, signal_handler> u = {};
+
+void SignalHandler(int signum) {
+    if (signum == SIGTERM || signum == SIGINT) {
+        u[signum].handler(u[signum].user_data);
+    }
+}
+
+guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
+    u[signum] = signal_handler{handler, user_data};
+    (void) signal(signum, SignalHandler);
+    return 0;
+}
+#endif
+
 static void main_loop()  {
     guint connection_watch_id = 0;
     guint gst_bus_watch_id = 0;
@@ -262,6 +290,9 @@ static std::string find_mac () {
 /*  finds the MAC address of a network interface *
  *  in a Linux, *BSD or macOS system.            */
     std::string mac = "";
+#ifdef _WIN32
+    /* for now, don't find true MAC address if compiled for Windows */ 
+#else
     struct ifaddrs *ifap, *ifaptr;
     int non_null_octets = 0;
     unsigned char octet[6], *ptr;
@@ -295,6 +326,7 @@ static std::string find_mac () {
         }
     }
     freeifaddrs(ifap);
+#endif
     return mac;
 }
 
@@ -486,13 +518,24 @@ static bool get_videorotate (const char *str, videoflip_t *videoflip) {
 }
 
 static void append_hostname(std::string &server_name) {
+#ifdef _WIN32   /*modification for compilation on Windows */
+    char buffer[256] = "";
+    unsigned long size = sizeof(buffer);
+    if (GetComputerNameA(buffer, &size)) {
+        std::string name = server_name;
+        name.append("@");
+        name.append(buffer);
+        server_name = name;
+    }
+#else
     struct utsname buf;
     if (!uname(&buf)) {
-      std::string name = server_name;
-      name.append("@");
-      name.append(buf.nodename);
-      server_name = name;
+        std::string name = server_name;
+        name.append("@");
+        name.append(buf.nodename);
+        server_name = name;
     }
+#endif
 }
 
 void parse_arguments (int argc, char *argv[]) {    
