@@ -46,8 +46,8 @@
 # define USE_LIBDL 0
 #endif
 
-#if defined(WIN32) || USE_LIBDL
-# ifdef WIN32
+#if defined(_WIN32) || USE_LIBDL
+# ifdef _WIN32
 #  include <stdint.h>
 #  if !defined(EFI32) && !defined(EFI64)
 #   define DNSSD_STDCALL __stdcall
@@ -60,8 +60,9 @@
 # endif
 
 typedef struct _DNSServiceRef_t *DNSServiceRef;
+#ifndef _WIN32
 typedef union _TXTRecordRef_t { char PrivateData[16]; char *ForceNaturalAlignment; } TXTRecordRef;
-
+#endif
 typedef uint32_t DNSServiceFlags;
 typedef int32_t  DNSServiceErrorType;
 

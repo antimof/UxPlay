@@ -20,7 +20,11 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <netinet/tcp.h>
+#endif
 
 #include "raop.h"
 #include "netutils.h"
@@ -32,7 +36,17 @@
 #include "utils.h"
 #include "plist/plist.h"
 
+#ifdef _WIN32
+#define CAST (char *)
+#define TCP_KEEPIDLE SO_KEEPALIVE
+#define TCP_KEEPINTVL SO_KEEPALIVE
+#define TCP_KEEPCNT SO_KEEPALIVE
+#else
+#define CAST
+#endif
+
 #define SEC 1000000
+
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
 #define SOL_TCP IPPROTO_TCP
@@ -240,25 +254,26 @@ raop_rtp_mirror_thread(void *arg)
             struct timeval tv;
             tv.tv_sec = 0;
             tv.tv_usec = 5000;
-            if (setsockopt(stream_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+            if (setsockopt(stream_fd, SOL_SOCKET, SO_RCVTIMEO, CAST &tv, sizeof(tv)) < 0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror could not set stream socket timeout %d %s", errno, strerror(errno));
                 break;
             }
+
             int option;
             option = 1;
-            if (setsockopt(stream_fd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option)) < 0) {
+            if (setsockopt(stream_fd, SOL_SOCKET, SO_KEEPALIVE, CAST &option, sizeof(option)) < 0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive %d %s", errno, strerror(errno));
             }
             option = 60;
-            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPIDLE, &option, sizeof(option)) < 0) {
+            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPIDLE, CAST &option, sizeof(option)) < 0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive time %d %s", errno, strerror(errno));
             }
             option = 10;
-            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPINTVL, &option, sizeof(option)) < 0) {
+            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPINTVL, CAST &option, sizeof(option)) < 0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive interval %d %s", errno, strerror(errno));
             }
             option = 6;
-            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPCNT, &option, sizeof(option)) < 0) {
+            if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPCNT, CAST &option, sizeof(option)) < 0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror could not set stream socket keepalive probes %d %s", errno, strerror(errno));
             }
             readstart = 0;
@@ -268,7 +283,8 @@ raop_rtp_mirror_thread(void *arg)
 
             // The first 128 bytes are some kind of header for the payload that follows
             while (payload == NULL && readstart < 128) {
-                ret = recv(stream_fd, packet + readstart, 128 - readstart, 0);
+                unsigned char* pos  = packet + readstart;
+                ret = recv(stream_fd, CAST pos, 128 - readstart, 0);
                 if (ret <= 0) break;
                 readstart = readstart + ret;
             }
@@ -315,7 +331,8 @@ raop_rtp_mirror_thread(void *arg)
 
             while (readstart < payload_size) {
                 // Payload data
-                ret = recv(stream_fd, payload + readstart, payload_size - readstart, 0);
+                unsigned char *pos = payload + readstart;
+                ret = recv(stream_fd, CAST pos, payload_size - readstart, 0);
                 if (ret <= 0) break;
                 readstart = readstart + ret;
             }

@@ -20,6 +20,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#ifdef _WIN32
+#define CAST (char *)
+#include <sys/time.h>
+#else
+#define CAST
+#endif
 
 #include "raop.h"
 #include "threads.h"
@@ -204,10 +210,11 @@ raop_ntp_init_socket(raop_ntp_t *raop_ntp, int use_ipv6)
     }
 
     // We're calling recvfrom without knowing whether there is any data, so we need a timeout
+
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = 300000;
-    if (setsockopt(tsock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+    if (setsockopt(tsock, SOL_SOCKET, SO_RCVTIMEO, CAST &tv, sizeof(tv)) < 0) {
         goto sockets_cleanup;
     }
 
@@ -227,8 +234,14 @@ raop_ntp_init_socket(raop_ntp_t *raop_ntp, int use_ipv6)
 static void
 raop_ntp_flush_socket(int fd)
 {
+#ifdef _WIN32
+#define IOCTL ioctlsocket
+    u_long bytes_available = 0;
+#else
+#define IOCTL ioctl
     int bytes_available = 0;
-    while (ioctl(fd, FIONREAD, &bytes_available) == 0 && bytes_available > 0)
+#endif
+    while (IOCTL(fd, FIONREAD, &bytes_available) == 0 && bytes_available > 0)
     {
         // We are guaranteed that we won't block, because bytes are available.
         // Read 1 byte. Extra bytes in the datagram will be discarded.
