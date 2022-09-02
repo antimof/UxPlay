@@ -38,9 +38,12 @@
 
 #ifdef _WIN32
 #define CAST (char *)
-#define TCP_KEEPIDLE SO_KEEPALIVE
-#define TCP_KEEPINTVL SO_KEEPALIVE
-#define TCP_KEEPCNT SO_KEEPALIVE
+/* are these keepalive settings for WIN32 correct? */
+/* (taken from https://github.com/wegank/ludimus)  */
+#define TCP_KEEPALIVE 3
+#define TCP_KEEPCNT 16
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#define TCP_KEEPINTVL 17
 #else
 #define CAST
 #endif
