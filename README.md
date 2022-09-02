@@ -1,4 +1,4 @@
-# UxPlay 1.56:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix.
+# UxPlay 1.56:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -29,6 +29,9 @@ Highlights:
      your distribution has made a backport of changes from the
      development branch.)
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
+
+   * **New**: Support for running on Microsoft Windows (so far only tested on current Windows 10 64 bit,
+     using MinGW-64 compiler in MSYS2 environment).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
@@ -308,7 +311,7 @@ Either avahi-libdns or mDNSResponder must also be installed to provide the dns_s
 OpenSSL is already installed as a System Library.
 
 
-## Building UxPlay on macOS:  **(Intel X86_64 and "Apple Silicon" M1 Macs)**
+## Building UxPlay on macOS:  **(Intel X86_64 and "Apple Silicon" M1/M2 Macs)**
 
 _Note: A native AirPlay Server feature is included in  macOS 12 Monterey, but is restricted to recent hardware.
 UxPlay can run  on older macOS systems that will not be able to run Monterey, or can run Monterey  but not AirPlay._
@@ -378,6 +381,78 @@ Using the MacPorts X11 GStreamer seems only possible if the image size is left u
 (also use the iPad/iPhone setting that locks the screen orientation against switching  between portrait and landscape mode
 as the device is rotated).
 
+## Building UxPlay on Windows (tested on Windows 10 64bit, using MSYS2 and MinGW-64 compiler)
+
+Limitations: "`sudo make install`" does not work (due to lack of "sudo" equivalent on this platform); GStreamer sound was so far only confirmed to work with the DirectSound audiosink option "`-as directsoundsink`".   The identification of the "true" MAC address of the UxPlay server is not yet implemented on Windows, so a random MAC address is used.
+
+1. Download and install  **Bonjour SDK for Windows v3.0** from the official Apple site
+   [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
+
+2. (This is for the MSYS2 build enviroment; other build environments may also work, but are not yet tested): download and install MSYS2 from the official site https://www.msys2.org/
+
+3. For building on Windows 64 bit, install the  **MinGW-64** compiler and cmake ([MSYS2 packages](https://packages.msys2.org/package/) are
+   installed with a  variant of the "pacman" package manager adapted from Arch Linux).   After installation,  you can add this
+   compiler  to your IDE. The compiler with all required dependencies is located in the msys64 directory, with
+   default path `C:/msys64/mingw64`. Alternatively,  you can build UxPlay from the command line in the MSYS2 environment
+   (this uses "`ninja`" in place of "``make``" for   the build system).
+
+   To install and build from the command line, open a MSYS2 MinGW x64 terminal from the MSYS2 64 bit tab in the Windows Start menu, then run 
+
+   `pacman -S mingw-w64-x86_64-cmake`
+   
+   `pacman -S mingw-w64-x86_64-gcc`
+
+   `echo 'export PATH="/mingw64/bin/:$PATH"' >> ~/.bashrc`
+
+    Now close the MSYS2 terminal widow, and reopen a new one from the Start menu, to use the new PATH.
+    
+4.  Download latest UxPlay from github **(to use `git`, install it with ``pacman -S git``, 
+    then "`git clone https://github.com/FDH2/UxPlay`")**, then install UxPlay dependencies:
+
+
+    `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-openssl`
+    
+    `pacman -S mingw-w64-x86_64-gstreamer  mingw-w64-x86_64-gst-plugins-base`
+
+     It should also be possible to install gstreamer for Windows from the [offical GStreamer site](https://gstreamer.freedesktop.org/download/),
+     especially if you are trying a different Windows build system.
+
+5.  cd to the UxPlay source directory, then "`mkdir build`" and  "``cd build``", then
+
+     `cmake ..`
+
+     `ninja`
+
+6.  Assuming no error in either of these, you will have built the uxplay executable **uxplay.exe** in the current ("build") directory.   Unfortunately 
+    "`make install`" does not yet work, as an equivalent to ``sudo`` does not appear to be available.   You can run **uxplay.exe** from the command line in
+    the build directory, or move it it somewhere in your PATH: in the MSYS2 environment, `/usr/local/bin` is in the PATH, so install using
+    
+    `mkdir /usr/local/bin`
+    
+    `cp uxplay.exe /usr/local/bin/`
+    
+    This does not install manpages, but you will have access to help with "`uxplay -h`".
+
+To run **uxplay.exe** you need to install gstreamer plugins.   For sound, the audiosink option `-as directsoundsink` has worked.
+Install plugins with `pacman -S mingw-w64-x86_64-gst-<plugin>`, where ``<plugin>`` is
+
+   1. **libav**
+   2. **plugins-good**
+   3. **plugins-bad**
+  
+Other possible MSYS2 gstreamer plugin packages you might use are listed in [MSYS2 packages](https://packages.msys2.org/package/).
+   
+You also will need to grant the uxplay executable permission to have access through the Windows firewall.  You may automatically be offered the choice to do this when you first run uxplay, or you may need to do it using **Windows Settings->Update and Security->Windows Security->Firewall & network protection -> allow an app through firewall**.   If your virus protection flags uxplay.exe as "suspicious" (but without a true malware signature) you may need to give it an exception.
+ 
+Now test (in a MSYS2 terminal window) with
+
+```
+uxplay -as directsoundsink
+```
+
+Unfortunately,  so far there is no success in getting UxPlay to successfully create a valid GStreamer audio pipeline ending at
+the more-modern **wasapi**  Windows audiosink with option "`-as wasapisink`".
+	
 # Usage
 
 Options:
@@ -701,7 +776,10 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (l
 "features" plist code (reported to the client by the AirPlay server) to be set.
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
-# ChangeLog
+# Changelog
+1.56 2022-09-01   Added support for building and running UxPlay-1.56 on Windows (github source only, no changes
+		  to Unix (Linux, *BSD, macOS) codebase.)
+					
 1.56 2022-07-30   Remove -bt709 from -rpi, -rpiwl, -rpifb as GStreamer is now fixed.
 
 1.55 2022-07-04   Remove the bt709 fix from -v4l2 and  create a new -bt709 option (previous
