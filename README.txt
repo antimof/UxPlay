@@ -465,8 +465,6 @@ landscape mode as the device is rotated).
 Limitations: "`sudo make install`" does not work (due to lack of "sudo"
 equivalent on this platform); GStreamer sound was so far only confirmed
 to work with the DirectSound audiosink option "`-as directsoundsink`".
-The identification of the "true" MAC address of the UxPlay server is not
-yet implemented on Windows, so a random MAC address is used.
 
 1.  Download and install **Bonjour SDK for Windows v3.0** from the
     official Apple site

@@ -28,7 +28,8 @@
 #ifdef _WIN32  /*modifications for Windows compilation */
 #include <glib.h>
 #include <unordered_map>
-#include <windows.h>
+#include <winsock2.h>
+#include <iphlpapi.h>
 #else
 #include <glib-unix.h>
 #include <sys/utsname.h>
@@ -288,10 +289,40 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
 
 static std::string find_mac () {
 /*  finds the MAC address of a network interface *
- *  in a Linux, *BSD or macOS system.            */
+ *  in a Windows, Linux, *BSD or macOS system.   */
     std::string mac = "";
+    char str[3];
 #ifdef _WIN32
-    /* for now, don't find true MAC address if compiled for Windows */ 
+    ULONG buflen = sizeof(IP_ADAPTER_ADDRESSES);
+    PIP_ADAPTER_ADDRESSES addresses = (IP_ADAPTER_ADDRESSES*) malloc(buflen);
+    if (addresses == NULL) { 					
+        return mac;
+    }
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addresses, &buflen) == ERROR_BUFFER_OVERFLOW) {
+        free(addresses);
+        addresses = (IP_ADAPTER_ADDRESSES*) malloc(buflen);
+        if (addresses == NULL) {
+            return mac;
+        }
+    }
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addresses, &buflen) == NO_ERROR) {
+        for (PIP_ADAPTER_ADDRESSES address = addresses; address != NULL; address = address->Next) {
+            if (address->PhysicalAddressLength != 6                 /* MAC has 6 octets */
+                || (address->IfType != 6 && address->IfType != 71)  /* Ethernet or Wireless interface */
+                || address->OperStatus != 1) {                      /* interface is up */
+                continue;
+            }
+            mac.erase();
+            for (int i = 0; i < 6; i++) {
+                sprintf(str,"%02x", int(address->PhysicalAddress[i]));
+                mac = mac + str;
+                if (i < 5) mac = mac + ":";
+            }
+	    break;
+        }
+    }
+    free(addresses);
+    return mac;
 #else
     struct ifaddrs *ifap, *ifaptr;
     int non_null_octets = 0;
@@ -315,7 +346,6 @@ static std::string find_mac () {
 #endif
             if (non_null_octets) {
                 mac.erase();
-                char str[3];
                 for (int i = 0; i < 6 ; i++) {
                     sprintf(str,"%02x", octet[i]);
                     mac = mac + str;
@@ -758,6 +788,12 @@ int main (int argc, char *argv[]) {
     if (audiosink == "0") {
         use_audio = false;
     }
+
+#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
+    if (!debug_log) {
+      setbuf(stdout, NULL);
+    }
+#endif
 
 #if __APPLE__
     /* force use of -nc option on macOS */

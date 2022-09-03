@@ -383,12 +383,14 @@ as the device is rotated).
 
 ## Building UxPlay on Windows (tested on Windows 10 64bit, using MSYS2 and MinGW-64 compiler)
 
-Limitations: "`sudo make install`" does not work (due to lack of "sudo" equivalent on this platform); GStreamer sound was so far only confirmed to work with the DirectSound audiosink option "`-as directsoundsink`".   The identification of the "true" MAC address of the UxPlay server is not yet implemented on Windows, so a random MAC address is used.
+Limitations: "`sudo make install`" does not work (due to lack of "sudo" equivalent on this platform);
+GStreamer sound was so far only confirmed to work with the DirectSound audiosink option "`-as directsoundsink`".
 
 1. Download and install  **Bonjour SDK for Windows v3.0** from the official Apple site
    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
 
-2. (This is for the MSYS2 build enviroment; other build environments may also work, but are not yet tested): download and install MSYS2 from the official site https://www.msys2.org/
+2. (This is for the MSYS2 build enviroment; other build environments may also work, but are not yet tested):
+   download and install MSYS2 from the official site https://www.msys2.org/
 
 3. For building on Windows 64 bit, install the  **MinGW-64** compiler and cmake ([MSYS2 packages](https://packages.msys2.org/package/) are
    installed with a  variant of the "pacman" package manager adapted from Arch Linux).   After installation,  you can add this

@@ -63,6 +63,7 @@ elseif( WIN32 )
                          playfair
                          llhttp
                          wsock32
+			 iphlpapi
                          ws2_32 )
 else()
   target_link_libraries( airplay PUBLIC
