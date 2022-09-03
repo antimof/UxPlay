@@ -24,15 +24,22 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <sys/utsname.h>
-#include <glib-unix.h>
 
+#ifdef _WIN32  /*modifications for Windows compilation */
+#include <glib.h>
+#include <unordered_map>
+#include <winsock2.h>
+#include <iphlpapi.h>
+#else
+#include <glib-unix.h>
+#include <sys/utsname.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
-#ifdef __linux__
-#include <netpacket/packet.h>
-#else
-#include <net/if_dl.h>
+# ifdef __linux__
+# include <netpacket/packet.h>
+# else
+# include <net/if_dl.h>
+# endif
 #endif
 
 #include "log.h"
@@ -65,7 +72,7 @@ static logger_t *render_logger = NULL;
 static bool relaunch_video = false;
 static bool relaunch_server = false;
 static bool reset_loop = false;
-static uint open_connections = 0;
+static unsigned int open_connections = 0;
 static bool connections_stopped = false;
 static unsigned int server_timeout = 0;
 static unsigned int counter;
@@ -225,6 +232,28 @@ static gboolean  sigterm_callback(gpointer loop) {
     return TRUE;
 }
 
+
+#ifdef _WIN32
+struct signal_handler {
+    GSourceFunc handler;
+    gpointer user_data;
+};
+
+static std::unordered_map<gint, signal_handler> u = {};
+
+void SignalHandler(int signum) {
+    if (signum == SIGTERM || signum == SIGINT) {
+        u[signum].handler(u[signum].user_data);
+    }
+}
+
+guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
+    u[signum] = signal_handler{handler, user_data};
+    (void) signal(signum, SignalHandler);
+    return 0;
+}
+#endif
+
 static void main_loop()  {
     guint connection_watch_id = 0;
     guint gst_bus_watch_id = 0;
@@ -260,8 +289,41 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
 
 static std::string find_mac () {
 /*  finds the MAC address of a network interface *
- *  in a Linux, *BSD or macOS system.            */
+ *  in a Windows, Linux, *BSD or macOS system.   */
     std::string mac = "";
+    char str[3];
+#ifdef _WIN32
+    ULONG buflen = sizeof(IP_ADAPTER_ADDRESSES);
+    PIP_ADAPTER_ADDRESSES addresses = (IP_ADAPTER_ADDRESSES*) malloc(buflen);
+    if (addresses == NULL) { 					
+        return mac;
+    }
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addresses, &buflen) == ERROR_BUFFER_OVERFLOW) {
+        free(addresses);
+        addresses = (IP_ADAPTER_ADDRESSES*) malloc(buflen);
+        if (addresses == NULL) {
+            return mac;
+        }
+    }
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addresses, &buflen) == NO_ERROR) {
+        for (PIP_ADAPTER_ADDRESSES address = addresses; address != NULL; address = address->Next) {
+            if (address->PhysicalAddressLength != 6                 /* MAC has 6 octets */
+                || (address->IfType != 6 && address->IfType != 71)  /* Ethernet or Wireless interface */
+                || address->OperStatus != 1) {                      /* interface is up */
+                continue;
+            }
+            mac.erase();
+            for (int i = 0; i < 6; i++) {
+                sprintf(str,"%02x", int(address->PhysicalAddress[i]));
+                mac = mac + str;
+                if (i < 5) mac = mac + ":";
+            }
+	    break;
+        }
+    }
+    free(addresses);
+    return mac;
+#else
     struct ifaddrs *ifap, *ifaptr;
     int non_null_octets = 0;
     unsigned char octet[6], *ptr;
@@ -284,7 +346,6 @@ static std::string find_mac () {
 #endif
             if (non_null_octets) {
                 mac.erase();
-                char str[3];
                 for (int i = 0; i < 6 ; i++) {
                     sprintf(str,"%02x", octet[i]);
                     mac = mac + str;
@@ -295,6 +356,7 @@ static std::string find_mac () {
         }
     }
     freeifaddrs(ifap);
+#endif
     return mac;
 }
 
@@ -349,7 +411,8 @@ static void print_info (char *name) {
     printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
     printf("-rpiwl    Same as \"-rpi -vs waylandsink\" for RPi using Wayland.\n");
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
-    printf("          choices: pulsesink,alsasink,osssink,oss4sink,osxaudiosink\n");
+    printf("          choices include: pulsesink,alsasink,pipewiresink,osssink,\n");
+    printf("          oss4sink,jackaudiosink,a2dpsink,osxaudiosink, etc.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
@@ -485,13 +548,24 @@ static bool get_videorotate (const char *str, videoflip_t *videoflip) {
 }
 
 static void append_hostname(std::string &server_name) {
+#ifdef _WIN32   /*modification for compilation on Windows */
+    char buffer[256] = "";
+    unsigned long size = sizeof(buffer);
+    if (GetComputerNameA(buffer, &size)) {
+        std::string name = server_name;
+        name.append("@");
+        name.append(buffer);
+        server_name = name;
+    }
+#else
     struct utsname buf;
     if (!uname(&buf)) {
-      std::string name = server_name;
-      name.append("@");
-      name.append(buf.nodename);
-      server_name = name;
+        std::string name = server_name;
+        name.append("@");
+        name.append(buf.nodename);
+        server_name = name;
     }
+#endif
 }
 
 void parse_arguments (int argc, char *argv[]) {    
@@ -714,6 +788,12 @@ int main (int argc, char *argv[]) {
     if (audiosink == "0") {
         use_audio = false;
     }
+
+#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
+    if (!debug_log) {
+      setbuf(stdout, NULL);
+    }
+#endif
 
 #if __APPLE__
     /* force use of -nc option on macOS */

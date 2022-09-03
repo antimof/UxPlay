@@ -92,8 +92,12 @@ netutils_init_socket(unsigned short *port, int use_ipv6, int use_udp)
     socklen_t socklen;
     int server_fd;
     int ret;
+#ifndef _WIN32
     int reuseaddr = 1;
-
+#else
+    const char reuseaddr = 1;
+#endif
+    
     assert(port);
 
     server_fd = socket(family, type, proto);
@@ -109,14 +113,14 @@ netutils_init_socket(unsigned short *port, int use_ipv6, int use_udp)
     memset(&saddr, 0, sizeof(saddr));
     if (use_ipv6) {
         struct sockaddr_in6 *sin6ptr = (struct sockaddr_in6 *)&saddr;
-        int v6only = 1;
 
         /* Initialize sockaddr for bind */
         sin6ptr->sin6_family = family;
         sin6ptr->sin6_addr = in6addr_any;
         sin6ptr->sin6_port = htons(*port);
 
-#ifndef WIN32
+#ifndef _WIN32
+        int v6only = 1;
         /* Make sure we only listen to IPv6 addresses */
         setsockopt(server_fd, IPPROTO_IPV6, IPV6_V6ONLY,
                    (char *) &v6only, sizeof(v6only));

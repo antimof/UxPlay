@@ -2,10 +2,14 @@ cmake_minimum_required(VERSION 3.4.1)
 include_directories( playfair llhttp )
 
 # Common Linux cflags
-if ( UNIX AND NOT APPLE )
+if ( UNIX  AND NOT APPLE )
   set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall -g" )
 endif()
 
+if ( WIN32 )
+  message( STATUS "Building for Windows " )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_WIN32 -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall -g" )
+endif()
 
 # Common x86/x86_64 cflags
 if( NOT NO_MARCH_NATIVE AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
@@ -18,12 +22,18 @@ else()
   set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2" )
 endif()
 
+message( STATUS "using CMAKE_CFLAGS: " ${CMAKE_C_FLAGS} )
+
 INCLUDE (CheckIncludeFiles)
+if( WIN32 )
+CHECK_INCLUDE_FILES ("winsock2.h" WINSOCK2 )
+else()
 # for BSD Unix (e.g. FreeBSD)
 CHECK_INCLUDE_FILES ("sys/endian.h" BSD )
 if ( BSD )
   add_definitions( -DSYS_ENDIAN_H )
 endif ( BSD )
+endif()
 
 if( APPLE )
   set( ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig" ) # standard location, and Brew
@@ -47,36 +57,40 @@ if ( APPLE )
                          pthread
                          playfair
                          llhttp )
-else()
-  target_link_libraries( airplay PUBLIC 
+elseif( WIN32 )
+  target_link_libraries( airplay 
                          pthread
                          playfair
-                         llhttp )
+                         llhttp
+                         wsock32
+			 iphlpapi
+                         ws2_32 )
+else()
+  target_link_libraries( airplay PUBLIC
+          pthread
+          playfair
+          llhttp )
 endif()
 
 # libplist
-if( UNIX AND NOT APPLE )
+if( APPLE OR WIN32 )
+   # use static linking
+   pkg_search_module( PLIST REQUIRED libplist-2.0 )
+   find_library( LIBPLIST libplist-2.0.a REQUIRED )
+   message( STATUS "(Static linking) LIBPLIST " ${LIBPLIST} )
+   target_link_libraries ( airplay  ${LIBPLIST} )
+else ()
   pkg_search_module(PLIST libplist>=2.0)
   if(NOT PLIST_FOUND)
     pkg_search_module(PLIST REQUIRED libplist-2.0)
   endif()
   find_library( LIBPLIST ${PLIST_LIBRARIES} PATH ${PLIST_LIBDIR} )
   target_link_libraries ( airplay PUBLIC ${LIBPLIST} )
-elseif( APPLE )
-   # use static linking
-   pkg_search_module( PLIST REQUIRED libplist-2.0 )
-   find_library( LIBPLIST libplist-2.0.a REQUIRED )
-   message( STATUS "LIBPLIST " ${LIBPLIST} )
-   target_link_libraries ( airplay  ${LIBPLIST} )
 endif()
 target_include_directories( airplay PRIVATE ${PLIST_INCLUDE_DIRS} )
 
 #libcrypto
-if( UNIX AND NOT APPLE )
-  find_package(OpenSSL 1.1.1 REQUIRED)
-  target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
-  target_link_libraries( airplay PUBLIC OpenSSL::Crypto )
-elseif( APPLE )
+if( APPLE )
   # use static linking
   # can either compile Openssl 1.1.1 or 3.0.0  from source (install_dev  to /usr/local) or use Macports or Brew
   # MacPorts needs zlib with it, Brew has a strange "keg-only" installation in usr/local/opt/openssl@3
@@ -84,7 +98,7 @@ elseif( APPLE )
   message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
   message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
   find_library( LIBCRYPTO libcrypto.a PATHS ${OPENSSL_LIBRARY_DIRS} REQUIRED )
-  message( "LIBCRYPTO "  ${LIBCRYPTO}  )
+  message( "(Static linking) LIBCRYPTO "  ${LIBCRYPTO}  )
   target_link_libraries( airplay ${LIBCRYPTO} )
   if( LIBCRYPTO MATCHES "/opt/local/lib/libcrypto.a" ) #MacPorts openssl
     find_library( LIBZ libz.a)  # needed by MacPorts openssl
@@ -92,28 +106,46 @@ elseif( APPLE )
     target_link_libraries( airplay  ${LIBZ} )
   endif()
   target_include_directories( airplay PRIVATE ${OPENSSL_INCLUDE_DIRS} )
+elseif( WIN32 )
+  find_package(OpenSSL 1.1.1 REQUIRED)
+  target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
+  target_link_libraries( airplay  OpenSSL::Crypto )
+else()
+  find_package(OpenSSL 1.1.1 REQUIRED)
+  target_compile_definitions( airplay PUBLIC OPENSSL_API_COMPAT=0x10101000L )
+  target_link_libraries( airplay PUBLIC OpenSSL::Crypto )
 endif()
 
 #dns_sd 
-if ( UNIX AND NOT APPLE )
+if ( NOT APPLE )
   pkg_search_module(AVAHI_DNSSD avahi-compat-libdns_sd)
   if (AVAHI_DNSSD_FOUND)
     target_include_directories( airplay PRIVATE ${AVAHI_DNSSD_INCLUDE_DIRS} )
     find_library( DNSSD ${AVAHI_DNSSD_LIBRARIES} PATH ${AVAHI_DNSSD_LIBDIR})
+    target_link_libraries(airplay PUBLIC ${DNSSD} )
   else()  # UxPlay can also build if mDNSResponder or another implementation of dns_sd is present instead of Avahi
-    find_library( DNSSD dns_sd )
-    if( NOT DNSSD )
-      message( FATAL_ERROR "libdns_sd missing; can be provided by avahi_compat-libdns_sd or mDNSResponder." )
+    if ( WIN32 )
+      set(BONJOUR_SDK "$ENV{BONJOUR_SDK_HOME}" )
+      message( STATUS "BONJOUR_SDK_HOME " ${BONJOUR_SDK} )
+      set(DNSSD "${BONJOUR_SDK}/Lib/x64/dnssd.lib")
+      target_link_libraries(airplay ${DNSSD} )
+      message( STATUS "dns_sd: using " ${DNSSD} )
+      find_path(DNSSD_INCLUDE_DIR dns_sd.h HINTS ${BONJOUR_SDK}/Include )
     else()
-      message( STATUS "dns_sd:  found" ${DNSSD} )
+      find_library( DNSSD dns_sd )
+      if( NOT DNSSD )
+        message( FATAL_ERROR "libdns_sd missing; can be provided by avahi_compat-libdns_sd or mDNSResponder." )
+      else()
+        message( STATUS "dns_sd:  found" ${DNSSD} )
+      endif()
+      target_link_libraries(airplay PUBLIC ${DNSSD} ) 
+      find_path(DNSSD_INCLUDE_DIR dns_sd.h HINTS ${CMAKE_INSTALL_INCLUDEDIR} )
     endif()
-    find_path(DNSSD_INCLUDE_DIR dns_sd.h HINTS ${CMAKE_INSTALL_INCLUDEDIR} )
     if ( NOT DNSSD_INCLUDE_DIR )
-      message( FATAL_ERROR " dns_sd.h not found ")
-    else()
-      message( STATUS "found dns_sd.h in " ${DNSSD_INCLUDE_DIR} )
-    endif()
+       message( FATAL_ERROR " dns_sd.h not found ")
+     else()
+        message( STATUS "found dns_sd.h in " ${DNSSD_INCLUDE_DIR} )
+     endif()
     target_include_directories( airplay PRIVATE ${DNSSD_INCLUDE_DIR} )
   endif()
-  target_link_libraries(airplay PUBLIC ${DNSSD} )
-endif()
+endif()	

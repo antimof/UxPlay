@@ -1,4 +1,4 @@
-# UxPlay 1.56:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix.
+# UxPlay 1.56:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -8,8 +8,8 @@ Highlights:
    * GPLv3, open source.
    * Originally supported only AirPlay Mirror protocol, now has added support
      for AirPlay Audio-only (Apple Lossless ALAC) streaming 
-     from current iOS/iPadOS 15.5 clients.  **There is no support for Airplay2 video-streaming protocol, and none is planned.**
-   * macOS computers (2011 or later, both Intel and "Apple Silicon" M1
+     from current iOS/iPadOS 15.6 clients.  **There is no support for Airplay2 video-streaming protocol, and none is planned.**
+   * macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
      systems) can act either as AirPlay clients, or
      as the server running UxPlay. Using AirPlay, UxPlay can
      emulate a second display for macOS clients.
@@ -29,6 +29,9 @@ Highlights:
      your distribution has made a backport of changes from the
      development branch.)
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
+
+   * **New**: Support for running on Microsoft Windows (so far only tested on current Windows 10 64 bit,
+     using MinGW-64 compiler in MSYS2 environment).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
@@ -81,13 +84,15 @@ possible: in_ **Mirror** _mode, stop mirroring (or close the mirror window) and 
 switch back by initiating a_ **Mirror** _mode connection; cover-art display stops/restarts as you leave/re-enter_ **Audio** _mode._
 
 * **Note that Apple video-DRM
-(as found in AppleTV.app content on the client) cannot be decrypted by UxPlay,
-and (unlike a true AppleTV), the UxPlay server does not allow the Apple
-client to run a http connection on the server that directly streams
-content from the internet to the server, instead of 
-streaming it to the client, and then re-streaming to the server. Unlike AppleTV.app,  DRM-free apps like youtube.app
-can be viewed  and listened to in Mirror mode, but using the youtube.app icon for AirPlay video will only send
-ALAC sound  without the accompanying  video.**
+(as found in "Apple TV app" content on the client) cannot be decrypted by UxPlay, and
+the Apple TV app cannot be watched using UxPlay's AirPlay Mirror mode (only the unprotected audio will be streamed, in AAC format),
+but both video and audio content from  DRM-free apps like "YouTube app" will be streamed  by UxPlay in Mirror mode.**
+
+* **As UxPlay does not support non-Mirror AirPlay2 video streaming (where the
+client controls a web server on the AirPlay server that directly receives
+content to avoid it being decoded and re-encoded by the client),
+using the icon for AirPlay video in apps such as the You Tube app
+will only send audio (in lossless ALAC format) without the accompanying video.**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
@@ -132,39 +137,36 @@ if not, software decoding is used.
     [patching instructions for GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki) for GStreamer  1.18.4 and later.
 
-### Note to packagers: OpenSSL-3.0.0 solves GPL v3 license issues.
-Some Linux distributions such as Debian do not allow distribution of compiled
-GPL code linked to OpenSSL-1.1.1 because its license
-has some incompatibilities with GPL code, unless all authors have
-given an "exception" to allow such linking (the historical origins of UxPlay
-make this impossible to obtain).    Other distributions
-treat OpenSSL as a "System Library" to which the GPL allows linking.
+### Note to packagers:
 
-For "GPL-strict" distributions, UxPlay can  be built using OpenSSL- 3.0.0,
-which has a new [GPLv3-compatible license](https://www.openssl.org/blog/blog/2021/09/07/OpenSSL3.Final/).
+UxPlay's GPLv3 license does not have an added
+"exception" explicitly allowing it to be distributed in compiled form when linked to OpenSSL versions
+**prior to v. 3.0.0** (older versions of OpenSSL have a license clause incompatible with the GPL unless
+OpenSSL can be regarded as a "System Library", which it is in *BSD).  Many Linux distributions treat OpenSSL
+as a "System Library", but some (e.g. Debian) do not: in this case, the issue is solved by linking with OpenSSL-3.0.0  or later.
 
 # Getting UxPlay:
+
+* Your distribution may already provide a pre-built uxplay package.  It will be included in the next Debian release "Bookworm"
+(currently in "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46 package based on this. Arch-based distributions also
+have AUR self-building packages for both the latest UxPlay release and the current GitHub version.
+To build the latest version yourself, follow the instructions below.
 
 Either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".   You
 can also download a recent or earlier version listed
 in [Releases](https://github.com/FDH2/UxPlay/releases).
 
- * Current UxPlay  is also a pull request on the
-original site https://github.com/antimof/UxPlay ; that original 
-project is  inactive, but the pull requests are
-now being periodically merged with the antimof tree (thank you antimof!).
+* A recent UxPlay  can also be found on the original [antimof site](https://github.com/antimof/UxPlay);
+that original project is inactive, but is usually kept current or almost-current with the 
+[active UxPlay github site](https://github.com/FDH2/UxPlay) (thank you antimof!).
 
 ## Building UxPlay on  Linux (or \*BSD):
 
 ### Debian-based systems:
 
-* Note that the current Debian "testing" distribution
-(for eventual release as Debian 12/Bookworm) now includes uxplay, so
-future Debian-based distributions may offer a pre-built uxplay package.
-
-(Instructions for Debian/Ubuntu; adapt these for other Linuxes; for macOS,
-see below). See [Troubleshooting](#troubleshooting) below for help with
+(Adapt these instructions for non-Debian-based Linuxes or *BSD; for macOS,
+see specific instruction below). See [Troubleshooting](#troubleshooting) below for help with
 any difficulties.
 
 You need a C/C++ compiler (e.g. g++) with the standard development libraries
@@ -190,40 +192,47 @@ zipfile downloads, "UxPlay" for "git clone" downloads), then follow the instruct
 computer it is built on; when this is not the case, as when you are packaging
 for a distribution, use the cmake option `-DNO_MARCH_NATIVE=ON`.
 
-1. `sudo apt-get install libssl-dev libplist-dev`
-   (unless you need to build OpenSSL and libplist from source).
-2. `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. 
-3. `sudo apt-get install libx11-dev`  (only needed if you invoke
-   the "ZOOMFIX" X11 display-name fix in the next step)
-4. `cmake .` (or "`cmake -DZOOMFIX=ON .`" to get a screen-sharing fix to
-   make X11 mirror display windows visible to screen-sharing applications
-   such as Zoom, see [ZOOMFIX compile-time option](#zoomfix-compile-time-option) below).
-   **ZOOMFIX  is only needed for GStreamer-1.18.x or earlier**.
-5. `make`
-6. `sudo make install` (you can afterwards uninstall with ``sudo make uninstall``
-   in the same directory in which this was run).
-7. Install GStreamer plugins that you need: `sudo apt-get install gstreamer1.0-<plugin>`;
-   values of `<plugin>` needed are: "**plugins-base**", "**libav**" (for sound),
-   "**plugins-good**" (for v4l2 hardware h264 decoding)
-   and  "**plugins-bad**" (for h264 decoding).   Also needed may
-   be "**gl**" for OpenGL support (which may be useful, and should
-   be used with h264 decoding by the NVIDIA GPU), and "**x**" for
-   X11 support, although these may  already be installed; "**vaapi**"
-   is needed for hardware-accelerated h264 video decoding by Intel
-   or AMD  graphics (but not for use with NVIDIA using proprietary drivers).
-   Also install "**tools**" to get the utility gst-inspect-1.0 for
-   examining the GStreamer installation.
+If you use Gstreamer older than 1.20, and wish to share the UxPlay screen using screen-sharing apps such
+as Zoom, you should use the cmake option "` -DZOOMFIX=ON`" in step 3.  This requires
+the X11 development libraries to be installed: on Debian-based systems do this with "`sudo apt-get install libx11-dev`" .
+"ZOOMFIX" is not needed on macOS, or if you are using non-X11 windows 
+(such as OpenGL) on Linux. See [ZOOMFIX compile-time option](#zoomfix-compile-time-option) below for more information,
+and alternatives to "ZOOMFIX"
 
-_If you intend to modify the code, use a separate "build" directory:
-replace_  "`cmake  [ ] .`" _by_  "``mkdir build ; cd build ; cmake [ ] ..``"; _you can then clean
-the build directory with_ "`rm -rf build/* `" _(run from within the UxPlay source directory) without affecting
-the source directories which contain your modifications_.
+1. `sudo apt-get install libssl-dev libplist-dev`".
+    (unless you need to build OpenSSL and libplist from source).
+2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. 
+3.  `cmake .` (For a cleaner build, which is useful if you modify the source, replace this 
+    by "``mkdir build; cd build; cmake ..``": you can then delete the
+    `build` directory if needed, without affecting the source.)   Also add any cmake "`-D`" options
+    here as needed (e.g, ZOOMFIX=ON or NO_MARCH_NATIVE=ON).
+4. `make`
+5. `sudo make install` (you can afterwards uninstall with ``sudo make uninstall``
+    in the same directory in which this was run).
 
 The above script installs the executable file "`uxplay`" to `/usr/local/bin`, (and installs a manpage to
 somewhere like `/usr/local/share/man/man1` and README
 files to somewhere like `/usr/local/share/doc/uxplay`).
 The uxplay executable  can also be found in the build directory after the build
-processs, if you wish to test before installing.
+process, if you wish to test before installing (in which case
+the GStreamer plugins must already be installed)
+
+Next install the GStreamer plugins that are needed with `sudo apt-get install gstreamer1.0-<plugin>`.
+Values of `<plugin>` required are: 
+
+1. "**plugins-base**" 
+2. "**libav**" (for sound),
+3. "**plugins-good**" (for v4l2 hardware h264 decoding)
+4. "**plugins-bad**" (for h264 decoding).   
+
+Plugins that may also be needed include "**gl**" for OpenGL support (which may be useful, and should
+be used with h264 decoding by the NVIDIA GPU), and "**x**" for
+X11 support, although these may  already be installed; "**vaapi**"
+is needed for hardware-accelerated h264 video decoding by Intel
+or AMD  graphics (but not for use with NVIDIA using proprietary drivers).
+Also install "**tools**" to get the utility gst-inspect-1.0 for
+examining the GStreamer installation.  If sound is not working, "**alsa**"", "**pulseaudio**",
+or "**pipewire**" plugins may need to be installed, depending on how your audio is set up.
 
 **Finally, run uxplay in a terminal window**.  Use Ctrl-C (or close the window) to terminate it when done. If it is not seen by the
 iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
@@ -299,15 +308,15 @@ for Intel graphics). (**Also available as a package in AUR**).
  * **FreeBSD:** (sudo pkg install) libplist gstreamer1, gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
 (\* = core, good,  bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi for Intel graphics).
 Either avahi-libdns or mDNSResponder must also be installed to provide the dns_sd library.
-OpenSSL is already installed as a System Library.   "ZOOMFIX" is untested; don't try to use it on FreeBSD unless you need it.
+OpenSSL is already installed as a System Library.
 
 
-## Building UxPlay on macOS:  **(Intel X86_64 and "Apple Silicon" M1 Macs)**
+## Building UxPlay on macOS:  **(Intel X86_64 and "Apple Silicon" M1/M2 Macs)**
 
 _Note: A native AirPlay Server feature is included in  macOS 12 Monterey, but is restricted to recent hardware.
 UxPlay can run  on older macOS systems that will not be able to run Monterey, or can run Monterey  but not AirPlay._
 
-These instructions for macOS  asssume that the Xcode command-line developer tools are installed (if Xcode is
+These instructions for macOS  assume that the Xcode command-line developer tools are installed (if Xcode is
 installed, open the Terminal, type "sudo xcode-select --install" and accept the conditions).
 
 It is also assumed that CMake >= 3.13 is installed:
@@ -326,8 +335,8 @@ Next get the latest macOS release of GStreamer-1.0.
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).  The alternative is to install it from Homebrew
 (MacPorts also supplies it, but compiled to use X11).
 
-**For the "official" release**: install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.2.
-install `gstreamer-1.0-1.20.2-universal.pkg` and ``gstreamer-1.0-devel-1.20.2-universal.pkg``.  (If
+**For the "official" release**: install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.3.
+install `gstreamer-1.0-1.20.3-universal.pkg` and ``gstreamer-1.0-devel-1.20.3-universal.pkg``.  (If
 you have an Intel-architecture Mac, and  have problems with the "universal" packages, you can also
 use `gstreamer-1.0-1.18.6-x86_64.pkg` and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to
 install (they install to /Library/FrameWorks/GStreamer.framework).
@@ -372,6 +381,80 @@ Using the MacPorts X11 GStreamer seems only possible if the image size is left u
 (also use the iPad/iPhone setting that locks the screen orientation against switching  between portrait and landscape mode
 as the device is rotated).
 
+## Building UxPlay on Windows (tested on Windows 10 64bit, using MSYS2 and MinGW-64 compiler)
+
+Limitations: "`sudo make install`" does not work (due to lack of "sudo" equivalent on this platform);
+GStreamer sound was so far only confirmed to work with the DirectSound audiosink option "`-as directsoundsink`".
+
+1. Download and install  **Bonjour SDK for Windows v3.0** from the official Apple site
+   [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
+
+2. (This is for the MSYS2 build enviroment; other build environments may also work, but are not yet tested):
+   download and install MSYS2 from the official site https://www.msys2.org/
+
+3. For building on Windows 64 bit, install the  **MinGW-64** compiler and cmake ([MSYS2 packages](https://packages.msys2.org/package/) are
+   installed with a  variant of the "pacman" package manager adapted from Arch Linux).   After installation,  you can add this
+   compiler  to your IDE. The compiler with all required dependencies is located in the msys64 directory, with
+   default path `C:/msys64/mingw64`. Alternatively,  you can build UxPlay from the command line in the MSYS2 environment
+   (this uses "`ninja`" in place of "``make``" for   the build system).
+
+   To install and build from the command line, open a MSYS2 MinGW x64 terminal from the MSYS2 64 bit tab in the Windows Start menu, then run 
+
+   `pacman -S mingw-w64-x86_64-cmake`
+   
+   `pacman -S mingw-w64-x86_64-gcc`
+
+   `echo 'export PATH="/mingw64/bin/:$PATH"' >> ~/.bashrc`
+
+    Now close the MSYS2 terminal widow, and reopen a new one from the Start menu, to use the new PATH.
+    
+4.  Download latest UxPlay from github **(to use `git`, install it with ``pacman -S git``, 
+    then "`git clone https://github.com/FDH2/UxPlay`")**, then install UxPlay dependencies:
+
+
+    `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-openssl`
+    
+    `pacman -S mingw-w64-x86_64-gstreamer  mingw-w64-x86_64-gst-plugins-base`
+
+     It should also be possible to install gstreamer for Windows from the [offical GStreamer site](https://gstreamer.freedesktop.org/download/),
+     especially if you are trying a different Windows build system.
+
+5.  cd to the UxPlay source directory, then "`mkdir build`" and  "``cd build``", then
+
+     `cmake ..`
+
+     `ninja`
+
+6.  Assuming no error in either of these, you will have built the uxplay executable **uxplay.exe** in the current ("build") directory.   Unfortunately 
+    "`make install`" does not yet work, as an equivalent to ``sudo`` does not appear to be available.   You can run **uxplay.exe** from the command line in
+    the build directory, or move it it somewhere in your PATH: in the MSYS2 environment, `/usr/local/bin` is in the PATH, so install using
+    
+    `mkdir /usr/local/bin`
+    
+    `cp uxplay.exe /usr/local/bin/`
+    
+    This does not install manpages, but you will have access to help with "`uxplay -h`".
+
+To run **uxplay.exe** you need to install gstreamer plugins.   For sound, the audiosink option `-as directsoundsink` has worked.
+Install plugins with `pacman -S mingw-w64-x86_64-gst-<plugin>`, where ``<plugin>`` is
+
+   1. **libav**
+   2. **plugins-good**
+   3. **plugins-bad**
+  
+Other possible MSYS2 gstreamer plugin packages you might use are listed in [MSYS2 packages](https://packages.msys2.org/package/).
+   
+You also will need to grant the uxplay executable permission to have access through the Windows firewall.  You may automatically be offered the choice to do this when you first run uxplay, or you may need to do it using **Windows Settings->Update and Security->Windows Security->Firewall & network protection -> allow an app through firewall**.   If your virus protection flags uxplay.exe as "suspicious" (but without a true malware signature) you may need to give it an exception.
+ 
+Now test (in a MSYS2 terminal window) with
+
+```
+uxplay -as directsoundsink
+```
+
+Unfortunately,  so far there is no success in getting UxPlay to successfully create a valid GStreamer audio pipeline ending at
+the more-modern **wasapi**  Windows audiosink with option "`-as wasapisink`".
+	
 # Usage
 
 Options:
@@ -465,8 +548,8 @@ which will not work if a firewall is running.
    Ubuntu 21.10 for Raspberry Pi 4B).
 
 **-as _audiosink_** chooses the GStreamer audiosink, instead of letting
-   autoaudiosink pick it for you.  Some audiosink choices are:  pulsesink, alsasink, 
-   osssink, oss4sink, and osxaudiosink (for macOS).  Using quotes
+   autoaudiosink pick it for you.  Some audiosink choices are:  pulsesink, alsasink, pipewiresink, 
+   osssink, oss4sink, jackaudiosink, a2dpsink, and osxaudiosink (for macOS).  Using quotes
    "..." might allow some parameters to be included with the audiosink name. 
    (Some choices of audiosink might not work on your system.)   
 
@@ -687,8 +770,7 @@ Note that Uxplay declares itself to be an AppleTV3,2 with a
 sourceVersion 220.68; this can also be changed in global.h. It had been thought
 that it was necessary for UxPlay to claim to be an older 32 bit
 AppleTV model that cannot run modern 64bit tvOS, in order for the client
-to use a "legacy" protocol for pairing with the server (see 
-the _"Notes on AirPlay protocol versions"_ at the end of this README).
+to use a "legacy" protocol for pairing with the server.
 However, UxPlay still works if it declares itself as an AppleTV6,2 with
 sourceVersion 380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running
 tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (listed as
@@ -696,7 +778,10 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (l
 "features" plist code (reported to the client by the AirPlay server) to be set.
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
-# ChangeLog
+# Changelog
+1.56 2022-09-01   Added support for building and running UxPlay-1.56 on Windows (github source only, no changes
+		  to Unix (Linux, *BSD, macOS) codebase.)
+					
 1.56 2022-07-30   Remove -bt709 from -rpi, -rpiwl, -rpifb as GStreamer is now fixed.
 
 1.55 2022-07-04   Remove the bt709 fix from -v4l2 and  create a new -bt709 option (previous
