@@ -462,34 +462,30 @@ compiler)</h2>
 <li><p>Download and install <strong>Bonjour SDK for Windows
 v3.0</strong> from the official Apple site <a
 href="https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows">https://developer.apple.com/download</a></p></li>
-<li><p>(This is for the unix-like MSYS2 build enviroment; other build
-environments may also work, but are not yet tested): download and
-install MSYS2 from the official site <a
-href="https://www.msys2.org/">https://www.msys2.org/</a></p></li>
-<li><p>For building on Windows 64 bit, install the
-<strong>MinGW-64</strong> compiler and cmake (<a
+<li><p>(This is for 64-bit Windows; a build for 32-bit Windows should be
+possible, but is not tested.) The unix-like MSYS2 build environment will
+be used: download and install MSYS2 from the official site <a
+href="https://www.msys2.org">https://www.msys2.org/</a>. Accept the
+default installation location <code>C:\mysys64</code>.</p></li>
+<li><p>Next update MSYS2 and install the <strong>MinGW-64</strong>
+compiler and <strong>cmake</strong> (<a
 href="https://packages.msys2.org/package/">MSYS2 packages</a> are
-installed with a variant of the “pacman” package manager adapted from
-Arch Linux). After installation, you can add this compiler to your IDE.
-The compiler with all required dependencies is located in the msys64
-directory, with default path <code>C:/msys64/mingw64</code>.
-Alternatively, you can build UxPlay from the command line in the MSYS2
-environment (this uses “<code>ninja</code>” in place of
-“<code>make</code>” for the build system).</p>
-<p>To install and build from the command line, open a MSYS2 MinGW x64
-terminal from the MSYS2 64 bit tab in the Windows Start menu, then
-run</p>
-<p><code>pacman -S mingw-w64-x86_64-cmake</code></p>
-<p><code>pacman -S mingw-w64-x86_64-gcc</code></p>
-<p><code>echo 'export PATH="/mingw64/bin/:$PATH"' &gt;&gt; ~/.bashrc</code></p>
-<p>Now close the MSYS2 terminal window, and reopen a new one from the
-Start menu, to use the new PATH.</p></li>
-<li><p>Download latest UxPlay from github <strong>(to use
+installed with a variant of the “pacman” package manager used by Arch
+Linux). Open a MSYS2 MinGW x64 terminal from the MSYS2 64 bit tab in the
+Windows Start menu, then run</p>
+<pre><code>pacman -Syu mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc</code></pre>
+<p>After installation, you can add this compiler to your IDE. The
+compiler with all required dependencies is located in the msys64
+directory, with default path <code>C:/msys64/mingw64</code>. Here we
+will simply build UxPlay from the command line in the MSYS2 environment
+(this uses “<code>ninja</code>” in place of “<code>make</code>” for the
+build system).</p></li>
+<li><p>Download the latest UxPlay from github <strong>(to use
 <code>git</code>, install it with <code>pacman -S git</code>, then
 “<code>git clone https://github.com/FDH2/UxPlay</code>”)</strong>, then
-install UxPlay dependencies:</p>
-<p><code>pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-openssl</code></p>
-<p><code>pacman -S mingw-w64-x86_64-gstreamer  mingw-w64-x86_64-gst-plugins-base</code></p>
+install UxPlay dependencies (openssl is already installed with
+MSYS2):</p>
+<p><code>pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base</code></p>
 <p>Note that libplist will be linked statically to the uxplay
 executable. It should also be possible to install gstreamer for Windows
 from the <a href="https://gstreamer.freedesktop.org/download/">offical
@@ -503,19 +499,18 @@ build system.</p></li>
 uxplay executable <strong>uxplay.exe</strong> in the current (“build”)
 directory. The “sudo make install” and “sudo make uninstall” features
 offered in the other builds are not available on Windows; instead, the
-MSYS2 environment has <code>/usr/local/...</code> available, and you can
-install the uxplay.exe executable in <code>/usr/local/bin</code> (plus
-manpage and documentation in <code>/usr/local/share</code>) with</p>
-<p><code>cmake --install . --prefix /usr/local</code></p>
+MSYS2 environment has <code>/mingw64/...</code> available, and you can
+install the uxplay.exe executable in <code>C:/msys64/mingw64/bin</code>
+(plus manpage and documentation in
+<code>C:/msys64/mingw64/share/...</code>) with</p>
+<p><code>cmake --install . --prefix /mingw64</code></p>
 <p>To be able to view the manpage, you need to install the manpage
-viewer with “<code>pacman -S man</code>”, then give it the location of
-the uxplay manpage:</p>
-<p><code>echo 'export "MANPATH=$MANPATH:/usr/local/share/man"' &gt;&gt; ~/.bashrc</code></p>
-<p>(followed by “<code>source ~/.bashrc</code>”).</p></li>
+viewer with “<code>pacman -S man</code>”.</p></li>
 </ol>
-<p>To run <strong>uxplay.exe</strong> you need to install gstreamer
-plugins with <code>pacman -S mingw-w64-x86_64-gst-&lt;plugin&gt;</code>,
-where <code>&lt;plugin&gt;</code> is</p>
+<p>To run <strong>uxplay.exe</strong> you need to install some gstreamer
+plugin packages with
+<code>pacman -S mingw-w64-x86_64-gst-&lt;plugin&gt;</code>, where the
+required ones have <code>&lt;plugin&gt;</code> given by</p>
 <ol type="1">
 <li><strong>libav</strong></li>
 <li><strong>plugins-good</strong></li>
@@ -537,13 +532,15 @@ window). If you need to specify the audiosink, there are two main
 choices on Windows: the older DirectSound plugin
 “<code>-as directsoundsink</code>”, and the more modern Windows Audio
 Session API (wasapi) plugin “<code>-as wasapisink</code>”, which
-supports options such as</p>
+supports additional options such as</p>
 <pre><code>uxplay -as &#39;wasapisink low_latency=true device=\&quot;&lt;guid&gt;\&quot;&#39; </code></pre>
 <p>where <code>&lt;guid&gt;</code> specifies an available audio device
 by its GUID, which can be found using
 “<code>gst-device-monitor-1.0 Audio</code>”: <code>&lt;guid&gt;</code>
 has a form like
-<code>\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}</code>.</p>
+<code>\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}</code>.
+If “<code>device</code>” is not specified, the default audio device is
+used.</p>
 <h1 id="usage">Usage</h1>
 <p>Options:</p>
 <p><strong>-n server_name</strong> (Default: UxPlay);
