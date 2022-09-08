@@ -387,80 +387,78 @@ as the device is rotated).
 1. Download and install  **Bonjour SDK for Windows v3.0** from the official Apple site
    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
 
-2. (This is for the unix-like MSYS2 build enviroment; other build environments may also work, but are not yet tested):
-   download and install MSYS2 from the official site [https://www.msys2.org/](https://www.msys2.org/)
+2. (This is for 64-bit Windows; a build for 32-bit Windows should be possible, but is not tested.) The
+   unix-like MSYS2 build environment will be used: download and install MSYS2 from the official
+   site [https://www.msys2.org/](https://www.msys2.org).  Accept the default installation location `C:\mysys64`.
 
-
-
-3. For building on Windows 64 bit, install the  **MinGW-64** compiler and cmake ([MSYS2 packages](https://packages.msys2.org/package/) are
-   installed with a  variant of the "pacman" package manager adapted from Arch Linux).   After installation,  you can add this
-   compiler  to your IDE. The compiler with all required dependencies is located in the msys64 directory, with
-   default path `C:/msys64/mingw64`. Alternatively,  you can build UxPlay from the command line in the MSYS2 environment
-   (this uses "`ninja`" in place of "``make``" for   the build system).
-
-   To install and build from the command line, open a MSYS2 MinGW x64 terminal from the MSYS2 64 bit tab in the Windows Start menu, then run 
-
-   `pacman -S mingw-w64-x86_64-cmake`
+3. Next update MSYS2 and install the  **MinGW-64** compiler
+   and   **cmake** ([MSYS2 packages](https://packages.msys2.org/package/) are installed with a
+   variant of the "pacman" package manager used by Arch Linux).  Open a MSYS2 MinGW x64 terminal
+   from the MSYS2 64 bit tab in the Windows Start menu, then run 
    
-   `pacman -S mingw-w64-x86_64-gcc`
+   ```
+   pacman -Syu mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
+   ```
+   
+   After installation,  you can add this compiler  to your IDE. The compiler with all required dependencies
+   is located in the msys64 directory, with default path `C:/msys64/mingw64`.   Here we will simply build UxPlay
+   from the command line in the MSYS2 environment (this uses "`ninja`" in place of "``make``" for   the build system).
 
-   `echo 'export PATH="/mingw64/bin/:$PATH"' >> ~/.bashrc`
+4. Download the latest UxPlay from github **(to use `git`, install it with ``pacman -S git``, 
+   then "`git clone https://github.com/FDH2/UxPlay`")**, then install UxPlay dependencies (openssl is already
+   installed with MSYS2):
 
-    Now close the MSYS2 terminal window, and reopen a new one from the Start menu, to use the new PATH.
-    
-4.  Download latest UxPlay from github **(to use `git`, install it with ``pacman -S git``, 
-    then "`git clone https://github.com/FDH2/UxPlay`")**, then install UxPlay dependencies:
-
-
-    `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-openssl`
-    
-    `pacman -S mingw-w64-x86_64-gstreamer  mingw-w64-x86_64-gst-plugins-base`
+   `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base`
 
     Note that libplist will be linked statically to the uxplay executable.
-    It should also be possible to install gstreamer for Windows from the [offical GStreamer site](https://gstreamer.freedesktop.org/download/),
+    It should also be possible to install gstreamer for Windows from the
+    [offical GStreamer site](https://gstreamer.freedesktop.org/download/),
     especially if you are trying a different Windows build system.
+    
 5.  cd to the UxPlay source directory, then "`mkdir build`" and  "``cd build``", followed by
 
      `cmake ..`
 
      `ninja`
 
-6.  Assuming no error in either of these, you will have built the uxplay executable **uxplay.exe** in the current ("build") 
-    directory. The "sudo make install" and "sudo make uninstall" features offered in the other builds are not available 
-    on Windows; instead, the MSYS2 environment has 
-    `/usr/local/...` available, and you can install the uxplay.exe executable 
-    in `/usr/local/bin` (plus manpage and documentation in ``/usr/local/share``) with
+6.  Assuming no error in either of these, you will have built the uxplay executable **uxplay.exe** in the
+    current ("build")  directory. The "sudo make install" and "sudo make uninstall" features offered in the
+    other builds are not available on Windows; instead, the MSYS2 environment has 
+    `/mingw64/...` available, and you can install the uxplay.exe executable 
+    in `C:/msys64/mingw64/bin` (plus manpage and documentation in ``C:/msys64/mingw64/share/...``) with
 
-    `cmake --install . --prefix /usr/local`
+    `cmake --install . --prefix /mingw64`
     
-    To be able to view the manpage, you need to install the manpage viewer with "`pacman -S man`", then give it the location of the uxplay manpage:
-    
-    `echo 'export "MANPATH=$MANPATH:/usr/local/share/man"' >> ~/.bashrc `
-    
-    (followed by "`source ~/.bashrc`").
+    To be able to view the manpage, you need to install the manpage viewer with "`pacman -S man`".
 
-To run **uxplay.exe** you need to install gstreamer plugins with `pacman -S mingw-w64-x86_64-gst-<plugin>`, where ``<plugin>`` is
+To run **uxplay.exe** you need to install some gstreamer plugin packages
+with `pacman -S mingw-w64-x86_64-gst-<plugin>`, where the required ones  have ``<plugin>`` given by
 
    1. **libav**
    2. **plugins-good**
    3. **plugins-bad**
   
-Other possible MSYS2 gstreamer plugin packages you might use are listed in [MSYS2 packages](https://packages.msys2.org/package/).
+Other possible MSYS2 gstreamer plugin packages you might use are listed
+in [MSYS2 packages](https://packages.msys2.org/package/).
    
-You also will need to grant permission to the uxplay executable uxplay.exe to access data through the Windows firewall.  You may automatically 
-be offered the choice to do this when you first run uxplay, or you may need to do it 
-using **Windows Settings->Update and Security->Windows Security->Firewall & network protection -> allow an app through firewall**. If
-your virus protection flags uxplay.exe as "suspicious" (but without a true malware signature) you may need to give it an exception.
+You also will need to grant permission to the uxplay executable uxplay.exe to access data through the Windows 
+firewall.  You may automatically be offered the choice to do this when you first run uxplay, or you may need to do it 
+using **Windows Settings->Update and Security->Windows Security->Firewall & network protection -> allow an app
+through firewall**. If your virus protection flags uxplay.exe as "suspicious" (but without a true malware signature)
+you may need to give it an exception.
  
 Now test by running "`uxplay`" (in a MSYS2 terminal window).  If you
-need to specify the audiosink, there are two main choices on Windows: the older DirectSound plugin "`-as directsoundsink`",
-and the more modern Windows Audio Session API  (wasapi) plugin "`-as wasapisink`", which supports options such as
+need to specify the audiosink, there are two main choices on Windows: the older DirectSound
+plugin "`-as directsoundsink`", and the more modern Windows Audio Session API  (wasapi)
+plugin "`-as wasapisink`", which supports additional options such as
 
 ```
 uxplay -as 'wasapisink low_latency=true device=\"<guid>\"' 
 ```
 where `<guid>` specifies an available audio device by its GUID, which can be found using
-"`gst-device-monitor-1.0 Audio`": ``<guid>`` has a form like ```\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}```.
+"`gst-device-monitor-1.0 Audio`": ``<guid>`` has a form
+like ```\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}```. If "`device`" is not specified, the
+default audio device is used.
 
 
 # Usage
