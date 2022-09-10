@@ -31,11 +31,13 @@ Highlights:
     using Video4Linux2 (vl42), which supports both 32- and 64-bit
     systems, unlike deprecated OpenMAX (omx), which is being dropped by
     RPi distributions in favor of v4l2. (For GStreamer \< 1.22, a
+    backport of changes from the GStreamer development branch is needed:
+    this has now been done by Raspberry Pi OS (Bullseye); for other
+    distributions a
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to the GStreamer Video4Linux2 plugin, available in the [UxPlay
-    Wiki](https://github.com/FDH2/UxPlay/wiki), is required, unless your
-    distribution has made a backport of changes from the development
-    branch.) See [success
+    Wiki](https://github.com/FDH2/UxPlay/wiki), is required.) See
+    [success
     reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
 -   **New**: Support for running on Microsoft Windows (so far only
@@ -149,10 +151,12 @@ used.
     replaces unmaintained 32-bit-only OpenMax used by RPiPlay. Fixes to
     the v4l2 plugin that allow it to work with UxPlay on RPi are now in
     the GStreamer development branch, and will appear in the upcoming
-    GStreamer-1.22 release. A (partial) backport (as
-    `gstreamer1.0-plugins-good-1.18.4-2+~rpt1`) has already appeared in
-    RPi OS updates. Until the full update appears, or for other
-    distributions, you can find [patching instructions for
+    GStreamer-1.22 release. A backport (package
+    `gstreamer1.0-plugins-good-1.18.4-2+deb11u1+rpt1`) has already
+    appeared in RPi OS (Bullseye); for it to work with uxplay 1.56 or
+    later, you may need to use the `-bt709` option. For other
+    distributions without the backport, you can find [patching
+    instructions for
     GStreamer](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki) for
     GStreamer 1.18.4 and later.
@@ -304,26 +308,31 @@ options.
 
 -   The upcoming GStreamer-1.22 release will work well, but older
     releases of GStreamer will not work unless patched with backports of
-    the improvements from GStreamer-1.22. Patches for GStreamer-1.18.4
-    and later are [available with instructions in the UxPlay
+    the improvements from GStreamer-1.22. Raspberry Pi OS (Bullseye) now
+    has the needed backports. For other distributions, patches for
+    GStreamer are [available with instructions in the UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
 
 The basic uxplay options for R Pi are `uxplay -v4l2 [-vs <videosink>]`.
 The choice `<videosink>` = `glimagesink` is sometimes useful. On a
 system without X11 (like R Pi OS Lite) with framebuffer video, use
-`<videosink>` = `kmssink`. With the Wayland video compositor (as in
-recent Ubuntu for R Pi) use `<videosink>` = `waylandsink`. For
-convenience, these options are also available combined in options
-`-rpi`, `-rpigl` `-rpifb`, `-rpiwl`, respectively provided for X11, X11
-with OpenGL, framebuffer, and Wayland systems. You may find the simple
-"uxplay", (which lets GStreamer try to find the best video solution by
-itself) provides the best results.
+`<videosink>` = `kmssink`. With the Wayland video compositor, use
+`<videosink>` = `waylandsink`. For convenience, these options are also
+available combined in options `-rpi`, `-rpigl` `-rpifb`, `-rpiwl`,
+respectively provided for X11, X11 with OpenGL, framebuffer, and Wayland
+systems. You may find the simple "uxplay", (which lets GStreamer try to
+find the best video solution by itself) provides the best results.
 
--   **If you are not using the latest patches from the wiki, you will
-    also need to add the `-bt709` option**: previously the GStreamer
-    v4l2 plugin could not recognise Apple's color format (an unusual
-    "full-range" variant of the bt709 HDTV standard), which -bt709
-    fixes.
+-   **For UxPlay-1.56 and later, if you are not using the latest
+    GStreamer patches from the Wiki, you will need to use the UxPlay
+    option `-bt709`**: previously the GStreamer v4l2 plugin could not
+    recognise Apple's color format (an unusual "full-range" variant of
+    the bt709 HDTV standard), which -bt709 fixes. GStreamer-1.20.4 will
+    have a fix for this, which is included in the latest patches, so
+    beginning with UxPlay-1.56, the bt709 fix is no longer automatically
+    applied. **After a recent update, Raspberry Pi OS (Bullseye) now
+    supplies an already-patched GStreamer-1.18.4 that can run UxPlay,
+    but needs the `-bt709` option with UxPlay-1.56 or later.**
 
 -   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
     ssh:
@@ -335,9 +344,9 @@ itself) provides the best results.
        export DISPLAY=:0
        nohup uxplay [options] > FILE &
 
-Sound and video will play on the remote host; "nohup" will keep uplay
-running if the ssh session is closed.\
-Terminal output is saved to FILE (which can be /dev/null to discard it).
+Sound and video will play on the remote host; "nohup" will keep uxplay
+running if the ssh session is closed. Terminal output is saved to FILE
+(which can be /dev/null to discard it).
 
 ### Non-Debian-based Linux or \*BSD
 
