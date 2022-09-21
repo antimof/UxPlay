@@ -8,30 +8,30 @@ Highlights:
    * GPLv3, open source.
    * Originally supported only AirPlay Mirror protocol, now has added support
      for AirPlay Audio-only (Apple Lossless ALAC) streaming 
-     from current iOS/iPadOS 15.6 clients.  **There is no support for Airplay2 video-streaming protocol, and none is planned.**
+     from current iOS/iPadOS clients.  **There is no support for Airplay2 video-streaming protocol, and none is planned.**
    * macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
      systems) can act either as AirPlay clients, or
      as the server running UxPlay. Using AirPlay, UxPlay can
      emulate a second display for macOS clients.
-   * Support for older iOS clients (such as 32-bit iPad 2nd gen. and
-     iPhone 4S, when upgraded to iOS 9.3.5 or later), plus a
+   * Support for older iOS clients (such as 32-bit iPad 2nd gen., iPod Touch 5th gen. and
+     iPhone 4S, when upgraded to iOS 9.3.5, or later 64-bit versions), plus a
      Windows AirPlay-client emulator, AirMyPC.
    * Uses GStreamer plugins for audio and video rendering (with options
      to select different hardware-appropriate output "videosinks" and
      "audiosinks", and a fully-user-configurable video streaming pipeline).
    * Support for server behind a firewall.
    * **New**: Support for Raspberry Pi, with hardware video acceleration using
-     Video4Linux2 (vl42), which supports both 32- and 64-bit systems, unlike deprecated
-     OpenMAX (omx), which is being dropped by RPi distributions in favor of v4l2. (For GStreamer < 1.22,
-     a backport of changes from the GStreamer development branch is needed: this has now been done
+     Video4Linux2 (v4l2), which supports both 32- and 64-bit systems: this is the replacement for
+     32-bit-only OpenMAX (omx), for which support by RPi distributions is being discontinued. (Until GStreamer 1.22
+     is released, a backport of changes from the GStreamer development branch is needed: this has now been done
      by Raspberry Pi OS (Bullseye); for other distributions 
      a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
      to the GStreamer Video4Linux2 plugin, available in the
      [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki), is required.)
      See [success reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
 
-   * **New**: Support for running on Microsoft Windows (so far only tested on current Windows 10 64 bit,
-     using MinGW-64 compiler in MSYS2 environment).
+   * **New**: Support for running on Microsoft Windows (builds with the MinGW-64 compiler in the
+     unix-like MSYS2 environment).
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
@@ -47,17 +47,19 @@ UxPlay is tested on a number of systems, including (among others) Debian 10.11 "
 Ubuntu 20.04 and 22.04, Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS successor),
 OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.
 On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
+Also tested on 64-bit Windows 10 and 11.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
-(iPhones, iPads, MacBooks) in a window
+(iPhone, iPod Touch, iPad, Mac computers) in a window
 on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom)
-on a host running Linux, macOS, or other unix.  UxPlay supports Apple's AirPlay2
-protocol using "Legacy Pairing", but some features are missing.
+on a host running Linux, macOS, or other unix (and now also Microsoft Windows).  UxPlay supports
+Apple's AirPlay2 protocol using "Legacy Pairing", but some features are missing.
 (Details of what is publically known about Apple's AirPlay 2 protocol can be found
 [here](https://openairplay.github.io/airplay-spec/),
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
-[here](https://emanuelecozzi.net/docs/airplay2)).
+[here](https://emanuelecozzi.net/docs/airplay2)).   While there is no guarantee that future
+iOS releases will keep supporting "Legacy Pairing", the recent iOS 16 release continues support.
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server**  is also running
@@ -76,9 +78,7 @@ metadata is displayed in the uxplay terminal;
 if UxPlay option ``-ca <name>`` is used,
 the accompanying cover art is also output 
 to a periodically-updated file `<name>`, and can be viewed with
-a (reloading) graphics viewer of your choice such as `feh`:
-run "`uxplay -ca <name> &`" in the background, then run "``feh -R 1 <name>``"
-in the foreground; terminate with "`ctrl-C fg ctrl-C`".
+a (reloading) graphics viewer of your choice.
 _Switching between_ **Mirror** _and_ **Audio** _modes  during an active  connection is
 possible: in_ **Mirror** _mode, stop mirroring (or close the mirror window) and start an_ **Audio** _mode connection,
 switch back by initiating a_ **Mirror** _mode connection; cover-art display stops/restarts as you leave/re-enter_ **Audio** _mode._
@@ -91,7 +91,7 @@ but both video and audio content from  DRM-free apps like "YouTube app" will be 
 * **As UxPlay does not support non-Mirror AirPlay2 video streaming (where the
 client controls a web server on the AirPlay server that directly receives
 content to avoid it being decoded and re-encoded by the client),
-using the icon for AirPlay video in apps such as the You Tube app
+using the icon for AirPlay video in apps such as the YouTube app
 will only send audio (in lossless ALAC format) without the accompanying video.**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
@@ -246,6 +246,12 @@ UxPlay from receiving client connection requests unless some network ports
 are opened. See [Troubleshooting](#troubleshooting) below for
 help with this or other problems.
 
+To display the accompanying "Cover Art" from sources like Apple Music in Audio-Only (ALAC) mode,
+run "`uxplay -ca <name> &`" in the background, then run a image viewer with an autoreload feature: an example
+is "feh": run "``feh -R 1 <name>``"
+in the foreground; terminate feh and then Uxplay with "`ctrl-C fg ctrl-C`".
+
+
 **One common problem involves GStreamer
 attempting to use incorrectly-configured or absent accelerated hardware h264
 video decoding (e.g., VAAPI).
@@ -270,14 +276,14 @@ On a system without X11 (like R Pi OS Lite) with framebuffer video, use `<videos
 With the  Wayland video compositor,  use `<videosink>` = ``waylandsink``.  For convenience,
 these options are also available combined in options `-rpi`, ``-rpigl``
 ``-rpifb``, ```-rpiwl```, respectively provided for X11, X11 with OpenGL, framebuffer, and Wayland systems.
-You may find the simple "uxplay", (which lets GStreamer try to find the best video solution by itself)
+You may find that just "`uxplay`", (_without_ ``-v4l2`` or ```-rpi*``` options, which lets GStreamer try to find the best video solution by itself)
 provides the best results.
 
 * **For UxPlay-1.56 and later, if you are not using the latest GStreamer patches from the Wiki, you will need to use the UxPlay option `-bt709`**:
 previously the GStreamer v4l2 plugin could
 not recognise Apple's color format (an unusual "full-range" variant of the bt709 HDTV standard), which -bt709 fixes.   GStreamer-1.20.4 will have
 a fix for this, which is included in the latest patches, so beginning with UxPlay-1.56, the bt709 fix is no longer automatically applied.
-**After a recent update, Raspberry Pi OS (Bullseye) now supplies an already-patched GStreamer-1.18.4 that can run UxPlay, but
+**After a recent update, Raspberry Pi OS (Bullseye) now supplies an already-patched GStreamer-1.18.4 that works with UxPlay, but
 needs the `-bt709` option with UxPlay-1.56 or later.**
 
 
@@ -385,8 +391,9 @@ Using the MacPorts X11 GStreamer seems only possible if the image size is left u
 (also use the iPad/iPhone setting that locks the screen orientation against switching  between portrait and landscape mode
 as the device is rotated).
 
-## Building UxPlay on Windows (tested on Windows 10 64bit, using MSYS2 and MinGW-64 compiler)
+## Building UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64 compiler.
 
+* tested on Windows 10 and 11, 64-bit.
 
 1. Download and install  **Bonjour SDK for Windows v3.0** from the official Apple site
    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
@@ -462,7 +469,8 @@ uxplay -as 'wasapisink low_latency=true device=\"<guid>\"'
 where `<guid>` specifies an available audio device by its GUID, which can be found using
 "`gst-device-monitor-1.0 Audio`": ``<guid>`` has a form
 like ```\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}```. If "`device`" is not specified, the
-default audio device is used.
+default audio device is used.   The executable uxplay.exe can also be run without the MSYS2 environment (using
+the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`).
 
 
 # Usage
@@ -573,10 +581,10 @@ which will not work if a firewall is running.
    the same terminal window in which uxplay was put into the background).   To quit, use ```ctrl-C fg ctrl-C``` to terminate
    the image viewer, bring ``uxplay`` into the foreground, and terminate it too.
 
-**-reset n** sets a limit of n consecutive timeout failures of the client to respond to ntp requests
-   from the server (these are sent every 3 seconds to check if the client is still present).   After
-   n failures, the client will be presumed to be offline, and the connection will be reset to allow a new
-   connection.   The default value of n is 5; the value n = 0 means "no limit" on timeouts.
+**-reset n** sets a limit of _n_ consecutive timeout failures of the client to respond to ntp requests
+   from the server (these are sent every 3 seconds to check if the client is still present, and synchronize with it).   After
+   _n_ failures, the client will be presumed to be offline, and the connection will be reset to allow a new
+   connection.   The default value of _n_ is 5; the value _n_ = 0 means "no limit" on timeouts.
 
 **-nc** maintains previous UxPlay < 1.45 behavior that does **not close** the video window when the the client
    sends the "Stop Mirroring" signal. _This option is currently used by default in macOS,
@@ -627,7 +635,8 @@ which will not work if a firewall is running.
 
 **-admp** Dumps  audio to file audiodump.x.aac (AAC-ELD format audio), audiodump.x.alac (ALAC format audio) or audiodump.x.aud
    (other-format audio), where x = 1,2,3... increases each time the audio format changes. -admp _n_ restricts the number of
-   packets dumped to a file to _n_ or less.    To change the name _audiodump_, use -admp [n] _filename_.
+   packets dumped to a file to _n_ or less.    To change the name _audiodump_, use -admp [n] _filename_.   _Note that (unlike dumped video)
+   the dumped audio is currently only useful for debugging, as it is not containerized to make it playable with standard audio players._ 
 
 **-d**  Enable debug output.   Note:  this does not show GStreamer error or debug messages.   To see GStreamer error
     and warning messages, set the environment variable GST_DEBUG with "export GST_DEBUG=2" before running uxplay.
@@ -682,6 +691,8 @@ that from a successful start of UxPlay in the [UxPlay Wiki](https://github.com/F
 GStreamer plugin that doesn't work on your system** (by default,
 GStreamer uses the "autovideosink"  and  "autoaudiosink" algorithms 
 to guess what are  the "best" plugins to use on your system).
+A different reason for no audio occurred when  a user with a firewall only opened two udp network
+ports: **three** are required (the third one receives the audio data).
 
 **Raspberry Pi** devices (-rpi option) only work with hardware GPU decoding if the Video4Linux2 plugin in  GStreamer v1.20.x or earlier has been patched
 (see the UxPlay [Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) for patches).
@@ -789,7 +800,7 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (l
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
-1.56 2022-09-01   Added support for building and running UxPlay-1.56 on Windows (github source only, no changes
+1.56 2022-09-01   Added support for building and running UxPlay-1.56 on Windows (no changes
 		  to Unix (Linux, *BSD, macOS) codebase.)
 					
 1.56 2022-07-30   Remove -bt709 from -rpi, -rpiwl, -rpifb as GStreamer is now fixed.
