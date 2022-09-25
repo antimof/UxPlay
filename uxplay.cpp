@@ -719,7 +719,7 @@ void parse_arguments (int argc, char *argv[]) {
             }
         } else if (arg == "-vdmp") {
             dump_video = true;
-            if (option_has_value(i, argc, arg, argv[i+1])) {
+            if (i < argc - 1 && *argv[i+1] != '-') {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
@@ -736,10 +736,9 @@ void parse_arguments (int argc, char *argv[]) {
                     video_dumpfile_name.append(argv[i]);
                 }
             }
-	    printf("dump_video %d %d %s \n",dump_video, video_dump_limit, video_dumpfile_name.c_str());
         } else if (arg == "-admp") {
             dump_audio = true;
-            if (option_has_value(i, argc, arg, argv[i+1])) {
+            if (i < argc - 1 && *argv[i+1] != '-') {
                 unsigned int n = 0;
                 if (get_value (argv[++i], &n)) {
                     if (n == 0) {
@@ -784,9 +783,23 @@ int main (int argc, char *argv[]) {
 #endif
 
     parse_arguments (argc, argv);
-    
     if (audiosink == "0") {
         use_audio = false;
+        dump_audio = false;
+    }
+    if (dump_video) {
+        if (video_dump_limit > 0) {
+             printf("dump video using \"-vdmp %d %s\"\n", video_dump_limit, video_dumpfile_name.c_str());
+	} else {
+             printf("dump video using \"-vdmp %s\"\n", video_dumpfile_name.c_str());
+        }
+    }
+    if (dump_audio) {
+        if (audio_dump_limit > 0) {
+            printf("dump audio using \"-admp %d %s\"\n", audio_dump_limit, audio_dumpfile_name.c_str());
+        } else {
+            printf("dump audio using \"-admp %s\"\n",  audio_dumpfile_name.c_str());
+        }
     }
 
 #ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
