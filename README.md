@@ -678,7 +678,7 @@ This shows that a *DNS-SD* service  is working, but a firewall on the server is 
 _both_ running on the server!)  If possible, either turn off the firewall
 to see if that is the problem, or get three consecutive network ports,
 starting at port n, all three in the range 1024-65535, opened  for both tcp and udp, and use "uxplay -p n"
-(or open UDP 6000, 6001, 6011 TCP 7000,7001,7100 and use "uxplay -p").
+(or open UDP 7011,6001,6000 TCP 7100,7000,7001 and use "uxplay -p").
 
 ### 3. Problems _after_ the client-server connection has been made:
 
