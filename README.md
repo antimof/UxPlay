@@ -472,6 +472,13 @@ like ```\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}```. If "`dev
 default audio device is used.   The executable uxplay.exe can also be run without the MSYS2 environment (using
 the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`).
 
+If you wish to specify the videosink using the `-vs <videosink>` option, some choices for `<videosink>` are
+`d3d11videosink`, ``d3dvideosink``, ```glimagesink```,
+`gtksink`.    You can get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
+
+```
+uxplay -vs "d3d11videosink fullscreen-toggle-mode=alt-enter"
+```
 
 # Usage
 

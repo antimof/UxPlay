@@ -560,6 +560,13 @@ If “<code>device</code>” is not specified, the default audio device is
 used. The executable uxplay.exe can also be run without the MSYS2
 environment (using the Windows Terminal, with
 <code>C:\msys64\mingw64\bin\uxplay</code>).</p>
+<p>If you wish to specify the videosink using the
+<code>-vs &lt;videosink&gt;</code> option, some choices for
+<code>&lt;videosink&gt;</code> are <code>d3d11videosink</code>,
+<code>d3dvideosink</code>, <code>glimagesink</code>,
+<code>gtksink</code>. You can get the ability to toggle into and out of
+fullscreen mode using the Alt-Enter key combination with</p>
+<pre><code>uxplay -vs &quot;d3d11videosink fullscreen-toggle-mode=alt-enter&quot;</code></pre>
 <h1 id="usage">Usage</h1>
 <p>Options:</p>
 <p><strong>-n server_name</strong> (Default: UxPlay);
