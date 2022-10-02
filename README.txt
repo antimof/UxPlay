@@ -568,16 +568,19 @@ supports additional options such as
 where `<guid>` specifies an available audio device by its GUID, which
 can be found using "`gst-device-monitor-1.0 Audio`": `<guid>` has a form
 like `\{0.0.0.00000000\}.\{98e35b2b-8eba-412e-b840-fd2c2492cf44\}`. If
-"`device`" is not specified, the default audio device is used. The
-executable uxplay.exe can also be run without the MSYS2 environment
-(using the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`).
+"`device`" is not specified, the default audio device is used.
 
 If you wish to specify the videosink using the `-vs <videosink>` option,
 some choices for `<videosink>` are `d3d11videosink`, `d3dvideosink`,
-`glimagesink`, `gtksink`. You can get the ability to toggle into and out
-of fullscreen mode using the Alt-Enter key combination with
+`glimagesink`, `gtksink`. With Direct3D 11.0 or greater, you can get the
+ability to toggle into and out of fullscreen mode using the Alt-Enter
+key combination with option
+`-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`. For
+convenience, this option will always be set if "`-vs d3d11videosink`" is
+used.
 
-    uxplay -vs "d3d11videosink fullscreen-toggle-mode=alt-enter"
+The executable uxplay.exe can also be run without the MSYS2 environment,
+in the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
 
 # Usage
 
