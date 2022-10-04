@@ -402,7 +402,7 @@ static void print_info (char *name) {
     printf("          another choice when using v4l2h264decode: v4l2convert\n");
     printf("-vs ...   Choose the GStreamer videosink; default \"autovideosink\"\n");
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
-    printf("          gtksink,waylandsink,osximagesink,kmssink,fpsdisplaysink etc.\n");
+    printf("          gtksink,waylandsink,osximagesink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
     printf("-bt709    A workaround (bt709 color) that may be needed with -rpi\n"); 
@@ -824,7 +824,15 @@ int main (int argc, char *argv[]) {
     }
 
     if (fullscreen && use_video) {
-        videosink.append(" fullscreen=true");
+        if (videosink == "waylandsink" || videosink == "vaapisink") {
+            videosink.append(" fullscreen=true");
+	}
+    }
+
+    if (videosink == "d3d11videosink"  && use_video) {
+        videosink.append(" fullscreen-toggle-mode=alt-enter");  
+        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
+               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
     }
 
     if (bt709_fix && use_video) {
