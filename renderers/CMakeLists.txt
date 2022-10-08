@@ -10,7 +10,17 @@ if (APPLE )
 endif()
 
 find_package( PkgConfig REQUIRED )
-pkg_check_modules(GST REQUIRED    gstreamer-1.0>=1.4
+if (ZOOMFIX) 
+  pkg_check_modules (GST120 gstreamer-1.0>=1.20)
+  if ( GST120_FOUND )
+    message( "--   Requested ZOOMFIX will NOT be applied as Gstreamer version is >= 1.20" )
+  else()
+    message( "--   Requested ZOOMFIX will be applied as Gstreamer version is < 1.20" )
+    add_definitions( -DX_DISPLAY_FIX )
+  endif()
+endif()
+
+pkg_check_modules(GST REQUIRED    gstreamer-1.0>=1.4 
                                   gstreamer-sdp-1.0>=1.4
                                   gstreamer-video-1.0>=1.4
                                   gstreamer-app-1.0>=1.4

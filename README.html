@@ -232,7 +232,9 @@ development libraries to be installed: on Debian-based systems do this
 with “<code>sudo apt-get install libx11-dev</code>” . “ZOOMFIX” is not
 needed on macOS, or if you are using non-X11 windows (such as OpenGL) on
 Linux. See <a href="#zoomfix-compile-time-option">ZOOMFIX compile-time
-option</a> below for more information, and alternatives to “ZOOMFIX”</p>
+option</a> below for more information, and alternatives to “ZOOMFIX”.
+<strong>ZOOMFIX will NOT be applied if GStreamer &gt;= 1.20 is
+found.</strong></p>
 <ol type="1">
 <li><code>sudo apt-get install libssl-dev libplist-dev</code>“. (unless
 you need to build OpenSSL and libplist from source).</li>
@@ -242,7 +244,7 @@ modify the source, replace this by
 “<code>mkdir build; cd build; cmake ..</code>”: you can then delete the
 <code>build</code> directory if needed, without affecting the source.)
 Also add any cmake “<code>-D</code>” options here as needed (e.g,
-ZOOMFIX=ON or NO_MARCH_NATIVE=ON).</li>
+<code>-DZOOMFIX=ON</code> or <code>-DNO_MARCH_NATIVE=ON</code>).</li>
 <li><code>make</code></li>
 <li><code>sudo make install</code> (you can afterwards uninstall with
 <code>sudo make uninstall</code> in the same directory in which this was
@@ -319,7 +321,7 @@ href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches"
 with instructions in the UxPlay Wiki</a>.</p></li>
 </ul>
 <p>The basic uxplay options for R Pi are
-<code>uxplay -v4l2 [-vs &lt;videosink&gt;]</code>. The choice
+<code>uxplay [-v4l2] [-vs &lt;videosink&gt;]</code>. The choice
 <code>&lt;videosink&gt;</code> = <code>glimagesink</code> is sometimes
 useful. On a system without X11 (like R Pi OS Lite) with framebuffer
 video, use <code>&lt;videosink&gt;</code> = <code>kmssink</code>. With
@@ -566,8 +568,8 @@ used.</p>
 ability to toggle into and out of fullscreen mode using the Alt-Enter
 key combination with option
 <code>-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"</code>. For
-convenience, this option will always be set if
-“<code>-vs d3d11videosink</code>” is used.</p>
+convenience, this option will be added if just
+<code>-vs d3d11videosink</code> (by itself) is used.</p>
 <p>The executable uxplay.exe can also be run without the MSYS2
 environment, in the Windows Terminal, with
 <code>C:\msys64\mingw64\bin\uxplay</code>.</p>
@@ -658,7 +660,7 @@ digital TV. This is no longer needed by GStreamer-1.20.4 and backports
 from it.</p>
 <p><strong>-rpi</strong> Equivalent to “-v4l2”. Use for “Desktop”
 Raspberry Pi systems with X11.</p>
-<p><strong>-rpigl</strong> Equivalent to “-v4l2 -vs glimagesink”.
+<p><strong>-rpigl</strong> Equivalent to “-rpi -vs glimagesink”.
 Sometimes better for “Desktop” Raspberry Pi systems with X11.</p>
 <p><strong>-rpifb</strong> Equivalent to “-rpi -vs kmssink” (use for
 Raspberry Pi systems using the framebuffer, like RPi OS Bullseye

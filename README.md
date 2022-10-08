@@ -197,7 +197,7 @@ as Zoom, you should use the cmake option "` -DZOOMFIX=ON`" in step 3.  This requ
 the X11 development libraries to be installed: on Debian-based systems do this with "`sudo apt-get install libx11-dev`" .
 "ZOOMFIX" is not needed on macOS, or if you are using non-X11 windows 
 (such as OpenGL) on Linux. See [ZOOMFIX compile-time option](#zoomfix-compile-time-option) below for more information,
-and alternatives to "ZOOMFIX"
+and alternatives to "ZOOMFIX".   **ZOOMFIX will NOT be applied if GStreamer >= 1.20 is found.** 
 
 1. `sudo apt-get install libssl-dev libplist-dev`".
     (unless you need to build OpenSSL and libplist from source).
@@ -205,7 +205,7 @@ and alternatives to "ZOOMFIX"
 3.  `cmake .` (For a cleaner build, which is useful if you modify the source, replace this 
     by "``mkdir build; cd build; cmake ..``": you can then delete the
     `build` directory if needed, without affecting the source.)   Also add any cmake "`-D`" options
-    here as needed (e.g, ZOOMFIX=ON or NO_MARCH_NATIVE=ON).
+    here as needed (e.g, `-DZOOMFIX=ON` or ``-DNO_MARCH_NATIVE=ON``).
 4. `make`
 5. `sudo make install` (you can afterwards uninstall with ``sudo make uninstall``
     in the same directory in which this was run).
@@ -270,7 +270,7 @@ You can also test UxPlay with software-only video decoding using option `-avdec`
 improvements from GStreamer-1.22.  Raspberry Pi OS (Bullseye) now has the needed backports. For other distributions, patches for GStreamer
 are [available with instructions in the UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
 
-The basic uxplay options for R Pi are ```uxplay -v4l2 [-vs <videosink>]```. The
+The basic uxplay options for R Pi are ```uxplay [-v4l2] [-vs <videosink>]```. The
 choice `<videosink>` = ``glimagesink`` is sometimes useful. 
 On a system without X11 (like R Pi OS Lite) with framebuffer video, use `<videosink>` = ``kmssink``.
 With the  Wayland video compositor,  use `<videosink>` = ``waylandsink``.  For convenience,
@@ -474,7 +474,7 @@ default audio device is used.
 If you wish to specify the videosink using the `-vs <videosink>` option, some choices for `<videosink>` are
 `d3d11videosink`, ``d3dvideosink``, ```glimagesink```,
 `gtksink`.   With Direct3D 11.0 or greater, you can get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
-option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.  For convenience, this option will always be set if "``-vs d3d11videosink``" is used.
+option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.  For convenience, this option will be added if just ``-vs d3d11videosink`` (by itself) is used.
 
 The executable uxplay.exe can also be run without the MSYS2 environment, in
 the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
@@ -562,7 +562,7 @@ which will not work if a firewall is running.
 
 **-rpi**  Equivalent to  "-v4l2 ".   Use for "Desktop" Raspberry Pi systems with X11.
 
-**-rpigl**  Equivalent to  "-v4l2 -vs glimagesink".  Sometimes better for "Desktop" Raspberry Pi systems with X11.
+**-rpigl**  Equivalent to  "-rpi -vs glimagesink".  Sometimes better for "Desktop" Raspberry Pi systems with X11.
 
 **-rpifb** Equivalent to "-rpi -vs kmssink" (use for Raspberry Pi systems
    using the framebuffer, like RPi OS Bullseye Lite).
