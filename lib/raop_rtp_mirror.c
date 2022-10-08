@@ -242,7 +242,9 @@ raop_rtp_mirror_thread(void *arg)
             break;
         }
 
-        if (stream_fd == -1 && FD_ISSET(raop_rtp_mirror->mirror_data_sock, &rfds)) {
+        if (stream_fd == -1 &&
+	    (raop_rtp_mirror && raop_rtp_mirror->mirror_data_sock >= 0) &&
+            FD_ISSET(raop_rtp_mirror->mirror_data_sock, &rfds)) {
             struct sockaddr_storage saddr;
             socklen_t saddrlen;
             logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror accepting client");
