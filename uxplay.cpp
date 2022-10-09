@@ -846,7 +846,10 @@ int main (int argc, char *argv[]) {
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
-    gstreamer_init();
+    if (!gstreamer_init()) {
+        printf ("stopping\n");
+        exit (1);
+    }
 
     if (use_audio) {
         audio_renderer_init(render_logger, audiosink.c_str());
