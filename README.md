@@ -1,4 +1,4 @@
-# UxPlay 1.56:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.57:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -44,9 +44,9 @@ development, but periodically posts updates pulled from the new
 main [UxPlay site](https://github.com/FDH2/UxPlay)). 
 
 UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye",
-Ubuntu 20.04 and 22.04, Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS successor),
-OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.
-On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
+Ubuntu 20.04 LTS and 22.04.1 LTS, Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS successor),
+OpenSUSE 15.4, Arch Linux 22.10, macOS 12.3 (Intel and M1), FreeBSD 13.1.
+On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04.1, and Manjaro RPi4 22.10.
 Also tested on 64-bit Windows 10 and 11.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
@@ -806,6 +806,11 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (l
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+1.57 2022-10-09   Minor fixes: (fix coredump on AUR on "stop mirroring", occurs when compiled with
+                  AUR CFLAGS -DFORTIFY_SOURCE); graceful exit when required plugins are missing;
+                  improved support for builds on Windows.  Include audioresample in GStreamer
+                  audio pipeline.
+
 1.56 2022-09-01   Added support for building and running UxPlay-1.56 on Windows (no changes
 		  to Unix (Linux, *BSD, macOS) codebase.)
 					
