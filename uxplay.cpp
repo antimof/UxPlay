@@ -841,15 +841,15 @@ int main (int argc, char *argv[]) {
     }
 
     if (do_append_hostname) append_hostname(server_name);
-    
+
+    if (!gstreamer_init()) {
+        LOGE ("stopping");
+        exit (1);
+    }
+
     render_logger = logger_init();
     logger_set_callback(render_logger, log_callback, NULL);
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
-
-    if (!gstreamer_init()) {
-        printf ("stopping\n");
-        exit (1);
-    }
 
     if (use_audio) {
         audio_renderer_init(render_logger, audiosink.c_str());
