@@ -178,8 +178,10 @@ case, the issue is solved by linking with OpenSSL-3.0.0 or later.
     "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46
     package based on this. Arch-based distributions also have AUR
     self-building packages for both the latest UxPlay release and the
-    current GitHub version. To build the latest version yourself, follow
-    the instructions below.
+    current GitHub version. (If you install a uxplay package, you may
+    also need to install some needed GStreamer plugin packages which
+    might not get installed as "requirements" : see below.) To build the
+    latest version yourself, follow the instructions below.
 
 Either download and unzip
 [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip),

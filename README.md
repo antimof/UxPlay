@@ -143,14 +143,17 @@ UxPlay's GPLv3 license does not have an added
 "exception" explicitly allowing it to be distributed in compiled form when linked to OpenSSL versions
 **prior to v. 3.0.0** (older versions of OpenSSL have a license clause incompatible with the GPL unless
 OpenSSL can be regarded as a "System Library", which it is in *BSD).  Many Linux distributions treat OpenSSL
-as a "System Library", but some (e.g. Debian) do not: in this case, the issue is solved by linking with OpenSSL-3.0.0  or later.
+as a "System Library", but some (e.g. Debian) do not: in this case, the issue is solved by linking
+with OpenSSL-3.0.0  or later.
 
 # Getting UxPlay:
 
-* Your distribution may already provide a pre-built uxplay package.  It will be included in the next Debian release "Bookworm"
-(currently in "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46 package based on this. Arch-based distributions also
-have AUR self-building packages for both the latest UxPlay release and the current GitHub version.
-To build the latest version yourself, follow the instructions below.
+* Your distribution may already provide a pre-built uxplay package.  It will be included in the
+next Debian release "Bookworm" (currently in "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46
+package based on this. Arch-based distributions also have AUR self-building packages for both the latest UxPlay
+release and the current GitHub version.  (If you install a uxplay package, you may also need to install
+some  needed GStreamer plugin packages which might not get installed as  "requirements" : see below.) To build
+the latest version yourself, follow the instructions below.
 
 Either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".   You
