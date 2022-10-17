@@ -9,7 +9,6 @@ include(GNUInstallDirs)
 set ( CMAKE_CXX_STANDARD 11 )
 
 if ( ZOOMFIX )
-add_definitions( -DX_DISPLAY_FIX )
 find_package( X11 REQUIRED )
 link_libraries( ${X11_LIBRARIES} )
 include_directories( ${X11_INCLUDE_DIR} )

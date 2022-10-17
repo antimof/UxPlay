@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.56-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.56: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.57-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.57: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -56,12 +56,12 @@ antimof site is no longer involved in development, but periodically
 posts updates pulled from the new main <a
 href="https://github.com/FDH2/UxPlay">UxPlay site</a>).</p>
 <p>UxPlay is tested on a number of systems, including (among others)
-Debian 10.11 “Buster” and 11.2 “Bullseye”, Ubuntu 20.04 and 22.04, Linux
-Mint 20.3, Pop!_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS
-successor), OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1),
-FreeBSD 13.1. On Raspberry Pi, it is tested on Raspberry Pi OS
-(Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04. Also
-tested on 64-bit Windows 10 and 11.</p>
+Debian 10.11 “Buster” and 11.2 “Bullseye”, Ubuntu 20.04 LTS and 22.04.1
+LTS, Linux Mint 20.3, Pop!_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a
+CentOS successor), OpenSUSE 15.4, Arch Linux 22.10, macOS 12.3 (Intel
+and M1), FreeBSD 13.1. On Raspberry Pi, it is tested on Raspberry Pi OS
+(Bullseye) (32- and 64-bit), Ubuntu 22.04.1, and Manjaro RPi4 22.10.
+Also tested on 64-bit Windows 10 and 11.</p>
 <p>Its main use is to act like an AppleTV for screen-mirroring (with
 audio) of iOS/iPadOS/macOS clients (iPhone, iPod Touch, iPad, Mac
 computers) in a window on the server display (with the possibility of
@@ -178,8 +178,10 @@ will be included in the next Debian release “Bookworm” (currently in
 “testing” phase) and Ubuntu-22.04 already provides a uxplay-1.46 package
 based on this. Arch-based distributions also have AUR self-building
 packages for both the latest UxPlay release and the current GitHub
-version. To build the latest version yourself, follow the instructions
-below.</li>
+version. (If you install a uxplay package, you may also need to install
+some needed GStreamer plugin packages which might not get installed as
+“requirements” : see below.) To build the latest version yourself,
+follow the instructions below.</li>
 </ul>
 <p>Either download and unzip <a
 href="https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip">UxPlay-master.zip</a>,
@@ -232,7 +234,9 @@ development libraries to be installed: on Debian-based systems do this
 with “<code>sudo apt-get install libx11-dev</code>” . “ZOOMFIX” is not
 needed on macOS, or if you are using non-X11 windows (such as OpenGL) on
 Linux. See <a href="#zoomfix-compile-time-option">ZOOMFIX compile-time
-option</a> below for more information, and alternatives to “ZOOMFIX”</p>
+option</a> below for more information, and alternatives to “ZOOMFIX”.
+<strong>ZOOMFIX will NOT be applied if GStreamer &gt;= 1.20 is
+found.</strong></p>
 <ol type="1">
 <li><code>sudo apt-get install libssl-dev libplist-dev</code>“. (unless
 you need to build OpenSSL and libplist from source).</li>
@@ -242,7 +246,7 @@ modify the source, replace this by
 “<code>mkdir build; cd build; cmake ..</code>”: you can then delete the
 <code>build</code> directory if needed, without affecting the source.)
 Also add any cmake “<code>-D</code>” options here as needed (e.g,
-ZOOMFIX=ON or NO_MARCH_NATIVE=ON).</li>
+<code>-DZOOMFIX=ON</code> or <code>-DNO_MARCH_NATIVE=ON</code>).</li>
 <li><code>make</code></li>
 <li><code>sudo make install</code> (you can afterwards uninstall with
 <code>sudo make uninstall</code> in the same directory in which this was
@@ -319,7 +323,7 @@ href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches"
 with instructions in the UxPlay Wiki</a>.</p></li>
 </ul>
 <p>The basic uxplay options for R Pi are
-<code>uxplay -v4l2 [-vs &lt;videosink&gt;]</code>. The choice
+<code>uxplay [-v4l2] [-vs &lt;videosink&gt;]</code>. The choice
 <code>&lt;videosink&gt;</code> = <code>glimagesink</code> is sometimes
 useful. On a system without X11 (like R Pi OS Lite) with framebuffer
 video, use <code>&lt;videosink&gt;</code> = <code>kmssink</code>. With
@@ -566,8 +570,8 @@ used.</p>
 ability to toggle into and out of fullscreen mode using the Alt-Enter
 key combination with option
 <code>-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"</code>. For
-convenience, this option will always be set if
-“<code>-vs d3d11videosink</code>” is used.</p>
+convenience, this option will be added if just
+<code>-vs d3d11videosink</code> (by itself) is used.</p>
 <p>The executable uxplay.exe can also be run without the MSYS2
 environment, in the Windows Terminal, with
 <code>C:\msys64\mingw64\bin\uxplay</code>.</p>
@@ -658,7 +662,7 @@ digital TV. This is no longer needed by GStreamer-1.20.4 and backports
 from it.</p>
 <p><strong>-rpi</strong> Equivalent to “-v4l2”. Use for “Desktop”
 Raspberry Pi systems with X11.</p>
-<p><strong>-rpigl</strong> Equivalent to “-v4l2 -vs glimagesink”.
+<p><strong>-rpigl</strong> Equivalent to “-rpi -vs glimagesink”.
 Sometimes better for “Desktop” Raspberry Pi systems with X11.</p>
 <p><strong>-rpifb</strong> Equivalent to “-rpi -vs kmssink” (use for
 Raspberry Pi systems using the framebuffer, like RPi OS Bullseye
@@ -958,6 +962,11 @@ as “SupportsLegacyPairing”) of the “features” plist code (reported to
 the client by the AirPlay server) to be set. The “features” code and
 other settings are set in <code>UxPlay/lib/dnssdint.h</code>.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.57 2022-10-09 Minor fixes: (fix coredump on AUR on “stop
+mirroring”, occurs when compiled with AUR CFLAGS -DFORTIFY_SOURCE);
+graceful exit when required plugins are missing; improved support for
+builds on Windows. Include audioresample in GStreamer audio
+pipeline.</p>
 <p>1.56 2022-09-01 Added support for building and running UxPlay-1.56 on
 Windows (no changes to Unix (Linux, *BSD, macOS) codebase.)</p>
 <p>1.56 2022-07-30 Remove -bt709 from -rpi, -rpiwl, -rpifb as GStreamer

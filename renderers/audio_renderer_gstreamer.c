@@ -51,14 +51,15 @@ static gboolean check_plugins (void)
     gboolean ret;
     GstRegistry *registry;
     const gchar *needed[] = { "app", "libav", "playback", "autodetect", "videoparsersbad",  NULL};
-
+    const gchar *gst[] = {"plugins-base", "libav", "plugins-base", "plugins-good", "plugins-bad", NULL};
     registry = gst_registry_get ();
     ret = TRUE;
     for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
         GstPlugin *plugin;
         plugin = gst_registry_find_plugin (registry, needed[i]);
         if (!plugin) {
-            g_print ("Required gstreamer plugin '%s' not found\n", needed[i]);
+            g_print ("Required gstreamer plugin '%s' not found\n"
+                     "Missing plugin is contained in  '[GStreamer 1.x]-%s'\n",needed[i], gst[i]);
             ret = FALSE;
             continue;
         }
@@ -68,9 +69,9 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-void  gstreamer_init(){
+bool gstreamer_init(){
     gst_init(NULL,NULL);
-    g_assert(check_plugins ());
+    return (bool) check_plugins ();
 }
 
 #define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
@@ -102,10 +103,9 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         default:
             break;
         }
-        g_string_append (launch, "audioconvert ! volume name=volume ! level ! ");
-#ifdef _WIN32
+        g_string_append (launch, "audioconvert ! ");
         g_string_append (launch, "audioresample ! ");    /* wasapisink must resample from 44.1 kHz to 48 kHz */
-#endif
+        g_string_append (launch, "volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
         g_string_append (launch, " sync=false");
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);

@@ -1,4 +1,4 @@
-# UxPlay 1.56:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.57:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -44,9 +44,9 @@ development, but periodically posts updates pulled from the new
 main [UxPlay site](https://github.com/FDH2/UxPlay)). 
 
 UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye",
-Ubuntu 20.04 and 22.04, Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS successor),
-OpenSUSE 15.4, Arch Linux 5.16.8, macOS 12.3 (Intel and M1), FreeBSD 13.1.
-On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04, and Manjaro RPi4 22.04.
+Ubuntu 20.04 LTS and 22.04.1 LTS, Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a CentOS successor),
+OpenSUSE 15.4, Arch Linux 22.10, macOS 12.3 (Intel and M1), FreeBSD 13.1.
+On Raspberry Pi, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04.1, and Manjaro RPi4 22.10.
 Also tested on 64-bit Windows 10 and 11.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
@@ -143,14 +143,17 @@ UxPlay's GPLv3 license does not have an added
 "exception" explicitly allowing it to be distributed in compiled form when linked to OpenSSL versions
 **prior to v. 3.0.0** (older versions of OpenSSL have a license clause incompatible with the GPL unless
 OpenSSL can be regarded as a "System Library", which it is in *BSD).  Many Linux distributions treat OpenSSL
-as a "System Library", but some (e.g. Debian) do not: in this case, the issue is solved by linking with OpenSSL-3.0.0  or later.
+as a "System Library", but some (e.g. Debian) do not: in this case, the issue is solved by linking
+with OpenSSL-3.0.0  or later.
 
 # Getting UxPlay:
 
-* Your distribution may already provide a pre-built uxplay package.  It will be included in the next Debian release "Bookworm"
-(currently in "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46 package based on this. Arch-based distributions also
-have AUR self-building packages for both the latest UxPlay release and the current GitHub version.
-To build the latest version yourself, follow the instructions below.
+* Your distribution may already provide a pre-built uxplay package.  It will be included in the
+next Debian release "Bookworm" (currently in "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46
+package based on this. Arch-based distributions also have AUR self-building packages for both the latest UxPlay
+release and the current GitHub version.  (If you install a uxplay package, you may also need to install
+some  needed GStreamer plugin packages which might not get installed as  "requirements" : see below.) To build
+the latest version yourself, follow the instructions below.
 
 Either download and unzip [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip), 
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".   You
@@ -197,7 +200,7 @@ as Zoom, you should use the cmake option "` -DZOOMFIX=ON`" in step 3.  This requ
 the X11 development libraries to be installed: on Debian-based systems do this with "`sudo apt-get install libx11-dev`" .
 "ZOOMFIX" is not needed on macOS, or if you are using non-X11 windows 
 (such as OpenGL) on Linux. See [ZOOMFIX compile-time option](#zoomfix-compile-time-option) below for more information,
-and alternatives to "ZOOMFIX"
+and alternatives to "ZOOMFIX".   **ZOOMFIX will NOT be applied if GStreamer >= 1.20 is found.** 
 
 1. `sudo apt-get install libssl-dev libplist-dev`".
     (unless you need to build OpenSSL and libplist from source).
@@ -205,7 +208,7 @@ and alternatives to "ZOOMFIX"
 3.  `cmake .` (For a cleaner build, which is useful if you modify the source, replace this 
     by "``mkdir build; cd build; cmake ..``": you can then delete the
     `build` directory if needed, without affecting the source.)   Also add any cmake "`-D`" options
-    here as needed (e.g, ZOOMFIX=ON or NO_MARCH_NATIVE=ON).
+    here as needed (e.g, `-DZOOMFIX=ON` or ``-DNO_MARCH_NATIVE=ON``).
 4. `make`
 5. `sudo make install` (you can afterwards uninstall with ``sudo make uninstall``
     in the same directory in which this was run).
@@ -270,7 +273,7 @@ You can also test UxPlay with software-only video decoding using option `-avdec`
 improvements from GStreamer-1.22.  Raspberry Pi OS (Bullseye) now has the needed backports. For other distributions, patches for GStreamer
 are [available with instructions in the UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
 
-The basic uxplay options for R Pi are ```uxplay -v4l2 [-vs <videosink>]```. The
+The basic uxplay options for R Pi are ```uxplay [-v4l2] [-vs <videosink>]```. The
 choice `<videosink>` = ``glimagesink`` is sometimes useful. 
 On a system without X11 (like R Pi OS Lite) with framebuffer video, use `<videosink>` = ``kmssink``.
 With the  Wayland video compositor,  use `<videosink>` = ``waylandsink``.  For convenience,
@@ -474,7 +477,7 @@ default audio device is used.
 If you wish to specify the videosink using the `-vs <videosink>` option, some choices for `<videosink>` are
 `d3d11videosink`, ``d3dvideosink``, ```glimagesink```,
 `gtksink`.   With Direct3D 11.0 or greater, you can get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
-option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.  For convenience, this option will always be set if "``-vs d3d11videosink``" is used.
+option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.  For convenience, this option will be added if just ``-vs d3d11videosink`` (by itself) is used.
 
 The executable uxplay.exe can also be run without the MSYS2 environment, in
 the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
@@ -562,7 +565,7 @@ which will not work if a firewall is running.
 
 **-rpi**  Equivalent to  "-v4l2 ".   Use for "Desktop" Raspberry Pi systems with X11.
 
-**-rpigl**  Equivalent to  "-v4l2 -vs glimagesink".  Sometimes better for "Desktop" Raspberry Pi systems with X11.
+**-rpigl**  Equivalent to  "-rpi -vs glimagesink".  Sometimes better for "Desktop" Raspberry Pi systems with X11.
 
 **-rpifb** Equivalent to "-rpi -vs kmssink" (use for Raspberry Pi systems
    using the framebuffer, like RPi OS Bullseye Lite).
@@ -806,6 +809,11 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (l
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+1.57 2022-10-09   Minor fixes: (fix coredump on AUR on "stop mirroring", occurs when compiled with
+                  AUR CFLAGS -DFORTIFY_SOURCE); graceful exit when required plugins are missing;
+                  improved support for builds on Windows.  Include audioresample in GStreamer
+                  audio pipeline.
+
 1.56 2022-09-01   Added support for building and running UxPlay-1.56 on Windows (no changes
 		  to Unix (Linux, *BSD, macOS) codebase.)
 					

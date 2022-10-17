@@ -29,7 +29,7 @@ extern "C" {
 #include <stdbool.h>
 #include "../lib/raop_ntp.h"
 
-void gstreamer_init();
+bool gstreamer_init();
 void audio_renderer_init(logger_t *logger, const char* audiosink);
 void audio_renderer_start(unsigned char* compression_type);
 void audio_renderer_stop();
