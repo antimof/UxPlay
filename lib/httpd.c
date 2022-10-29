@@ -175,7 +175,7 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
     /* for uxplay, remove existing connections to make way for new connections:
      * this will only occur if max_connections > 2 */
     if (httpd->open_connections >= 2)  {
-        logger_log(httpd->logger, LOGGER_INFO, "removing current connections to make way for new connection");
+        logger_log(httpd->logger, LOGGER_INFO, "Destroying current connections to allow connection by new client");
         for (int i = 0; i<httpd->max_connections; i++) {
             http_connection_t *connection = &httpd->connections[i];
             if (!connection->connected) {

@@ -949,14 +949,14 @@ int main (int argc, char *argv[]) {
 extern "C" void conn_init (void *cls) {
     open_connections++;
     connections_stopped = false;
-    LOGI("Open connections: %i", open_connections);
+    //LOGD("Open connections: %i", open_connections);
     //video_renderer_update_background(1);
 }
 
 extern "C" void conn_destroy (void *cls) {
     //video_renderer_update_background(-1);
     open_connections--;
-    LOGI("Open connections: %i", open_connections);
+    //LOGD("Open connections: %i", open_connections);
     if (!open_connections) {
         connections_stopped = true;
     }
