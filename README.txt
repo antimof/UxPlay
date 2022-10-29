@@ -1,4 +1,4 @@
-# UxPlay 1.57: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.58: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -344,6 +344,12 @@ results.
     applied. **After a recent update, Raspberry Pi OS (Bullseye) now
     supplies an already-patched GStreamer-1.18.4 that works with UxPlay,
     but needs the `-bt709` option with UxPlay-1.56 or later.**
+
+-   **The option `-v4l2` (also `-rpi*` options) causes a crash when the
+    client screen is rotated, if used with current Raspberry Pi OS
+    version gstreamer1.0-plugins-good-1.18.4-2+deb11u1+rpt1. Solution:
+    don't use these options, or apply the GStreamer backport patch from
+    the UxPlay Wiki.**
 
 -   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
     ssh:
@@ -731,6 +737,10 @@ window created in macOS by GStreamer does not terminate correctly (it
 causes a segfault) if it is still open when the GStreamer pipeline is
 closed.*
 
+**-nohold** Drops the current connection when a new client attempts to
+connect. Without this option, the current client maintains exclusive
+ownership of UxPlay until it disconnects.
+
 **-FPSdata** Turns on monitoring of regular reports about video
 streaming performance that are sent by the client. These will be
 displayed in the terminal window if this option is used. The data is
@@ -1003,6 +1013,9 @@ the client by the AirPlay server) to be set. The "features" code and
 other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+
+1.58 2022-10-29 Add option "-nohold" that will drop existing connections
+when a new client connects.
 
 1.57 2022-10-09 Minor fixes: (fix coredump on AUR on "stop mirroring",
 occurs when compiled with AUR CFLAGS -DFORTIFY_SOURCE); graceful exit

@@ -50,7 +50,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.57"
+#define VERSION "1.58"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -111,6 +111,7 @@ static bool use_random_hw_addr = false;
 static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
 static bool bt709_fix = false;
+static int max_connections = 2;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -416,7 +417,8 @@ static void print_info (char *name) {
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
-    printf("-nc       do Not Close video window when client stops mirroring\n");  
+    printf("-nc       do Not Close video window when client stops mirroring\n");
+    printf("-nohold   Drop current connection when new client connects.\n");
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
@@ -763,8 +765,10 @@ void parse_arguments (int argc, char *argv[]) {
                 LOGE("option -ca must be followed by a filename for cover-art output");
                 exit(1);
             }
-        } else if (arg == "-bt709" ) {
+        } else if (arg == "-bt709") {
             bt709_fix = true;
+        } else if (arg == "-nohold") {
+            max_connections = 3;
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
@@ -953,7 +957,7 @@ extern "C" void conn_destroy (void *cls) {
     //video_renderer_update_background(-1);
     open_connections--;
     LOGI("Open connections: %i", open_connections);
-    if(!open_connections) {
+    if (!open_connections) {
         connections_stopped = true;
     }
 }
@@ -1133,8 +1137,8 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
     
-    /* set max number of connections = 2 */
-    raop = raop_init(2, &raop_cbs);
+    /* set max number of connections = 2 to protect against capture by new client */
+    raop = raop_init(max_connections, &raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;
