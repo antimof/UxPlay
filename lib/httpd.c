@@ -97,6 +97,20 @@ httpd_destroy(httpd_t *httpd)
     }
 }
 
+static void
+httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
+{
+    if (connection->request) {
+        http_request_destroy(connection->request);
+        connection->request = NULL;
+    }
+    httpd->callbacks.conn_destroy(connection->user_data);
+    shutdown(connection->socket_fd, SHUT_WR);
+    closesocket(connection->socket_fd);
+    connection->connected = 0;
+    httpd->open_connections--;
+}
+
 static int
 httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len, unsigned char *remote, int remote_len)
 {
@@ -158,6 +172,19 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
     local = netutils_get_address(&local_saddr, &local_len);
     remote = netutils_get_address(&remote_saddr, &remote_len);
 
+    /* for uxplay, remove existing connections to make way for new connections:
+     * this will only occur if max_connections > 2 */
+    if (httpd->open_connections >= 2)  {
+        logger_log(httpd->logger, LOGGER_INFO, "Destroying current connections to allow connection by new client");
+        for (int i = 0; i<httpd->max_connections; i++) {
+            http_connection_t *connection = &httpd->connections[i];
+            if (!connection->connected) {
+                continue;
+            }
+	    httpd_remove_connection(httpd, connection);
+        }
+    }
+
     ret = httpd_add_connection(httpd, fd, local, local_len, remote, remote_len);
     if (ret == -1) {
         shutdown(fd, SHUT_RDWR);
@@ -165,20 +192,6 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
         return 0;
     }
     return 1;
-}
-
-static void
-httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
-{
-    if (connection->request) {
-        http_request_destroy(connection->request);
-        connection->request = NULL;
-    }
-    httpd->callbacks.conn_destroy(connection->user_data);
-    shutdown(connection->socket_fd, SHUT_WR);
-    closesocket(connection->socket_fd);
-    connection->connected = 0;
-    httpd->open_connections--;
 }
 
 static THREAD_RETVAL
