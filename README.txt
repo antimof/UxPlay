@@ -1,4 +1,4 @@
-# UxPlay 1.57: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.58: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -18,7 +18,7 @@ Highlights:
 
 -   Support for older iOS clients (such as 32-bit iPad 2nd gen., iPod
     Touch 5th gen. and iPhone 4S, when upgraded to iOS 9.3.5, or later
-    64-bit versions), plus a Windows AirPlay-client emulator, AirMyPC.
+    64-bit devices), plus a Windows AirPlay-client emulator, AirMyPC.
 
 -   Uses GStreamer plugins for audio and video rendering (with options
     to select different hardware-appropriate output "videosinks" and
@@ -29,9 +29,9 @@ Highlights:
 
 -   **New**: Support for Raspberry Pi, with hardware video acceleration
     using Video4Linux2 (v4l2), which supports both 32- and 64-bit
-    systems: this is the replacement for 32-bit-only OpenMAX (omx), for
-    which support by RPi distributions is being discontinued. (Until
-    GStreamer 1.22 is released, a backport of changes from the GStreamer
+    systems: this is the replacement for 32-bit-only OpenMAX (omx), no
+    longer actively supported by RPi distributions. (Until GStreamer
+    1.22 is released, a backport of changes from the GStreamer
     development branch is needed: this has now been done by Raspberry Pi
     OS (Bullseye); for other distributions a
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
@@ -293,6 +293,11 @@ prevents UxPlay from receiving client connection requests unless some
 network ports are opened. See [Troubleshooting](#troubleshooting) below
 for help with this or other problems.
 
+-   By default, UxPlay is locked to its current client until that client
+    drops the connection; the option `-nohold` modifies this behavior so
+    that when a new client requests a connection, it removes the current
+    client and takes over.
+
 To display the accompanying "Cover Art" from sources like Apple Music in
 Audio-Only (ALAC) mode, run "`uxplay -ca <name> &`" in the background,
 then run a image viewer with an autoreload feature: an example is "feh":
@@ -312,14 +317,20 @@ options.
 
 -   For good performance, the Raspberry Pi needs the GStreamer
     Video4linux2 plugin to use its Broadcom GPU hardware for decoding
-    h264 video. You can also test UxPlay with software-only video
-    decoding using option `-avdec`.
+    h264 video. The plugin accesses the GPU using the bcm2835_codec
+    kernel module which is maintained by Raspberry Pi in the
+    drivers/staging/VC04_services part of the [Raspberry Pi kernel
+    tree](https://github.com/raspberrypi/linux), but is not yet included
+    in the mainline Linux kernel. Distributions for R Pi that supply it
+    include Raspberry Pi OS, Ubuntu, and Manjaro. Some others may not.
+    **Without this kernel module, UxPlay cannot use the GPU.**
 
--   The upcoming GStreamer-1.22 release will work well, but older
-    releases of GStreamer will not work unless patched with backports of
-    the improvements from GStreamer-1.22. Raspberry Pi OS (Bullseye) now
-    has the needed backports. For other distributions, patches for
-    GStreamer are [available with instructions in the UxPlay
+-   The plugin in the upcoming GStreamer-1.22 release will work well,
+    but the one in older releases of GStreamer will not work unless
+    patched with backports of the improvements from GStreamer-1.22.
+    Raspberry Pi OS (Bullseye) now has a working backport. For a fuller
+    backport, or for other distributions, patches for the GStreamer
+    Video4Linux2 plugin are [available with instructions in the UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
 
 The basic uxplay options for R Pi are
@@ -338,12 +349,18 @@ results.
     GStreamer patches from the Wiki, you will need to use the UxPlay
     option `-bt709`**: previously the GStreamer v4l2 plugin could not
     recognise Apple's color format (an unusual "full-range" variant of
-    the bt709 HDTV standard), which -bt709 fixes. GStreamer-1.20.4 will
-    have a fix for this, which is included in the latest patches, so
-    beginning with UxPlay-1.56, the bt709 fix is no longer automatically
-    applied. **After a recent update, Raspberry Pi OS (Bullseye) now
-    supplies an already-patched GStreamer-1.18.4 that works with UxPlay,
-    but needs the `-bt709` option with UxPlay-1.56 or later.**
+    the bt709 HDTV standard), which -bt709 fixes. GStreamer-1.20.4 has a
+    fix for this, which is included in the latest patches, so beginning
+    with UxPlay-1.56, the bt709 fix is no longer automatically applied.
+
+-   As mentioned, **Raspberry Pi OS (Bullseye) now supplies a
+    GStreamer-1.18.4 package with backports that works with UxPlay, but
+    needs the `-bt709` option with UxPlay-1.56 or later.** Although this
+    Raspberry Pi OS package
+    gstreamer1.0-plugins-good-1.18.4-2+deb11u1+rpt1 works without having
+    to be patched, **don't use options `-v4l2` and `-rpi*` with it, as
+    they cause a crash if the client screen is rotated**. (This does not
+    occur when the patch from the UxPlay Wiki has been applied.)
 
 -   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
     ssh:
@@ -365,9 +382,12 @@ running if the ssh session is closed. Terminal output is saved to FILE
     Linux):** (sudo yum install) openssl-devel libplist-devel
     avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on
     repository) (+libX11-devel for ZOOMFIX). The required GStreamer
-    packages (some from [rpmfusion.org](https://rpmfusion.org)) are:
-    gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
-    gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics).
+    packages are: gstreamer1-devel gstreamer1-plugins-base-devel
+    gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for
+    intel graphics); you may need to get some of them (in particular
+    gstreamer1-libav) from [rpmfusion.org](https://rpmfusion.org) (which
+    provides packages including plugins that RedHat does not ship for
+    license reasons).
 
 -   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
     avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
@@ -377,7 +397,8 @@ running if the ssh session is closed. Terminal output is saved to FILE
     graphics); in some cases, you may need to use gstreamer packages for
     OpenSUSE from
     [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
-    "Essentials".
+    "Essentials" (which provides packages including plugins that
+    OpenSUSE does not ship for license reasons).
 
 -   **Arch Linux** (sudo pacman -Syu) openssl libplist avahi
     gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+
@@ -423,8 +444,8 @@ Next get the latest macOS release of GStreamer-1.0.
 
 **For the "official" release**: install both the macOS runtime and
 development installer packages. Assuming that the latest release is
-1.20.3. install `gstreamer-1.0-1.20.3-universal.pkg` and
-`gstreamer-1.0-devel-1.20.3-universal.pkg`. (If you have an
+1.20.4. install `gstreamer-1.0-1.20.4-universal.pkg` and
+`gstreamer-1.0-devel-1.20.4-universal.pkg`. (If you have an
 Intel-architecture Mac, and have problems with the "universal" packages,
 you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
@@ -461,7 +482,9 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     can be expanded using the mouse or trackpad. In contrast, a window
     created with "-vs osxvideosink" is initially big, but has the wrong
     aspect ratio (stretched image); in this case the aspect ratio
-    changes when the window width is changed by dragging its side.
+    changes when the window width is changed by dragging its side; the
+    option "-vs osxvideosink force-aspect-ratio=true" can be used to
+    make the window have the correct aspect ratio when it first opens.
 
 ***Using GStreamer installed from MacPorts (not recommended):***
 
@@ -642,11 +665,11 @@ vaapisink.
 default is h264parse. Using quotes "..." allows options to be added.
 
 **-vd *decoder*** chooses the GStreamer pipeline's h264 decoder element,
-instead of letting decodebin pick it for you. Software decoding is done
-by avdec_h264; various hardware decoders include: vaapih264dec, nvdec,
-nvh264dec, v4l2h264dec (these require that the appropriate hardware is
-available). Using quotes "..." allows some parameters to be included
-with the decoder name.
+instead of the default value "decodebin" which chooses it for you.
+Software decoding is done by avdec_h264; various hardware decoders
+include: vaapih264dec, nvdec, nvh264dec, v4l2h264dec (these require that
+the appropriate hardware is available). Using quotes "..." allows some
+parameters to be included with the decoder name.
 
 **-vc *converter*** chooses the GStreamer pipeline's videoconverter
 element, instead of the default value "videoconvert". When using
@@ -654,17 +677,17 @@ Video4Linux2 hardware-decoding by a GPU,`-vc  v4l2convert` will also use
 the GPU for video conversion. Using quotes "..." allows some parameters
 to be included with the converter name.
 
-**-vs *videosink*** chooses the GStreamer videosink, instead of letting
-autovideosink pick it for you. Some videosink choices are: ximagesink,
-xvimagesink, vaapisink (for intel graphics), gtksink, glimagesink,
-waylandsink, osximagesink (for macOS), kmssink (for systems without X11,
-like Raspberry Pi OS lite) or fpsdisplaysink (which shows the streaming
-framerate in fps). Using quotes "..." allows some parameters to be
-included with the videosink name. For example, **fullscreen** mode is
-supported by the vaapisink plugin, and is obtained using
-`-vs "vaapisink fullscreen=true"`; this also works with `waylandsink`.
-The syntax of such options is specific to a given plugin, and some
-choices of videosink might not work on your system.
+**-vs *videosink*** chooses the GStreamer videosink, instead of the
+default value "autovideosink" which chooses it for you. Some videosink
+choices are: ximagesink, xvimagesink, vaapisink (for intel graphics),
+gtksink, glimagesink, waylandsink, osximagesink (for macOS), kmssink
+(for systems without X11, like Raspberry Pi OS lite) or fpsdisplaysink
+(which shows the streaming framerate in fps). Using quotes "..." allows
+some parameters to be included with the videosink name. For example,
+**fullscreen** mode is supported by the vaapisink plugin, and is
+obtained using `-vs "vaapisink fullscreen=true"`; this also works with
+`waylandsink`. The syntax of such options is specific to a given plugin,
+and some choices of videosink might not work on your system.
 
 **-vs 0** suppresses display of streamed video, but plays streamed
 audio. (The client's screen is still mirrored at a reduced rate of 1
@@ -731,6 +754,10 @@ window created in macOS by GStreamer does not terminate correctly (it
 causes a segfault) if it is still open when the GStreamer pipeline is
 closed.*
 
+**-nohold** Drops the current connection when a new client attempts to
+connect. Without this option, the current client maintains exclusive
+ownership of UxPlay until it disconnects.
+
 **-FPSdata** Turns on monitoring of regular reports about video
 streaming performance that are sent by the client. These will be
 displayed in the terminal window if this option is used. The data is
@@ -791,8 +818,9 @@ audio players.*
 **-d** Enable debug output. Note: this does not show GStreamer error or
 debug messages. To see GStreamer error and warning messages, set the
 environment variable GST_DEBUG with "export GST_DEBUG=2" before running
-uxplay. To see GStreamer debug messages, set GST_DEBUG=4; increase this
-to see even more of the GStreamer inner workings.
+uxplay. To see GStreamer information messages, set GST_DEBUG=4; for
+DEBUG messages, GST_DEBUG=5; increase this to see even more of the
+GStreamer inner workings.
 
 # Troubleshooting
 
@@ -1003,6 +1031,9 @@ the client by the AirPlay server) to be set. The "features" code and
 other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+
+1.58 2022-10-29 Add option "-nohold" that will drop existing connections
+when a new client connects. Update llhttp to v8.1.0.
 
 1.57 2022-10-09 Minor fixes: (fix coredump on AUR on "stop mirroring",
 occurs when compiled with AUR CFLAGS -DFORTIFY_SOURCE); graceful exit

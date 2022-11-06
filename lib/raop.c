@@ -359,7 +359,7 @@ static void
 conn_destroy(void *ptr) {
     raop_conn_t *conn = ptr;
 
-    logger_log(conn->raop->logger, LOGGER_INFO, "Destroying connection");
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "Destroying connection");
 
     if (conn->raop->callbacks.conn_destroy) {
         conn->raop->callbacks.conn_destroy(conn->raop->callbacks.cls);

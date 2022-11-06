@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "October 2022" "1.57" "User Commands"
+.TH UXPLAY "1" "November 2022" "1.58" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.57: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.58: An open\-source AirPlay mirroring server based on RPiPlay
 .SH OPTIONS
 .TP
 .B
@@ -78,6 +78,8 @@ UxPlay 1.57: An open\-source AirPlay mirroring server based on RPiPlay
 \fB\-reset\fR n  Reset after 3n seconds client silence (default 5, 0=never).
 .TP
 \fB\-nc\fR       Do not close video window when client stops mirroring
+.TP
+\fB\-nohold\fR   Drop current connection when new client connects.
 .TP
 \fB\-FPSdata\fR  Show video-streaming performance reports sent by client.
 .TP
