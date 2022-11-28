@@ -2,6 +2,8 @@
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
+### Linux distributions providing prebuilt uxplay packages include Debian "testing" (Bookworm), Ubuntu (since 22.04), and Ubuntu derivatives (install with "`sudo apt install uxplay`"). To easily build latest UxPlay from source, or for guidance on required GStreamer plugins, see [Getting UxPlay](#getting-uxplay) below. Raspberry Pi users see [here](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
+
 Highlights:
 
 -   GPLv3, open source.
@@ -67,7 +69,7 @@ a window on the server display (with the possibility of sharing that
 window on screen-sharing applications such as Zoom) on a host running
 Linux, macOS, or other unix (and now also Microsoft Windows). UxPlay
 supports Apple's AirPlay2 protocol using "Legacy Pairing", but some
-features are missing. (Details of what is publically known about Apple's
+features are missing. (Details of what is publicly known about Apple's
 AirPlay 2 protocol can be found
 [here](https://openairplay.github.io/airplay-spec/),
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol)
@@ -171,7 +173,7 @@ clause incompatible with the GPL unless OpenSSL can be regarded as a
 OpenSSL as a "System Library", but some (e.g. Debian) do not: in this
 case, the issue is solved by linking with OpenSSL-3.0.0 or later.
 
-# Getting UxPlay:
+# Getting UxPlay
 
 -   Your distribution may already provide a pre-built uxplay package. It
     will be included in the next Debian release "Bookworm" (currently in
@@ -348,7 +350,7 @@ results.
 -   **For UxPlay-1.56 and later, if you are not using the latest
     GStreamer patches from the Wiki, you will need to use the UxPlay
     option `-bt709`**: previously the GStreamer v4l2 plugin could not
-    recognise Apple's color format (an unusual "full-range" variant of
+    recognize Apple's color format (an unusual "full-range" variant of
     the bt709 HDTV standard), which -bt709 fixes. GStreamer-1.20.4 has a
     fix for this, which is included in the latest patches, so beginning
     with UxPlay-1.56, the bt709 fix is no longer automatically applied.
@@ -540,7 +542,7 @@ landscape mode as the device is rotated).
 
     Note that libplist will be linked statically to the uxplay
     executable. It should also be possible to install gstreamer for
-    Windows from the [offical GStreamer
+    Windows from the [official GStreamer
     site](https://gstreamer.freedesktop.org/download/), especially if
     you are trying a different Windows build system.
 
@@ -789,7 +791,7 @@ running uxplay if you attempt to run two instances of uxplay on the same
 computer.) If UxPlay fails to find the true MAC address of a network
 card, (more specifically, the MAC address used by the first active
 network interface detected) a random MAC address will be used even if
-option **-m** was not specifed. (Note that a random MAC address will be
+option **-m** was not specified. (Note that a random MAC address will be
 different each time UxPlay is started).
 
 **-t *timeout*** will cause the server to relaunch (without stopping
