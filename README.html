@@ -7,6 +7,15 @@ id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-is
 developed at the GitHub site <a
 href="https://github.com/FDH2/UxPlay">https://github.com/FDH2/UxPlay</a>
 (where all user issues should be posted).</h3>
+<h3
+id="linux-distributions-providing-prebuilt-uxplay-packages-include-debian-testing-bookworm-ubuntu-since-22.04-and-ubuntu-derivatives-install-with-sudo-apt-install-uxplay.-to-easily-build-latest-uxplay-from-source-or-for-guidance-on-required-gstreamer-plugins-see-getting-uxplay-below.-raspberry-pi-users-see-here.">Linux
+distributions providing prebuilt uxplay packages include Debian
+“testing” (Bookworm), Ubuntu (since 22.04), and Ubuntu derivatives
+(install with “<code>sudo apt install uxplay</code>”). To easily build
+latest UxPlay from source, or for guidance on required GStreamer
+plugins, see <a href="#getting-uxplay">Getting UxPlay</a> below.
+Raspberry Pi users see <a
+href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">here</a>.</h3>
 <p>Highlights:</p>
 <ul>
 <li><p>GPLv3, open source.</p></li>
@@ -68,7 +77,7 @@ computers) in a window on the server display (with the possibility of
 sharing that window on screen-sharing applications such as Zoom) on a
 host running Linux, macOS, or other unix (and now also Microsoft
 Windows). UxPlay supports Apple’s AirPlay2 protocol using “Legacy
-Pairing”, but some features are missing. (Details of what is publically
+Pairing”, but some features are missing. (Details of what is publicly
 known about Apple’s AirPlay 2 protocol can be found <a
 href="https://openairplay.github.io/airplay-spec/">here</a>, <a
 href="https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol">here</a>
@@ -171,7 +180,7 @@ regarded as a “System Library”, which it is in *BSD). Many Linux
 distributions treat OpenSSL as a “System Library”, but some
 (e.g. Debian) do not: in this case, the issue is solved by linking with
 OpenSSL-3.0.0 or later.</p>
-<h1 id="getting-uxplay">Getting UxPlay:</h1>
+<h1 id="getting-uxplay">Getting UxPlay</h1>
 <ul>
 <li>Your distribution may already provide a pre-built uxplay package. It
 will be included in the next Debian release “Bookworm” (currently in
@@ -352,7 +361,7 @@ video solution by itself) provides the best results.</p>
 <li><p><strong>For UxPlay-1.56 and later, if you are not using the
 latest GStreamer patches from the Wiki, you will need to use the UxPlay
 option <code>-bt709</code></strong>: previously the GStreamer v4l2
-plugin could not recognise Apple’s color format (an unusual “full-range”
+plugin could not recognize Apple’s color format (an unusual “full-range”
 variant of the bt709 HDTV standard), which -bt709 fixes.
 GStreamer-1.20.4 has a fix for this, which is included in the latest
 patches, so beginning with UxPlay-1.56, the bt709 fix is no longer
@@ -533,7 +542,7 @@ MSYS2):</p>
 <p><code>pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base</code></p>
 <p>Note that libplist will be linked statically to the uxplay
 executable. It should also be possible to install gstreamer for Windows
-from the <a href="https://gstreamer.freedesktop.org/download/">offical
+from the <a href="https://gstreamer.freedesktop.org/download/">official
 GStreamer site</a>, especially if you are trying a different Windows
 build system.</p></li>
 <li><p>cd to the UxPlay source directory, then
@@ -763,7 +772,7 @@ running uxplay if you attempt to run two instances of uxplay on the same
 computer.) If UxPlay fails to find the true MAC address of a network
 card, (more specifically, the MAC address used by the first active
 network interface detected) a random MAC address will be used even if
-option <strong>-m</strong> was not specifed. (Note that a random MAC
+option <strong>-m</strong> was not specified. (Note that a random MAC
 address will be different each time UxPlay is started).</p>
 <p><strong>-t <em>timeout</em></strong> will cause the server to
 relaunch (without stopping uxplay) if no connections have been present
