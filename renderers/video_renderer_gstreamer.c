@@ -20,6 +20,7 @@
 #include "video_renderer.h"
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
+#include <gst/video/navigation.h>
 
 #ifdef X_DISPLAY_FIX
 #include "x_display_fix.h"
@@ -95,6 +96,10 @@ static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
+#ifdef  X_DISPLAY_FIX
+    XEvent e;
+    static bool fullscreen = false;
+#endif
 
 /* apple uses colorimetry=1:3:5:1 (not recognized by gstreamer v4l2)  *
  * See .../gst-libs/gst/video/video-color.h in gst-plugins-base  *
@@ -289,6 +294,31 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
          logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream");
 	//   g_main_loop_quit( (GMainLoop *) loop);
         break;
+#ifdef  X_DISPLAY_FIX        
+    case GST_MESSAGE_ELEMENT: ;
+        GstNavigationMessageType mtype = gst_navigation_message_get_type (message);
+        if (mtype == GST_NAVIGATION_MESSAGE_EVENT) {
+            GstEvent *ev = NULL;
+            if (gst_navigation_message_parse_event (message, &ev)) {
+                GstNavigationEventType e_type = gst_navigation_event_get_type (ev);
+                switch (e_type) {
+                    case GST_NAVIGATION_EVENT_KEY_PRESS: ;
+                        const gchar *key;
+                        if (gst_navigation_event_parse_key_event (ev, &key)) {
+                            if (strcmp (key, "F11") == 0) 
+                            {
+                                fullscreen = !(fullscreen);
+                                set_fullscreen(renderer->gst_window->display, renderer->gst_window->window, renderer->server_name, &fullscreen);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        break;
+#endif
     default:
       /* unhandled message */
         break;
