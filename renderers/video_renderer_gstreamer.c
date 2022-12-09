@@ -20,10 +20,12 @@
 #include "video_renderer.h"
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
-#include <gst/video/navigation.h>
 
 #ifdef X_DISPLAY_FIX
+#include <gst/video/navigation.h>
 #include "x_display_fix.h"
+static bool fullscreen = false;
+static bool using_x11 = false;
 #endif
 
 struct video_renderer_s {
@@ -96,10 +98,6 @@ static video_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
-#ifdef  X_DISPLAY_FIX
-    XEvent e;
-    static bool fullscreen = false;
-#endif
 
 /* apple uses colorimetry=1:3:5:1 (not recognized by gstreamer v4l2)  *
  * See .../gst-libs/gst/video/video-color.h in gst-plugins-base  *
@@ -197,6 +195,7 @@ void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
     first_packet = true;
+    using_x11 = false;
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
@@ -220,8 +219,12 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
         if (renderer->gst_window && !(renderer->gst_window->window)) {
-            fix_x_window_name(renderer->gst_window, renderer->server_name);
-        }
+            get_x_window(renderer->gst_window, renderer->server_name);
+	    if (renderer->gst_window && ! using_x11) {
+                logger_log(logger, LOGGER_INFO, "\n*** X11 Windows detected: Use key F11 to toggle in/out of full-screen mode\n");
+                using_x11 = true;
+            }
+    }
 #endif
     }
 }
@@ -294,30 +297,32 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
          logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream");
 	//   g_main_loop_quit( (GMainLoop *) loop);
         break;
-#ifdef  X_DISPLAY_FIX        
-    case GST_MESSAGE_ELEMENT: ;
+#ifdef  X_DISPLAY_FIX
+    case GST_MESSAGE_ELEMENT: {
         GstNavigationMessageType mtype = gst_navigation_message_get_type (message);
-        if (mtype == GST_NAVIGATION_MESSAGE_EVENT) {
-            GstEvent *ev = NULL;
-            if (gst_navigation_message_parse_event (message, &ev)) {
-                GstNavigationEventType e_type = gst_navigation_event_get_type (ev);
+        if (using_x11 && mtype == GST_NAVIGATION_MESSAGE_EVENT) {
+            GstEvent *event = NULL;
+            if (gst_navigation_message_parse_event (message, &event)) {
+                GstNavigationEventType e_type = gst_navigation_event_get_type (event);
+                const gchar *key;
                 switch (e_type) {
-                    case GST_NAVIGATION_EVENT_KEY_PRESS: ;
-                        const gchar *key;
-                        if (gst_navigation_event_parse_key_event (ev, &key)) {
-                            if (strcmp (key, "F11") == 0) 
-                            {
-                                fullscreen = !(fullscreen);
-                                set_fullscreen(renderer->gst_window->display, renderer->gst_window->window, renderer->server_name, &fullscreen);
-                            }
+                case GST_NAVIGATION_EVENT_KEY_PRESS:
+                    if (gst_navigation_event_parse_key_event (event, &key)) {
+                        if (strcmp (key, "F11") == 0) {
+                            fullscreen = !(fullscreen);
+                            set_fullscreen(renderer->gst_window->display, renderer->gst_window->window,
+                                           renderer->server_name, &fullscreen);
                         }
-                        break;
-                    default:
-                        break;
+                    }
+                    break; 
+                default:
+                    break;
                 }
             }
+            gst_event_unref (event);
         }
         break;
+    }
 #endif
     default:
       /* unhandled message */

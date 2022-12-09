@@ -64,8 +64,20 @@ Window enum_windows(const char * str, Display * display, Window window, int dept
     return (Window) NULL;
 }
 
-// Fullscreen mod
-
+void get_x_window(X11_Window_t * X11, const char * name) {
+    Window root = XDefaultRootWindow(X11->display);     
+    X11->window  = enum_windows(name, X11->display, root, 0);
+#ifdef ZOOM_WINDOW_NAME_FIX
+    if (X11->window) {
+        Atom _NET_WM_NAME = XInternAtom(X11->display, "_NET_WM_NAME", 0);
+        Atom UTF8_STRING = XInternAtom(X11->display, "UTF8_STRING", 0);
+        XChangeProperty(X11->display, X11->window, _NET_WM_NAME, UTF8_STRING, 
+                        8, 0, (const unsigned char *) name, strlen(name));
+        XSync(X11->display, False);
+    }
+#endif
+}
+  
 void set_fullscreen(Display* dpy, Window win, const char * name, bool* fullscreen)
 {
     // *fullscreen = !(*fullscreen);    
@@ -88,18 +100,6 @@ void set_fullscreen(Display* dpy, Window win, const char * name, bool* fullscree
     if (win) {
         XSendEvent(dpy, XRootWindow(dpy, XDefaultScreen(dpy)), False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*) &msg);
         XSync(dpy, False);
-    }
-}
-
-void fix_x_window_name(X11_Window_t * X11, const char * name) {
-    Window root = XDefaultRootWindow(X11->display);     
-    X11->window  = enum_windows(name, X11->display, root, 0);
-    if (X11->window) {
-        Atom _NET_WM_NAME = XInternAtom(X11->display, "_NET_WM_NAME", 0);
-        Atom UTF8_STRING = XInternAtom(X11->display, "UTF8_STRING", 0);
-        XChangeProperty(X11->display, X11->window, _NET_WM_NAME, UTF8_STRING, 
-                        8, 0, (const unsigned char *) name, strlen(name));
-        XSync(X11->display, False);
     }
 }
 
