@@ -234,16 +234,16 @@ packaging for a distribution, use the cmake option
 `-DNO_MARCH_NATIVE=ON`.
 
 If you use X11 Windows on Linux or *BSD, and wish to toggle in/out of
-fullscreen mode with key F11, UxPlay needs to be built with a dependence
-on X11. Starting with UxPlay-1.59, this will be done by default **IF**
-the X11 development libraries are installed and detected. Install these
-with "`sudo apt-get install libx11-dev`". If GStreamer \< 1.20 is
-detected, a fix ("ZOOMFIX") to a problem (fixed since GStreamer-1.20)
-that prevents screen-sharing apps like Zoom from detecting (and sharing)
-an X11 UxPlay window will also be made. If you wish to build UxPlay
-*without\* any X11 dependence, use the cmake option `-DNO_X11_DEPS=ON`
-(this is not necessary if the X11 development libraries are not
-installed).
+fullscreen mode with a keypress (F11 or Alt_L+Enter) UxPlay needs to be
+built with a dependence on X11. Starting with UxPlay-1.59, this will be
+done by default **IF** the X11 development libraries are installed and
+detected. Install these with "`sudo apt-get install libx11-dev`". If
+GStreamer \< 1.20 is detected, a fix ("ZOOMFIX") to a problem (fixed
+since GStreamer-1.20) that prevents screen-sharing apps like Zoom from
+detecting (and sharing) an X11 UxPlay window will also be made. If you
+wish to build UxPlay *without\* any X11 dependence, use the cmake option
+`-DNO_X11_DEPS=ON` (this is not necessary if the X11 development
+libraries are not installed).
 
 1.  `sudo apt-get install libssl-dev libplist-dev`". (unless you need to
     build OpenSSL and libplist from source).
@@ -284,10 +284,12 @@ gst-inspect-1.0 for examining the GStreamer installation. If sound is
 not working, "**alsa**"","**pulseaudio**", or "**pipewire**" plugins may
 need to be installed, depending on how your audio is set up.
 
-**Finally, run uxplay in a terminal window**. Use Ctrl-C (or close the
-window) to terminate it when done. If it is not seen by the iOS client's
-drop-down "Screen Mirroring" panel, check that your DNS-SD server
-(usually avahi-daemon) is running: do this in a terminal window with
+**Finally, run uxplay in a terminal window**. On some systems, you can
+toggle into and out of fullscreen mode with F11 or (held-down left
+Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it when
+done. If the UxPlay server is not seen by the iOS client's drop-down
+"Screen Mirroring" panel, check that your DNS-SD server (usually
+avahi-daemon) is running: do this in a terminal window with
 `systemctl status avahi-daemon`. If this shows the avahi-daemon is not
 running, control it with
 `sudo systemctl [start,stop,enable,disable] avahi-daemon` (or
@@ -646,8 +648,7 @@ display that overscans, and is not displayed by gstreamer).
 Recommendation: **don't use this option** unless there is some special
 reason to use it.
 
-**-fs** uses fullscreen mode, but only works with Wayland or VAAPI
-plugins.
+**-fs** uses fullscreen mode, but only works with X11, Wayland or VAAPI.
 
 **-p** allows you to select the network ports used by UxPlay (these need
 to be opened if the server is behind a firewall). By itself, -p sets
@@ -1022,12 +1023,11 @@ other settings are set in `UxPlay/lib/dnssdint.h`.
 # Changelog
 
 1.59 2022-12-10 remove "ZOOMFIX" compile option and make compilation
-with X11 dependence (that now provides a toggle into/out of X11
-fullscreen mode with the F11 key) the default if X11 development
-libraries are detected. (ZOOMFIX is then automatically applied for
-GStreamer \< 1.20.) The cmake option -DNO_X11_DEPS now allows
-compilation with no X11 dependence. Also reworked internal handling of
-metadata.
+with X11-dependence the default if X11 development libraries are
+detected (this now provides fullscreen mode with a F11 or Alt+Enter key
+toggle); ZOOMFIX is automatically applied for GStreamer \< 1.20. The
+cmake option -DNO_X11_DEPS allows compilation with no dependence on X11.
+Reworked internal handling of metadata.
 
 1.58 2022-10-29 Add option "-nohold" that will drop existing connections
 when a new client connects. Update llhttp to v8.1.0.

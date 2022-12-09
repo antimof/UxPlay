@@ -196,7 +196,8 @@ zipfile downloads, "UxPlay" for "git clone" downloads), then follow the instruct
 computer it is built on; when this is not the case, as when you are packaging
 for a distribution, use the cmake option `-DNO_MARCH_NATIVE=ON`.
 
-If you use X11 Windows on Linux or *BSD, and wish to toggle in/out of fullscreen mode with key F11,
+If you use X11 Windows on Linux or *BSD, and wish to toggle in/out of fullscreen mode with a keypress
+(F11 or Alt_L+Enter)
 UxPlay needs to be built with a dependence on X11.  Starting with UxPlay-1.59, this will be done by
 default **IF** the X11 development libraries are installed and detected.   Install these with
 "`sudo apt-get install libx11-dev`".    If GStreamer < 1.20 is detected, a fix ("ZOOMFIX") to a problem 
@@ -239,7 +240,9 @@ Also install "**tools**" to get the utility gst-inspect-1.0 for
 examining the GStreamer installation.  If sound is not working, "**alsa**"", "**pulseaudio**",
 or "**pipewire**" plugins may need to be installed, depending on how your audio is set up.
 
-**Finally, run uxplay in a terminal window**.  Use Ctrl-C (or close the window) to terminate it when done. If it is not seen by the
+**Finally, run uxplay in a terminal window**. On some systems, you can toggle into and out of fullscreen mode
+with F11 or (held-down left Alt)+Enter keys.  Use Ctrl-C (or close the window)
+to terminate it when done. If the UxPlay server is not seen by the
 iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
 server (usually avahi-daemon) is running: do this in a terminal window
 with ```systemctl status avahi-daemon```.
@@ -533,7 +536,7 @@ Options:
    Recommendation: **don't use this option** unless there is some special
    reason to use it.
 
-**-fs** uses fullscreen mode, but only works with Wayland or VAAPI plugins.
+**-fs** uses fullscreen mode, but only works with X11, Wayland or VAAPI.
 
 **-p**  allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets
@@ -824,11 +827,11 @@ The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
 
-1.59 2022-12-10   remove "ZOOMFIX" compile option and make compilation with X11 dependence (that now
-                  provides a toggle into/out of X11 fullscreen mode with the F11 key) the default if
-                  X11 development libraries are detected. (ZOOMFIX is then automatically applied for 
-                  GStreamer < 1.20.)  The cmake option -DNO_X11_DEPS now allows compilation with no X11 
-                  dependence.  Also reworked internal handling of metadata.
+1.59 2022-12-10   remove "ZOOMFIX" compile option and make compilation with X11-dependence the
+                  default if X11 development libraries are detected (this now provides fullscreen mode 
+                  with a F11 or Alt+Enter key toggle); ZOOMFIX is  automatically applied 
+                  for GStreamer < 1.20.  The cmake option -DNO_X11_DEPS allows compilation with no
+                  dependence on X11.  Reworked internal handling of metadata.
 
 1.58 2022-10-29   Add option "-nohold" that will drop existing connections when a new client connects.
                   Update llhttp to v8.1.0.

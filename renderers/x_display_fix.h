@@ -77,29 +77,26 @@ void get_x_window(X11_Window_t * X11, const char * name) {
     }
 #endif
 }
-  
-void set_fullscreen(Display* dpy, Window win, const char * name, bool* fullscreen)
-{
-    // *fullscreen = !(*fullscreen);    
+
+void set_fullscreen(X11_Window_t * X11, bool * fullscreen) {
     XClientMessageEvent msg = {
         .type = ClientMessage,
-        .display = dpy,
-        .window = win,
-        .message_type = XInternAtom(dpy, "_NET_WM_STATE", True),
+        .display = X11->display,
+        .window = X11->window,
+        .message_type = XInternAtom(X11->display, "_NET_WM_STATE", True),
         .format = 32,
         .data = { .l = {
                 *fullscreen,
-                XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", True),
+                XInternAtom(X11->display, "_NET_WM_STATE_FULLSCREEN", True),
                 None,
                 0,
                 1
             }}
     };
-    Window root = XDefaultRootWindow(dpy);     
-    win  = enum_windows(name, dpy, root, 0);
-    if (win) {
-        XSendEvent(dpy, XRootWindow(dpy, XDefaultScreen(dpy)), False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*) &msg);
-        XSync(dpy, False);
+    if (X11->window) {
+        XSendEvent(X11->display, XRootWindow(X11->display, XDefaultScreen(X11->display)),
+                   False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*) &msg);
+        XSync(X11->display, False);
     }
 }
 

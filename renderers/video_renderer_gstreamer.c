@@ -26,6 +26,7 @@
 #include "x_display_fix.h"
 static bool fullscreen = false;
 static bool using_x11 = false;
+static bool alt_keypress = false;
 #endif
 
 struct video_renderer_s {
@@ -119,7 +120,7 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
 }
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
-                          const char *decoder, const char *converter, const char *videosink) {
+                          const char *decoder, const char *converter, const char *videosink, const bool *initial_fullscreen) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     logger = render_logger;
@@ -164,6 +165,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_assert(renderer->sink);
 
 #ifdef X_DISPLAY_FIX
+    fullscreen = *initial_fullscreen;
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
     bool x_display_fix = false;
@@ -222,9 +224,10 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
 #ifdef X_DISPLAY_FIX
         if (renderer->gst_window && !(renderer->gst_window->window)) {
             get_x_window(renderer->gst_window, renderer->server_name);
-	    if (renderer->gst_window && ! using_x11) {
-                logger_log(logger, LOGGER_INFO, "\n*** X11 Windows detected: Use key F11 to toggle in/out of full-screen mode\n");
+	    if (renderer->gst_window->window) {
+                logger_log(logger, LOGGER_INFO, "\n*** X11 Windows: Use key F11 or (left Alt)+Enter to toggle full-screen mode\n");
                 using_x11 = true;
+		set_fullscreen(renderer->gst_window, &fullscreen);
             }
     }
 #endif
@@ -310,13 +313,20 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
                 switch (e_type) {
                 case GST_NAVIGATION_EVENT_KEY_PRESS:
                     if (gst_navigation_event_parse_key_event (event, &key)) {
-                        if (strcmp (key, "F11") == 0) {
+                        if ((strcmp (key, "F11") == 0) || (alt_keypress && strcmp (key, "Return") == 0)) {
                             fullscreen = !(fullscreen);
-                            set_fullscreen(renderer->gst_window->display, renderer->gst_window->window,
-                                           renderer->server_name, &fullscreen);
+                            set_fullscreen(renderer->gst_window, &fullscreen);
+                        } else if (strcmp (key, "Alt_L") == 0) {
+                            alt_keypress = true;
                         }
                     }
-                    break; 
+                    break;
+                case GST_NAVIGATION_EVENT_KEY_RELEASE:
+                    if (gst_navigation_event_parse_key_event (event, &key)) {
+                        if (strcmp (key, "Alt_L") == 0) {
+                            alt_keypress = false;;
+                        }
+                    }
                 default:
                     break;
                 }
