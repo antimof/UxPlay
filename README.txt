@@ -1,4 +1,4 @@
-# UxPlay 1.58: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.59: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -233,15 +233,17 @@ computer it is built on; when this is not the case, as when you are
 packaging for a distribution, use the cmake option
 `-DNO_MARCH_NATIVE=ON`.
 
-If you use Gstreamer older than 1.20, and wish to share the UxPlay
-screen using screen-sharing apps such as Zoom, you should use the cmake
-option "`-DZOOMFIX=ON`" in step 3. This requires the X11 development
-libraries to be installed: on Debian-based systems do this with
-"`sudo apt-get install libx11-dev`" . "ZOOMFIX" is not needed on macOS,
-or if you are using non-X11 windows (such as OpenGL) on Linux. See
-[ZOOMFIX compile-time option](#zoomfix-compile-time-option) below for
-more information, and alternatives to "ZOOMFIX". **ZOOMFIX will NOT be
-applied if GStreamer \>= 1.20 is found.**
+If you use X11 Windows on Linux or *BSD, and wish to toggle in/out of
+fullscreen mode with key F11, UxPlay needs to be built with a dependence
+on X11. Starting with UxPlay-1.59, this will be done by default **IF**
+the X11 development libraries are installed and detected. Install these
+with "`sudo apt-get install libx11-dev`". If GStreamer \< 1.20 is
+detected, a fix ("ZOOMFIX") to a problem (fixed since GStreamer-1.20)
+that prevents screen-sharing apps like Zoom from detecting (and sharing)
+an X11 UxPlay window will also be made. If you wish to build UxPlay
+*without\* any X11 dependence, use the cmake option `-DNO_X11_DEPS=ON`
+(this is not necessary if the X11 development libraries are not
+installed).
 
 1.  `sudo apt-get install libssl-dev libplist-dev`". (unless you need to
     build OpenSSL and libplist from source).
@@ -250,7 +252,7 @@ applied if GStreamer \>= 1.20 is found.**
     source, replace this by "`mkdir build; cd build; cmake ..`": you can
     then delete the `build` directory if needed, without affecting the
     source.) Also add any cmake "`-D`" options here as needed (e.g,
-    `-DZOOMFIX=ON` or `-DNO_MARCH_NATIVE=ON`).
+    `-DNO_X11_DEPS=ON` or `-DNO_MARCH_NATIVE=ON`).
 4.  `make`
 5.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run).
@@ -383,18 +385,18 @@ running if the ssh session is closed. Terminal output is saved to FILE
 -   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
     Linux):** (sudo yum install) openssl-devel libplist-devel
     avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on
-    repository) (+libX11-devel for ZOOMFIX). The required GStreamer
-    packages are: gstreamer1-devel gstreamer1-plugins-base-devel
-    gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for
-    intel graphics); you may need to get some of them (in particular
-    gstreamer1-libav) from [rpmfusion.org](https://rpmfusion.org) (which
-    provides packages including plugins that RedHat does not ship for
-    license reasons).
+    repository) (+libX11-devel for fullscreen X11, and "ZOOMFIX" if
+    needed). The required GStreamer packages are: gstreamer1-devel
+    gstreamer1-plugins-base-devel gstreamer1-libav
+    gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics);
+    you may need to get some of them (in particular gstreamer1-libav)
+    from [rpmfusion.org](https://rpmfusion.org) (which provides packages
+    including plugins that RedHat does not ship for license reasons).
 
 -   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
-    avahi-compat-mDNSResponder-devel (+ libX11-devel for ZOOMFIX). The
-    required GStreamer packages are: gstreamer-devel
-    gstreamer-plugins-base-devel gstreamer-plugins-libav
+    avahi-compat-mDNSResponder-devel (+ libX11-devel for fullscreen X11,
+    and ZOOMFIX if needed). The required GStreamer packages are:
+    gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
     graphics); in some cases, you may need to use gstreamer packages for
     OpenSUSE from
@@ -461,10 +463,10 @@ installed by Homebrew as dependencies. **You may need to set the
 environment variable GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0 to
 point to the Homebrew GStreamer installation.**
 
-Finally, build and install uxplay (without ZOOMFIX): open a terminal and
-change into the UxPlay source directory ("UxPlay-master" for zipfile
-downloads, "UxPlay" for "git clone" downloads) and build/install with
-"cmake . ; make ; sudo make install" (same as for Linux).
+Finally, build and install uxplay: open a terminal and change into the
+UxPlay source directory ("UxPlay-master" for zipfile downloads, "UxPlay"
+for "git clone" downloads) and build/install with "cmake . ; make ; sudo
+make install" (same as for Linux).
 
 -   On macOS with this installation of GStreamer, the only videosinks
     available seem to be glimagesink (default choice made by
@@ -932,21 +934,6 @@ will show you which audiosinks are available on your system. (Replace
 "Audio" by "Video" to see videosinks). Some possible audiosinks are
 pulsesink, alsasink, osssink, oss4sink, and osxaudiosink (macOS).
 
-If you ran cmake with "-DZOOMFIX=ON", check if the problem is still
-there without ZOOMFIX. ZOOMFIX is only applied to the default videosink
-choice ("autovideosink") and the two X11 videosinks "ximagesink" and
-"xvimagesink". ZOOMFIX is only designed for these last two; if
-autovideosink chooses a different videosink, ZOOMFIX is now ignored. If
-you are using the X11 windowing system (standard on Linux), and have
-trouble with screen-sharing on Zoom, use ZOOMFIX and "-vs xvimagesink"
-(or "-vs ximagesink" if the previous choice doesn't work).
-
-As other videosink choices are not affected by ZOOMFIX, they may or may
-not be visible to screen-sharing apps. Cairo-based windows created on
-Linux with "-vs gtksink" are visible to screen-sharing aps without
-ZOOMFIX; windows on macOS created by "-vs glimagesink" (default choice)
-and "-vs osximagesink" are also visible.
-
 The "OpenGL renderer" window created on Linux by "-vs glimagesink"
 sometimes does not close properly when its "close" button is clicked.
 (this is a GStreamer issue). You may need to terminate uxplay with
@@ -1033,6 +1020,14 @@ the client by the AirPlay server) to be set. The "features" code and
 other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+
+1.59 2022-12-10 remove "ZOOMFIX" compile option and make compilation
+with X11 dependence (that now provides a toggle into/out of X11
+fullscreen mode with the F11 key) the default if X11 development
+libraries are detected. (ZOOMFIX is then automatically applied for
+GStreamer \< 1.20.) The cmake option -DNO_X11_DEPS now allows
+compilation with no X11 dependence. Also reworked internal handling of
+metadata.
 
 1.58 2022-10-29 Add option "-nohold" that will drop existing connections
 when a new client connects. Update llhttp to v8.1.0.
@@ -1152,28 +1147,6 @@ made the first time the GStreamer window was created by uxplay, and not
 if the server was relaunched after the GStreamer window was closed, with
 uxplay still running. Corrected in v. 1.34
 
-### ZOOMFIX compile-time option
-
-In GStreamer-1.18.6 and earlier, if UxPlay is using an X11 window for
-screen mirroring, this window is not visible to screen-sharing apps like
-ZOOM. OpenGL-based windows (use `-vs glimagesink` or `-vs gtksink`,
-*etc.*) do not have this problem.
-
-A workaround is to manually make the X11 window visible to
-screen-sharing apps with the X11 utility xdotool, if it is installed,
-with: `xdotool selectwindow set_window --name <name>` (where `<name>` is
-your choice of name), and then select the uxplay window by clicking on
-it with the mouse.
-
-However, if "`cmake -DZOOMFIX=ON .`" is run before compiling, the
-mirrored window is visible to screen-sharing applications, without this
-procedure. To compile with ZOOMFIX=ON, the X11 development libraries
-must be installed. (Without ZOOMFIX, UxPlay has no dependence on X11).
-
-**ZOOMFIX is not needed in GStreamer-1.20 or later.** Thanks to David
-Ventura https://github.com/DavidVentura/UxPlay for the fix and also for
-getting a fix into gstreamer-1.20.
-
 ### Building OpenSSL \>= 1.1.1 from source.
 
 If you need to do this, note that you may be able to use a newer version
@@ -1221,11 +1194,11 @@ user to make sure all local laws are adhered to.
 This project makes use of a third-party GPL library for handling
 FairPlay. The legal status of that library is unclear. Should you be a
 representative of Apple and have any objections against the legality of
-the library and its use in this project, please contact me and I'll take
-the appropriate steps.
+the library and its use in this project, please contact the developers
+and the appropriate steps will be taken.
 
 Given the large number of third-party AirPlay receivers (mostly
-closed-source) available for purchase, it is my understanding that an
+closed-source) available for purchase, it is our understanding that an
 open source implementation of the same functionality wouldn't violate
 any of Apple's rights either.
 

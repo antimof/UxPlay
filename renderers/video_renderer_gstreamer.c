@@ -195,7 +195,9 @@ void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
     first_packet = true;
+#ifdef X_DISPLAY_FIX
     using_x11 = false;
+#endif
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
