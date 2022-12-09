@@ -50,7 +50,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.58"
+#define VERSION "1.59"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -388,7 +388,7 @@ static void print_info (char *name) {
     printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
-    printf("-fs       Full-screen (only with Wayland and VAAPI plugins)\n");
+    printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
@@ -972,7 +972,7 @@ int main (int argc, char *argv[]) {
 
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
         video_renderer_start();
     }
     
@@ -1016,7 +1016,7 @@ int main (int argc, char *argv[]) {
         if (use_video && close_window) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str());
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
             video_renderer_start();
         }
         if (reset_loop) goto reconnect;
