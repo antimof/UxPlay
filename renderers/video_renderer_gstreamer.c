@@ -25,7 +25,6 @@
 #include <gst/video/navigation.h>
 #include "x_display_fix.h"
 static bool fullscreen = false;
-static bool using_x11 = false;
 static bool alt_keypress = false;
 #endif
 
@@ -197,9 +196,6 @@ void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
     first_packet = true;
-#ifdef X_DISPLAY_FIX
-    using_x11 = false;
-#endif
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
@@ -226,7 +222,6 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
             get_x_window(renderer->gst_window, renderer->server_name);
 	    if (renderer->gst_window->window) {
                 logger_log(logger, LOGGER_INFO, "\n*** X11 Windows: Use key F11 or (left Alt)+Enter to toggle full-screen mode\n");
-                using_x11 = true;
                 if (fullscreen) {
                     set_fullscreen(renderer->gst_window, &fullscreen);
                 }
@@ -305,40 +300,41 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
 	//   g_main_loop_quit( (GMainLoop *) loop);
         break;
 #ifdef  X_DISPLAY_FIX
-    case GST_MESSAGE_ELEMENT: {
-        GstNavigationMessageType message_type = gst_navigation_message_get_type (message);
-        if (using_x11 && message_type == GST_NAVIGATION_MESSAGE_EVENT) {
-            GstEvent *event = NULL;
-            if (gst_navigation_message_parse_event (message, &event)) {
-                GstNavigationEventType event_type = gst_navigation_event_get_type (event);
-                const gchar *key;
-                switch (event_type) {
-                case GST_NAVIGATION_EVENT_KEY_PRESS:
-                    if (gst_navigation_event_parse_key_event (event, &key)) {
-                        if ((strcmp (key, "F11") == 0) || (alt_keypress && strcmp (key, "Return") == 0)) {
-                            fullscreen = !(fullscreen);
-                            set_fullscreen(renderer->gst_window, &fullscreen);
-                        } else if (strcmp (key, "Alt_L") == 0) {
-                            alt_keypress = true;
+    case GST_MESSAGE_ELEMENT:
+        if (renderer->gst_window && renderer->gst_window->window) {
+            GstNavigationMessageType message_type = gst_navigation_message_get_type (message);
+            if (message_type == GST_NAVIGATION_MESSAGE_EVENT) {
+                GstEvent *event = NULL;
+                if (gst_navigation_message_parse_event (message, &event)) {
+                    GstNavigationEventType event_type = gst_navigation_event_get_type (event);
+                    const gchar *key;
+                    switch (event_type) {
+                    case GST_NAVIGATION_EVENT_KEY_PRESS:
+                        if (gst_navigation_event_parse_key_event (event, &key)) {
+                            if ((strcmp (key, "F11") == 0) || (alt_keypress && strcmp (key, "Return") == 0)) {
+                                fullscreen = !(fullscreen);
+                                set_fullscreen(renderer->gst_window, &fullscreen);
+                            } else if (strcmp (key, "Alt_L") == 0) {
+                                alt_keypress = true;
+                            }
                         }
-                    }
-                    break;
-                case GST_NAVIGATION_EVENT_KEY_RELEASE:
-                    if (gst_navigation_event_parse_key_event (event, &key)) {
-                        if (strcmp (key, "Alt_L") == 0) {
-                            alt_keypress = false;;
+                        break;
+                    case GST_NAVIGATION_EVENT_KEY_RELEASE:
+                        if (gst_navigation_event_parse_key_event (event, &key)) {
+                            if (strcmp (key, "Alt_L") == 0) {
+                                alt_keypress = false;;
+                            }
                         }
+                    default:
+                        break;
                     }
-                default:
-                    break;
                 }
-            }
-            if (event) {
-                gst_event_unref (event);
+                if (event) {
+                    gst_event_unref (event);
+                }
             }
         }
         break;
-    }
 #endif
     default:
       /* unhandled message */
