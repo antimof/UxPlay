@@ -227,9 +227,11 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
 	    if (renderer->gst_window->window) {
                 logger_log(logger, LOGGER_INFO, "\n*** X11 Windows: Use key F11 or (left Alt)+Enter to toggle full-screen mode\n");
                 using_x11 = true;
-		set_fullscreen(renderer->gst_window, &fullscreen);
+                if (fullscreen) {
+                    set_fullscreen(renderer->gst_window, &fullscreen);
+                }
             }
-    }
+        }
 #endif
     }
 }
@@ -304,13 +306,13 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
         break;
 #ifdef  X_DISPLAY_FIX
     case GST_MESSAGE_ELEMENT: {
-        GstNavigationMessageType mtype = gst_navigation_message_get_type (message);
-        if (using_x11 && mtype == GST_NAVIGATION_MESSAGE_EVENT) {
+        GstNavigationMessageType message_type = gst_navigation_message_get_type (message);
+        if (using_x11 && message_type == GST_NAVIGATION_MESSAGE_EVENT) {
             GstEvent *event = NULL;
             if (gst_navigation_message_parse_event (message, &event)) {
-                GstNavigationEventType e_type = gst_navigation_event_get_type (event);
+                GstNavigationEventType event_type = gst_navigation_event_get_type (event);
                 const gchar *key;
-                switch (e_type) {
+                switch (event_type) {
                 case GST_NAVIGATION_EVENT_KEY_PRESS:
                     if (gst_navigation_event_parse_key_event (event, &key)) {
                         if ((strcmp (key, "F11") == 0) || (alt_keypress && strcmp (key, "Return") == 0)) {
@@ -331,7 +333,9 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
                     break;
                 }
             }
-            gst_event_unref (event);
+            if (event) {
+                gst_event_unref (event);
+            }
         }
         break;
     }

@@ -93,11 +93,9 @@ void set_fullscreen(X11_Window_t * X11, bool * fullscreen) {
                 1
             }}
     };
-    if (X11->window) {
-        XSendEvent(X11->display, XRootWindow(X11->display, XDefaultScreen(X11->display)),
-                   False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*) &msg);
-        XSync(X11->display, False);
-    }
+    XSendEvent(X11->display, XRootWindow(X11->display, XDefaultScreen(X11->display)),
+               False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*) &msg);
+    XSync(X11->display, False);
 }
 
 #ifdef __cplusplus
