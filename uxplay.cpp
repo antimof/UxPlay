@@ -896,6 +896,15 @@ int main (int argc, char *argv[]) {
 #endif
 
     parse_arguments (argc, argv);
+
+#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
+    if (!debug_log) {
+      setbuf(stdout, NULL);
+    }
+#endif
+
+    LOGI("UxPlay %s: An Open-Source AirPlay mirroring and audio-streaming server.", VERSION);
+
     if (audiosink == "0") {
         use_audio = false;
         dump_audio = false;
@@ -914,12 +923,6 @@ int main (int argc, char *argv[]) {
             printf("dump audio using \"-admp %s\"\n",  audio_dumpfile_name.c_str());
         }
     }
-
-#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
-    if (!debug_log) {
-      setbuf(stdout, NULL);
-    }
-#endif
 
 #if __APPLE__
     /* force use of -nc option on macOS */
@@ -975,7 +978,7 @@ int main (int argc, char *argv[]) {
                             video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
         video_renderer_start();
     }
-    
+
     if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
                       udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
 

@@ -1022,12 +1022,12 @@ other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
 
-1.59 2022-12-10 remove "ZOOMFIX" compile option and make compilation
+1.59 2022-12-12 remove "ZOOMFIX" compile option and make compilation
 with X11-dependence the default if X11 development libraries are
-detected (this now provides fullscreen mode with a F11 or Alt+Enter key
-toggle); ZOOMFIX is automatically applied for GStreamer \< 1.20. The
-cmake option -DNO_X11_DEPS allows compilation with no dependence on X11.
-Reworked internal handling of metadata.
+detected (this now also provides fullscreen mode with a F11 or Alt+Enter
+key toggle); ZOOMFIX is now automatically applied for GStreamer \< 1.20.
+New cmake option -DNO_X11_DEPS compiles uxplay without X11 dependence.
+Reworked internal metadata handling. Fix segfault with "-vs 0".
 
 1.58 2022-10-29 Add option "-nohold" that will drop existing connections
 when a new client connects. Update llhttp to v8.1.0.
