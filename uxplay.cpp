@@ -1156,7 +1156,9 @@ extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *
 }
 
 extern "C" void video_report_size(void *cls, float *width_source, float *height_source, float *width, float *height) {
-    video_renderer_size(width_source, height_source, width, height);
+    if (use_video) {
+        video_renderer_size(width_source, height_source, width, height);
+    }
 }
 
 extern "C" void audio_set_coverart(void *cls, const void *buffer, int buflen) {
