@@ -322,7 +322,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
                     case GST_NAVIGATION_EVENT_KEY_RELEASE:
                         if (gst_navigation_event_parse_key_event (event, &key)) {
                             if (strcmp (key, "Alt_L") == 0) {
-                                alt_keypress = false;;
+                                alt_keypress = false;
                             }
                         }
                     default:
