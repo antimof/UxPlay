@@ -21,6 +21,7 @@
 #include <cstring>
 #include <signal.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -776,14 +777,13 @@ static void parse_arguments (int argc, char *argv[]) {
     }
 }
 
-static void process_metadata(int count, const char *dmap_tag, const unsigned char *dmap_len, const char* metadata, int datalen) {
+static void process_metadata(int count, const char *dmap_tag, const unsigned char* metadata, int datalen) {
     int dmap_type = 0;
-    /* DMAP metadata items can be strings (dmap_type = 1); other types are byte, short, int, long, date, and list.  *
+    /* DMAP metadata items can be strings (dmap_type = 9); other types are byte, short, int, long, date, and list.  *
      * The DMAP item begins with a 4-character (4-letter) "dmap_tag" string that identifies the type.               */
 
-    /* dmap_len is the contents of last byte of 8-byte header preceding metadata, usually equals datalen */
     if (debug_log) {
-        printf("%d: dmap_tag [%s], dmap_len %d %d\n", count, dmap_tag, (int) *dmap_len, datalen);
+        printf("%d: dmap_tag [%s], %d\n", count, dmap_tag, datalen);
     }
 
     /* String-type DMAP tags seen in Apple Music Radio are processed here.   *
@@ -794,7 +794,7 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
     }
 
     if (dmap_tag[0] == 'a' && dmap_tag[1] == 's') {
-        dmap_type = 1;
+        dmap_type = 9;
         switch (dmap_tag[2]) {
         case 'a':
             switch (dmap_tag[3]) {
@@ -869,20 +869,43 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
             break;
         }
     } else if (strcmp (dmap_tag, "minm") == 0) {
-        dmap_type = 1;
+        dmap_type = 9;
         printf("Title: ");
     }
 
     for (int i = 0; i < datalen; i++) {
-        if (dmap_type == 1) {
-            printf("%c", metadata[i]);
+        if (dmap_type == 9) {
+            printf("%c",(char) metadata[i]);
         } else if (debug_log) {
             if (i > 0 && i % 16 == 0) printf("\n");
-            const unsigned char * data = (const unsigned char *) (metadata + i);
-            printf("%2.2x ", (int) *data);
+            printf("%2.2x ", (int) metadata[i]);
         }
     }
     printf("\n");
+}
+
+static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len) {
+    const unsigned char *header = metadata;
+
+    bool istag = true;
+    for (int i = 0; i < 4; i++) {
+        tag[i] =  (char) *header;
+	if (!isalpha(tag[i])) {
+            istag = false;
+        }
+        header++;
+    }
+
+    *len = 0;
+    for (int i = 0; i < 4; i++) {
+        *len <<= 8;
+        *len += (int) *header;
+        header++;
+    }
+    if (!istag || *len < 0) {
+        return 1;
+    }
+    return 0;
 }
 
 int main (int argc, char *argv[]) {
@@ -1172,43 +1195,42 @@ extern "C" void audio_set_coverart(void *cls, const void *buffer, int buflen) {
 }
 
 extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
-    const unsigned char mark[]={ 0x0, 0x0, 0x0 }; /*daap separator*/
-    const char *dmap_tag;
-    const char *metadata = (const  char *) buffer;
-    const unsigned char *dmap_len;
+    char dmap_tag[5] = {0x0};
+    const unsigned char *metadata = (const  unsigned char *) buffer;
     int datalen;
     int count = 0;
 
-    /* de-concatenate (and process) individual items in DMAP metadata sent by client in AirPlay Audio mode    */
-
-    /* The metadata  packet is a concatenated sequence of DMAP items each consisting of an 8-byte header, usually  *
-     * followed by data.  No item is smaller than 8 bytes. The header is a DMAP "tag" of 4 letters, followed by    *
-     * three null bytes and a final byte which is either the byte-length of data that follows, or the data itself. */
-
-    if ( buflen < 8 || memcmp (metadata + 4, mark, 3) != 0) {
-      LOGE("received invalid metadata");
-      return;
-    }
- 
     printf("==============Audio Metadata=============\n");
-        
+
+    if (buflen < 8) {
+        LOGE("received invalid metadata, length %d < 8", buflen);
+        return;
+    } else if (parse_dmap_header(metadata, dmap_tag, &datalen)) {
+        LOGE("received invalid metadata, tag [%s]  datalen %d", dmap_tag, datalen);
+        return;
+    }
+    metadata += 8;
+    buflen -= 8;
+
+    if (strcmp(dmap_tag, "mlit") != 0 || datalen != buflen) {
+        LOGE("received metadata with tag %s, but is not a DMAP listingitem, or datalen = %d !=  buflen %d",
+             dmap_tag, datalen, buflen);
+        return;
+    }
     while (buflen >= 8) {
-        dmap_tag = metadata;
-        if (strlen(dmap_tag) != 4) {
-            LOGE("received metadata with invalid DMAP tag [%s]", dmap_tag);
-            break;
-        }
         count++;
-        dmap_len = (const unsigned char *) (metadata + 7);
+        if (parse_dmap_header(metadata, dmap_tag, &datalen)) {
+            LOGE("received metadata with invalid DMAP header:  tag = [%s],  datalen = %d", dmap_tag, datalen);
+            return;
+        }
         metadata += 8;
-	buflen -= 8;
-	datalen = 0;
-	while (datalen < buflen && (datalen + 8 > buflen || memcmp(metadata + datalen + 4, mark, 3) != 0)) {
-            datalen++;
-	}
-	process_metadata (count, dmap_tag, dmap_len, metadata, datalen);
+        buflen -= 8;
+        process_metadata(count, (const char *) dmap_tag, metadata, datalen);
         metadata += datalen;
         buflen -= datalen;
+    }
+    if (buflen != 0) {
+      LOGE("%d bytes of metadata were not processed", buflen);
     }
 }
 
