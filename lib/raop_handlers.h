@@ -414,11 +414,33 @@ raop_handler_setup(raop_conn_t *conn,
         }
 
         // Time port
-        uint64_t timing_rport;
-        plist_t time_note = plist_dict_get_item(req_root_node, "timingPort");
-        plist_get_uint_val(time_note, &timing_rport);
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "timing_rport = %llu", timing_rport);
-
+        plist_t req_is_remote_control_only_node = plist_dict_get_item(req_root_node, "isRemoteControlOnly");
+        if (req_is_remote_control_only_node) {
+	    uint8_t bool_val = 0;
+	    plist_get_bool_val(req_is_remote_control_only_node, &bool_val);  
+            if (bool_val) {
+                logger_log(conn->raop->logger, LOGGER_ERR, "Client specified AirPlay2 \"Remote Control\" protocol\n"
+			   " UxPlay only supports AirPlay v1 protocol using NTP and timing port");
+            }
+	}
+	uint64_t string_len;
+        const char *timing_protocol;
+        plist_t req_timing_protocol_node = plist_dict_get_item(req_root_node, "timingProtocol");
+        timing_protocol = plist_get_string_ptr(req_timing_protocol_node, &string_len);
+        if (strcmp(timing_protocol, "NTP")) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Client specified timingProtocol=%s, UxPlay requires timingProtocol= NTP", timing_protocol);     
+        }
+        timing_protocol = NULL;
+        uint64_t timing_rport = 0;
+        plist_t req_timing_port_node = plist_dict_get_item(req_root_node, "timingPort");
+	if (req_timing_port_node) {
+             plist_get_uint_val(req_timing_port_node, &timing_rport);
+        }
+        if (timing_rport) {
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "timing_rport = %llu", timing_rport);
+        } else {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Client did not supply timing_rport, may be using unsupported AirPlay2 \"Remote Control\" protocol");
+        }
         unsigned short timing_lport = conn->raop->timing_lport;
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, conn->remote, conn->remotelen, timing_rport);
         raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
