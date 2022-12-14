@@ -1260,6 +1260,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 
 int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
                   unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
+    int dnssd_error;
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -1306,9 +1307,8 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_start(raop, &port);
     raop_set_port(raop, port);
 
-    int error;
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &error);
-    if (error) {
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    if (dnssd_error) {
         LOGE("Could not initialize dnssd library!");
         stop_raop_server();
         return -2;
@@ -1316,13 +1316,29 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
 
     raop_set_dnssd(raop, dnssd);
 
-    dnssd_register_raop(dnssd, port);
+    if ((dnssd_error = dnssd_register_raop(dnssd, port))) {
+        if (dnssd_error == -65537) {
+             LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
+        } else {
+             LOGE("dnssd_register_raop failed with error code %d\n"
+                  "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
+                  "(see Apple's dns_sd.h)", dnssd_error);
+        }
+        stop_raop_server();
+        return -3;
+    }
     if (tcp[2]) {
         port = tcp[2];
     } else {
-      port = (port != HIGHEST_PORT ? port + 1 : port - 1);
+        port = (port != HIGHEST_PORT ? port + 1 : port - 1);
     }
-    dnssd_register_airplay(dnssd, port);
+    if ((dnssd_error = dnssd_register_airplay(dnssd, port))) {
+        LOGE("dnssd_register_airplay failed with error code %d\n"
+             "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
+             "(see Apple's dns_sd.h)", dnssd_error);
+        stop_raop_server();
+        return -4;
+    }
 
     return 0;
 }

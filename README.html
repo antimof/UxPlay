@@ -823,18 +823,28 @@ correct one; on 64-bit Ubuntu, this is done by running
 <code>export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/</code> before
 running cmake.</p>
 <h3
-id="uxplay-starts-but-stalls-after-initialized-server-sockets-appears-without-any-server-name-showing-on-the-client.">1.
-uxplay starts, but stalls after “Initialized server socket(s)” appears,
-<em>without any server name showing on the client</em>.</h3>
+id="uxplay-starts-but-stalls-or-stops-after-initialized-server-sockets-appears-without-any-server-name-showing-on-the-client.">1.
+uxplay starts, but stalls or stops after “Initialized server socket(s)”
+appears, <em>without any server name showing on the client</em>.</h3>
 <p>Stalling this way, with <em>no</em> server name showing <em>on the
 client</em> as available, probably means that your network <strong>does
-not have a running Bonjour/zeroconf DNS-SD server.</strong> On Linux,
-make sure Avahi is installed, and start the avahi-daemon service on the
-system running uxplay (your distribution will document how to do this).
-Some systems may instead use the mdnsd daemon as an alternative to
-provide DNS-SD service. <em>(FreeBSD offers both alternatives, but only
-Avahi was tested: one of the steps needed for getting Avahi running on a
-FreeBSD system is to edit
+not have a running Bonjour/zeroconf DNS-SD server.</strong></p>
+<p>UxPlay used to stall silently if DNS-SD service registration failed,
+but now stops with an error message returned by the DNSServiceRegister
+function, which will probably be -65537 (0xFFFE FFFF, or
+kDNSServiceErr_Unknown) if no DNS-SD server was found: mDNS error codes
+are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are
+listed in Apple’s dnssd.h file. An older version of this (the one used
+by avahi) is found <a
+href="https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h">here</a>.
+A few additional error codes are defined in a later version from <a
+href="https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html">Apple</a>.</p>
+<p>On Linux, make sure Avahi is installed, and start the avahi-daemon
+service on the system running uxplay (your distribution will document
+how to do this). Some systems may instead use the mdnsd daemon as an
+alternative to provide DNS-SD service. <em>(FreeBSD offers both
+alternatives, but only Avahi was tested: one of the steps needed for
+getting Avahi running on a FreeBSD system is to edit
 <code>/usr/local/etc/avahi/avahi-daemon.conf</code> to uncomment a line
 for airplay support.</em>)</p>
 <p>After starting uxplay, use the utility

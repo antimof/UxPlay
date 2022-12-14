@@ -255,6 +255,7 @@ int
 dnssd_register_raop(dnssd_t *dnssd, unsigned short port)
 {
     char servname[MAX_SERVNAME];
+    DNSServiceErrorType retval;
 
     assert(dnssd);
 
@@ -295,7 +296,7 @@ dnssd_register_raop(dnssd_t *dnssd, unsigned short port)
     strncat(servname, dnssd->name, sizeof(servname)-strlen(servname)-1);
 
     /* Register the service */
-    dnssd->DNSServiceRegister(&dnssd->raop_service, 0, 0,
+    retval = dnssd->DNSServiceRegister(&dnssd->raop_service, 0, 0,
                               servname, "_raop._tcp",
                               NULL, NULL,
                               htons(port),
@@ -303,14 +304,14 @@ dnssd_register_raop(dnssd_t *dnssd, unsigned short port)
                               dnssd->TXTRecordGetBytesPtr(&dnssd->raop_record),
                               NULL, NULL);
 
-
-    return 1;
+    return (int) retval;   /* error codes are listed in Apple's dns_sd.h */
 }
 
 int
 dnssd_register_airplay(dnssd_t *dnssd, unsigned short port)
 {
     char device_id[3 * MAX_HWADDR_LEN];
+    DNSServiceErrorType retval;
 
     assert(dnssd);
 
@@ -332,7 +333,7 @@ dnssd_register_airplay(dnssd_t *dnssd, unsigned short port)
     dnssd->TXTRecordSetValue(&dnssd->airplay_record, "vv", strlen(AIRPLAY_VV), AIRPLAY_VV);
 
     /* Register the service */
-    dnssd->DNSServiceRegister(&dnssd->airplay_service, 0, 0,
+    retval = dnssd->DNSServiceRegister(&dnssd->airplay_service, 0, 0,
                               dnssd->name, "_airplay._tcp",
                               NULL, NULL,
                               htons(port),
@@ -340,7 +341,7 @@ dnssd_register_airplay(dnssd_t *dnssd, unsigned short port)
                               dnssd->TXTRecordGetBytesPtr(&dnssd->airplay_record),
                               NULL, NULL);
 
-    return 1;
+    return (int) retval;   /* error codes are listed in Apple's dns_sd.h */
 }
 
 const char *

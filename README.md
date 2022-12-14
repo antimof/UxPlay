@@ -692,10 +692,18 @@ Solution: when more than one installation of OpenSSL is present, set the environ
 on 64-bit Ubuntu, this is done by
 running `export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/` before running cmake.
 
-### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
+### 1. uxplay starts, but stalls  or stops after "Initialized server socket(s)" appears, *without any server name showing on the client*.
 
 Stalling this way, with _no_  server name showing  _on  the client_ as available,
 probably means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
+
+UxPlay used to stall silently if DNS-SD service registration failed, but now stops with an error message returned by the
+DNSServiceRegister function, which will probably be -65537 (0xFFFE FFFF, or kDNSServiceErr_Unknown) if no DNS-SD server was found:
+mDNS error codes are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are listed in Apple's
+dnssd.h file.  An older version of this (the one used by avahi) is found [here](https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h).
+A few additional error codes are defined in a later version
+from [Apple](https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html).   
+
 On Linux, make sure Avahi is installed,
 and start the avahi-daemon service on the system running uxplay (your distribution will document how to do  this).
 Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS-SD service.

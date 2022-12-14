@@ -844,18 +844,31 @@ correct one; on 64-bit Ubuntu, this is done by running
 `export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/` before running
 cmake.
 
-### 1. uxplay starts, but stalls after "Initialized server socket(s)" appears, *without any server name showing on the client*.
+### 1. uxplay starts, but stalls or stops after "Initialized server socket(s)" appears, *without any server name showing on the client*.
 
 Stalling this way, with *no* server name showing *on the client* as
 available, probably means that your network **does not have a running
-Bonjour/zeroconf DNS-SD server.** On Linux, make sure Avahi is
-installed, and start the avahi-daemon service on the system running
-uxplay (your distribution will document how to do this). Some systems
-may instead use the mdnsd daemon as an alternative to provide DNS-SD
-service. *(FreeBSD offers both alternatives, but only Avahi was tested:
-one of the steps needed for getting Avahi running on a FreeBSD system is
-to edit `/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for
-airplay support.*)
+Bonjour/zeroconf DNS-SD server.**
+
+UxPlay used to stall silently if DNS-SD service registration failed, but
+now stops with an error message returned by the DNSServiceRegister
+function, which will probably be -65537 (0xFFFE FFFF, or
+kDNSServiceErr_Unknown) if no DNS-SD server was found: mDNS error codes
+are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are
+listed in Apple's dnssd.h file. An older version of this (the one used
+by avahi) is found
+[here](https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h).
+A few additional error codes are defined in a later version from
+[Apple](https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html).
+
+On Linux, make sure Avahi is installed, and start the avahi-daemon
+service on the system running uxplay (your distribution will document
+how to do this). Some systems may instead use the mdnsd daemon as an
+alternative to provide DNS-SD service. *(FreeBSD offers both
+alternatives, but only Avahi was tested: one of the steps needed for
+getting Avahi running on a FreeBSD system is to edit
+`/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for airplay
+support.*)
 
 After starting uxplay, use the utility `avahi-browse -a -t` in a
 different terminal window on the server to verify that the UxPlay
