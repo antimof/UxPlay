@@ -1,4 +1,4 @@
-# UxPlay 1.59: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.60: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -1034,6 +1034,13 @@ the client by the AirPlay server) to be set. The "features" code and
 other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+
+1.60 2022-12-15 Added exit with error message if DNSServiceRegister
+fails (instead of just stalling). Test for Client's attempt to using
+unsupported AirPlay 2 "REMOTE CONTROL" protocol (with no timing
+channel), and exit if this occurs. Reworked metadata processing to
+correctly parse DMAP header (previous version worked with DMAP messages
+currently received, but was not correct).
 
 1.59 2022-12-12 remove "ZOOMFIX" compile option and make compilation
 with X11-dependence the default if X11 development libraries are
