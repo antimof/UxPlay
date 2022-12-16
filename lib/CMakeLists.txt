@@ -24,6 +24,10 @@ endif()
 
 message( STATUS "using CMAKE_CFLAGS: " ${CMAKE_C_FLAGS} )
 
+#activate the NOHOLD feature to drop existing connections if a third connection is made 
+add_definitions( -DNOHOLD )
+
+
 INCLUDE (CheckIncludeFiles)
 if( WIN32 )
 CHECK_INCLUDE_FILES ("winsock2.h" WINSOCK2 )
@@ -123,7 +127,7 @@ if ( NOT APPLE )
     target_include_directories( airplay PRIVATE ${AVAHI_DNSSD_INCLUDE_DIRS} )
     find_library( DNSSD ${AVAHI_DNSSD_LIBRARIES} PATH ${AVAHI_DNSSD_LIBDIR})
     target_link_libraries(airplay PUBLIC ${DNSSD} )
-  else()  # UxPlay can also build if mDNSResponder or another implementation of dns_sd is present instead of Avahi
+  else()  # can also build if mDNSResponder or another implementation of dns_sd is present instead of Avahi
     if ( WIN32 )
       set(BONJOUR_SDK "$ENV{BONJOUR_SDK_HOME}" )
       message( STATUS "BONJOUR_SDK_HOME " ${BONJOUR_SDK} )

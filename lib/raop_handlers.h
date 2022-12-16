@@ -420,7 +420,7 @@ raop_handler_setup(raop_conn_t *conn,
 	    plist_get_bool_val(req_is_remote_control_only_node, &bool_val);  
             if (bool_val) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Client specified AirPlay2 \"Remote Control\" protocol\n"
-			   " UxPlay only supports AirPlay v1 protocol using NTP and timing port");
+			   " Only AirPlay v1 protocol (using NTP and timing port) is supported");
             }
 	}
 	uint64_t string_len;
@@ -428,7 +428,7 @@ raop_handler_setup(raop_conn_t *conn,
         plist_t req_timing_protocol_node = plist_dict_get_item(req_root_node, "timingProtocol");
         timing_protocol = plist_get_string_ptr(req_timing_protocol_node, &string_len);
         if (strcmp(timing_protocol, "NTP")) {
-            logger_log(conn->raop->logger, LOGGER_ERR, "Client specified timingProtocol=%s, UxPlay requires timingProtocol= NTP", timing_protocol);     
+            logger_log(conn->raop->logger, LOGGER_ERR, "Client specified timingProtocol=%s, but timingProtocol= NTP is required here", timing_protocol);     
         }
         timing_protocol = NULL;
         uint64_t timing_rport = 0;
