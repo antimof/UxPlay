@@ -1344,10 +1344,10 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
 }
 
 int stop_raop_server () {
-  if (raop) {
-    raop_destroy(raop);
-    raop = NULL;
-  }
+    if (raop) {
+        raop_destroy(raop);
+        raop = NULL;
+    }
     if (dnssd) {
         dnssd_unregister_raop(dnssd);
         dnssd_unregister_airplay(dnssd);

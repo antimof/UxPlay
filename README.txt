@@ -413,10 +413,10 @@ running if the ssh session is closed. Terminal output is saved to FILE
 
 -   **FreeBSD:** (sudo pkg install) libplist gstreamer1,
     gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-\* (\* =
-    core, good, bad, x, gtk, gl, vulkan, pulse ...), (+ gstreamer1-vaapi
-    for Intel graphics). Either avahi-libdns or mDNSResponder must also
-    be installed to provide the dns_sd library. OpenSSL is already
-    installed as a System Library.
+    core, good, bad, x, gtk, gl, vulkan, pulse, v4l2, ...), (+
+    gstreamer1-vaapi for Intel graphics). Either avahi-libdns or
+    mDNSResponder must also be installed to provide the dns_sd library.
+    OpenSSL is already installed as a System Library.
 
 ## Building UxPlay on macOS: **(Intel X86_64 and "Apple Silicon" M1/M2 Macs)**
 
@@ -844,39 +844,45 @@ correct one; on 64-bit Ubuntu, this is done by running
 `export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/` before running
 cmake.
 
-### 1. uxplay starts, but stalls or stops after "Initialized server socket(s)" appears, *without any server name showing on the client*.
+### 1. uxplay starts, but either stalls or stops after "Initialized server socket(s)" appears (*without the server name showing on the client*).
 
-Stalling this way, with *no* server name showing *on the client* as
-available, probably means that your network **does not have a running
-Bonjour/zeroconf DNS-SD server.**
+If UxPlay stops with the "No DNS-SD Server found" message, this means
+that your network **does not have a running Bonjour/zeroconf DNS-SD
+server.**
 
-UxPlay used to stall silently if DNS-SD service registration failed, but
-now stops with an error message returned by the DNSServiceRegister
-function, which will probably be -65537 (0xFFFE FFFF, or
-kDNSServiceErr_Unknown) if no DNS-SD server was found: mDNS error codes
-are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are
-listed in Apple's dnssd.h file. An older version of this (the one used
-by avahi) is found
+Before v1.60, UxPlay used to stall silently if DNS-SD service
+registration failed, but now stops with an error message returned by the
+DNSServiceRegister function, which will probably be -65537 (0xFFFE FFFF,
+or kDNSServiceErr_Unknown) if no DNS-SD server was found: other mDNS
+error codes are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537),
+and are listed in Apple's dnssd.h file. An older version of this (the
+one used by avahi) is found
 [here](https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h).
 A few additional error codes are defined in a later version from
 [Apple](https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html).
 
 On Linux, make sure Avahi is installed, and start the avahi-daemon
 service on the system running uxplay (your distribution will document
-how to do this). Some systems may instead use the mdnsd daemon as an
-alternative to provide DNS-SD service. *(FreeBSD offers both
-alternatives, but only Avahi was tested: one of the steps needed for
-getting Avahi running on a FreeBSD system is to edit
-`/usr/local/etc/avahi/avahi-daemon.conf` to uncomment a line for airplay
-support.*)
+how to do this, for example:
+`sudo systemctl [enable,disable,start,stop,status] avahi-daemon`). You
+might need to edit the avahi-daemon.conf file (it is typically in
+/etc/avahi/, find it with "`sudo find /etc -name avahi-daemon.conf`"):
+make sure that "disable-publishing" is **not** a selected option). Some
+systems may instead use the mdnsd daemon as an alternative to provide
+DNS-SD service. *(FreeBSD offers both alternatives, but only Avahi was
+tested: one of the steps needed for getting Avahi running on a FreeBSD
+system is to edit `/usr/local/etc/avahi/avahi-daemon.conf` to uncomment
+a line for airplay support.*)
 
-After starting uxplay, use the utility `avahi-browse -a -t` in a
-different terminal window on the server to verify that the UxPlay
-AirTunes and AirPlay services are correctly registered (only the
-AirTunes service is used in the "Legacy" AirPlay Mirror mode used by
-UxPlay). If the UxPlay service is listed by avahi-browse, but is not
-seen by the client, the problem is likely to be a problem with the local
-network.
+If UxPlay stalls *without an error message* and *without the server name
+showing on the client*, this is either pre-UxPlay-1.60 behavior when no
+DNS-SD server was found, or a network problem. After starting uxplay,
+use the utility `avahi-browse -a -t` in a different terminal window on
+the server to verify that the UxPlay AirTunes and AirPlay services are
+correctly registered (only the AirTunes service is used in the "Legacy"
+AirPlay Mirror mode used by UxPlay). If the UxPlay service is listed by
+avahi-browse, but is not seen by the client, the problem is likely to be
+a problem with the local network.
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
