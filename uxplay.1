@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "November 2022" "1.58" "User Commands"
+.TH UXPLAY "1" "December 2022" "1.60" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.58: An open\-source AirPlay mirroring server based on RPiPlay
+UxPlay 1.60: An open\-source AirPlay mirroring (+ audio streaming) server.
 .SH OPTIONS
 .TP
 .B
@@ -18,7 +18,7 @@ UxPlay 1.58: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-o\fR        Set display "overscanned" mode on (not usually needed)
 .TP
-\fB-fs\fR       Full-screen (only with Wayland and VAAPI plugins)
+\fB-fs\fR       Full-screen (only works with X11, Wayland and VAAPI)
 .TP
 \fB\-p\fR        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100
 .TP
@@ -95,20 +95,20 @@ UxPlay 1.58: An open\-source AirPlay mirroring server based on RPiPlay
 .TP
 \fB\-vdmp\fR [n] Dump h264 video output to "fn.h264"; fn="videodump", change
 .IP
-    with "-vdmp [n] filename". If [n] is given, file fn.x.h264
+   with "-vdmp [n] filename". If [n] is given, file fn.x.h264
 .IP
-    x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n
+   x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n
 .IP
-    NAL units are dumped.
+   NAL units are dumped.
 .PP
 .TP
 \fB\-admp\fR [n] Dump audio output to "fn.x.fmt", fmt ={aac, alac, aud}, x
 .IP
-    =1,2,..; fn="audiodump"; change with "-admp [n] filename".
+   =1,2,..; fn="audiodump"; change with "-admp [n] filename".
 .IP
-    x increases when audio format changes. If n is given, <= n
+   x increases when audio format changes. If n is given, <= n
 .IP
-    audio packets are dumped. "aud"= unknown format.
+   audio packets are dumped. "aud"= unknown format.
 .PP
 .TP
 \fB\-d\fR        Enable debug logging

@@ -213,7 +213,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-pin-start")) {
        logger_log(conn->raop->logger, LOGGER_ERR,  "*** ERROR: Unsupported client request %s with URL %s", method, url);
        logger_log(conn->raop->logger, LOGGER_INFO, "*** AirPlay client has requested PIN as implemented on AppleTV,");
-       logger_log(conn->raop->logger, LOGGER_INFO, "*** but UxPlay does not require a PIN and cannot supply one.");
+       logger_log(conn->raop->logger, LOGGER_INFO, "*** but this implementation does not require a PIN and cannot supply one.");
        logger_log(conn->raop->logger, LOGGER_INFO, "*** This client behavior may have been required by mobile device management (MDM)");
        logger_log(conn->raop->logger, LOGGER_INFO, "*** (such as Apple Configurator or a third-party MDM tool).");
     } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-setup")) {

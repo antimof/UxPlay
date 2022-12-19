@@ -64,9 +64,10 @@ Window enum_windows(const char * str, Display * display, Window window, int dept
     return (Window) NULL;
 }
 
-void fix_x_window_name(X11_Window_t * X11, const char * name) {
+void get_x_window(X11_Window_t * X11, const char * name) {
     Window root = XDefaultRootWindow(X11->display);     
     X11->window  = enum_windows(name, X11->display, root, 0);
+#ifdef ZOOM_WINDOW_NAME_FIX
     if (X11->window) {
         Atom _NET_WM_NAME = XInternAtom(X11->display, "_NET_WM_NAME", 0);
         Atom UTF8_STRING = XInternAtom(X11->display, "UTF8_STRING", 0);
@@ -74,6 +75,27 @@ void fix_x_window_name(X11_Window_t * X11, const char * name) {
                         8, 0, (const unsigned char *) name, strlen(name));
         XSync(X11->display, False);
     }
+#endif
+}
+
+void set_fullscreen(X11_Window_t * X11, bool * fullscreen) {
+    XClientMessageEvent msg = {
+        .type = ClientMessage,
+        .display = X11->display,
+        .window = X11->window,
+        .message_type = XInternAtom(X11->display, "_NET_WM_STATE", True),
+        .format = 32,
+        .data = { .l = {
+                *fullscreen,
+                XInternAtom(X11->display, "_NET_WM_STATE_FULLSCREEN", True),
+                None,
+                0,
+                1
+            }}
+    };
+    XSendEvent(X11->display, XRootWindow(X11->display, XDefaultScreen(X11->display)),
+               False, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent*) &msg);
+    XSync(X11->display, False);
 }
 
 #ifdef __cplusplus

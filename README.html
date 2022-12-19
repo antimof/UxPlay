@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.58-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.58: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.60-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.60: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -236,16 +236,18 @@ follow the instructions below:</p>
 optimization for the computer it is built on; when this is not the case,
 as when you are packaging for a distribution, use the cmake option
 <code>-DNO_MARCH_NATIVE=ON</code>.</p>
-<p>If you use Gstreamer older than 1.20, and wish to share the UxPlay
-screen using screen-sharing apps such as Zoom, you should use the cmake
-option “<code>-DZOOMFIX=ON</code>” in step 3. This requires the X11
-development libraries to be installed: on Debian-based systems do this
-with “<code>sudo apt-get install libx11-dev</code>” . “ZOOMFIX” is not
-needed on macOS, or if you are using non-X11 windows (such as OpenGL) on
-Linux. See <a href="#zoomfix-compile-time-option">ZOOMFIX compile-time
-option</a> below for more information, and alternatives to “ZOOMFIX”.
-<strong>ZOOMFIX will NOT be applied if GStreamer &gt;= 1.20 is
-found.</strong></p>
+<p>If you use X11 Windows on Linux or <em>BSD, and wish to toggle in/out
+of fullscreen mode with a keypress (F11 or Alt_L+Enter) UxPlay needs to
+be built with a dependence on X11. Starting with UxPlay-1.59, this will
+be done by default <strong>IF</strong> the X11 development libraries are
+installed and detected. Install these with
+“<code>sudo apt-get install libx11-dev</code>”. If GStreamer &lt; 1.20
+is detected, a fix (“ZOOMFIX”) to a problem (fixed since GStreamer-1.20)
+that prevents screen-sharing apps like Zoom from detecting (and sharing)
+an X11 UxPlay window will also be made. If you wish to build UxPlay
+</em>without* any X11 dependence, use the cmake option
+<code>-DNO_X11_DEPS=ON</code> (this is not necessary if the X11
+development libraries are not installed).</p>
 <ol type="1">
 <li><code>sudo apt-get install libssl-dev libplist-dev</code>“. (unless
 you need to build OpenSSL and libplist from source).</li>
@@ -255,7 +257,8 @@ modify the source, replace this by
 “<code>mkdir build; cd build; cmake ..</code>”: you can then delete the
 <code>build</code> directory if needed, without affecting the source.)
 Also add any cmake “<code>-D</code>” options here as needed (e.g,
-<code>-DZOOMFIX=ON</code> or <code>-DNO_MARCH_NATIVE=ON</code>).</li>
+<code>-DNO_X11_DEPS=ON</code> or
+<code>-DNO_MARCH_NATIVE=ON</code>).</li>
 <li><code>make</code></li>
 <li><code>sudo make install</code> (you can afterwards uninstall with
 <code>sudo make uninstall</code> in the same directory in which this was
@@ -289,12 +292,14 @@ examining the GStreamer installation. If sound is not working,
 “<strong>alsa</strong>”“,”<strong>pulseaudio</strong>”, or
 “<strong>pipewire</strong>” plugins may need to be installed, depending
 on how your audio is set up.</p>
-<p><strong>Finally, run uxplay in a terminal window</strong>. Use Ctrl-C
-(or close the window) to terminate it when done. If it is not seen by
-the iOS client’s drop-down “Screen Mirroring” panel, check that your
-DNS-SD server (usually avahi-daemon) is running: do this in a terminal
-window with <code>systemctl status avahi-daemon</code>. If this shows
-the avahi-daemon is not running, control it with
+<p><strong>Finally, run uxplay in a terminal window</strong>. On some
+systems, you can toggle into and out of fullscreen mode with F11 or
+(held-down left Alt)+Enter keys. Use Ctrl-C (or close the window) to
+terminate it when done. If the UxPlay server is not seen by the iOS
+client’s drop-down “Screen Mirroring” panel, check that your DNS-SD
+server (usually avahi-daemon) is running: do this in a terminal window
+with <code>systemctl status avahi-daemon</code>. If this shows the
+avahi-daemon is not running, control it with
 <code>sudo systemctl [start,stop,enable,disable] avahi-daemon</code> (or
 avahi-daemon.service). If UxPlay is seen, but the client fails to
 connect when it is selected, there may be a firewall on the server that
@@ -390,8 +395,9 @@ FILE (which can be /dev/null to discard it).</p>
 <li><p><strong>Red Hat, Fedora, CentOS (now continued as Rocky Linux or
 Alma Linux):</strong> (sudo yum install) openssl-devel libplist-devel
 avahi-compat-libdns_sd-devel (some from the “PowerTools” add-on
-repository) (+libX11-devel for ZOOMFIX). The required GStreamer packages
-are: gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-libav
+repository) (+libX11-devel for fullscreen X11, and “ZOOMFIX” if needed).
+The required GStreamer packages are: gstreamer1-devel
+gstreamer1-plugins-base-devel gstreamer1-libav
 gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics); you
 may need to get some of them (in particular gstreamer1-libav) from <a
 href="https://rpmfusion.org">rpmfusion.org</a> (which provides packages
@@ -399,10 +405,11 @@ including plugins that RedHat does not ship for license
 reasons).</p></li>
 <li><p><strong>OpenSUSE:</strong> (sudo zypper install) libopenssl-devel
 libplist-devel avahi-compat-mDNSResponder-devel (+ libX11-devel for
-ZOOMFIX). The required GStreamer packages are: gstreamer-devel
-gstreamer-plugins-base-devel gstreamer-plugins-libav
-gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel graphics); in
-some cases, you may need to use gstreamer packages for OpenSUSE from <a
+fullscreen X11, and ZOOMFIX if needed). The required GStreamer packages
+are: gstreamer-devel gstreamer-plugins-base-devel
+gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi
+for Intel graphics); in some cases, you may need to use gstreamer
+packages for OpenSUSE from <a
 href="https://ftp.gwdg.de/pub/linux/misc/packman/suse/">Packman</a>
 “Essentials” (which provides packages including plugins that OpenSUSE
 does not ship for license reasons).</p></li>
@@ -412,10 +419,10 @@ gstreamer-vaapi for Intel graphics). (<strong>Also available as a
 package in AUR</strong>).</p></li>
 <li><p><strong>FreeBSD:</strong> (sudo pkg install) libplist gstreamer1,
 gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-* (* = core,
-good, bad, x, gtk, gl, vulkan, pulse …), (+ gstreamer1-vaapi for Intel
-graphics). Either avahi-libdns or mDNSResponder must also be installed
-to provide the dns_sd library. OpenSSL is already installed as a System
-Library.</p></li>
+good, bad, x, gtk, gl, vulkan, pulse, v4l2, …), (+ gstreamer1-vaapi for
+Intel graphics). Either avahi-libdns or mDNSResponder must also be
+installed to provide the dns_sd library. OpenSSL is already installed as
+a System Library.</p></li>
 </ul>
 <h2
 id="building-uxplay-on-macos-intel-x86_64-and-apple-silicon-m1m2-macs">Building
@@ -465,10 +472,10 @@ packages to be installed by Homebrew as dependencies. <strong>You may
 need to set the environment variable
 GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0 to point to the Homebrew
 GStreamer installation.</strong></p>
-<p>Finally, build and install uxplay (without ZOOMFIX): open a terminal
-and change into the UxPlay source directory (“UxPlay-master” for zipfile
-downloads, “UxPlay” for “git clone” downloads) and build/install with
-“cmake . ; make ; sudo make install” (same as for Linux).</p>
+<p>Finally, build and install uxplay: open a terminal and change into
+the UxPlay source directory (“UxPlay-master” for zipfile downloads,
+“UxPlay” for “git clone” downloads) and build/install with “cmake . ;
+make ; sudo make install” (same as for Linux).</p>
 <ul>
 <li><p>On macOS with this installation of GStreamer, the only videosinks
 available seem to be glimagesink (default choice made by autovideosink)
@@ -636,8 +643,8 @@ an empty boundary frame of unused pixels (which would be lost in a
 full-screen display that overscans, and is not displayed by gstreamer).
 Recommendation: <strong>don’t use this option</strong> unless there is
 some special reason to use it.</p>
-<p><strong>-fs</strong> uses fullscreen mode, but only works with
-Wayland or VAAPI plugins.</p>
+<p><strong>-fs</strong> uses fullscreen mode, but only works with X11,
+Wayland or VAAPI.</p>
 <p><strong>-p</strong> allows you to select the network ports used by
 UxPlay (these need to be opened if the server is behind a firewall). By
 itself, -p sets “legacy” ports TCP 7100, 7000, 7001, UDP 6000, 6001,
@@ -816,21 +823,41 @@ correct one; on 64-bit Ubuntu, this is done by running
 <code>export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/</code> before
 running cmake.</p>
 <h3
-id="uxplay-starts-but-stalls-after-initialized-server-sockets-appears-without-any-server-name-showing-on-the-client.">1.
-uxplay starts, but stalls after “Initialized server socket(s)” appears,
-<em>without any server name showing on the client</em>.</h3>
-<p>Stalling this way, with <em>no</em> server name showing <em>on the
-client</em> as available, probably means that your network <strong>does
-not have a running Bonjour/zeroconf DNS-SD server.</strong> On Linux,
-make sure Avahi is installed, and start the avahi-daemon service on the
-system running uxplay (your distribution will document how to do this).
-Some systems may instead use the mdnsd daemon as an alternative to
-provide DNS-SD service. <em>(FreeBSD offers both alternatives, but only
-Avahi was tested: one of the steps needed for getting Avahi running on a
+id="uxplay-starts-but-either-stalls-or-stops-after-initialized-server-sockets-appears-without-the-server-name-showing-on-the-client.">1.
+uxplay starts, but either stalls or stops after “Initialized server
+socket(s)” appears (<em>without the server name showing on the
+client</em>).</h3>
+<p>If UxPlay stops with the “No DNS-SD Server found” message, this means
+that your network <strong>does not have a running Bonjour/zeroconf
+DNS-SD server.</strong></p>
+<p>Before v1.60, UxPlay used to stall silently if DNS-SD service
+registration failed, but now stops with an error message returned by the
+DNSServiceRegister function, which will probably be -65537 (0xFFFE FFFF,
+or kDNSServiceErr_Unknown) if no DNS-SD server was found: other mDNS
+error codes are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537),
+and are listed in Apple’s dnssd.h file. An older version of this (the
+one used by avahi) is found <a
+href="https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h">here</a>.
+A few additional error codes are defined in a later version from <a
+href="https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html">Apple</a>.</p>
+<p>On Linux, make sure Avahi is installed, and start the avahi-daemon
+service on the system running uxplay (your distribution will document
+how to do this, for example:
+<code>sudo systemctl [enable,disable,start,stop,status] avahi-daemon</code>).
+You might need to edit the avahi-daemon.conf file (it is typically in
+/etc/avahi/, find it with
+“<code>sudo find /etc -name avahi-daemon.conf</code>”): make sure that
+“disable-publishing” is <strong>not</strong> a selected option). Some
+systems may instead use the mdnsd daemon as an alternative to provide
+DNS-SD service. <em>(FreeBSD offers both alternatives, but only Avahi
+was tested: one of the steps needed for getting Avahi running on a
 FreeBSD system is to edit
 <code>/usr/local/etc/avahi/avahi-daemon.conf</code> to uncomment a line
 for airplay support.</em>)</p>
-<p>After starting uxplay, use the utility
+<p>If UxPlay stalls <em>without an error message</em> and <em>without
+the server name showing on the client</em>, this is either
+pre-UxPlay-1.60 behavior when no DNS-SD server was found, or a network
+problem. After starting uxplay, use the utility
 <code>avahi-browse -a -t</code> in a different terminal window on the
 server to verify that the UxPlay AirTunes and AirPlay services are
 correctly registered (only the AirTunes service is used in the “Legacy”
@@ -906,19 +933,6 @@ grep Sink | grep Audio” ” will show you which audiosinks are available
 on your system. (Replace “Audio” by “Video” to see videosinks). Some
 possible audiosinks are pulsesink, alsasink, osssink, oss4sink, and
 osxaudiosink (macOS).</p>
-<p>If you ran cmake with “-DZOOMFIX=ON”, check if the problem is still
-there without ZOOMFIX. ZOOMFIX is only applied to the default videosink
-choice (“autovideosink”) and the two X11 videosinks “ximagesink” and
-“xvimagesink”. ZOOMFIX is only designed for these last two; if
-autovideosink chooses a different videosink, ZOOMFIX is now ignored. If
-you are using the X11 windowing system (standard on Linux), and have
-trouble with screen-sharing on Zoom, use ZOOMFIX and “-vs xvimagesink”
-(or “-vs ximagesink” if the previous choice doesn’t work).</p>
-<p>As other videosink choices are not affected by ZOOMFIX, they may or
-may not be visible to screen-sharing apps. Cairo-based windows created
-on Linux with “-vs gtksink” are visible to screen-sharing aps without
-ZOOMFIX; windows on macOS created by “-vs glimagesink” (default choice)
-and “-vs osximagesink” are also visible.</p>
 <p>The “OpenGL renderer” window created on Linux by “-vs glimagesink”
 sometimes does not close properly when its “close” button is clicked.
 (this is a GStreamer issue). You may need to terminate uxplay with
@@ -999,6 +1013,19 @@ as “SupportsLegacyPairing”) of the “features” plist code (reported to
 the client by the AirPlay server) to be set. The “features” code and
 other settings are set in <code>UxPlay/lib/dnssdint.h</code>.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.60 2022-12-15 Added exit with error message if DNSServiceRegister
+fails (instead of just stalling). Test for Client’s attempt to using
+unsupported AirPlay 2 “REMOTE CONTROL” protocol (with no timing
+channel), and exit if this occurs. Reworked metadata processing to
+correctly parse DMAP header (previous version worked with DMAP messages
+currently received, but was not correct).</p>
+<p>1.59 2022-12-12 remove “ZOOMFIX” compile option and make compilation
+with X11-dependence the default if X11 development libraries are
+detected (this now also provides fullscreen mode with a F11 or Alt+Enter
+key toggle); ZOOMFIX is now automatically applied for GStreamer &lt;
+1.20. New cmake option -DNO_X11_DEPS compiles uxplay without X11
+dependence. Reworked internal metadata handling. Fix segfault with “-vs
+0”.</p>
 <p>1.58 2022-10-29 Add option “-nohold” that will drop existing
 connections when a new client connects. Update llhttp to v8.1.0.</p>
 <p>1.57 2022-10-09 Minor fixes: (fix coredump on AUR on “stop
@@ -1096,24 +1123,6 @@ stop_server()</p>
 being made the first time the GStreamer window was created by uxplay,
 and not if the server was relaunched after the GStreamer window was
 closed, with uxplay still running. Corrected in v. 1.34</p>
-<h3 id="zoomfix-compile-time-option">ZOOMFIX compile-time option</h3>
-<p>In GStreamer-1.18.6 and earlier, if UxPlay is using an X11 window for
-screen mirroring, this window is not visible to screen-sharing apps like
-ZOOM. OpenGL-based windows (use <code>-vs glimagesink</code> or
-<code>-vs gtksink</code>, <em>etc.</em>) do not have this problem.</p>
-<p>A workaround is to manually make the X11 window visible to
-screen-sharing apps with the X11 utility xdotool, if it is installed,
-with: <code>xdotool selectwindow set_window --name &lt;name&gt;</code>
-(where <code>&lt;name&gt;</code> is your choice of name), and then
-select the uxplay window by clicking on it with the mouse.</p>
-<p>However, if “<code>cmake -DZOOMFIX=ON .</code>” is run before
-compiling, the mirrored window is visible to screen-sharing
-applications, without this procedure. To compile with ZOOMFIX=ON, the
-X11 development libraries must be installed. (Without ZOOMFIX, UxPlay
-has no dependence on X11).</p>
-<p><strong>ZOOMFIX is not needed in GStreamer-1.20 or later.</strong>
-Thanks to David Ventura https://github.com/DavidVentura/UxPlay for the
-fix and also for getting a fix into gstreamer-1.20.</p>
 <h3 id="building-openssl-1.1.1-from-source.">Building OpenSSL &gt;=
 1.1.1 from source.</h3>
 <p>If you need to do this, note that you may be able to use a newer
@@ -1158,10 +1167,10 @@ user to make sure all local laws are adhered to.</p>
 <p>This project makes use of a third-party GPL library for handling
 FairPlay. The legal status of that library is unclear. Should you be a
 representative of Apple and have any objections against the legality of
-the library and its use in this project, please contact me and I’ll take
-the appropriate steps.</p>
+the library and its use in this project, please contact the developers
+and the appropriate steps will be taken.</p>
 <p>Given the large number of third-party AirPlay receivers (mostly
-closed-source) available for purchase, it is my understanding that an
+closed-source) available for purchase, it is our understanding that an
 open source implementation of the same functionality wouldn’t violate
 any of Apple’s rights either.</p>
 <h1 id="uxplay-authors">UxPlay authors</h1>

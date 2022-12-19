@@ -8,11 +8,23 @@ include(GNUInstallDirs)
 
 set ( CMAKE_CXX_STANDARD 11 )
 
-if ( ZOOMFIX )
-find_package( X11 REQUIRED )
-link_libraries( ${X11_LIBRARIES} )
-include_directories( ${X11_INCLUDE_DIR} )
-endif ( ZOOMFIX )
+if (ZOOMFIX )
+  message (STATUS "cmake option ZOOMFIX is no longer used (if needed, ZOOMFIX is automatically applied if X11 libraries are present)" )
+endif()
+
+
+if ( NOT NO_X11_DEPS )
+find_package( X11  )
+  if ( X11_FOUND )
+    message (STATUS "Will compile using X11 Libraries  (use cmake option -DNO_X11_DEPS=ON if X11 dependence is not wanted)" )
+    link_libraries( ${X11_LIBRARIES} )
+    include_directories( ${X11_INCLUDE_DIR} )
+   else ()
+       message (STATUS "X11 libraries not found, will compile without X11 dependence" )
+   endif ()
+else()
+   message (STATUS "will compile without X11 dependence" )
+endif()
 
 if( UNIX AND NOT APPLE )
  add_definitions( -DSUPPRESS_AVAHI_COMPAT_WARNING )

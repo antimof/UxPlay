@@ -22,7 +22,10 @@
 #include <gst/app/gstappsrc.h>
 
 #ifdef X_DISPLAY_FIX
+#include <gst/video/navigation.h>
 #include "x_display_fix.h"
+static bool fullscreen = false;
+static bool alt_keypress = false;
 #endif
 
 struct video_renderer_s {
@@ -116,7 +119,7 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
 }
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
-                          const char *decoder, const char *converter, const char *videosink) {
+                          const char *decoder, const char *converter, const char *videosink, const bool *initial_fullscreen) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     logger = render_logger;
@@ -161,6 +164,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_assert(renderer->sink);
 
 #ifdef X_DISPLAY_FIX
+    fullscreen = *initial_fullscreen;
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
     bool x_display_fix = false;
@@ -215,7 +219,13 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
         if (renderer->gst_window && !(renderer->gst_window->window)) {
-            fix_x_window_name(renderer->gst_window, renderer->server_name);
+            get_x_window(renderer->gst_window, renderer->server_name);
+	    if (renderer->gst_window->window) {
+                logger_log(logger, LOGGER_INFO, "\n*** X11 Windows: Use key F11 or (left Alt)+Enter to toggle full-screen mode\n");
+                if (fullscreen) {
+                    set_fullscreen(renderer->gst_window, &fullscreen);
+                }
+            }
         }
 #endif
     }
@@ -289,6 +299,43 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
          logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream");
 	//   g_main_loop_quit( (GMainLoop *) loop);
         break;
+#ifdef  X_DISPLAY_FIX
+    case GST_MESSAGE_ELEMENT:
+        if (renderer->gst_window && renderer->gst_window->window) {
+            GstNavigationMessageType message_type = gst_navigation_message_get_type (message);
+            if (message_type == GST_NAVIGATION_MESSAGE_EVENT) {
+                GstEvent *event = NULL;
+                if (gst_navigation_message_parse_event (message, &event)) {
+                    GstNavigationEventType event_type = gst_navigation_event_get_type (event);
+                    const gchar *key;
+                    switch (event_type) {
+                    case GST_NAVIGATION_EVENT_KEY_PRESS:
+                        if (gst_navigation_event_parse_key_event (event, &key)) {
+                            if ((strcmp (key, "F11") == 0) || (alt_keypress && strcmp (key, "Return") == 0)) {
+                                fullscreen = !(fullscreen);
+                                set_fullscreen(renderer->gst_window, &fullscreen);
+                            } else if (strcmp (key, "Alt_L") == 0) {
+                                alt_keypress = true;
+                            }
+                        }
+                        break;
+                    case GST_NAVIGATION_EVENT_KEY_RELEASE:
+                        if (gst_navigation_event_parse_key_event (event, &key)) {
+                            if (strcmp (key, "Alt_L") == 0) {
+                                alt_keypress = false;
+                            }
+                        }
+                    default:
+                        break;
+                    }
+                }
+                if (event) {
+                    gst_event_unref (event);
+                }
+            }
+        }
+        break;
+#endif
     default:
       /* unhandled message */
         break;
