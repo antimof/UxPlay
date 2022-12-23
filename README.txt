@@ -58,10 +58,10 @@ pulled from the new main [UxPlay site](https://github.com/FDH2/UxPlay)).
 UxPlay is tested on a number of systems, including (among others) Debian
 10.11 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 LTS and 22.04.1 LTS,
 Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a
-CentOS successor), OpenSUSE 15.4, Arch Linux 22.10, macOS 12.3 (Intel
-and M1), FreeBSD 13.1. On Raspberry Pi, it is tested on Raspberry Pi OS
-(Bullseye) (32- and 64-bit), Ubuntu 22.04.1, and Manjaro RPi4 22.10.
-Also tested on 64-bit Windows 10 and 11.
+CentOS successor), Fedora 36, OpenSUSE 15.4, Arch Linux 22.10, macOS
+12.3 (Intel and M1), FreeBSD 13.1. On Raspberry Pi, it is tested on
+Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04.1, and Manjaro
+RPi4 22.10. Also tested on 64-bit Windows 10 and 11.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
 of iOS/iPadOS/macOS clients (iPhone, iPod Touch, iPad, Mac computers) in
@@ -384,16 +384,23 @@ running if the ssh session is closed. Terminal output is saved to FILE
 
 ### Non-Debian-based Linux or \*BSD
 
--   **Red Hat, Fedora, CentOS (now continued as Rocky Linux or Alma
-    Linux):** (sudo yum install) openssl-devel libplist-devel
-    avahi-compat-libdns_sd-devel (some from the "PowerTools" add-on
-    repository) (+libX11-devel for fullscreen X11, and "ZOOMFIX" if
-    needed). The required GStreamer packages are: gstreamer1-devel
+-   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
+    Alma Linux):** (sudo dnf install, or sudo yum install) openssl-devel
+    libplist-devel avahi-compat-libdns_sd-devel (some from the
+    "CodeReady" \[called "PowerTools" by clones\] add-on repository)
+    (+libX11-devel for fullscreen X11, and "ZOOMFIX" if needed). The
+    required GStreamer packages are: gstreamer1-devel
     gstreamer1-plugins-base-devel gstreamer1-libav
     gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics);
     you may need to get some of them (in particular gstreamer1-libav)
     from [rpmfusion.org](https://rpmfusion.org) (which provides packages
     including plugins that RedHat does not ship for license reasons).
+    *\[In recent **Fedora**, the libav plugin package is renamed to
+    "gstreamer1-plugin-libav". which now needs the RPM Fusion package
+    ffmpeg-libs for the patent-encumbered code which RedHat does not
+    provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
+    as RPM Fusion; if this is not installed, uxplay will fail to start,
+    with error: **no element "avdec_aac"** \]*.
 
 -   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
     avahi-compat-mDNSResponder-devel (+ libX11-devel for fullscreen X11,
