@@ -1,32 +1,33 @@
 cmake_minimum_required(VERSION 3.4.1)
 include_directories( playfair llhttp )
 
-# Common Linux cflags
-if ( UNIX  AND NOT APPLE )
-  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall" )
-endif()
-
-if ( WIN32 )
-  message( STATUS "Building for Windows " )
-  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_WIN32 -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall" )
-endif()
+message( STATUS "*** CFLAGS \"" ${CMAKE_C_FLAGS} "\" from build environment will be postpended to CMAKE_CFLAGS" )
 
 # Common x86/x86_64 cflags
 if( NOT NO_MARCH_NATIVE AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
-  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -march=native" )
+  set( CMAKE_C_FLAGS "-Ofast -march=native ${CMAKE_C_FLAGS}" )
   message( STATUS "Using CFLAGS with  -march=native" )
   message( STATUS "*** ONLY USE THIS WHEN COMPILING ON THE MACHINE THAT WILL RUN UXPLAY" )
   message( STATUS "  run \"cmake -DNO_MARCH_NATIVE=ON\" to switch off this compiler option" )
 else()
   message( STATUS "Not using -march=native" )
-  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2" )
+  set( CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS}" )
+endif()
+
+# Common Linux cflags
+if ( UNIX  AND NOT APPLE )
+  set( CMAKE_C_FLAGS "-DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall ${CMAKE_C_FLAGS}" )
+endif()
+
+if ( WIN32 )
+  message( STATUS "Building for Windows " )
+  set( CMAKE_C_FLAGS "-DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_WIN32 -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -Wall ${CMAKE_C_FLAGS}" )
 endif()
 
 message( STATUS "using CMAKE_CFLAGS: " ${CMAKE_C_FLAGS} )
 
 #activate the NOHOLD feature to drop existing connections if a third connection is made 
 add_definitions( -DNOHOLD )
-
 
 INCLUDE (CheckIncludeFiles)
 if( WIN32 )
