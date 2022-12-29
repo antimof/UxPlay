@@ -61,9 +61,12 @@
 #define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
 
 static std::string server_name = DEFAULT_NAME;
-static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                 unsigned short tcp[3], unsigned short udp[3], bool debug_log);
-static int stop_raop_server ();
+static int start_dnssd(std::vector<char> hw_addr, std::string name);
+static void stop_dnssd();
+static int register_dnssd();
+static void unregister_dnssd();
+static int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log);
+static void stop_raop_server ();
 extern "C" void log_callback (void *cls, int level, const char *msg) ;
 
 static dnssd_t *dnssd = NULL;
@@ -113,6 +116,8 @@ static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
 static bool bt709_fix = false;
 static int max_connections = 2;
+static unsigned short raop_port;
+static unsigned short airplay_port;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -130,8 +135,7 @@ size_t write_coverart(const char *filename, const void *image, size_t len) {
     return count;
 }
   
-
-void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
+static void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
         char suffix[20];
         std::string fn = audio_dumpfile_name;
@@ -165,7 +169,7 @@ void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     }
 }
 
-void dump_video_to_file(unsigned char *data, int datalen) {
+static void dump_video_to_file(unsigned char *data, int datalen) {
     /*  SPS NAL has (data[4] & 0x1f) = 0x07  */
     if ((data[4] & 0x1f) == 0x07  && video_dumpfile && video_dump_limit) {
         fwrite(mark, 1, sizeof(mark), video_dumpfile);
@@ -233,7 +237,6 @@ static gboolean  sigterm_callback(gpointer loop) {
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
 }
-
 
 #ifdef _WIN32
 struct signal_handler {
@@ -910,7 +913,6 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
 
 int main (int argc, char *argv[]) {
     std::vector<char> server_hw_addr;
-
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
     // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
     // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
@@ -1024,8 +1026,16 @@ int main (int argc, char *argv[]) {
 
     connections_stopped = true;
     relaunch:
-    if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
+    if (start_dnssd(server_hw_addr, server_name)) {
         return 1;
+    }
+    if (start_raop_server(display, tcp, udp, debug_log)) {
+        return 1;
+    }
+    if (register_dnssd()) {
+        stop_raop_server();
+        stop_dnssd();
+        return  1;
     }
     reconnect:
     counter = 0;
@@ -1045,7 +1055,6 @@ int main (int argc, char *argv[]) {
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
             video_renderer_start();
         }
-        if (reset_loop) goto reconnect;
         if (relaunch_video) {
             unsigned short port = raop_get_port(raop);
             raop_start(raop, &port);
@@ -1054,11 +1063,13 @@ int main (int argc, char *argv[]) {
         } else {
             LOGI("Re-launching RAOP server...");
             stop_raop_server();
+            stop_dnssd();
             goto relaunch;
         }
     } else {
         LOGI("Stopping...");
         stop_raop_server();
+	stop_dnssd();
     }
     if (use_audio) {
       audio_renderer_destroy();
@@ -1258,8 +1269,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 
 }
 
-int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                  unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
+int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
     int dnssd_error;
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
@@ -1303,20 +1313,37 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_set_log_callback(raop, log_callback, NULL);
     raop_set_log_level(raop, debug_log ? RAOP_LOG_DEBUG : LOGGER_INFO);
 
-    unsigned short port = raop_get_port(raop);
-    raop_start(raop, &port);
-    raop_set_port(raop, port);
+    raop_port = raop_get_port(raop);
+    raop_start(raop, &raop_port);
+    raop_set_port(raop, raop_port);
 
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
-    if (dnssd_error) {
-        LOGE("Could not initialize dnssd library!");
-        stop_raop_server();
+    if (tcp[2]) {
+        airplay_port = tcp[2];
+    } else {
+        /* is there a problem if this coincides with a randomly-selected tcp raop_mirror_data port? 
+         * probably not, as the airplay port is only used for initial client contact */
+        airplay_port = (raop_port != HIGHEST_PORT ? raop_port + 1 : raop_port - 1);
+    }
+    if (dnssd) {
+        raop_set_dnssd(raop, dnssd);
+    } else {
+        LOGE("raop_set failed to set dnssd");
         return -2;
     }
+    return 0;
+}
 
-    raop_set_dnssd(raop, dnssd);
+static void stop_raop_server () {
+    if (raop) {
+        raop_destroy(raop);
+        raop = NULL;
+    }
+    return;
+}
 
-    if ((dnssd_error = dnssd_register_raop(dnssd, port))) {
+static int register_dnssd() {
+    int dnssd_error;    
+    if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
         if (dnssd_error == -65537) {
              LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
         } else {
@@ -1324,35 +1351,44 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
                   "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
                   "(see Apple's dns_sd.h)", dnssd_error);
         }
-        stop_raop_server();
         return -3;
     }
-    if (tcp[2]) {
-        port = tcp[2];
-    } else {
-        port = (port != HIGHEST_PORT ? port + 1 : port - 1);
-    }
-    if ((dnssd_error = dnssd_register_airplay(dnssd, port))) {
+    if ((dnssd_error = dnssd_register_airplay(dnssd, airplay_port))) {
         LOGE("dnssd_register_airplay failed with error code %d\n"
              "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
              "(see Apple's dns_sd.h)", dnssd_error);
-        stop_raop_server();
         return -4;
     }
 
     return 0;
 }
 
-int stop_raop_server () {
-    if (raop) {
-        raop_destroy(raop);
-        raop = NULL;
-    }
+static void unregister_dnssd() {
     if (dnssd) {
         dnssd_unregister_raop(dnssd);
         dnssd_unregister_airplay(dnssd);
-        dnssd_destroy(dnssd);
-        dnssd = NULL;
+    }
+    return;
+}
+
+static int start_dnssd(std::vector<char> hw_addr, std::string name) {
+    int dnssd_error;
+    if (dnssd) {
+        stop_dnssd();
+    }
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    if (dnssd_error) {
+        LOGE("Could not initialize dnssd library!");
+        return 1;
     }
     return 0;
+}
+
+static void stop_dnssd() {
+    if (dnssd) {
+        unregister_dnssd();
+        dnssd_destroy(dnssd);
+        dnssd = NULL;
+	return;
+    }	
 }
