@@ -911,186 +911,6 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
     return 0;
 }
 
-int main (int argc, char *argv[]) {
-    std::vector<char> server_hw_addr;
-#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
-    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
-    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
-    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
-    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
-#endif
-
-    parse_arguments (argc, argv);
-
-#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
-    if (!debug_log) {
-      setbuf(stdout, NULL);
-    }
-#endif
-
-    LOGI("UxPlay %s: An Open-Source AirPlay mirroring and audio-streaming server.", VERSION);
-
-    if (audiosink == "0") {
-        use_audio = false;
-        dump_audio = false;
-    }
-    if (dump_video) {
-        if (video_dump_limit > 0) {
-             printf("dump video using \"-vdmp %d %s\"\n", video_dump_limit, video_dumpfile_name.c_str());
-	} else {
-             printf("dump video using \"-vdmp %s\"\n", video_dumpfile_name.c_str());
-        }
-    }
-    if (dump_audio) {
-        if (audio_dump_limit > 0) {
-            printf("dump audio using \"-admp %d %s\"\n", audio_dump_limit, audio_dumpfile_name.c_str());
-        } else {
-            printf("dump audio using \"-admp %s\"\n",  audio_dumpfile_name.c_str());
-        }
-    }
-
-#if __APPLE__
-    /* force use of -nc option on macOS */
-    LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
-    new_window_closing_behavior = false;
-    server_timeout = 0;
-#endif
-
-    if (videosink == "0") {
-        use_video = false;
-	videosink.erase();
-        videosink.append("fakesink");
-	LOGI("video_disabled");
-        display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
-    }
-
-    if (fullscreen && use_video) {
-        if (videosink == "waylandsink" || videosink == "vaapisink") {
-            videosink.append(" fullscreen=true");
-	}
-    }
-
-    if (videosink == "d3d11videosink"  && use_video) {
-        videosink.append(" fullscreen-toggle-mode=alt-enter");  
-        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
-               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
-    }
-
-    if (bt709_fix && use_video) {
-        video_parser.append(" ! ");
-        video_parser.append(BT709_FIX);
-    }
-
-    if (do_append_hostname) append_hostname(server_name);
-
-    if (!gstreamer_init()) {
-        LOGE ("stopping");
-        exit (1);
-    }
-
-    render_logger = logger_init();
-    logger_set_callback(render_logger, log_callback, NULL);
-    logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
-
-    if (use_audio) {
-        audio_renderer_init(render_logger, audiosink.c_str());
-    } else {
-        LOGI("audio_disabled");
-    }
-
-    if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
-        video_renderer_start();
-    }
-
-    if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
-                      udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
-
-    std::string mac_address;
-    if (!use_random_hw_addr) mac_address = find_mac();
-    if (mac_address.empty()) {
-        srand(time(NULL) * getpid());
-        mac_address = random_mac();
-        LOGI("using randomly-generated MAC address %s",mac_address.c_str());
-    } else {
-        LOGI("using system MAC address %s",mac_address.c_str());
-    }
-    parse_hw_addr(mac_address, server_hw_addr);
-    mac_address.clear();
-
-    if (coverart_filename.length()) {
-        LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());
-        write_coverart(coverart_filename.c_str(), (const void *) empty_image, sizeof(empty_image));
-    }
-
-    connections_stopped = true;
-    relaunch:
-    if (start_dnssd(server_hw_addr, server_name)) {
-        return 1;
-    }
-    if (start_raop_server(display, tcp, udp, debug_log)) {
-        return 1;
-    }
-    if (register_dnssd()) {
-        stop_raop_server();
-        stop_dnssd();
-        return  1;
-    }
-    reconnect:
-    counter = 0;
-    compression_type = 0;
-    close_window = new_window_closing_behavior; 
-    main_loop();
-    if (relaunch_server || relaunch_video || reset_loop) {
-        if(reset_loop) {
-            reset_loop = false;
-        } else {
-            raop_stop(raop);
-        }
-        if (use_audio) audio_renderer_stop();
-        if (use_video && close_window) {
-            video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
-            video_renderer_start();
-        }
-        if (relaunch_video) {
-            unsigned short port = raop_get_port(raop);
-            raop_start(raop, &port);
-            raop_set_port(raop, port);
-            goto reconnect;
-        } else {
-            LOGI("Re-launching RAOP server...");
-            stop_raop_server();
-            stop_dnssd();
-            goto relaunch;
-        }
-    } else {
-        LOGI("Stopping...");
-        stop_raop_server();
-	stop_dnssd();
-    }
-    if (use_audio) {
-      audio_renderer_destroy();
-    }
-    if (use_video)  {
-        video_renderer_destroy();
-    }
-    logger_destroy(render_logger);
-    render_logger = NULL;
-    if(audio_dumpfile) {
-        fclose(audio_dumpfile);
-    }
-    if (video_dumpfile) {
-        fwrite(mark, 1, sizeof(mark), video_dumpfile);
-        fclose(video_dumpfile);
-    }
-    if (coverart_filename.length()) {
-	remove (coverart_filename.c_str());
-    }
-}
-
 // Server callbacks
 extern "C" void conn_init (void *cls) {
     open_connections++;
@@ -1391,4 +1211,184 @@ static void stop_dnssd() {
         dnssd = NULL;
 	return;
     }	
+}
+
+int main (int argc, char *argv[]) {
+    std::vector<char> server_hw_addr;
+#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
+    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
+    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
+    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
+    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
+#endif
+
+    parse_arguments (argc, argv);
+
+#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
+    if (!debug_log) {
+      setbuf(stdout, NULL);
+    }
+#endif
+
+    LOGI("UxPlay %s: An Open-Source AirPlay mirroring and audio-streaming server.", VERSION);
+
+    if (audiosink == "0") {
+        use_audio = false;
+        dump_audio = false;
+    }
+    if (dump_video) {
+        if (video_dump_limit > 0) {
+             printf("dump video using \"-vdmp %d %s\"\n", video_dump_limit, video_dumpfile_name.c_str());
+	} else {
+             printf("dump video using \"-vdmp %s\"\n", video_dumpfile_name.c_str());
+        }
+    }
+    if (dump_audio) {
+        if (audio_dump_limit > 0) {
+            printf("dump audio using \"-admp %d %s\"\n", audio_dump_limit, audio_dumpfile_name.c_str());
+        } else {
+            printf("dump audio using \"-admp %s\"\n",  audio_dumpfile_name.c_str());
+        }
+    }
+
+#if __APPLE__
+    /* force use of -nc option on macOS */
+    LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
+    new_window_closing_behavior = false;
+    server_timeout = 0;
+#endif
+
+    if (videosink == "0") {
+        use_video = false;
+	videosink.erase();
+        videosink.append("fakesink");
+	LOGI("video_disabled");
+        display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
+    }
+
+    if (fullscreen && use_video) {
+        if (videosink == "waylandsink" || videosink == "vaapisink") {
+            videosink.append(" fullscreen=true");
+	}
+    }
+
+    if (videosink == "d3d11videosink"  && use_video) {
+        videosink.append(" fullscreen-toggle-mode=alt-enter");  
+        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
+               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
+    }
+
+    if (bt709_fix && use_video) {
+        video_parser.append(" ! ");
+        video_parser.append(BT709_FIX);
+    }
+
+    if (do_append_hostname) append_hostname(server_name);
+
+    if (!gstreamer_init()) {
+        LOGE ("stopping");
+        exit (1);
+    }
+
+    render_logger = logger_init();
+    logger_set_callback(render_logger, log_callback, NULL);
+    logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
+
+    if (use_audio) {
+        audio_renderer_init(render_logger, audiosink.c_str());
+    } else {
+        LOGI("audio_disabled");
+    }
+
+    if (use_video) {
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
+        video_renderer_start();
+    }
+
+    if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
+                      udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
+
+    std::string mac_address;
+    if (!use_random_hw_addr) mac_address = find_mac();
+    if (mac_address.empty()) {
+        srand(time(NULL) * getpid());
+        mac_address = random_mac();
+        LOGI("using randomly-generated MAC address %s",mac_address.c_str());
+    } else {
+        LOGI("using system MAC address %s",mac_address.c_str());
+    }
+    parse_hw_addr(mac_address, server_hw_addr);
+    mac_address.clear();
+
+    if (coverart_filename.length()) {
+        LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());
+        write_coverart(coverart_filename.c_str(), (const void *) empty_image, sizeof(empty_image));
+    }
+
+    connections_stopped = true;
+    relaunch:
+    if (start_dnssd(server_hw_addr, server_name)) {
+        return 1;
+    }
+    if (start_raop_server(display, tcp, udp, debug_log)) {
+        return 1;
+    }
+    if (register_dnssd()) {
+        stop_raop_server();
+        stop_dnssd();
+        return  1;
+    }
+    reconnect:
+    counter = 0;
+    compression_type = 0;
+    close_window = new_window_closing_behavior; 
+    main_loop();
+    if (relaunch_server || relaunch_video || reset_loop) {
+        if(reset_loop) {
+            reset_loop = false;
+        } else {
+            raop_stop(raop);
+        }
+        if (use_audio) audio_renderer_stop();
+        if (use_video && close_window) {
+            video_renderer_destroy();
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
+            video_renderer_start();
+        }
+        if (relaunch_video) {
+            unsigned short port = raop_get_port(raop);
+            raop_start(raop, &port);
+            raop_set_port(raop, port);
+            goto reconnect;
+        } else {
+            LOGI("Re-launching RAOP server...");
+            stop_raop_server();
+            stop_dnssd();
+            goto relaunch;
+        }
+    } else {
+        LOGI("Stopping...");
+        stop_raop_server();
+	stop_dnssd();
+    }
+    if (use_audio) {
+      audio_renderer_destroy();
+    }
+    if (use_video)  {
+        video_renderer_destroy();
+    }
+    logger_destroy(render_logger);
+    render_logger = NULL;
+    if(audio_dumpfile) {
+        fclose(audio_dumpfile);
+    }
+    if (video_dumpfile) {
+        fwrite(mark, 1, sizeof(mark), video_dumpfile);
+        fclose(video_dumpfile);
+    }
+    if (coverart_filename.length()) {
+	remove (coverart_filename.c_str());
+    }
 }
