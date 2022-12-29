@@ -387,7 +387,7 @@ running if the ssh session is closed. Terminal output is saved to FILE
 -   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
     Alma Linux):** (sudo dnf install, or sudo yum install) openssl-devel
     libplist-devel avahi-compat-libdns_sd-devel (some from the
-    "CodeReady" \[called "PowerTools" by clones\] add-on repository)
+    "CodeReady" add-on repository, called "PowerTools" by clones)
     (+libX11-devel for fullscreen X11, and "ZOOMFIX" if needed). The
     required GStreamer packages are: gstreamer1-devel
     gstreamer1-plugins-base-devel gstreamer1-libav
@@ -396,7 +396,7 @@ running if the ssh session is closed. Terminal output is saved to FILE
     from [rpmfusion.org](https://rpmfusion.org) (which provides packages
     including plugins that RedHat does not ship for license reasons).
     *\[In recent **Fedora**, the libav plugin package is renamed to
-    "gstreamer1-plugin-libav". which now needs the RPM Fusion package
+    "gstreamer1-plugin-libav", which now needs the RPM Fusion package
     ffmpeg-libs for the patent-encumbered code which RedHat does not
     provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
     as RPM Fusion; if this is not installed, uxplay will fail to start,
@@ -887,9 +887,24 @@ DNS-SD server was found, or a network problem. After starting uxplay,
 use the utility `avahi-browse -a -t` in a different terminal window on
 the server to verify that the UxPlay AirTunes and AirPlay services are
 correctly registered (only the AirTunes service is used in the "Legacy"
-AirPlay Mirror mode used by UxPlay). If the UxPlay service is listed by
-avahi-browse, but is not seen by the client, the problem is likely to be
-a problem with the local network.
+AirPlay Mirror mode used by UxPlay).
+
+The results returned by avahi-browse should show entries for uxplay like
+
+    +   eno1 IPv6 UxPlay                                        AirPlay Remote Video local
+    +   eno1 IPv4 UxPlay                                        AirPlay Remote Video local
+    +     lo IPv4 UxPlay                                        AirPlay Remote Video local
+    +   eno1 IPv6 863EA27598FE@UxPlay                           AirTunes Remote Audio local
+    +   eno1 IPv4 863EA27598FE@UxPlay                           AirTunes Remote Audio local
+    +     lo IPv4 863EA27598FE@UxPlay                           AirTunes Remote Audio local
+
+If only the loopback ("lo") entries are shown, a firewall on the UxPlay
+host is probably blocking full DNS-SD service, and you need to open the
+default UDP port 5353 for mDNS requests, as loopback-based DNS-SD
+service is unreliable.
+
+If the UxPlay service is listed by avahi-browse, but is not seen by the
+client, the problem is likely to be a problem with the local network.
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 

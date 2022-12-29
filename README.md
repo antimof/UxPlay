@@ -721,10 +721,30 @@ uncomment a line for airplay support._)
 
 If UxPlay stalls _without an error message_ and _without the server name showing on the client_, this is either pre-UxPlay-1.60
 behavior when no DNS-SD server was found, or a network problem.
-After starting uxplay, use the utility ```avahi-browse -a -t``` in a different terminal window on the server to
+After starting uxplay, use the utility ``avahi-browse -a -t`` in a different terminal window on the server to
 verify that the UxPlay AirTunes and AirPlay services are correctly registered (only the AirTunes service is
-used in the "Legacy" AirPlay Mirror mode  used by UxPlay).    If the UxPlay service is listed by avahi-browse, but is not seen by the client,
+used in the "Legacy" AirPlay Mirror mode  used by UxPlay).
+
+The results returned by avahi-browse should show entries for
+uxplay like
+
+
+```
++   eno1 IPv6 UxPlay                                        AirPlay Remote Video local
++   eno1 IPv4 UxPlay                                        AirPlay Remote Video local
++     lo IPv4 UxPlay                                        AirPlay Remote Video local
++   eno1 IPv6 863EA27598FE@UxPlay                           AirTunes Remote Audio local
++   eno1 IPv4 863EA27598FE@UxPlay                           AirTunes Remote Audio local
++     lo IPv4 863EA27598FE@UxPlay                           AirTunes Remote Audio local
+
+```
+If only the loopback ("lo") entries are shown, a firewall on the UxPlay host
+is probably blocking full DNS-SD service, and  you need to open the default UDP port 5353 for mDNS requests,
+as loopback-based DNS-SD service is unreliable.
+
+If the UxPlay service is listed by avahi-browse, but is not seen by the client,
 the problem is likely to be a problem with the local network.
+
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
