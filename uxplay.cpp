@@ -61,14 +61,6 @@
 #define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
 
 static std::string server_name = DEFAULT_NAME;
-static int start_dnssd(std::vector<char> hw_addr, std::string name);
-static void stop_dnssd();
-static int register_dnssd();
-static void unregister_dnssd();
-static int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log);
-static void stop_raop_server ();
-extern "C" void log_callback (void *cls, int level, const char *msg) ;
-
 static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
@@ -929,7 +921,6 @@ static int register_dnssd() {
              "(see Apple's dns_sd.h)", dnssd_error);
         return -4;
     }
-
     return 0;
 }
 
@@ -941,19 +932,6 @@ static void unregister_dnssd() {
     return;
 }
 
-static int start_dnssd(std::vector<char> hw_addr, std::string name) {
-    int dnssd_error;
-    if (dnssd) {
-        stop_dnssd();
-    }
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
-    if (dnssd_error) {
-        LOGE("Could not initialize dnssd library!");
-        return 1;
-    }
-    return 0;
-}
-
 static void stop_dnssd() {
     if (dnssd) {
         unregister_dnssd();
@@ -961,6 +939,20 @@ static void stop_dnssd() {
         dnssd = NULL;
 	return;
     }	
+}
+
+static int start_dnssd(std::vector<char> hw_addr, std::string name) {
+    int dnssd_error;
+    if (dnssd) {
+        LOGE("start_dnssd error: dnssd != NULL");
+        return 2;
+    }
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    if (dnssd_error) {
+        LOGE("Could not initialize dnssd library!");
+        return 1;
+    }
+    return 0;
 }
 
 // Server callbacks
@@ -1138,7 +1130,6 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
         default:
             break;
     }
-
 }
 
 int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
@@ -1327,7 +1318,7 @@ int main (int argc, char *argv[]) {
     }
 
     connections_stopped = true;
-    relaunch:
+    restart:
     if (start_dnssd(server_hw_addr, server_name)) {
         return 1;
     }
@@ -1366,7 +1357,7 @@ int main (int argc, char *argv[]) {
             LOGI("Re-launching RAOP server...");
             stop_raop_server();
             stop_dnssd();
-            goto relaunch;
+            goto restart;
         }
     } else {
         LOGI("Stopping...");
