@@ -911,6 +911,58 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
     return 0;
 }
 
+static int register_dnssd() {
+    int dnssd_error;    
+    if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
+        if (dnssd_error == -65537) {
+             LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
+        } else {
+             LOGE("dnssd_register_raop failed with error code %d\n"
+                  "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
+                  "(see Apple's dns_sd.h)", dnssd_error);
+        }
+        return -3;
+    }
+    if ((dnssd_error = dnssd_register_airplay(dnssd, airplay_port))) {
+        LOGE("dnssd_register_airplay failed with error code %d\n"
+             "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
+             "(see Apple's dns_sd.h)", dnssd_error);
+        return -4;
+    }
+
+    return 0;
+}
+
+static void unregister_dnssd() {
+    if (dnssd) {
+        dnssd_unregister_raop(dnssd);
+        dnssd_unregister_airplay(dnssd);
+    }
+    return;
+}
+
+static int start_dnssd(std::vector<char> hw_addr, std::string name) {
+    int dnssd_error;
+    if (dnssd) {
+        stop_dnssd();
+    }
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    if (dnssd_error) {
+        LOGE("Could not initialize dnssd library!");
+        return 1;
+    }
+    return 0;
+}
+
+static void stop_dnssd() {
+    if (dnssd) {
+        unregister_dnssd();
+        dnssd_destroy(dnssd);
+        dnssd = NULL;
+	return;
+    }	
+}
+
 // Server callbacks
 extern "C" void conn_init (void *cls) {
     open_connections++;
@@ -1159,58 +1211,6 @@ static void stop_raop_server () {
         raop = NULL;
     }
     return;
-}
-
-static int register_dnssd() {
-    int dnssd_error;    
-    if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
-        if (dnssd_error == -65537) {
-             LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
-        } else {
-             LOGE("dnssd_register_raop failed with error code %d\n"
-                  "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
-                  "(see Apple's dns_sd.h)", dnssd_error);
-        }
-        return -3;
-    }
-    if ((dnssd_error = dnssd_register_airplay(dnssd, airplay_port))) {
-        LOGE("dnssd_register_airplay failed with error code %d\n"
-             "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
-             "(see Apple's dns_sd.h)", dnssd_error);
-        return -4;
-    }
-
-    return 0;
-}
-
-static void unregister_dnssd() {
-    if (dnssd) {
-        dnssd_unregister_raop(dnssd);
-        dnssd_unregister_airplay(dnssd);
-    }
-    return;
-}
-
-static int start_dnssd(std::vector<char> hw_addr, std::string name) {
-    int dnssd_error;
-    if (dnssd) {
-        stop_dnssd();
-    }
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
-    if (dnssd_error) {
-        LOGE("Could not initialize dnssd library!");
-        return 1;
-    }
-    return 0;
-}
-
-static void stop_dnssd() {
-    if (dnssd) {
-        unregister_dnssd();
-        dnssd_destroy(dnssd);
-        dnssd = NULL;
-	return;
-    }	
 }
 
 int main (int argc, char *argv[]) {
