@@ -1,4 +1,4 @@
-# UxPlay 1.60: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.61: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -296,8 +296,10 @@ running, control it with
 avahi-daemon.service). If UxPlay is seen, but the client fails to
 connect when it is selected, there may be a firewall on the server that
 prevents UxPlay from receiving client connection requests unless some
-network ports are opened. See [Troubleshooting](#troubleshooting) below
-for help with this or other problems.
+network ports are opened: if a firewall is active, also open UDP port
+5353 (for mDNS queries) needed by Avahi. See
+[Troubleshooting](#troubleshooting) below for help with this or other
+problems.
 
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; the option `-nohold` modifies this behavior so
@@ -804,14 +806,9 @@ network interface detected) a random MAC address will be used even if
 option **-m** was not specified. (Note that a random MAC address will be
 different each time UxPlay is started).
 
-**-t *timeout*** will cause the server to relaunch (without stopping
-uxplay) if no connections have been present during the previous
-*timeout* seconds. You may wish to use this if the Server is not visible
-to new Clients that were inactive when the Server was launched, and an
-idle Bonjour registration eventually becomes unavailable for new
-connections (this is a workaround for what may be due to a problem with
-your DNS-SD or Avahi setup). *This option is currently disabled in
-macOS, for the same reason that requires the -nc option.*
+**-t *timeout*** \[This option was removed in UxPlay v.1.61.\] It was a
+workaround for an Avahi problem that occurs when there is a firewall and
+network port UDP 5353 (for mDNS queries) was not opened.
 
 **-vdmp** Dumps h264 video to file videodump.h264. -vdmp n dumps not
 more than n NAL units to videodump.x.h264; x= 1,2,... increases each
@@ -1062,6 +1059,11 @@ the client by the AirPlay server) to be set. The "features" code and
 other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+
+1.61 2022-12-30 Removed -t option (workaround for an Avahi issue,
+correctly solved by opening network port UDP 5353 in firewall). Remove
+-g debug flag from CMAKE_CFLAGS. Postpend (instead of prepend) build
+environment CFLAGS to CMAKE_CFLAGS. Refactor parts of uxplay.cpp
 
 1.60 2022-12-15 Added exit with error message if DNSServiceRegister
 fails (instead of just stalling). Test for Client's attempt to using
