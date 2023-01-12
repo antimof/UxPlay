@@ -1290,15 +1290,16 @@ int main (int argc, char *argv[]) {
 
     restart:
     if (start_dnssd(server_hw_addr, server_name)) {
-        return 1;
+        goto cleanup;
     }
     if (start_raop_server(display, tcp, udp, debug_log)) {
-        return 1;
+        stop_dnssd();
+        goto cleanup;
     }
     if (register_dnssd()) {
         stop_raop_server();
         stop_dnssd();
-        return  1;
+        goto cleanup;
     }
     reconnect:
     compression_type = 0;
@@ -1331,8 +1332,9 @@ int main (int argc, char *argv[]) {
     } else {
         LOGI("Stopping...");
         stop_raop_server();
-	stop_dnssd();
+        stop_dnssd();
     }
+    cleanup:
     if (use_audio) {
         audio_renderer_destroy();
     }
