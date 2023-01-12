@@ -838,10 +838,13 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
         printf("Title: ");
     }
 
-    for (int i = 0; i < datalen; i++) {
-        if (dmap_type == 9) {
-            printf("%c",(char) metadata[i]);
-        } else if (debug_log) {
+    if (dmap_type == 9) {
+        char *str = (char *) calloc(1, datalen + 1);
+        memcpy(str, metadata, datalen);
+        printf("%s", str);
+        free(str);
+    } else if (debug_log) {
+        for (int i = 0; i < datalen; i++) {
             if (i > 0 && i % 16 == 0) printf("\n");
             printf("%2.2x ", (int) metadata[i]);
         }
@@ -1183,9 +1186,10 @@ int main (int argc, char *argv[]) {
 
     parse_arguments (argc, argv);
 
-#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
+#ifdef _WIN32    /*  use utf-8 terminal output; don't buffer stdout in WIN32 when debug_log = false */
+    SetConsoleOutputCP(CP_UTF8);
     if (!debug_log) {
-      setbuf(stdout, NULL);
+        setbuf(stdout, NULL);
     }
 #endif
 
