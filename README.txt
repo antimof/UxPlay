@@ -2,9 +2,7 @@
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
-### Linux distributions providing prebuilt uxplay packages include Debian "testing" (Bookworm), Ubuntu (since 22.04), and Ubuntu derivatives (install with "`sudo apt install uxplay`"). To easily build latest UxPlay from source, or for guidance on required GStreamer plugins, see [Getting UxPlay](#getting-uxplay) below. Raspberry Pi users see [here](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
-
-Highlights:
+## Highlights:
 
 -   GPLv3, open source.
 
@@ -29,21 +27,54 @@ Highlights:
 
 -   Support for server behind a firewall.
 
--   **New**: Support for Raspberry Pi, with hardware video acceleration
-    using Video4Linux2 (v4l2), which supports both 32- and 64-bit
-    systems: this is the replacement for 32-bit-only OpenMAX (omx), no
-    longer actively supported by RPi distributions. (Until GStreamer
-    1.22 is released, a backport of changes from the GStreamer
-    development branch is needed: this has now been done by Raspberry Pi
-    OS (Bullseye); for other distributions a
-    [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
-    to the GStreamer Video4Linux2 plugin, available in the [UxPlay
-    Wiki](https://github.com/FDH2/UxPlay/wiki), is required.) See
-    [success
-    reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:).
+-   Support for Raspberry Pi, with hardware video acceleration using the
+    GStreamer Video4Linux2 (v4l2) plugin, which supports both 32- and
+    64-bit systems, as the replacement for unmaintained 32-bit OpenMAX
+    (omx). See [success
+    reports](https://github.com/FDH2/UxPlay/wiki/UxPlay-on-Raspberry-Pi:-success-reports:),
+    so far limited to distributions available through Raspberry-Pi
+    Imager.
 
 -   **New**: Support for running on Microsoft Windows (builds with the
     MinGW-64 compiler in the unix-like MSYS2 environment).
+
+## Packaging status (Linux and \*BSD distributions)
+
+[![Current Packaging
+status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repology.org/project/uxplay/versions).
+
+-   Install uxplay on Debian-based Linux systems with
+    "`sudo apt install uxplay`"; on FreeBSD with
+    "`sudo pkg install uxplay`".
+
+-   On Linux and \*BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local network
+    services needed by UxPlay are usually provided by Avahi: **if there
+    is a firewall on the server that will host UxPlay, make sure the
+    default network port for mDNS queries (UDP 5353) is open**. (Uxplay
+    can work without this port by using only the host's loopback
+    interface, but its visibility to clients will be degraded.) See the
+    [Troubleshooting](#troubleshooting) section below for more details.
+
+-   Even if you install your distribution's pre-compiled uxplay binary
+    package, you may need to read the instructions below for [running
+    UxPlay](#running-uxplay) to see which of your distribution's
+    **GStreamer plugin packages** you should also install.
+
+-   For Raspbery Pi (tested on RPi 4 model B, reported to work on RPi 3
+    model B+), only Raspberry Pi OS, plus the Debian and Manjaro
+    ARM-RPi4 Images made available through the Raspberry Pi Imager, are
+    known to provide the (out-of-mainline-kernel) kernel-module
+    **bcm2835-codec.ko** maintained by Rasperry Pi, and needed for
+    hardware-accelerated video decoding by the Broadcom GPU on the Pi,
+    accessed using the GStreamer Video4Linux (v4l2) plugin. In addition,
+    for Ubuntu and Manjaro, the v4l2 plugin needs a
+    [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
+    forGStreamer \< 1.22.
+
+-   To (easily) compile UxPlay from source, see the section [building
+    UxPlay](#building-uxplay).
+
+# Detailed description of UxPlay
 
 This project is a GPLv3 open source unix AirPlay2 Mirror server for
 Linux, macOS, and \*BSD. It was initially developed by
@@ -175,16 +206,6 @@ case, the issue is solved by linking with OpenSSL-3.0.0 or later.
 
 # Getting UxPlay
 
--   Your distribution may already provide a pre-built uxplay package. It
-    will be included in the next Debian release "Bookworm" (currently in
-    "testing" phase) and Ubuntu-22.04 already provides a uxplay-1.46
-    package based on this. Arch-based distributions also have AUR
-    self-building packages for both the latest UxPlay release and the
-    current GitHub version. (If you install a uxplay package, you may
-    also need to install some needed GStreamer plugin packages which
-    might not get installed as "requirements" : see below.) To build the
-    latest version yourself, follow the instructions below.
-
 Either download and unzip
 [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip),
 or (if git is installed): "git clone https://github.com/FDH2/UxPlay".
@@ -265,6 +286,29 @@ in the build directory after the build process, if you wish to test
 before installing (in which case the GStreamer plugins must already be
 installed)
 
+### Building on non-Debian Linux and \*BSD
+
+-   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
+    Alma Linux):** (sudo dnf instal, or sudo yum install) openssl-devel
+    libplist-devel avahi-compat-libdns_sd-devel (some from the
+    "CodeReady" add-on repository, called "PowerTools" by clones)
+    (+libX11-devel for fullscreen X11 and "ZOOMFIX" if needed).
+
+-   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
+    avahi-compat-mDNSResponder-devel (+ libX11-devel for fullscreen X11,
+    and ZOOMFIX if needed).
+
+-   **Arch Linux** (*Also available as a package in AUR*): (sudo pacman
+    -Syu) openssl libplist avahi gst-plugins-base.
+
+-   **FreeBSD:** (sudo pkg install) libplist gstreamer1. Either
+    avahi-libdns or mDNSResponder must also be installed to provide the
+    dns_sd library. OpenSSL is already installed as a System Library.
+
+## Running UxPlay
+
+### Debian-based systems
+
 Next install the GStreamer plugins that are needed with
 `sudo apt-get install gstreamer1.0-<plugin>`. Values of `<plugin>`
 required are:
@@ -320,6 +364,40 @@ video decoding if you need it, or just uninstall the GStreamer VAAPI
 plugin. If your system uses the Wayland compositor for graphics, use
 "`uxplay -vs waylandsink`".** See [Usage](#usage) for more run-time
 options.
+
+### Running uxplay Non-Debian-based Linux or \*BSD
+
+-   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
+    Alma Linux):** (sudo dnf install, or sudo yum install) The required
+    GStreamer packages are: gstreamer1-devel
+    gstreamer1-plugins-base-devel gstreamer1-libav
+    gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics);
+    you may need to get some of them (in particular gstreamer1-libav)
+    from [rpmfusion.org](https://rpmfusion.org) (which provides packages
+    including plugins that RedHat does not ship for license reasons).
+    *\[In recent **Fedora**, the libav plugin package is renamed to
+    "gstreamer1-plugin-libav", which now needs the RPM Fusion package
+    ffmpeg-libs for the patent-encumbered code which RedHat does not
+    provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
+    as RPM Fusion; if this is not installed, uxplay will fail to start,
+    with error: **no element "avdec_aac"** \]*.
+
+-   **OpenSUSE:** (sudo zypper install) The required GStreamer packages
+    are: gstreamer-devel gstreamer-plugins-base-devel
+    gstreamer-plugins-libav gstreamer-plugins-bad (+
+    gstreamer-plugins-vaapi for Intel graphics); in some cases, you may
+    need to use gstreamer packages for OpenSUSE from
+    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
+    "Essentials" (which provides packages including plugins that
+    OpenSUSE does not ship for license reasons).
+
+-   **Arch Linux** (sudo pacman -Syu) gst-plugins-good gst-plugins-bad
+    gst-libav (+ gstreamer-vaapi for Intel graphics).
+
+-   **FreeBSD:** (sudo pkg install) gstreamer1-libav,
+    gstreamer1-plugins, gstreamer1-plugins-\* (\* = core, good, bad, x,
+    gtk, gl, vulkan, pulse, v4l2, ...), (+ gstreamer1-vaapi for Intel
+    graphics).
 
 ### **Special instructions for Raspberry Pi (only tested on model 4B)**:
 
@@ -382,50 +460,7 @@ results.
 
 Sound and video will play on the remote host; "nohup" will keep uxplay
 running if the ssh session is closed. Terminal output is saved to FILE
-(which can be /dev/null to discard it).
-
-### Non-Debian-based Linux or \*BSD
-
--   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
-    Alma Linux):** (sudo dnf install, or sudo yum install) openssl-devel
-    libplist-devel avahi-compat-libdns_sd-devel (some from the
-    "CodeReady" add-on repository, called "PowerTools" by clones)
-    (+libX11-devel for fullscreen X11, and "ZOOMFIX" if needed). The
-    required GStreamer packages are: gstreamer1-devel
-    gstreamer1-plugins-base-devel gstreamer1-libav
-    gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for intel graphics);
-    you may need to get some of them (in particular gstreamer1-libav)
-    from [rpmfusion.org](https://rpmfusion.org) (which provides packages
-    including plugins that RedHat does not ship for license reasons).
-    *\[In recent **Fedora**, the libav plugin package is renamed to
-    "gstreamer1-plugin-libav", which now needs the RPM Fusion package
-    ffmpeg-libs for the patent-encumbered code which RedHat does not
-    provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
-    as RPM Fusion; if this is not installed, uxplay will fail to start,
-    with error: **no element "avdec_aac"** \]*.
-
--   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
-    avahi-compat-mDNSResponder-devel (+ libX11-devel for fullscreen X11,
-    and ZOOMFIX if needed). The required GStreamer packages are:
-    gstreamer-devel gstreamer-plugins-base-devel gstreamer-plugins-libav
-    gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
-    graphics); in some cases, you may need to use gstreamer packages for
-    OpenSUSE from
-    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
-    "Essentials" (which provides packages including plugins that
-    OpenSUSE does not ship for license reasons).
-
--   **Arch Linux** (sudo pacman -Syu) openssl libplist avahi
-    gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav (+
-    gstreamer-vaapi for Intel graphics). (**Also available as a package
-    in AUR**).
-
--   **FreeBSD:** (sudo pkg install) libplist gstreamer1,
-    gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-\* (\* =
-    core, good, bad, x, gtk, gl, vulkan, pulse, v4l2, ...), (+
-    gstreamer1-vaapi for Intel graphics). Either avahi-libdns or
-    mDNSResponder must also be installed to provide the dns_sd library.
-    OpenSSL is already installed as a System Library.
+(which can be /dev/null to discard it)
 
 ## Building UxPlay on macOS: **(Intel X86_64 and "Apple Silicon" M1/M2 Macs)**
 
@@ -459,8 +494,8 @@ Next get the latest macOS release of GStreamer-1.0.
 
 **For the "official" release**: install both the macOS runtime and
 development installer packages. Assuming that the latest release is
-1.20.4. install `gstreamer-1.0-1.20.4-universal.pkg` and
-`gstreamer-1.0-devel-1.20.4-universal.pkg`. (If you have an
+1.20.4. install `gstreamer-1.0-1.20.5-universal.pkg` and
+`gstreamer-1.0-devel-1.20.5-universal.pkg`. (If you have an
 Intel-architecture Mac, and have problems with the "universal" packages,
 you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
 `gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
@@ -486,11 +521,10 @@ make install" (same as for Linux).
     apps (e.g., Zoom). The only available audiosink seems to be
     osxaudiosink.
 
--   The option -t *timeout* is currently suppressed, and the option -nc
-    is always used, whether or not it is selected. This is a workaround
-    for a problem with GStreamer videosinks on macOS: if the GStreamer
-    pipeline is destroyed while the mirror window is still open, a
-    segfault occurs.
+-   The option -nc is always used, whether or not it is selected. This
+    is a workaround for a problem with GStreamer videosinks on macOS: if
+    the GStreamer pipeline is destroyed while the mirror window is still
+    open, a segfault occurs.
 
 -   In the case of glimagesink, the resolution settings "-s wxh" do not
     affect the (small) initial OpenGL mirror window size, but the window
@@ -1262,8 +1296,10 @@ they created:
 
 UxPlay was initially created by **antimof** from RPiPlay, by replacing
 its Raspberry-Pi-adapted OpenMAX video and audio rendering system with
-GStreamer rendering for desktop Linux systems (antimof's work on code in
-`renderers/` was later backported to RPiPlay).
+GStreamer rendering for desktop Linux systems; antimof's work on code in
+`renderers/` was later backported to RPiPlay, and the antimof project
+became dormant, but was later revived at the current GitHub site to
+serve a wider community of users.
 
 The previous authors of code included in UxPlay by inheritance from
 RPiPlay include:
