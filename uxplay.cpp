@@ -51,7 +51,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.60"
+#define VERSION "1.61"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -61,22 +61,13 @@
 #define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
 
 static std::string server_name = DEFAULT_NAME;
-static int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                 unsigned short tcp[3], unsigned short udp[3], bool debug_log);
-static int stop_raop_server ();
-extern "C" void log_callback (void *cls, int level, const char *msg) ;
-
 static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
 
 static bool relaunch_video = false;
-static bool relaunch_server = false;
 static bool reset_loop = false;
-static unsigned int open_connections = 0;
-static bool connections_stopped = false;
-static unsigned int server_timeout = 0;
-static unsigned int counter;
+static unsigned int open_connections= 0;
 static std::string videosink = "autovideosink";
 static videoflip_t videoflip[2] = { NONE , NONE };
 static bool use_video = true;
@@ -113,6 +104,8 @@ static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
 static bool bt709_fix = false;
 static int max_connections = 2;
+static unsigned short raop_port;
+static unsigned short airplay_port;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -130,8 +123,7 @@ size_t write_coverart(const char *filename, const void *image, size_t len) {
     return count;
 }
   
-
-void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
+static void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
         char suffix[20];
         std::string fn = audio_dumpfile_name;
@@ -165,7 +157,7 @@ void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     }
 }
 
-void dump_video_to_file(unsigned char *data, int datalen) {
+static void dump_video_to_file(unsigned char *data, int datalen) {
     /*  SPS NAL has (data[4] & 0x1f) = 0x07  */
     if ((data[4] & 0x1f) == 0x07  && video_dumpfile && video_dump_limit) {
         fwrite(mark, 1, sizeof(mark), video_dumpfile);
@@ -199,20 +191,6 @@ void dump_video_to_file(unsigned char *data, int datalen) {
     }
 }
 
-static gboolean connection_callback (gpointer loop){
-    if (!connections_stopped) {
-        counter = 0;
-    } else {
-        if (++counter == server_timeout) {
-            LOGD("no connections for %d seconds: relaunch server",server_timeout);
-            relaunch_server = true;
-            relaunch_video = false;
-            g_main_loop_quit((GMainLoop *) loop);
-        }
-    }
-    return TRUE;
-}
-
 static gboolean reset_callback(gpointer loop) {
     if (reset_loop) {
         g_main_loop_quit((GMainLoop *) loop);
@@ -222,18 +200,15 @@ static gboolean reset_callback(gpointer loop) {
 
 static gboolean  sigint_callback(gpointer loop) {
     relaunch_video = false;
-    relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
 }
 
 static gboolean  sigterm_callback(gpointer loop) {
     relaunch_video = false;
-    relaunch_server = false;
     g_main_loop_quit((GMainLoop *) loop);
     return TRUE;
 }
-
 
 #ifdef _WIN32
 struct signal_handler {
@@ -260,11 +235,7 @@ static void main_loop()  {
     guint connection_watch_id = 0;
     guint gst_bus_watch_id = 0;
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
-    if (server_timeout) {
-        connection_watch_id = g_timeout_add_seconds(1, (GSourceFunc) connection_callback, (gpointer) loop);
-    }
     relaunch_video = false;
-    relaunch_server = false;
     if (use_video) {
         relaunch_video = true;
         gst_bus_watch_id = (guint) video_renderer_listen((void *)loop);
@@ -278,7 +249,6 @@ static void main_loop()  {
     if (sigint_watch_id > 0) g_source_remove(sigint_watch_id);
     if (sigterm_watch_id > 0) g_source_remove(sigterm_watch_id);
     if (reset_watch_id > 0) g_source_remove(reset_watch_id);
-    if (connection_watch_id > 0) g_source_remove(connection_watch_id);
     g_main_loop_unref(loop);
 }    
 
@@ -425,7 +395,6 @@ static void print_info (char *name) {
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
-    printf("-t n      Relaunch server if no connection existed in last n seconds\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
     printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
     printf("          x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n\n");
@@ -662,13 +631,9 @@ static void parse_arguments (int argc, char *argv[]) {
             audiosink.erase();
             audiosink.append(argv[++i]);
         } else if (arg == "-t") {
-            if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
-            server_timeout = 0;
-            bool valid = get_value(argv[++i], &server_timeout);
-            if (!valid || server_timeout == 0) {
-                fprintf(stderr,"invalid \"-t %s\", must have -t n with  n > 0\n",argv[i]);
-                exit(1);
-            }
+            fprintf(stderr,"The uxplay option \"-t\" has been removed: it was a workaround for an  Avahi issue.\n");
+            fprintf(stderr,"The correct solution is to open network port UDP 5353 in the firewall for mDNS queries\n");
+            exit(1);
         } else if (arg == "-nc") {
             new_window_closing_behavior = false;
         } else if (arg == "-avdec") {
@@ -873,10 +838,13 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
         printf("Title: ");
     }
 
-    for (int i = 0; i < datalen; i++) {
-        if (dmap_type == 9) {
-            printf("%c",(char) metadata[i]);
-        } else if (debug_log) {
+    if (dmap_type == 9) {
+        char *str = (char *) calloc(1, datalen + 1);
+        memcpy(str, metadata, datalen);
+        printf("%s", str);
+        free(str);
+    } else if (debug_log) {
+        for (int i = 0; i < datalen; i++) {
             if (i > 0 && i % 16 == 0) printf("\n");
             printf("%2.2x ", (int) metadata[i]);
         }
@@ -908,182 +876,61 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
     return 0;
 }
 
-int main (int argc, char *argv[]) {
-    std::vector<char> server_hw_addr;
-
-#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
-    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
-    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
-    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
-    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
-#endif
-
-    parse_arguments (argc, argv);
-
-#ifdef _WIN32    /* don't buffer stdout in WIN32 when debug_log = false */
-    if (!debug_log) {
-      setbuf(stdout, NULL);
-    }
-#endif
-
-    LOGI("UxPlay %s: An Open-Source AirPlay mirroring and audio-streaming server.", VERSION);
-
-    if (audiosink == "0") {
-        use_audio = false;
-        dump_audio = false;
-    }
-    if (dump_video) {
-        if (video_dump_limit > 0) {
-             printf("dump video using \"-vdmp %d %s\"\n", video_dump_limit, video_dumpfile_name.c_str());
-	} else {
-             printf("dump video using \"-vdmp %s\"\n", video_dumpfile_name.c_str());
-        }
-    }
-    if (dump_audio) {
-        if (audio_dump_limit > 0) {
-            printf("dump audio using \"-admp %d %s\"\n", audio_dump_limit, audio_dumpfile_name.c_str());
+static int register_dnssd() {
+    int dnssd_error;    
+    if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
+        if (dnssd_error == -65537) {
+             LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
         } else {
-            printf("dump audio using \"-admp %s\"\n",  audio_dumpfile_name.c_str());
+             LOGE("dnssd_register_raop failed with error code %d\n"
+                  "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
+                  "(see Apple's dns_sd.h)", dnssd_error);
         }
+        return -3;
     }
-
-#if __APPLE__
-    /* force use of -nc option on macOS */
-    LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
-    new_window_closing_behavior = false;
-    server_timeout = 0;
-#endif
-
-    if (videosink == "0") {
-        use_video = false;
-	videosink.erase();
-        videosink.append("fakesink");
-	LOGI("video_disabled");
-        display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
+    if ((dnssd_error = dnssd_register_airplay(dnssd, airplay_port))) {
+        LOGE("dnssd_register_airplay failed with error code %d\n"
+             "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
+             "(see Apple's dns_sd.h)", dnssd_error);
+        return -4;
     }
+    return 0;
+}
 
-    if (fullscreen && use_video) {
-        if (videosink == "waylandsink" || videosink == "vaapisink") {
-            videosink.append(" fullscreen=true");
-	}
+static void unregister_dnssd() {
+    if (dnssd) {
+        dnssd_unregister_raop(dnssd);
+        dnssd_unregister_airplay(dnssd);
     }
+    return;
+}
 
-    if (videosink == "d3d11videosink"  && use_video) {
-        videosink.append(" fullscreen-toggle-mode=alt-enter");  
-        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
-               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
+static void stop_dnssd() {
+    if (dnssd) {
+        unregister_dnssd();
+        dnssd_destroy(dnssd);
+        dnssd = NULL;
+	return;
+    }	
+}
+
+static int start_dnssd(std::vector<char> hw_addr, std::string name) {
+    int dnssd_error;
+    if (dnssd) {
+        LOGE("start_dnssd error: dnssd != NULL");
+        return 2;
     }
-
-    if (bt709_fix && use_video) {
-        video_parser.append(" ! ");
-        video_parser.append(BT709_FIX);
-    }
-
-    if (do_append_hostname) append_hostname(server_name);
-
-    if (!gstreamer_init()) {
-        LOGE ("stopping");
-        exit (1);
-    }
-
-    render_logger = logger_init();
-    logger_set_callback(render_logger, log_callback, NULL);
-    logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
-
-    if (use_audio) {
-        audio_renderer_init(render_logger, audiosink.c_str());
-    } else {
-        LOGI("audio_disabled");
-    }
-
-    if (use_video) {
-        video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
-        video_renderer_start();
-    }
-
-    if (udp[0]) LOGI("using network ports UDP %d %d %d TCP %d %d %d",
-                      udp[0],udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
-
-    std::string mac_address;
-    if (!use_random_hw_addr) mac_address = find_mac();
-    if (mac_address.empty()) {
-        srand(time(NULL) * getpid());
-        mac_address = random_mac();
-        LOGI("using randomly-generated MAC address %s",mac_address.c_str());
-    } else {
-        LOGI("using system MAC address %s",mac_address.c_str());
-    }
-    parse_hw_addr(mac_address, server_hw_addr);
-    mac_address.clear();
-
-    if (coverart_filename.length()) {
-        LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());
-        write_coverart(coverart_filename.c_str(), (const void *) empty_image, sizeof(empty_image));
-    }
-
-    connections_stopped = true;
-    relaunch:
-    if (start_raop_server(server_hw_addr, server_name, display, tcp, udp, debug_log)) {
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    if (dnssd_error) {
+        LOGE("Could not initialize dnssd library!");
         return 1;
     }
-    reconnect:
-    counter = 0;
-    compression_type = 0;
-    close_window = new_window_closing_behavior; 
-    main_loop();
-    if (relaunch_server || relaunch_video || reset_loop) {
-        if(reset_loop) {
-            reset_loop = false;
-        } else {
-            raop_stop(raop);
-        }
-        if (use_audio) audio_renderer_stop();
-        if (use_video && close_window) {
-            video_renderer_destroy();
-            video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
-            video_renderer_start();
-        }
-        if (reset_loop) goto reconnect;
-        if (relaunch_video) {
-            unsigned short port = raop_get_port(raop);
-            raop_start(raop, &port);
-            raop_set_port(raop, port);
-            goto reconnect;
-        } else {
-            LOGI("Re-launching RAOP server...");
-            stop_raop_server();
-            goto relaunch;
-        }
-    } else {
-        LOGI("Stopping...");
-        stop_raop_server();
-    }
-    if (use_audio) {
-      audio_renderer_destroy();
-    }
-    if (use_video)  {
-        video_renderer_destroy();
-    }
-    logger_destroy(render_logger);
-    render_logger = NULL;
-    if(audio_dumpfile) {
-        fclose(audio_dumpfile);
-    }
-    if (video_dumpfile) {
-        fwrite(mark, 1, sizeof(mark), video_dumpfile);
-        fclose(video_dumpfile);
-    }
-    if (coverart_filename.length()) {
-	remove (coverart_filename.c_str());
-    }
+    return 0;
 }
 
 // Server callbacks
 extern "C" void conn_init (void *cls) {
     open_connections++;
-    connections_stopped = false;
     //LOGD("Open connections: %i", open_connections);
     //video_renderer_update_background(1);
 }
@@ -1092,9 +939,6 @@ extern "C" void conn_destroy (void *cls) {
     //video_renderer_update_background(-1);
     open_connections--;
     //LOGD("Open connections: %i", open_connections);
-    if (!open_connections) {
-        connections_stopped = true;
-    }
 }
 
 extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
@@ -1135,9 +979,9 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
 }
 
 extern "C" void audio_flush (void *cls) {
-  if (use_audio) {
-      audio_renderer_flush();
-  }
+    if (use_audio) {
+        audio_renderer_flush();
+    }
 }
 
 extern "C" void video_flush (void *cls) {
@@ -1255,11 +1099,9 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
         default:
             break;
     }
-
 }
 
-int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned short display[5],
-                  unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
+int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
     int dnssd_error;
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
@@ -1303,56 +1145,216 @@ int start_raop_server (std::vector<char> hw_addr, std::string name, unsigned sho
     raop_set_log_callback(raop, log_callback, NULL);
     raop_set_log_level(raop, debug_log ? RAOP_LOG_DEBUG : LOGGER_INFO);
 
-    unsigned short port = raop_get_port(raop);
-    raop_start(raop, &port);
-    raop_set_port(raop, port);
+    raop_port = raop_get_port(raop);
+    raop_start(raop, &raop_port);
+    raop_set_port(raop, raop_port);
 
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
-    if (dnssd_error) {
-        LOGE("Could not initialize dnssd library!");
-        stop_raop_server();
+    if (tcp[2]) {
+        airplay_port = tcp[2];
+    } else {
+        /* is there a problem if this coincides with a randomly-selected tcp raop_mirror_data port? 
+         * probably not, as the airplay port is only used for initial client contact */
+        airplay_port = (raop_port != HIGHEST_PORT ? raop_port + 1 : raop_port - 1);
+    }
+    if (dnssd) {
+        raop_set_dnssd(raop, dnssd);
+    } else {
+        LOGE("raop_set failed to set dnssd");
         return -2;
     }
-
-    raop_set_dnssd(raop, dnssd);
-
-    if ((dnssd_error = dnssd_register_raop(dnssd, port))) {
-        if (dnssd_error == -65537) {
-             LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
-        } else {
-             LOGE("dnssd_register_raop failed with error code %d\n"
-                  "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
-                  "(see Apple's dns_sd.h)", dnssd_error);
-        }
-        stop_raop_server();
-        return -3;
-    }
-    if (tcp[2]) {
-        port = tcp[2];
-    } else {
-        port = (port != HIGHEST_PORT ? port + 1 : port - 1);
-    }
-    if ((dnssd_error = dnssd_register_airplay(dnssd, port))) {
-        LOGE("dnssd_register_airplay failed with error code %d\n"
-             "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
-             "(see Apple's dns_sd.h)", dnssd_error);
-        stop_raop_server();
-        return -4;
-    }
-
     return 0;
 }
 
-int stop_raop_server () {
+static void stop_raop_server () {
     if (raop) {
         raop_destroy(raop);
         raop = NULL;
     }
-    if (dnssd) {
-        dnssd_unregister_raop(dnssd);
-        dnssd_unregister_airplay(dnssd);
-        dnssd_destroy(dnssd);
-        dnssd = NULL;
+    return;
+}
+
+int main (int argc, char *argv[]) {
+    std::vector<char> server_hw_addr;
+    std::string mac_address;
+
+#ifdef SUPPRESS_AVAHI_COMPAT_WARNING
+    // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
+    // if  getenv("AVAHI_COMPAT_NOWARN") returns null.
+    static char avahi_compat_nowarn[] = "AVAHI_COMPAT_NOWARN=1";
+    if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
+#endif
+
+    parse_arguments (argc, argv);
+
+#ifdef _WIN32    /*  use utf-8 terminal output; don't buffer stdout in WIN32 when debug_log = false */
+    SetConsoleOutputCP(CP_UTF8);
+    if (!debug_log) {
+        setbuf(stdout, NULL);
     }
-    return 0;
+#endif
+
+    LOGI("UxPlay %s: An Open-Source AirPlay mirroring and audio-streaming server.", VERSION);
+
+    if (audiosink == "0") {
+        use_audio = false;
+        dump_audio = false;
+    }
+    if (dump_video) {
+        if (video_dump_limit > 0) {
+             printf("dump video using \"-vdmp %d %s\"\n", video_dump_limit, video_dumpfile_name.c_str());
+	} else {
+             printf("dump video using \"-vdmp %s\"\n", video_dumpfile_name.c_str());
+        }
+    }
+    if (dump_audio) {
+        if (audio_dump_limit > 0) {
+            printf("dump audio using \"-admp %d %s\"\n", audio_dump_limit, audio_dumpfile_name.c_str());
+        } else {
+            printf("dump audio using \"-admp %s\"\n",  audio_dumpfile_name.c_str());
+        }
+    }
+
+#if __APPLE__
+    /* force use of -nc option on macOS */
+    LOGI("macOS detected: use -nc option as workaround for GStreamer problem");
+    new_window_closing_behavior = false;
+#endif
+
+    if (videosink == "0") {
+        use_video = false;
+	videosink.erase();
+        videosink.append("fakesink");
+	LOGI("video_disabled");
+        display[3] = 1; /* set fps to 1 frame per sec when no video will be shown */
+    }
+
+    if (fullscreen && use_video) {
+        if (videosink == "waylandsink" || videosink == "vaapisink") {
+            videosink.append(" fullscreen=true");
+	}
+    }
+
+    if (videosink == "d3d11videosink"  && use_video) {
+        videosink.append(" fullscreen-toggle-mode=alt-enter");  
+        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
+               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
+    }
+
+    if (bt709_fix && use_video) {
+        video_parser.append(" ! ");
+        video_parser.append(BT709_FIX);
+    }
+
+    if (do_append_hostname) {
+        append_hostname(server_name);
+    }
+
+    if (!gstreamer_init()) {
+        LOGE ("stopping");
+        exit (1);
+    }
+
+    render_logger = logger_init();
+    logger_set_callback(render_logger, log_callback, NULL);
+    logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
+
+    if (use_audio) {
+        audio_renderer_init(render_logger, audiosink.c_str());
+    } else {
+        LOGI("audio_disabled");
+    }
+
+    if (use_video) {
+        video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
+        video_renderer_start();
+    }
+
+    if (udp[0]) {
+        LOGI("using network ports UDP %d %d %d TCP %d %d %d", udp[0], udp[1], udp[2], tcp[0], tcp[1], tcp[2]);
+    }
+
+    if (!use_random_hw_addr) {
+        mac_address = find_mac();
+    }
+    if (mac_address.empty()) {
+        srand(time(NULL) * getpid());
+        mac_address = random_mac();
+        LOGI("using randomly-generated MAC address %s",mac_address.c_str());
+    } else {
+        LOGI("using system MAC address %s",mac_address.c_str());
+    }
+    parse_hw_addr(mac_address, server_hw_addr);
+    mac_address.clear();
+
+    if (coverart_filename.length()) {
+        LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());
+        write_coverart(coverart_filename.c_str(), (const void *) empty_image, sizeof(empty_image));
+    }
+
+    restart:
+    if (start_dnssd(server_hw_addr, server_name)) {
+        goto cleanup;
+    }
+    if (start_raop_server(display, tcp, udp, debug_log)) {
+        stop_dnssd();
+        goto cleanup;
+    }
+    if (register_dnssd()) {
+        stop_raop_server();
+        stop_dnssd();
+        goto cleanup;
+    }
+    reconnect:
+    compression_type = 0;
+    close_window = new_window_closing_behavior; 
+    main_loop();
+    if (relaunch_video || reset_loop) {
+        if(reset_loop) {
+            reset_loop = false;
+        } else {
+            raop_stop(raop);
+        }
+        if (use_audio) audio_renderer_stop();
+        if (use_video && close_window) {
+            video_renderer_destroy();
+            video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
+            video_renderer_start();
+        }
+        if (relaunch_video) {
+            unsigned short port = raop_get_port(raop);
+            raop_start(raop, &port);
+            raop_set_port(raop, port);
+            goto reconnect;
+        } else {
+            LOGI("Re-launching RAOP server...");
+            stop_raop_server();
+            stop_dnssd();
+            goto restart;
+        }
+    } else {
+        LOGI("Stopping...");
+        stop_raop_server();
+        stop_dnssd();
+    }
+    cleanup:
+    if (use_audio) {
+        audio_renderer_destroy();
+    }
+    if (use_video)  {
+        video_renderer_destroy();
+    }
+    logger_destroy(render_logger);
+    render_logger = NULL;
+    if(audio_dumpfile) {
+        fclose(audio_dumpfile);
+    }
+    if (video_dumpfile) {
+        fwrite(mark, 1, sizeof(mark), video_dumpfile);
+        fclose(video_dumpfile);
+    }
+    if (coverart_filename.length()) {
+	remove (coverart_filename.c_str());
+    }
 }

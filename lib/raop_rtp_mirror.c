@@ -320,7 +320,7 @@ raop_rtp_mirror_thread(void *arg)
              * be the only ones with packet[5] = 0x10, and almost always have packet[5] = 0x10,  *
              * but occasionally have packet[5] = 0x00.                                           */
 
-            /* unencrypted SPS/PPS packets have packet[4:7] = 0x01 0x00 0x01 0x16                *
+            /* unencrypted SPS/PPS packets have packet[4:7] = 0x01 0x00 (0x16 or 0x56) 0x01      *
              * they are followed by an encrypted packet with the same timestamp in packet[8:15]  */
 
             /* "streaming report" packages have packet[4:7] = 0x05 0x00 0x00 0x00, and have no    *
@@ -453,6 +453,10 @@ raop_rtp_mirror_thread(void *arg)
             case 0x01:
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
+                if (payload_size == 0) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror, discard type 0x01 packet with no payload");
+                    break;
+                }
                 ntp_timestamp_nal = byteutils_get_long(packet, 8);
                 float width = byteutils_get_float(packet, 16);
                 float height = byteutils_get_float(packet, 20);
