@@ -60,18 +60,20 @@ binary package, you may need to read the instructions below for <a
 href="#running-uxplay">running UxPlay</a> to see which of your
 distribution’s <strong>GStreamer plugin packages</strong> you should
 also install.</p></li>
-<li><p>For Raspbery Pi (tested on RPi 4 model B, reported to work on RPi
-3 model B+), only Raspberry Pi OS, plus the Debian and Manjaro ARM-RPi4
-Images made available through the Raspberry Pi Imager, are known to
-provide the (out-of-mainline-kernel) kernel-module
-<strong>bcm2835-codec.ko</strong> maintained by Rasperry Pi, and needed
-for hardware-accelerated video decoding by the Broadcom GPU on the Pi,
-accessed using the GStreamer Video4Linux (v4l2) plugin. In addition, for
-Ubuntu and Manjaro, the v4l2 plugin needs a <a
+<li><p>For Raspberry Pi (tested on RPi 4 model B, reported to work on
+RPi 3 model B+), only Raspberry Pi OS, plus the Debian and Manjaro
+ARM-RPi4 Images made available through the Raspberry Pi Imager, are
+known to provide the (out-of-mainline-kernel) kernel-module
+<strong>bcm2835-codec.ko</strong> <a
+href="https://github.com/raspberrypi/linux/tree/rpi-5.15.y/drivers/staging/vc04_services">maintained
+by Raspberry Pi</a>, and needed for hardware-accelerated video decoding
+by the Broadcom GPU on the Pi, accessed using the GStreamer Video4Linux
+(v4l2) plugin. In addition, for Ubuntu and Manjaro, the v4l2 plugin
+needs a <a
 href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">patch</a>
 forGStreamer &lt; 1.22.</p></li>
 <li><p>To (easily) compile UxPlay from source, see the section <a
-href="#building-uxplay">building UxPlay</a>.</p></li>
+href="#getting-uxplay">Getting UxPlay</a>.</p></li>
 </ul>
 <h1 id="detailed-description-of-uxplay">Detailed description of
 UxPlay</h1>

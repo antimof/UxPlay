@@ -34,17 +34,21 @@
 * Install uxplay on Debian-based Linux systems with "`sudo apt install uxplay`"; on FreeBSD with "``sudo pkg install uxplay``".
 
 * On Linux and  \*BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local network services needed by UxPlay are usually provided by Avahi: **if
-there is a firewall on the server that will host UxPlay, make sure the default network port for mDNS queries (UDP 5353) is open**. (Uxplay can work without this port by using
-only the host's loopback interface, but its visibility to clients will be degraded.)  See the [Troubleshooting](#troubleshooting) section below for more details.
+there is a firewall on the server that will host UxPlay, make sure the default network port for mDNS queries (UDP 5353) is open**. (Uxplay
+can work without this port by using only the host's loopback interface, but its visibility to clients will be
+degraded.)  See the [Troubleshooting](#troubleshooting) section below for more details.
 
 * Even if you install your distribution's pre-compiled uxplay binary package, you may need to read the instructions below
 for [running UxPlay](#running-uxplay) to see which of your distribution's **GStreamer plugin packages** you should also install.
 
-* For Raspbery Pi (tested on RPi 4 model B, reported to work on RPi 3 model B+), only Raspberry Pi OS, plus the Debian and Manjaro ARM-RPi4 Images made available through the Raspberry Pi Imager, are known to provide the (out-of-mainline-kernel)
-kernel-module **bcm2835-codec.ko** maintained by Rasperry Pi, and needed for hardware-accelerated video decoding by the Broadcom GPU on the Pi, accessed using the GStreamer Video4Linux (v4l2) plugin.   In addition,
+* For Raspberry Pi (tested on RPi 4 model B, reported to work on RPi 3 model B+), only Raspberry Pi OS, plus the Debian
+and Manjaro ARM-RPi4 Images made available through the Raspberry Pi Imager, are known to provide the (out-of-mainline-kernel)
+kernel-module **bcm2835-codec.ko** [maintained by Raspberry Pi](https://github.com/raspberrypi/linux/tree/rpi-5.15.y/drivers/staging/vc04_services),
+and needed for hardware-accelerated video decoding by
+the Broadcom GPU on the Pi, accessed using the GStreamer Video4Linux (v4l2) plugin.   In addition,
 for Ubuntu and Manjaro, the v4l2 plugin needs a [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) forGStreamer < 1.22.
 
-* To (easily) compile UxPlay from source, see the section [building UxPlay](#building-uxplay).
+* To (easily) compile UxPlay from source, see the section [Getting UxPlay](#getting-uxplay).
 
 # Detailed description of UxPlay
 
