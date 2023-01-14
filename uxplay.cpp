@@ -765,7 +765,7 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
         printf("%d: dmap_tag [%s], %d\n", count, dmap_tag, datalen);
     }
 
-    /* String-type DMAP tags seen in Apple Music Radio are processed here.   *
+    /* UTF-8 String-type DMAP tags seen in Apple Music Radio are processed here.   *
      * (DMAP tags "asal", "asar", "ascp", "asgn", "minm" ). TODO expand this */  
     
     if (datalen == 0) {
@@ -842,6 +842,10 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
                 printf("Format: ");
             } else if (strcmp (dmap_tag, "asgn") == 0) {
                 printf("Genre: ");
+            } else if (strcmp (dmap_tag, "asky") == 0) {
+                printf("Keywords: ");
+            } else if (strcmp (dmap_tag, "aslc") == 0) {
+                printf("Long Content Description: ");
             } else {
                 dmap_type = 0;
             }
