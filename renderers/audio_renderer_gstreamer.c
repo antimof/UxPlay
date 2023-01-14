@@ -80,7 +80,7 @@ static audio_renderer_t *renderer = NULL;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
-void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink, const char* audio_delay) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     logger = render_logger;
@@ -89,14 +89,19 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
         g_assert(renderer_type[i]);
         GString *launch = g_string_new("appsrc name=audio_source ! ");
-        g_string_append(launch, "queue ! ");
+        g_string_append(launch, "queue ");
         switch (i) {
         case 0:    /* AAC-ELD */
         case 2:    /* AAC-LC */
-            g_string_append(launch, "avdec_aac ! ");
+            g_string_append(launch, "! avdec_aac ! ");
             break;
         case 1:    /* ALAC */
-            g_string_append(launch, "avdec_alac ! ");
+            if (audio_delay[0]) {
+                g_string_append(launch, "min-threshold-time=");
+                g_string_append(launch, audio_delay);
+                g_string_append(launch, "000000 ");
+            }
+            g_string_append(launch, "! avdec_alac ! ");
             break;
         case 3:   /*PCM*/
             break;
@@ -113,7 +118,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
           g_error ("gst_parse_launch error (audio %d):\n %s\n", i+1, error->message);
           g_clear_error (&error);
         }
-        g_string_free(launch, TRUE);
+
         g_assert (renderer_type[i]->pipeline);
  
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
@@ -142,7 +147,9 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         default:
             break;
         }
-        logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
+        logger_log(logger, LOGGER_DEBUG, "Audio format %d: %s",i+1,format[i]);
+        logger_log(logger, LOGGER_DEBUG, "GStreamer audio pipeline %d: \"%s\"", i+1, launch->str);
+        g_string_free(launch, TRUE);
         g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
         gst_caps_unref(caps);
     }

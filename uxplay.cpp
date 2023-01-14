@@ -73,6 +73,7 @@ static videoflip_t videoflip[2] = { NONE , NONE };
 static bool use_video = true;
 static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
+static std::string audiodelay = "";
 static bool use_audio = true;
 static bool new_window_closing_behavior = true;
 static bool close_window;
@@ -735,6 +736,19 @@ static void parse_arguments (int argc, char *argv[]) {
             bt709_fix = true;
         } else if (arg == "-nohold") {
             max_connections = 3;
+        } else if (arg == "-ad") {
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                unsigned int n = 0;
+                if (get_value (argv[++i], &n)) {
+                    audiodelay.erase();
+                    if (n > 0) {
+                        audiodelay = argv[i];
+                    }
+                }
+            } else {
+                LOGE("option -ad must be followed by a positive time delay in millisecs");
+                exit(1);
+            }
         } else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
@@ -1259,7 +1273,10 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
     if (use_audio) {
-        audio_renderer_init(render_logger, audiosink.c_str());
+        if (audiodelay.c_str()[0]) {
+            LOGI("Audio-only ALAC streams will be delayed by %s millisecs", audiodelay.c_str());
+        }
+        audio_renderer_init(render_logger, audiosink.c_str(), audiodelay.c_str());
     } else {
         LOGI("audio_disabled");
     }
