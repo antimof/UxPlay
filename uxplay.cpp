@@ -542,7 +542,7 @@ static void append_hostname(std::string &server_name) {
 #endif
 }
 
-static void parse_arguments (int argc, char *argv[]) {    
+static void parse_arguments (int argc, char *argv[]) {
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
@@ -647,14 +647,14 @@ static void parse_arguments (int argc, char *argv[]) {
             video_converter = "videoconvert";
         } else if (arg == "-v4l2" || arg == "-rpi") {
             if (arg == "-rpi") {
-                printf("*** -rpi no longer includes -bt709: add it if needed\n");
+                LOGI("*** -rpi no longer includes -bt709: add it if needed");
             }
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
         } else if (arg == "-rpifb") {
-            printf("*** -rpifb no longer includes -bt709: add it if needed\n");
+            LOGI("*** -rpifb no longer includes -bt709: add it if needed");
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -662,7 +662,7 @@ static void parse_arguments (int argc, char *argv[]) {
             videosink.erase();
             videosink = "kmssink";
         } else if (arg == "-rpigl") {
-            printf("*** -rpigl does not include -bt709: add it if needed\n");
+            LOGI("*** -rpigl does not include -bt709: add it if needed");
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -670,7 +670,7 @@ static void parse_arguments (int argc, char *argv[]) {
             videosink.erase();
             videosink = "glimagesink";
         } else if (arg == "-rpiwl" ) {
-            printf("*** -rpiwl no longer includes -bt709: add it if needed\n");
+            LOGI("*** -rpiwl no longer includes -bt709: add it if needed");
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
@@ -730,7 +730,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 coverart_filename.erase();
                 coverart_filename.append(argv[++i]);
             } else {
-                LOGE("option -ca must be followed by a filename for cover-art output");
+                fprintf(stderr,"option -ca must be followed by a filename for cover-art output\n");
                 exit(1);
             }
         } else if (arg == "-bt709") {
@@ -753,11 +753,11 @@ static void parse_arguments (int argc, char *argv[]) {
                     continue;
                 }
             }
-            LOGE("invalid argument -ao %s: must be a decimal time offset in seconds, range [0,10]\n"
-                 "(like 5 or 4.8, which will be converted to a whole number of milliseconds)", argv[i]);
+            fprintf(stderr, "invalid argument -ao %s: must be a decimal time offset in seconds, range [0,10]\n"
+                    "(like 5 or 4.8, which will be converted to a whole number of milliseconds)\n", argv[i]);
             exit(1);
 	} else {
-            LOGE("unknown option %s, stopping\n",argv[i]);
+            fprintf(stderr, "unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
     }
