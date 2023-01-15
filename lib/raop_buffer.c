@@ -154,11 +154,11 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 
     if (DECRYPTION_TEST) {
         char *str = utils_data_to_string(data,12,12);
-        printf("encrypted 12 byte header %s", str);
+        logger_log(raop_buffer->logger, LOGGER_INFO, "encrypted 12 byte header %s", str);
         free(str);
         if (payload_size) {
             str = utils_data_to_string(&data[12],16,16);
-            printf("len %d before decryption:\n%s", payload_size, str);
+            logger_log(raop_buffer->logger, LOGGER_INFO, "len %d before decryption:\n%s", payload_size, str);
             free(str);
         }
     }
@@ -181,18 +181,17 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
         case 0x20:
 	    break;
         default:
-            printf("***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC\n");
+            logger_log(raop_buffer->logger, LOGGER_INFO, "***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC");
 	    break;
         }
         if (DECRYPTION_TEST == 2) {
-            printf("decrypted audio frame, len = %d\n", *outputlen);
+            logger_log(raop_buffer->logger, LOGGER_INFO, "decrypted audio frame, len = %d", *outputlen);
             char *str = utils_data_to_string(output,payload_size,16);
-	    printf("%s",str);
-            printf("\n");
+            logger_log(raop_buffer->logger, LOGGER_INFO,"%s",str);
             free(str);
         } else {
             char *str = utils_data_to_string(output,16,16);
-            printf("%d after  \n%s\n", payload_size, str);
+            logger_log(raop_buffer->logger, LOGGER_INFO, "%d after  \n%s", payload_size, str);
             free(str);
         }
     }
