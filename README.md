@@ -1,4 +1,4 @@
-# UxPlay 1.61:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.62:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -255,7 +255,7 @@ OpenSSL is already installed as a System Library.
 
 ## Running UxPlay
 
-### Debian-based systems
+### Installing plugins (Debian-based Linux systems)
 
 Next install the GStreamer plugins that are needed with `sudo apt-get install gstreamer1.0-<plugin>`.
 Values of `<plugin>` required are: 
@@ -274,41 +274,8 @@ Also install "**tools**" to get the utility gst-inspect-1.0 for
 examining the GStreamer installation.  If sound is not working, "**alsa**"", "**pulseaudio**",
 or "**pipewire**" plugins may need to be installed, depending on how your audio is set up.
 
-**Finally, run uxplay in a terminal window**. On some systems, you can toggle into and out of fullscreen mode
-with F11 or (held-down left Alt)+Enter keys.  Use Ctrl-C (or close the window)
-to terminate it when done. If the UxPlay server is not seen by the
-iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
-server (usually avahi-daemon) is running: do this in a terminal window
-with ```systemctl status avahi-daemon```.
-If this shows the avahi-daemon is not running, control it
-with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or
-avahi-daemon.service). If UxPlay is seen, but the client fails to connect
-when it is selected, there may be a firewall on the server that  prevents
-UxPlay from receiving client connection requests unless some network ports
-are opened: if a firewall is active, also open UDP port 5353 (for mDNS queries)
-needed by Avahi. See [Troubleshooting](#troubleshooting) below for
-help with this or other problems.
 
-* By default, UxPlay is locked to
-its current client until that client drops the connection; the option `-nohold` modifies this
-behavior so that when a new client requests a connection, it removes the current client and takes over.
-
-To display the accompanying "Cover Art" from sources like Apple Music in Audio-Only (ALAC) mode,
-run "`uxplay -ca <name> &`" in the background, then run a image viewer with an autoreload feature: an example
-is "feh": run "``feh -R 1 <name>``"
-in the foreground; terminate feh and then Uxplay with "`ctrl-C fg ctrl-C`".
-
-
-**One common problem involves GStreamer
-attempting to use incorrectly-configured or absent accelerated hardware h264
-video decoding (e.g., VAAPI).
-Try "`uxplay -avdec`" to force software video decoding; if this works you can
-then try to fix accelerated hardware video decoding if you need it, or just uninstall the GStreamer VAAPI plugin. If
-your system uses the Wayland compositor for graphics, use "`uxplay -vs waylandsink`".**
-See [Usage](#usage) for more run-time options.
-
-
-### Running uxplay Non-Debian-based Linux or \*BSD
+### Installing plugins (Non-Debian-based Linux or \*BSD)
 
 * **Red Hat, or clones like CentOS (now continued as Rocky Linux or Alma Linux):** 
 (sudo dnf install, or sudo yum install) The required GStreamer packages are:
@@ -337,6 +304,48 @@ for Intel graphics).
  * **FreeBSD:** (sudo pkg install)  gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
 (\* = core, good,  bad, x, gtk, gl, vulkan, pulse, v4l2,  ...), (+ gstreamer1-vaapi for Intel graphics).
 
+
+### Starting UxPlay 
+
+**Finally, run uxplay in a terminal window**. On some systems, you can toggle into and out of fullscreen mode
+with F11 or (held-down left Alt)+Enter keys.  Use Ctrl-C (or close the window)
+to terminate it when done. If the UxPlay server is not seen by the
+iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
+server (usually avahi-daemon) is running: do this in a terminal window
+with ```systemctl status avahi-daemon```.
+If this shows the avahi-daemon is not running, control it
+with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or
+avahi-daemon.service). If UxPlay is seen, but the client fails to connect
+when it is selected, there may be a firewall on the server that  prevents
+UxPlay from receiving client connection requests unless some network ports
+are opened: if a firewall is active, also open UDP port 5353 (for mDNS queries)
+needed by Avahi. See [Troubleshooting](#troubleshooting) below for
+help with this or other problems.
+
+* By default, UxPlay is locked to
+its current client until that client drops the connection; the option `-nohold` modifies this
+behavior so that when a new client requests a connection, it removes the current client and takes over.
+
+* To display the accompanying "Cover Art" from sources like Apple Music in Audio-Only (ALAC) mode,
+run "`uxplay -ca <name> &`" in the background, then run a image viewer with an autoreload feature: an example
+is "feh": run "``feh -R 1 <name>``"
+in the foreground; terminate feh and then Uxplay with "`ctrl-C fg ctrl-C`".
+
+* If you wish to listen in Audio-Only mode on the server while watching the client screen (for video or Apple Music song lyrics, etc.),
+the video on the client is delayed by about 5 seconds behind the the audio on the server.  This can be corrected with
+the **audio offset** option `-ao x` with an _x_ of about 5.0
+(allowed values of _x_ are decimal numbers between 0 and 10.0 seconds); this workaround just delays playing of audio on the server by _x_ seconds, so the effect
+of pausing or changing tracks on the client will unfortunately also be delayed.    _(The reason for the 5 sec.  video delay on the client
+may be because, while streaming in Legacy mode, the client does not get latency information from the
+server.)_
+
+**One common problem involves GStreamer
+attempting to use incorrectly-configured or absent accelerated hardware h264
+video decoding (e.g., VAAPI).
+Try "`uxplay -avdec`" to force software video decoding; if this works you can
+then try to fix accelerated hardware video decoding if you need it, or just uninstall the GStreamer VAAPI plugin. If
+your system uses the Wayland compositor for graphics, use "`uxplay -vs waylandsink`".**
+See [Usage](#usage) for more run-time options.
 
 
 ### **Special instructions for Raspberry Pi (only tested on model 4B)**:
@@ -411,7 +420,7 @@ Next get the latest macOS release of GStreamer-1.0.
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).  The alternative is to install it from Homebrew
 (MacPorts also supplies it, but compiled to use X11).
 
-**For the "official" release**: install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.4.
+**For the "official" release**: install both the macOS runtime and development installer packages. Assuming that the latest release is 1.20.5.
 install `gstreamer-1.0-1.20.5-universal.pkg` and ``gstreamer-1.0-devel-1.20.5-universal.pkg``.  (If
 you have an Intel-architecture Mac, and  have problems with the "universal" packages, you can also
 use `gstreamer-1.0-1.18.6-x86_64.pkg` and ``gstreamer-1.0-devel-1.18.6-x86_64.pkg``.)   Click on them to
@@ -645,6 +654,12 @@ which will not work if a firewall is running.
    (Some choices of audiosink might not work on your system.)   
 
 **-as 0**  (or just **-a**) suppresses playing of streamed audio, but displays streamed video.
+
+**-ao x.y** adds an audio offset time in (decimal) seconds to Audio-only (ALAC) streams to allow synchronization of sound
+   playing on the UxPlay server with video on the client.  In the AirPlay Legacy mode used by UxPlay, the client cannot
+   obtain audio latency information from the server, and appears to assume a latency of about 5 seconds.  This can be corrected
+   with offset values such as `-ao 5` or ``-ao 4.9``.   The -ao option accepts values of the offset between 0 and 10 seconds, as
+   a decimal number which it converts to a whole number of milliseconds.
 
 **-ca _filename_** provides a file (where _filename_ can include a full path) used for output of "cover art"
    (from Apple Music, _etc._,) in audio-only ALAC mode.   This file is overwritten with the latest cover art as
@@ -894,6 +909,10 @@ tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (l
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+1.62 2023-01-14   Added Audio-only mode time offset -ao x to allow user synchronization of ALAC
+                  audio playing on the server with video, song lyrics, etc. playing on the client.
+                  x = 5.0 appears to be optimal in many cases.
+
 1.61 2022-12-30   Removed -t option (workaround for an Avahi issue, correctly solved by opening network
                   port UDP 5353 in firewall).  Remove -g debug flag from CMAKE_CFLAGS. Postpend (instead 
                   of prepend) build environment CFLAGS to CMAKE_CFLAGS.  Refactor parts of uxplay.cpp

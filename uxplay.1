@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "December 2022" "1.61" "User Commands"
+.TH UXPLAY "1" "January 2023" "1.62" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.61: An open\-source AirPlay mirroring (+ audio streaming) server.
+UxPlay 1.62: An open\-source AirPlay mirroring (+ audio streaming) server.
 .SH OPTIONS
 .TP
 .B
@@ -72,6 +72,8 @@ UxPlay 1.61: An open\-source AirPlay mirroring (+ audio streaming) server.
 .PP
 .TP
 \fB\-as\fR 0     (or \fB\-a\fR) Turn audio off, streamed video only.
+.TP
+\fB\-ao\fR x.y   Audio offset time in seconds (default 0.0) in Audio-only mode.
 .TP
 \fB\-ca\fI fn \fR   In Airplay Audio (ALAC) mode, write cover-art to file fn.
 .TP

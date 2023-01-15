@@ -51,7 +51,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.61"
+#define VERSION "1.62"
 
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
@@ -387,6 +387,7 @@ static void print_info (char *name) {
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
+    printf("-ao x.y   Audio offset time in seconds (default 0.0) in Audio-only mode.\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");
@@ -736,20 +737,26 @@ static void parse_arguments (int argc, char *argv[]) {
             bt709_fix = true;
         } else if (arg == "-nohold") {
             max_connections = 3;
-        } else if (arg == "-ad") {
+        } else if (arg == "-ao") {
+	    int n;
+            char *end;
             if (i < argc - 1 && *argv[i+1] != '-') {
-                unsigned int n = 0;
-                if (get_value (argv[++i], &n)) {
+                n = (int) (1000 * strtof(argv[++i], &end));
+                if (*end == '\0' && n >=0 && n <= 10000) {
                     audiodelay.erase();
                     if (n > 0) {
-                        audiodelay = argv[i];
+                        char* delay = new char[6];
+                        snprintf(delay, 6, "%d", n);
+                        audiodelay = delay;
+                        delete[] delay;
                     }
+                    continue;
                 }
-            } else {
-                LOGE("option -ad must be followed by a positive time delay in millisecs");
-                exit(1);
             }
-        } else {
+            LOGE("invalid argument -ao %s: must be a decimal time offset in seconds, range [0,10]\n"
+                 "(like 5 or 4.8, which will be converted to a whole number of milliseconds)", argv[i]);
+            exit(1);
+	} else {
             LOGE("unknown option %s, stopping\n",argv[i]);
             exit(1);
         }
@@ -1278,7 +1285,7 @@ int main (int argc, char *argv[]) {
 
     if (use_audio) {
         if (audiodelay.c_str()[0]) {
-            LOGI("Audio-only ALAC streams will be delayed by %s millisecs", audiodelay.c_str());
+            LOGI("Audio-only ALAC streams will be delayed by %s milliseconds", audiodelay.c_str());
         }
         audio_renderer_init(render_logger, audiosink.c_str(), audiodelay.c_str());
     } else {
