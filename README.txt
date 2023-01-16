@@ -1122,7 +1122,8 @@ other settings are set in `UxPlay/lib/dnssdint.h`.
 1.62 2023-01-14 Added Audio-only mode time offset -ao x to allow user
 synchronization of ALAC audio playing on the server with video, song
 lyrics, etc. playing on the client. x = 5.0 appears to be optimal in
-many cases.
+many cases. Quality fixes: change default fps to 60, cleanup in volume
+changes, some bugfixes.
 
 1.61 2022-12-30 Removed -t option (workaround for an Avahi issue,
 correctly solved by opening network port UDP 5353 in firewall). Remove
