@@ -342,7 +342,7 @@ raop_rtp_process_events(raop_rtp_t *raop_rtp, void *cb_data)
 
     /* Call set_volume callback if changed */
     if (volume_changed) {
-        raop_buffer_flush(raop_rtp->buffer, flush);
+        //raop_buffer_flush(raop_rtp->buffer, flush); /* seems to be unnecessary, may cause audio artefacts */
         if (raop_rtp->callbacks.audio_set_volume) {
             raop_rtp->callbacks.audio_set_volume(raop_rtp->callbacks.cls, volume);
         }
