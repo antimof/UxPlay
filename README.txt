@@ -839,7 +839,7 @@ updated by the client at 1 second intervals.
 **-fps n** sets a maximum frame rate (in frames per second) for the
 AirPlay client to stream video; n must be a whole number less than 256.
 (The client may choose to serve video at any frame rate lower than this;
-default is 30 fps.) A setting below 30 fps might be useful to reduce
+default is 60 fps.) A setting below 60 fps might be useful to reduce
 latency if you are running more than one instance of uxplay at the same
 time. *This setting is only an advisory to the client device, so setting
 a high value will not force a high framerate.* (You can test using "-vs

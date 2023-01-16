@@ -393,7 +393,7 @@ static void print_info (char *name) {
     printf("-nc       do Not Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
-    printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
+    printf("-fps n    Set maximum allowed streaming framerate, default 60\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
