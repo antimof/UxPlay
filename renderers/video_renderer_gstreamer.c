@@ -26,6 +26,8 @@
 #include "x_display_fix.h"
 static bool fullscreen = false;
 static bool alt_keypress = false;
+#define MAX_X11_SEARCH_ATTEMPTS 5   /*should be less than 256 */
+static unsigned char X11_search_attempts; 
 #endif
 
 struct video_renderer_s {
@@ -168,15 +170,22 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
     bool x_display_fix = false;
-    if (strcmp(videosink,"autovideosink") == 0 ||
-        strcmp(videosink,"ximagesink") ==  0 ||
-        strcmp(videosink,"xvimagesink") == 0) {
+    /* only include X11 videosinks that provide fullscreen mode, or need ZOOMFIX */
+    /* limit searching for X11 Windows in case autovideosink selects an incompatible videosink */
+    if (strncmp(videosink,"autovideosink", strlen("autovideosink")) == 0 ||
+        strncmp(videosink,"ximagesink", strlen("ximagesink")) ==  0 ||
+	strncmp(videosink,"xvimagesink", strlen("xvimagesink")) == 0 ||
+	strncmp(videosink,"fpsdisplaysink", strlen("fpsdisplaysink")) == 0 ) {
         x_display_fix = true;
     }
     if (x_display_fix) {
         renderer->gst_window = calloc(1, sizeof(X11_Window_t));
         g_assert(renderer->gst_window);
         get_X11_Display(renderer->gst_window);
+        if (!renderer->gst_window->display) {
+            free(renderer->gst_window);
+            renderer->gst_window = NULL;
+        }
     }
 #endif
     gst_element_set_state (renderer->pipeline, GST_STATE_READY);
@@ -196,6 +205,9 @@ void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
     first_packet = true;
+#ifdef X_DISPLAY_FIX
+    X11_search_attempts = 0;
+#endif
 }
 
 void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
@@ -218,13 +230,17 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
         gst_buffer_fill(buffer, 0, data, data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
-        if (renderer->gst_window && !(renderer->gst_window->window)) {
+        if (renderer->gst_window && !(renderer->gst_window->window) && X11_search_attempts < MAX_X11_SEARCH_ATTEMPTS) {
+            X11_search_attempts++;
+            logger_log(logger, LOGGER_DEBUG, "Looking for X11 UxPlay Window, attempt %d", (int) X11_search_attempts);
             get_x_window(renderer->gst_window, renderer->server_name);
 	    if (renderer->gst_window->window) {
                 logger_log(logger, LOGGER_INFO, "\n*** X11 Windows: Use key F11 or (left Alt)+Enter to toggle full-screen mode\n");
                 if (fullscreen) {
                     set_fullscreen(renderer->gst_window, &fullscreen);
                 }
+            } else if (X11_search_attempts == MAX_X11_SEARCH_ATTEMPTS) {
+	      logger_log(logger, LOGGER_DEBUG, "X11 UxPlay Window not found in %d search attempts", MAX_X11_SEARCH_ATTEMPTS);
             }
         }
 #endif
