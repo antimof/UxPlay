@@ -370,12 +370,14 @@ client’s drop-down “Screen Mirroring” panel, check that your DNS-SD
 server (usually avahi-daemon) is running: do this in a terminal window
 with <code>systemctl status avahi-daemon</code>. If this shows the
 avahi-daemon is not running, control it with
-<code>sudo systemctl [start,stop,enable,disable] avahi-daemon</code> (or
-avahi-daemon.service). If UxPlay is seen, but the client fails to
-connect when it is selected, there may be a firewall on the server that
-prevents UxPlay from receiving client connection requests unless some
-network ports are opened: if a firewall is active, also open UDP port
-5353 (for mDNS queries) needed by Avahi. See <a
+<code>sudo systemctl [start,stop,enable,disable] avahi-daemon</code> (on
+non-systemd systems, such as *BSD, use
+<code>sudo service avahi-daemon [status, start, stop, restart, ...]</code>).
+If UxPlay is seen, but the client fails to connect when it is selected,
+there may be a firewall on the server that prevents UxPlay from
+receiving client connection requests unless some network ports are
+opened: if a firewall is active, also open UDP port 5353 (for mDNS
+queries) needed by Avahi. See <a
 href="#troubleshooting">Troubleshooting</a> below for help with this or
 other problems.</p>
 <ul>

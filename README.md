@@ -314,9 +314,10 @@ iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
 server (usually avahi-daemon) is running: do this in a terminal window
 with ```systemctl status avahi-daemon```.
 If this shows the avahi-daemon is not running, control it
-with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (or
-avahi-daemon.service). If UxPlay is seen, but the client fails to connect
-when it is selected, there may be a firewall on the server that  prevents
+with ```sudo systemctl [start,stop,enable,disable] avahi-daemon``` (on non-systemd systems, such as  \*BSD,
+use ``sudo service avahi-daemon [status, start, stop, restart, ...]``). If UxPlay is
+seen, but the client fails to connect
+when it is selected, there may be a firewall on the server that prevents
 UxPlay from receiving client connection requests unless some network ports
 are opened: if a firewall is active, also open UDP port 5353 (for mDNS queries)
 needed by Avahi. See [Troubleshooting](#troubleshooting) below for
