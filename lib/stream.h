@@ -22,7 +22,7 @@ typedef struct {
     int nal_count;
     unsigned char *data;
     int data_len;
-    uint64_t pts;
+    uint64_t ntp_time;
 } h264_decode_struct;
 
 typedef struct {

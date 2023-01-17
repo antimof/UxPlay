@@ -999,7 +999,7 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
         dump_video_to_file(data->data, data->data_len);
     }
     if (use_video) {
-        video_renderer_render_buffer(ntp, data->data, data->data_len, data->pts, data->nal_count);
+        video_renderer_render_buffer(ntp, data->data, data->data_len, data->ntp_time, data->nal_count);
     }
 }
 

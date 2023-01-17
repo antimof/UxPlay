@@ -101,13 +101,14 @@ static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
 
-/* apple uses colorimetry=1:3:5:1 (not recognized by gstreamer v4l2)  *
+/* apple uses colorimetry=1:3:5:1                                *
+ * (not recognized by v4l2 plugin in Gstreamer  < 1.20.4)        *
  * See .../gst-libs/gst/video/video-color.h in gst-plugins-base  *
  * range = 1   -> GST_VIDEO_COLOR_RANGE_0_255      ("full RGB")  * 
  * matrix = 3  -> GST_VIDEO_COLOR_MATRIX_BT709                   *
  * transfer = 5 -> GST_VIDEO_TRANSFER_BT709                      *
  * primaries = 1 -> GST_VIDEO_COLOR_PRIMARIES_BT709              *
- * closest is BT709, 2:3:5:1 with                                *
+ * closest used by  GStreamer < 1.20.4 is BT709, 2:3:5:1 with    *                            *
  * range = 2 -> GST_VIDEO_COLOR_RANGE_16_235 ("limited RGB")     */  
 
 static const char h264_caps[]="video/x-h264,stream-format=(string)byte-stream,alignment=(string)au";
@@ -210,7 +211,7 @@ void video_renderer_start() {
 #endif
 }
 
-void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count) {
+void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time, int nal_count) {
     GstBuffer *buffer;
     g_assert(data_len != 0);
     /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
@@ -224,9 +225,10 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
             logger_log(logger, LOGGER_INFO, "Begin streaming to GStreamer video pipeline");
             first_packet = false;
         }
-        buffer = gst_buffer_new_and_alloc(data_len);
+        buffer = gst_buffer_new_allocate(NULL, data_len, NULL);
         g_assert(buffer != NULL);
-        GST_BUFFER_PTS(buffer) = (GstClockTime) pts;
+        /* ntp_time is PTS given as UTC in usec */
+        GST_BUFFER_PTS(buffer) = (GstClockTime) (ntp_time * 1000);
         gst_buffer_fill(buffer, 0, data, data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX

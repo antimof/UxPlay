@@ -203,9 +203,10 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
      *                   but is 0x80, 0x81 or 0x82: 0x100000(00,01,10) in ios9, ios10 devices          *
      * first byte of AAC_LC should be 0xff (ADTS) (but has never been  seen).                          */
     
-    buffer = gst_buffer_new_and_alloc(data_len);
+    buffer = gst_buffer_new_allocate(NULL, data_len, NULL);
     g_assert(buffer != NULL);
-    GST_BUFFER_PTS(buffer) = (GstClockTime) ntp_time;
+    /* ntp_time is PTS given as UTC in usec */
+    GST_BUFFER_PTS(buffer) = (GstClockTime) (ntp_time * 1000);
     gst_buffer_fill(buffer, 0, data, data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/
