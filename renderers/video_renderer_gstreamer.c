@@ -97,6 +97,7 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
 }	
 
 static video_renderer_t *renderer = NULL;
+static GstClockTime gst_video_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
@@ -125,6 +126,9 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
                           const char *decoder, const char *converter, const char *videosink, const bool *initial_fullscreen) {
     GError *error = NULL;
     GstCaps *caps = NULL;
+    GstClock *clock = gst_system_clock_obtain();
+    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_MONOTONIC, NULL);
+
     logger = render_logger;
 
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
@@ -155,13 +159,15 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
         g_clear_error (&error);
     }
     g_assert (renderer->pipeline);
-    g_string_free(launch, TRUE);
+    gst_pipeline_use_clock(GST_PIPELINE_CAST(renderer->pipeline), clock);
 
     renderer->appsrc = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_source");
     g_assert(renderer->appsrc);
     caps = gst_caps_from_string(h264_caps);
     g_object_set(renderer->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
+    g_string_free(launch, TRUE);
     gst_caps_unref(caps);
+    gst_object_unref(clock);
 
     renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
     g_assert(renderer->sink);
@@ -204,6 +210,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 
 void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+    gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
     renderer->bus = gst_element_get_bus(renderer->pipeline);
     first_packet = true;
 #ifdef X_DISPLAY_FIX
@@ -211,8 +218,15 @@ void video_renderer_start() {
 #endif
 }
 
-void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time, int nal_count) {
+void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_count, uint64_t *pts_raw) {
     GstBuffer *buffer;
+    GstClockTime pts = (GstClockTime) *pts_raw;
+    if (pts >= gst_video_pipeline_base_time) {
+        pts -= gst_video_pipeline_base_time;
+    } else {
+        logger_log(logger, LOGGER_ERR, "*** invalid *pts_raw < gst_video_pipeline_base_time") ;
+        return;
+    }
     g_assert(data_len != 0);
     /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
      * nal_count is the number of NAL units in the data: short SPS, PPS, SEI NALs *
@@ -225,11 +239,10 @@ void video_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
             logger_log(logger, LOGGER_INFO, "Begin streaming to GStreamer video pipeline");
             first_packet = false;
         }
-        buffer = gst_buffer_new_allocate(NULL, data_len, NULL);
+        buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
         g_assert(buffer != NULL);
-        /* ntp_time is PTS given as UTC in usec */
-        GST_BUFFER_PTS(buffer) = (GstClockTime) (ntp_time * 1000);
-        gst_buffer_fill(buffer, 0, data, data_len);
+        GST_BUFFER_PTS(buffer) = pts;
+        gst_buffer_fill(buffer, 0, data, *data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
         if (renderer->gst_window && !(renderer->gst_window->window) && X11_search_attempts < MAX_X11_SEARCH_ATTEMPTS) {

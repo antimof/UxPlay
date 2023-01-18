@@ -69,20 +69,43 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-bool gstreamer_init(){
-    gst_init(NULL,NULL);
+bool gstreamer_init(uint64_t *unix_start_time, uint64_t *monotonic_start_time){
+    struct timespec tp;
+    GstClock *clock = NULL;
+    GstClockTime time;
+    
+    gst_init(NULL,NULL);    
+    clock = gst_system_clock_obtain();
+    if (!clock) {
+        g_print("gstreamer_init:  error: failed to obtain gst_system_clock\n");
+        return false;
+    }
+    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_MONOTONIC, NULL);
+    time = GST_TIME_AS_NSECONDS(gst_clock_get_time(clock));
+    if (clock_gettime(CLOCK_REALTIME, &tp)){
+        g_print("gstreamer_init: error failed to get unix time\n");
+        return false;
+    }
+    time += GST_TIME_AS_NSECONDS(gst_clock_get_time(clock));
+    *monotonic_start_time = time/2;   
+    *unix_start_time = (1000000000 * tp.tv_sec) + tp.tv_nsec;
+    g_object_unref (clock);
     return (bool) check_plugins ();
 }
 
 #define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
 static audio_renderer_t *renderer_type[NFORMATS];
 static audio_renderer_t *renderer = NULL;
+static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
 void audio_renderer_init(logger_t *render_logger, const char* audiosink, const char* audio_delay) {
     GError *error = NULL;
     GstCaps *caps = NULL;
+    GstClock *clock = gst_system_clock_obtain();
+    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_MONOTONIC, NULL);
+
     logger = render_logger;
 
     for (int i = 0; i < NFORMATS ; i++) {
@@ -120,7 +143,8 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
         }
 
         g_assert (renderer_type[i]->pipeline);
- 
+        gst_pipeline_use_clock(GST_PIPELINE_CAST(renderer_type[i]->pipeline), clock);
+
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
         switch (i) {
@@ -152,6 +176,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
         g_string_free(launch, TRUE);
         g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
         gst_caps_unref(caps);
+        g_object_unref(clock);
     }
 }
 
@@ -179,21 +204,29 @@ void  audio_renderer_start(unsigned char *ct) {
             logger_log(logger, LOGGER_INFO, "changed audio connection, format %s", format[id]);
             renderer = renderer_type[id];
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+            gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
         }
     } else if (compression_type) {
         logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+        gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
     } else {
         logger_log(logger, LOGGER_ERR, "unknown audio compression type ct = %d", *ct);
     }
     
 }
 
-void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time,
-                                  uint64_t rtp_time, unsigned short seqnum) {
+void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *pts_raw) {
     GstBuffer *buffer;
     bool valid;
+    GstClockTime pts = (GstClockTime) *pts_raw;
+    if (pts >= gst_audio_pipeline_base_time) {
+        pts -= gst_audio_pipeline_base_time;
+    } else {
+        logger_log(logger, LOGGER_ERR, "*** invalid *pts_raw < gst_audio_pipeline_base_time");
+        return;
+    }
     if (data_len == 0 || renderer == NULL) return;
 
     /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol *
@@ -203,11 +236,10 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
      *                   but is 0x80, 0x81 or 0x82: 0x100000(00,01,10) in ios9, ios10 devices          *
      * first byte of AAC_LC should be 0xff (ADTS) (but has never been  seen).                          */
     
-    buffer = gst_buffer_new_allocate(NULL, data_len, NULL);
+    buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
     g_assert(buffer != NULL);
-    /* ntp_time is PTS given as UTC in usec */
-    GST_BUFFER_PTS(buffer) = (GstClockTime) (ntp_time * 1000);
-    gst_buffer_fill(buffer, 0, data, data_len);
+    GST_BUFFER_PTS(buffer) = pts;
+    gst_buffer_fill(buffer, 0, data, *data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/
         switch (data[0]){

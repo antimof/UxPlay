@@ -32,7 +32,6 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "../lib/logger.h"
-#include "../lib/raop_ntp.h"
 
 typedef enum videoflip_e {
     NONE,
@@ -49,7 +48,7 @@ void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t
                           const char *decoder, const char *converter, const char *videosink, const bool *fullscreen);
 void video_renderer_start ();
 void video_renderer_stop ();
-void video_renderer_render_buffer (raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time, int nal_count);
+void video_renderer_render_buffer (unsigned char* data, int *data_len, int *nal_count, uint64_t *pts);
 void video_renderer_flush ();
 unsigned int video_renderer_listen(void *loop);
 void video_renderer_destroy ();
