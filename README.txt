@@ -237,11 +237,12 @@ cmake\>=3.4.1 is installed: "`sudo apt-get install cmake`" (add
 `build-essential` and `pkg-config` (or `pkgconf`) to this if needed).
 
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and
-libplist 2.0 or later. (This means Debian 10 "Buster", Ubuntu 18.04 or
-later.) If it does not, you may need to build and install these from
-source (see instructions at the end of this README). If you have a
-non-standard OpenSSL installation, you may need to set the environment
-variable OPENSSL_ROOT_DIR (*e.g.* ,
+libplist 2.0 or later. (This means Debian 10 "Buster" based systems
+(e.g, Ubuntu 18.04) or newer; on Debian 10 systems "libplist" is an
+older version, you need "libplist3".) If it does not, you may need to
+build and install these from source (see instructions at the end of this
+README). If you have a non-standard OpenSSL installation, you may need
+to set the environment variable OPENSSL_ROOT_DIR (*e.g.* ,
 "`export OPENSSL_ROOT_DIR=/usr/local/lib64`" if that is where it is
 installed).
 
@@ -350,7 +351,7 @@ need to be installed, depending on how your audio is set up.
     are: gstreamer-devel gstreamer-plugins-base-devel
     gstreamer-plugins-libav gstreamer-plugins-bad (+
     gstreamer-plugins-vaapi for Intel graphics); in some cases, you may
-    need to use gstreamer packages for OpenSUSE from
+    need to use gstreamer or libav\* packages for OpenSUSE from
     [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
     "Essentials" (which provides packages including plugins that
     OpenSUSE does not ship for license reasons).
@@ -793,12 +794,14 @@ displays streamed video.
 
 **-ao x.y** adds an audio offset time in (decimal) seconds to Audio-only
 (ALAC) streams to allow synchronization of sound playing on the UxPlay
-server with video on the client. In the AirPlay Legacy mode used by
-UxPlay, the client cannot obtain audio latency information from the
-server, and appears to assume a latency of about 5 seconds. This can be
-corrected with offset values such as `-ao 5` or `-ao 4.9`. The -ao
-option accepts values of the offset between 0 and 10 seconds, as a
-decimal number which it converts to a whole number of milliseconds.
+server with video on the client which delays playing the audio by *x.y*
+seconds (a decimal number). In the AirPlay Legacy mode used by UxPlay,
+the client cannot obtain audio latency information from the server, and
+appears to assume a latency of about 5 seconds. This can be compensated
+for with offset values such as `-ao 5` (but the effect of a pause in
+play etc., on the client will also be delayed). The -ao option accepts
+values in the range \[0,10\], which it converts to a whole number of
+milliseconds (-ao 1.2345 gives 1234 msec audio delay).
 
 **-ca *filename*** provides a file (where *filename* can include a full
 path) used for output of "cover art" (from Apple Music, *etc.*,) in
@@ -907,7 +910,11 @@ correct one; on 64-bit Ubuntu, this is done by running
 `export OPENSSL_ROOT_DIR=/usr/lib/X86_64-linux-gnu/` before running
 cmake.
 
-### 1. uxplay starts, but either stalls or stops after "Initialized server socket(s)" appears (*without the server name showing on the client*).
+### 1. **Avahi/DNS_SD Bonjour/Zeroconf issues**
+
+-   **uxplay starts, but either stalls or stops after "Initialized
+    server socket(s)" appears (*without the server name showing on the
+    client*)**.
 
 If UxPlay stops with the "No DNS-SD Server found" message, this means
 that your network **does not have a running Bonjour/zeroconf DNS-SD
@@ -939,11 +946,21 @@ a line for airplay support.*)
 
 If UxPlay stalls *without an error message* and *without the server name
 showing on the client*, this is either pre-UxPlay-1.60 behavior when no
-DNS-SD server was found, or a network problem. After starting uxplay,
-use the utility `avahi-browse -a -t` in a different terminal window on
-the server to verify that the UxPlay AirTunes and AirPlay services are
-correctly registered (only the AirTunes service is used in the "Legacy"
-AirPlay Mirror mode used by UxPlay).
+DNS-SD server was found, or a network problem.
+
+-   **Avahi works at first, but new clients do not see UxPlay, or
+    clients that initially saw it stop doing so after they disconnect**.
+
+This is because Avahi is only using the "loopback" network interface,
+and is not receiving mDNS queries from new clients that were not
+listening when UxPlay started.
+
+To check this, after starting uxplay, use the utility
+`avahi-browse -a -t` in a different terminal window on the server to
+verify that the UxPlay AirTunes and AirPlay services are correctly
+registered (only the AirTunes service is used in the "Legacy" AirPlay
+Mirror mode used by UxPlay, bit the AirPlay service is used for the
+initial contact).
 
 The results returned by avahi-browse should show entries for uxplay like
 
@@ -959,8 +976,9 @@ host is probably blocking full DNS-SD service, and you need to open the
 default UDP port 5353 for mDNS requests, as loopback-based DNS-SD
 service is unreliable.
 
-If the UxPlay service is listed by avahi-browse, but is not seen by the
-client, the problem is likely to be a problem with the local network.
+If the UxPlay services are listed by avahi-browse as above, but are not
+seen by the client, the problem is likely to be a problem with the local
+network.
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
@@ -1119,11 +1137,11 @@ other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
 
-1.62 2023-01-14 Added Audio-only mode time offset -ao x to allow user
+1.62 2023-01-18 Added Audio-only mode time offset -ao x to allow user
 synchronization of ALAC audio playing on the server with video, song
 lyrics, etc. playing on the client. x = 5.0 appears to be optimal in
 many cases. Quality fixes: change default fps to 60, cleanup in volume
-changes, some bugfixes.
+changes, timestamps, some bugfixes.
 
 1.61 2022-12-30 Removed -t option (workaround for an Avahi issue,
 correctly solved by opening network port UDP 5353 in firewall). Remove
