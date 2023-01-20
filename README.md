@@ -324,6 +324,9 @@ are opened: if a firewall is active, also open UDP port 5353 (for mDNS queries)
 needed by Avahi. See [Troubleshooting](#troubleshooting) below for
 help with this or other problems.
 
+* you may find video is improved by the setting -fps 60 that allows some video to be played at 60 frames
+per second. (You can see what framerate is actually streaming by using -vs fpsdisplaysink, and/or -FPSdata.)
+
 * By default, UxPlay is locked to
 its current client until that client drops the connection; the option `-nohold` modifies this
 behavior so that when a new client requests a connection, it removes the current client and takes over.
@@ -692,7 +695,8 @@ which will not work if a firewall is running.
 **-fps n** sets a maximum frame rate (in frames per second) for the AirPlay
    client to stream video; n must be a whole number less than 256.
    (The client may choose to serve video at any frame rate lower
-   than this;  default is 60 fps.)  A setting below 60 fps might be useful to
+   than this;  default is 30 fps.)  A setting of 60 fps may give you improved video
+   but is not recommended on Raspberry Pi.   A setting below 30 fps might be useful to
    reduce latency if you are running more than one instance of uxplay at the same time.
    _This setting is only an advisory to
    the client device, so setting a high value will not force a high framerate._
@@ -922,8 +926,8 @@ The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 # Changelog
 1.62 2023-01-18   Added Audio-only mode time offset -ao x to allow user synchronization of ALAC
                   audio playing on the server with video, song lyrics, etc. playing on the client.
-                  x = 5.0 appears to be optimal in many cases.  Quality fixes: change default fps to 60,
-                  cleanup in volume changes, timestamps, some bugfixes.
+                  x = 5.0 appears to be optimal in many cases.  Quality fixes: cleanup in volume 
+                  changes, timestamps, some bugfixes.
 
 1.61 2022-12-30   Removed -t option (workaround for an Avahi issue, correctly solved by opening network
                   port UDP 5353 in firewall).  Remove -g debug flag from CMAKE_CFLAGS. Postpend (instead 

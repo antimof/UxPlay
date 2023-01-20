@@ -382,6 +382,10 @@ queries) needed by Avahi. See <a
 href="#troubleshooting">Troubleshooting</a> below for help with this or
 other problems.</p>
 <ul>
+<li><p>you may find video is improved by the setting -fps 60 that allows
+some video to be played at 60 frames per second. (You can see what
+framerate is actually streaming by using -vs fpsdisplaysink, and/or
+-FPSdata.)</p></li>
 <li><p>By default, UxPlay is locked to its current client until that
 client drops the connection; the option <code>-nohold</code> modifies
 this behavior so that when a new client requests a connection, it
@@ -818,14 +822,15 @@ data is updated by the client at 1 second intervals.</p>
 <p><strong>-fps n</strong> sets a maximum frame rate (in frames per
 second) for the AirPlay client to stream video; n must be a whole number
 less than 256. (The client may choose to serve video at any frame rate
-lower than this; default is 60 fps.) A setting below 60 fps might be
-useful to reduce latency if you are running more than one instance of
-uxplay at the same time. <em>This setting is only an advisory to the
-client device, so setting a high value will not force a high
-framerate.</em> (You can test using “-vs fpsdisplaysink” to see what
-framerate is being received, or use the option -FPSdata which displays
-video-stream performance data continuously sent by the client during
-video-streaming.)</p>
+lower than this; default is 30 fps.) A setting of 60 fps may give you
+improved video but is not recommended on Raspberry Pi. A setting below
+30 fps might be useful to reduce latency if you are running more than
+one instance of uxplay at the same time. <em>This setting is only an
+advisory to the client device, so setting a high value will not force a
+high framerate.</em> (You can test using “-vs fpsdisplaysink” to see
+what framerate is being received, or use the option -FPSdata which
+displays video-stream performance data continuously sent by the client
+during video-streaming.)</p>
 <p><strong>-f {H|V|I}</strong> implements “videoflip” image transforms:
 H = horizontal flip (right-left flip, or mirror image); V = vertical
 flip ; I = 180 degree rotation or inversion (which is the combination of
@@ -1098,8 +1103,8 @@ other settings are set in <code>UxPlay/lib/dnssdint.h</code>.</p>
 <p>1.62 2023-01-18 Added Audio-only mode time offset -ao x to allow user
 synchronization of ALAC audio playing on the server with video, song
 lyrics, etc. playing on the client. x = 5.0 appears to be optimal in
-many cases. Quality fixes: change default fps to 60, cleanup in volume
-changes, timestamps, some bugfixes.</p>
+many cases. Quality fixes: cleanup in volume changes, timestamps, some
+bugfixes.</p>
 <p>1.61 2022-12-30 Removed -t option (workaround for an Avahi issue,
 correctly solved by opening network port UDP 5353 in firewall). Remove
 -g debug flag from CMAKE_CFLAGS. Postpend (instead of prepend) build

@@ -454,7 +454,7 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     raop->width = 1920;
     raop->height = 1080;
     raop->refreshRate = 60;
-    raop->maxFPS = 60;
+    raop->maxFPS = 30;
     raop->overscanned = 0;
 
     /* initialize switch for display of client's streaming data records */    
