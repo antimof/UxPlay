@@ -22,7 +22,6 @@
 #include <stdbool.h>
 #ifdef _WIN32
 #define CAST (char *)
-#include <sys/time.h>
 #else
 #define CAST
 #endif
@@ -359,12 +358,10 @@ raop_ntp_thread(void *arg)
         }
 
         // Sleep for 3 seconds
-        struct timeval now;
         struct timespec wait_time;
         MUTEX_LOCK(raop_ntp->wait_mutex);
-        gettimeofday(&now, NULL);
-        wait_time.tv_sec = now.tv_sec + 3;
-        wait_time.tv_nsec = now.tv_usec * 1000;
+        clock_gettime(CLOCK_REALTIME, &wait_time);
+        wait_time.tv_sec += 3;
         pthread_cond_timedwait(&raop_ntp->wait_cond, &raop_ntp->wait_mutex, &wait_time);
         MUTEX_UNLOCK(raop_ntp->wait_mutex);
     }
