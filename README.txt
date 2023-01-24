@@ -45,7 +45,8 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
 
 -   Install uxplay on Debian-based Linux systems with
     "`sudo apt install uxplay`"; on FreeBSD with
-    "`sudo pkg install uxplay`".
+    "`sudo pkg install uxplay`". Also available on Arch-based systems
+    through AUR.
 
 -   On Linux and \*BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local network
     services needed by UxPlay are usually provided by Avahi: **if there
@@ -54,6 +55,8 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
     can work without this port by using only the host's loopback
     interface, but its visibility to clients will be degraded.) See the
     [Troubleshooting](#troubleshooting) section below for more details.
+    (With a firewall, you also need to open ports for UxPlay, and use
+    the `-p <n>` option; see `man uxplay` or `uxplay -h`.)
 
 -   Even if you install your distribution's pre-compiled uxplay binary
     package, you may need to read the instructions below for [running
@@ -62,7 +65,7 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
 
 -   For Raspberry Pi (tested on RPi 4 model B, reported to work on RPi 3
     model B+), only Raspberry Pi OS, plus the Debian and Manjaro
-    ARM-RPi4 Images made available through the Raspberry Pi Imager, are
+    ARM-RPi4 images made available through the Raspberry Pi Imager, are
     known to provide the (out-of-mainline-kernel) kernel-module
     **bcm2835-codec.ko** [maintained by Raspberry
     Pi](https://github.com/raspberrypi/linux/tree/rpi-5.15.y/drivers/staging/vc04_services),
@@ -72,8 +75,8 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
     [patch](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     forGStreamer \< 1.22.
 
--   To (easily) compile UxPlay from source, see the section [Getting
-    UxPlay](#getting-uxplay).
+-   To (easily) compile the latest UxPlay from source, see the section
+    [Getting UxPlay](#getting-uxplay).
 
 # Detailed description of UxPlay
 
@@ -390,27 +393,28 @@ for help with this or other problems.
     -FPSdata.)
 
 -   By default, UxPlay is locked to its current client until that client
-    drops the connection; the option `-nohold` modifies this behavior so
-    that when a new client requests a connection, it removes the current
-    client and takes over.
+    drops the connection; since UxPlay-1.58, the option `-nohold`
+    modifies this behavior so that when a new client requests a
+    connection, it removes the current client and takes over.
 
--   To display the accompanying "Cover Art" from sources like Apple
-    Music in Audio-Only (ALAC) mode, run "`uxplay -ca <name> &`" in the
-    background, then run a image viewer with an autoreload feature: an
-    example is "feh": run "`feh -R 1 <name>`" in the foreground;
-    terminate feh and then Uxplay with "`ctrl-C fg ctrl-C`".
+-   Since UxPlay-1.54, you can display the accompanying "Cover Art" from
+    sources like Apple Music in Audio-Only (ALAC) mode: run
+    "`uxplay -ca <name> &`" in the background, then run a image viewer
+    with an autoreload feature: an example is "feh": run
+    "`feh -R 1 <name>`" in the foreground; terminate feh and then Uxplay
+    with "`ctrl-C fg ctrl-C`".
 
 -   If you wish to listen in Audio-Only mode on the server while
     watching the client screen (for video or Apple Music song lyrics,
     etc.), the video on the client is delayed by about 5 seconds behind
-    the the audio on the server. This can be corrected with the **audio
-    offset** option `-ao x` with an *x* of about 5.0 (allowed values of
-    *x* are decimal numbers between 0 and 10.0 seconds); this workaround
-    just delays playing of audio on the server by *x* seconds, so the
-    effect of pausing or changing tracks on the client will
-    unfortunately also be delayed. *(The reason for the 5 sec. video
-    delay on the client may be because, while streaming in Legacy mode,
-    the client does not get latency information from the server.)*
+    the the audio on the server (*this is a Legacy mode issue: the
+    client does not receive latency information to sync its video with
+    audio played on the server*). Since UxPlay-1.62, this can be
+    corrected with the **audio offset** option `-ao x` with an *x* of
+    about 5.0 (allowed values are decimal numbers between 0 and 10.0
+    seconds); this workaround just delays playing of audio on the server
+    by *x* seconds, so the effect of pausing or changing tracks on the
+    client will also be delayed.
 
 **One common problem involves GStreamer attempting to use
 incorrectly-configured or absent accelerated hardware h264 video
@@ -511,17 +515,32 @@ Next get the latest macOS release of GStreamer-1.0.
 
 -   recommended: install the "official" GStreamer release for macOS from
     <https://gstreamer.freedesktop.org/download/>. The alternative is to
-    install it from Homebrew (MacPorts also supplies it, but compiled to
-    use X11).
+    install it from Homebrew. MacPorts packages of GStreamer are
+    compiled to use X11 and are **NOT** recommended.
+
+-   Experienced users could instead compile the "official" GStreamer
+    release from source: get it with
+    "`git clone https://gitlab.freedesktop.org/gstreamer/gstreamer; cd gstreamer`"
+    and select version with e.g., "`git checkout 1.22.0`"; then
+    "`meson setup build <-D...>`" followed by "`ninja -C build`" and
+    "`sudo ninja install -C build`". A successful build of v1.22.0 was
+    achieved this way with `<-D...>` =
+    `-Dgst-plugins-bad:openexr=disabled` to avoid a build failure on one
+    component, using the MacPorts build system, with installed MacPorts
+    versions of some external libraries needed by GStreamer, such as
+    glib-2.0, pango, etc., to avoid the GStreamer build process
+    downloading and building them. You should completely remove all
+    other GStreamer packages before compiling from source.
 
 **For the "official" release**: install both the macOS runtime and
 development installer packages. Assuming that the latest release is
-1.20.5. install `gstreamer-1.0-1.20.5-universal.pkg` and
-`gstreamer-1.0-devel-1.20.5-universal.pkg`. (If you have an
-Intel-architecture Mac, and have problems with the "universal" packages,
-you can also use `gstreamer-1.0-1.18.6-x86_64.pkg` and
-`gstreamer-1.0-devel-1.18.6-x86_64.pkg`.) Click on them to install (they
-install to /Library/FrameWorks/GStreamer.framework).
+1.20.5 install `gstreamer-1.0-1.20.5-universal.pkg` and
+`gstreamer-1.0-devel-1.20.5-universal.pkg`. Click on them to install
+(they install to /Library/FrameWorks/GStreamer.framework).
+
+-   **ADDED 2023-01-25: v1.22.0 has just been released, but these
+    binaries seem to have problems, perhaps only on older macOS
+    releases; use v1.20.5 if they dont work for you.**
 
 **For Homebrew**: pkgconfig is needed ("brew install pkgconfig"). Then
 "brew install gst-plugins-base gst-plugins-good gst-plugins-bad
@@ -562,12 +581,13 @@ make install" (same as for Linux).
 To install: "sudo port install pkgconfig"; "sudo port install
 gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
 gstreamer1-gst-plugins-bad gstreamer1-gst-libav". **The MacPorts
-GStreamer is built to use X11**, so uxplay must be run from an XQuartz
-terminal, can use ZOOMFIX, and needs option "-vs ximagesink". On an
-unibody (non-retina) MacBook Pro, the default resolution wxh = 1920x1080
-was too large, but using option "-s 800x600" worked. The MacPorts
-GStreamer pipeline seems fragile against attempts to change the X11
-window size, or to rotations that switch a connected client between
+GStreamer is built to use X11**: use the special CMake option
+`-DUSE_X11=ON` when building UxPlay. Then uxplay must be run from an
+XQuartz terminal, can use ZOOMFIX, and needs option "-vs ximagesink". On
+an unibody (non-retina) MacBook Pro, the default resolution wxh =
+1920x1080 was too large, but using option "-s 800x600" worked. The
+MacPorts GStreamer pipeline seems fragile against attempts to change the
+X11 window size, or to rotations that switch a connected client between
 portrait and landscape mode while uxplay is running. Using the MacPorts
 X11 GStreamer seems only possible if the image size is left unchanged
 from the initial "-s wxh" setting (also use the iPad/iPhone setting that
@@ -1065,6 +1085,34 @@ when the client sends the "Stop Mirroring" signal, try the no-close
 option "-nc" that leaves the video window open.
 
 ### 4. GStreamer issues (missing plugins, etc.):
+
+If UxPlay fails to start, with a message that a required GStreamer
+plugin (such as "libav") was not found, first check with the GStreamer
+tool gst-inspect-1.0 to see what GStreamer knows is available. (You may
+need to install some additional GStreamer "tools" package to get
+gst-inspect-1.0). For, *e.g.* a libav problem, check with
+"`gst-inspect-1.0 libav`". If it is not shown as available to GStreamer,
+but your package manager shows the relevant package as installed (as one
+user found), try entirely removing and reinstalling the package. That
+user found that a solution to a "**Required gstreamer plugin 'libav' not
+found**" message that kept recurring was to clear the user's gstreamer
+cache with `rm -rf ~/.cache/gstreamer-1.0`.
+
+If it fails to start with an error like '`no element "avdec_aac"`' this
+is because even though gstreamer-libav is installed. it is incomplete
+because some plugins are missing: "`gst-inspect-1.0 | grep avdec_aac`"
+will show if avdec_aac is available. Some distributions (RedHat, SUSE,
+etc) provide incomplete versions of libav because of patent issues with
+codecs used by certain plugins. In those cases there will be some "extra
+package" provider like [RPM fusion](https://rpmfusion.org) (RedHat) or
+[packman](http://packman.links2linux.org/) (SUSE) where you can get
+complete packages (your distribution will usually provide instructions
+for this). The packages needed may be "libav\*" or "ffmpeg\*" packages:
+the GStreamer libav plugin package does not contain any codecs itself,
+it just provides a way for GStreamer to use ffmpeg/libav codec libraries
+which must be installed separately. For similar reasons, distributions
+may ship incomplete packages of GStreamer "plugins-bad", which is where
+"license-problematical" plugins go.
 
 To troubleshoot GStreamer execute "export GST_DEBUG=2" to set the
 GStreamer debug-level environment-variable in the terminal where you
