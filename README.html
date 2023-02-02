@@ -499,12 +499,12 @@ href="http://www.macports.org">MacPorts</a>, <a
 href="http://finkproject.org">Fink</a> or <a
 href="http://brew.sh">Homebrew</a>, or by a download from <a
 href="https://cmake.org/download/">https://cmake.org/download/</a>.</p>
-<p>First install OpenSSL and libplist: static versions of these libaries
-will be used, so they can be uninstalled after UxPlay is built. These
-are available in MacPorts and Homebrew, or they can easily be built from
-source (see instructions at the end of this README; this requires
-development tools autoconf, automake, libtool, which can be installed
-using MacPorts, HomeBrew, or Fink).</p>
+<p>First install OpenSSL and libplist: static versions of these
+libraries will be used, so they can be uninstalled after UxPlay is
+built. These are available in MacPorts and Homebrew, or they can easily
+be built from source (see instructions at the end of this README; this
+requires development tools autoconf, automake, libtool, which can be
+installed using MacPorts, HomeBrew, or Fink).</p>
 <p>Next get the latest macOS release of GStreamer-1.0.</p>
 <ul>
 <li><p>recommended: install the “official” GStreamer release for macOS
@@ -513,20 +513,11 @@ href="https://gstreamer.freedesktop.org/download/">https://gstreamer.freedesktop
 The alternative is to install it from Homebrew. MacPorts packages of
 GStreamer are compiled to use X11 and are <strong>NOT</strong>
 recommended.</p></li>
-<li><p>Experienced users could instead compile the “official” GStreamer
-release from source: get it with
-“<code>git clone https://gitlab.freedesktop.org/gstreamer/gstreamer; cd gstreamer</code>”
-and select version with e.g., “<code>git checkout 1.22.0</code>”; then
-“<code>meson setup build &lt;-D...&gt;</code>” followed by
-“<code>ninja -C build</code>” and
-“<code>sudo ninja install -C build</code>”. A successful build of
-v1.22.0 was achieved this way with <code>&lt;-D...&gt;</code> =
-<code>-Dgst-plugins-bad:openexr=disabled</code> to avoid a build failure
-on one component, using the MacPorts build system, with installed
-MacPorts versions of some external libraries needed by GStreamer, such
-as glib-2.0, pango, etc., to avoid the GStreamer build process
-downloading and building them. You should completely remove all other
-GStreamer packages before compiling from source.</p></li>
+<li><p>You could instead compile the “official” GStreamer release from
+source: GStreamer-1.22.0 has been successfully built this way on a
+system using MacPorts: see <a
+href="https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts">the
+UxPlay Wiki</a></p></li>
 </ul>
 <p><strong>For the “official” release</strong>: install both the macOS
 runtime and development installer packages. Assuming that the latest
