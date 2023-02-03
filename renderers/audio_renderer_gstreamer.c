@@ -69,27 +69,8 @@ static gboolean check_plugins (void)
     return ret;
 }
 
-bool gstreamer_init(uint64_t *unix_start_time, uint64_t *monotonic_start_time){
-    struct timespec tp;
-    GstClock *clock = NULL;
-    GstClockTime time;
-    
+bool gstreamer_init(){
     gst_init(NULL,NULL);    
-    clock = gst_system_clock_obtain();
-    if (!clock) {
-        g_print("gstreamer_init:  error: failed to obtain gst_system_clock\n");
-        return false;
-    }
-    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_MONOTONIC, NULL);
-    time = GST_TIME_AS_NSECONDS(gst_clock_get_time(clock));
-    if (clock_gettime(CLOCK_REALTIME, &tp)){
-        g_print("gstreamer_init: error failed to get unix time\n");
-        return false;
-    }
-    time += GST_TIME_AS_NSECONDS(gst_clock_get_time(clock));
-    *monotonic_start_time = time/2;   
-    *unix_start_time = (1000000000 * tp.tv_sec) + tp.tv_nsec;
-    g_object_unref (clock);
     return (bool) check_plugins ();
 }
 
@@ -104,7 +85,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
-    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_MONOTONIC, NULL);
+    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
 
     logger = render_logger;
 
@@ -217,10 +198,10 @@ void  audio_renderer_start(unsigned char *ct) {
     
 }
 
-void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *pts_raw) {
+void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {
     GstBuffer *buffer;
     bool valid;
-    GstClockTime pts = (GstClockTime) *pts_raw;
+    GstClockTime pts = (GstClockTime) (*ntp_time * 1000);    /* convert from usec to nsec */
     if (pts >= gst_audio_pipeline_base_time) {
         pts -= gst_audio_pipeline_base_time;
     } else {

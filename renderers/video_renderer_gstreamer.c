@@ -127,7 +127,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
-    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_MONOTONIC, NULL);
+    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
 
     logger = render_logger;
 
@@ -218,9 +218,9 @@ void video_renderer_start() {
 #endif
 }
 
-void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_count, uint64_t *pts_raw) {
+void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time) {
     GstBuffer *buffer;
-    GstClockTime pts = (GstClockTime) *pts_raw;
+    GstClockTime pts = (GstClockTime) (*ntp_time * 1000); /*convert from usec to nsec */
     if (pts >= gst_video_pipeline_base_time) {
         pts -= gst_video_pipeline_base_time;
     } else {

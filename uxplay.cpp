@@ -107,7 +107,6 @@ static bool bt709_fix = false;
 static int max_connections = 2;
 static unsigned short raop_port;
 static unsigned short airplay_port;
-static uint64_t ntp_start_time, gst_start_time;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -991,8 +990,7 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
     }
     if (use_audio) {
-      uint64_t pts = ((data->ntp_time * 1000)  + gst_start_time) - ntp_start_time; 
-      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &pts);
+      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time));
     }
 }
 
@@ -1001,8 +999,7 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
         dump_video_to_file(data->data, data->data_len);
     }
     if (use_video) {
-        uint64_t pts = ((data->ntp_time * 1000)  + gst_start_time) - ntp_start_time; 
-        video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &pts);
+        video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time));
     }
 }
 
@@ -1277,7 +1274,7 @@ int main (int argc, char *argv[]) {
         append_hostname(server_name);
     }
 
-    if (!gstreamer_init(&ntp_start_time, &gst_start_time)) {
+    if (!gstreamer_init()) {
         LOGE ("stopping");
         exit (1);
     }

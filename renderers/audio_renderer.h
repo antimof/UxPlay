@@ -29,11 +29,11 @@ extern "C" {
 #include <stdbool.h>
 #include "../lib/logger.h"
 
-bool gstreamer_init(uint64_t * unix_start_time, uint64_t *monotonic_start_time);
+bool gstreamer_init();
 void audio_renderer_init(logger_t *logger, const char* audiosink, const char* audiodelay);
 void audio_renderer_start(unsigned char* compression_type);
 void audio_renderer_stop();
-void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *pts);
+void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time);
 void audio_renderer_set_volume(float volume);
 void audio_renderer_flush();
 void audio_renderer_destroy();
