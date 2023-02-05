@@ -33,7 +33,6 @@
 #define NO_FLUSH (-42)
 
 #define SECOND_IN_NSECS 1000000000UL
-#define RAOP_RTP_SAMPLE_RATE (44100.0 / SECOND_IN_NSECS)
 #define RAOP_RTP_SYNC_DATA_COUNT 8
 #define SEC SECOND_IN_NSECS
 
@@ -54,7 +53,7 @@ struct raop_rtp_s {
 
     // Time and sync
     raop_ntp_t *ntp;
-    double rtp_sync_scale;
+    double rtp_clock_rate;
     int64_t rtp_sync_offset;
     raop_rtp_sync_data_t sync_data[RAOP_RTP_SYNC_DATA_COUNT];
     int sync_data_index;
@@ -164,7 +163,6 @@ raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, co
     raop_rtp->ntp = ntp;
 
     raop_rtp->rtp_sync_offset = 0;
-    raop_rtp->rtp_sync_scale = RAOP_RTP_SAMPLE_RATE;
     raop_rtp->sync_data_index = 0;
     for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; ++i) {
         raop_rtp->sync_data[i].ntp_time = 0;
@@ -404,13 +402,13 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t ntp_time, uint64_t rtp_t
     for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; i++) {
         if (raop_rtp->sync_data[i].ntp_time == 0) continue;
         rtp_offset = ((int64_t) raop_rtp->sync_data[i].rtp_time) - ((int64_t) raop_rtp->sync_data[latest].rtp_time);
-        total_offsets += ((double) rtp_offset) / raop_rtp-> rtp_sync_scale;
+        total_offsets += ((double) rtp_offset) * raop_rtp-> rtp_clock_rate;
         total_offsets -= (double) (((int64_t) raop_rtp->sync_data[i].ntp_time) - ((int64_t) raop_rtp->sync_data[latest].ntp_time));
         valid_data_count++;
     }
     total_offsets = (total_offsets / valid_data_count);
     rtp_offset =  ((int64_t) raop_rtp->sync_data[latest].rtp_time) - ((int64_t) raop_rtp->rtp_start_time) + ((int64_t) shift);
-    total_offsets +=  ((double) rtp_offset) / raop_rtp->rtp_sync_scale;
+    total_offsets +=  ((double) rtp_offset) * raop_rtp->rtp_clock_rate;
     avg_offset = (int64_t) total_offsets;
     avg_offset -= ((int64_t) raop_rtp->sync_data[latest].ntp_time) - ((int64_t) raop_rtp->ntp_start_time);
     correction = avg_offset - raop_rtp->rtp_sync_offset;
@@ -655,7 +653,7 @@ raop_rtp_thread_udp(void *arg)
                     if (seqnum2 != seqnum) {  /* for AAC-ELD  only use copy 3 of the 3 copies of each  frame */
                         rtp_count++;
                         offset -= initial_offset;
-                        sync_adjustment += ((double) offset) + (((double) sync_rtp) / raop_rtp->rtp_sync_scale);
+                        sync_adjustment += ((double) offset) + (((double) sync_rtp) * raop_rtp->rtp_clock_rate);
                         raop_rtp->rtp_sync_offset = initial_offset + (int64_t) (sync_adjustment / rtp_count);
                         //logger_log(raop_rtp->logger, LOGGER_DEBUG, "initial estimate of rtp_sync_offset %d secnum = %u:  %8.6f",
                         //           rtp_count, seqnum,  ((double) raop_rtp->rtp_sync_offset) / SEC);
@@ -671,7 +669,7 @@ raop_rtp_thread_udp(void *arg)
                 unsigned short seqnum;
                 uint64_t rtp64_timestamp;
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &rtp64_timestamp, &seqnum, no_resend))) {
-                    double  elapsed_time =  (((double) (rtp64_timestamp - (uint64_t) raop_rtp->rtp_start_time)) / raop_rtp->rtp_sync_scale);
+                    double  elapsed_time =  (((double) (rtp64_timestamp - (uint64_t) raop_rtp->rtp_start_time)) * raop_rtp->rtp_clock_rate);
                     audio_decode_struct audio_data; 
                     audio_data.data_len = payload_size;
                     audio_data.data = payload;
@@ -712,15 +710,13 @@ raop_rtp_thread_udp(void *arg)
 
 // Start rtp service, three udp ports
 void
-raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_rport,
-                     unsigned short *control_lport, unsigned short *data_lport, unsigned char ct)
+raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport,
+                     unsigned short *control_lport, unsigned short *data_lport, unsigned char *ct, unsigned int *sr)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
     int use_ipv6 = 0;
 
     assert(raop_rtp);
-    assert(control_lport);
-    assert(data_lport);
 
     MUTEX_LOCK(raop_rtp->run_mutex);
     if (raop_rtp->running || !raop_rtp->joined) {
@@ -728,12 +724,13 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short control_r
         return;
     }
 
-    raop_rtp->ct = ct;
+    raop_rtp->ct = *ct;
+    raop_rtp->rtp_clock_rate = SECOND_IN_NSECS / *sr;
 
     /* Initialize ports and sockets */
     raop_rtp->control_lport = *control_lport;
     raop_rtp->data_lport = *data_lport;
-    raop_rtp->control_rport = control_rport;
+    raop_rtp->control_rport = *control_rport;
     if (raop_rtp->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
     }
