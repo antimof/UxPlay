@@ -48,7 +48,8 @@
 #define CAST
 #endif
 
-#define SEC 1000000
+#define SECOND_IN_NSECS 1000000000UL
+#define SEC SECOND_IN_NSECS
 
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
@@ -359,9 +360,9 @@ raop_rtp_mirror_thread(void *arg)
                 // Conveniently, the video data is already stamped with the remote wall clock time,
                 // so no additional clock syncing needed. The only thing odd here is that the video
                 // ntp time stamps don't include the SECONDS_FROM_1900_TO_1970, so it's really just
-                // counting micro seconds since last boot.
+                // counting nano seconds since last boot.
                 ntp_timestamp_raw = byteutils_get_long(packet, 8);
-                uint64_t ntp_timestamp_remote = raop_ntp_timestamp_to_micro_seconds(ntp_timestamp_raw, false);
+                uint64_t ntp_timestamp_remote = raop_ntp_timestamp_to_nano_seconds(ntp_timestamp_raw, false);
                 uint64_t ntp_timestamp = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
 
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);

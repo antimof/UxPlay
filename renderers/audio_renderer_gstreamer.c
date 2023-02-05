@@ -21,6 +21,7 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include "audio_renderer.h"
+#define SECOND_IN_NSECS 1000000000UL
 
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
@@ -201,11 +202,12 @@ void  audio_renderer_start(unsigned char *ct) {
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {
     GstBuffer *buffer;
     bool valid;
-    GstClockTime pts = (GstClockTime) (*ntp_time * 1000);    /* convert from usec to nsec */
+    GstClockTime pts = (GstClockTime) *ntp_time ;    /* now in nsecs */
     if (pts >= gst_audio_pipeline_base_time) {
         pts -= gst_audio_pipeline_base_time;
     } else {
-        logger_log(logger, LOGGER_ERR, "*** invalid *pts_raw < gst_audio_pipeline_base_time");
+        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_audio_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_audio_pipeline_base_time) / SECOND_IN_NSECS);
         return;
     }
     if (data_len == 0 || renderer == NULL) return;

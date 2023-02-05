@@ -32,12 +32,13 @@
 
 #define NO_FLUSH (-42)
 
-#define RAOP_RTP_SAMPLE_RATE (44100.0 / 1000000.0)
+#define SECOND_IN_NSECS 1000000000UL
+#define RAOP_RTP_SAMPLE_RATE (44100.0 / SECOND_IN_NSECS)
 #define RAOP_RTP_SYNC_DATA_COUNT 8
-#define SEC 1000000
+#define SEC SECOND_IN_NSECS
 
-#define DELAY_AAC 500000 //empirical, matches audio latency of about -0.5 sec after first clock sync event
-#define DELAY_ALAC 2000000 //empirical, matches audio latency of about -2.0 sec after first clock sync event
+#define DELAY_AAC  500000000 //empirical, matches audio latency of about -0.5 sec after first clock sync event
+#define DELAY_ALAC 200000000 //empirical, matches audio latency of about -2.0 sec after first clock sync event
 
 /* note: it is unclear what will happen in the unlikely event that this code is running at the time of the unix-time 
  * epoch event on 2038-01-19 at 3:14:08 UTC ! (but Apple will surely have removed AirPlay "legacy pairing" by then!) */
@@ -550,7 +551,7 @@ raop_rtp_thread_udp(void *arg)
                     have_synced = true;
                 }
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
-                uint64_t sync_ntp_remote = raop_ntp_timestamp_to_micro_seconds(sync_ntp_raw, true);
+                uint64_t sync_ntp_remote = raop_ntp_timestamp_to_nano_seconds(sync_ntp_raw, true);
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
                 int64_t shift;
                 switch (raop_rtp->ct) {
@@ -631,12 +632,12 @@ raop_rtp_thread_udp(void *arg)
                         offset_estimate_initialized = true;
                         switch (raop_rtp->ct) {
                         case 0x02:  
-                            delay = DELAY_ALAC;   /* DELAY = 2000000 (2.0 sec) is empirical choice for ALAC */
+                            delay = DELAY_ALAC;   /* DELAY = 2000000000 (2.0 sec) is empirical choice for ALAC */
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "Audio is ALAC: using initial latency estimate -%8.6f sec",
                                       ((double) delay) / SEC);
                             break;
                         case 0x08:
-                            delay = DELAY_AAC;   /* DELAY = 500000 (0.5 sec) is empirical choice for AAC-ELD */
+                            delay = DELAY_AAC;   /* DELAY = 500000000 (0.5 sec) is empirical choice for AAC-ELD */
                             logger_log(raop_rtp->logger, LOGGER_DEBUG, "Audio is AAC: using initial latency estimate -%8.6f sec",
                                        ((double) delay ) / SEC);
                             break;
@@ -682,7 +683,7 @@ raop_rtp_thread_udp(void *arg)
                     free(payload);
                     uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
                     int64_t latency =  ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time); 
-                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: now = %8.6f, npt = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u",
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: now = %8.6f, ntp = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u",
                                ((double) ntp_now ) / SEC, ((double) audio_data.ntp_time) / SEC, ((double) latency) / SEC, (uint32_t) rtp64_timestamp,
                                seqnum);
                 }
