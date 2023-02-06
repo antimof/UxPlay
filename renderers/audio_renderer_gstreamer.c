@@ -82,7 +82,7 @@ static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
-void audio_renderer_init(logger_t *render_logger, const char* audiosink, const char* audio_delay) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
@@ -101,11 +101,6 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
             g_string_append(launch, "! avdec_aac ! ");
             break;
         case 1:    /* ALAC */
-            if (audio_delay[0]) {
-                g_string_append(launch, "min-threshold-time=");
-                g_string_append(launch, audio_delay);
-                g_string_append(launch, "000000 ");
-            }
             g_string_append(launch, "! avdec_alac ! ");
             break;
         case 3:   /*PCM*/
@@ -117,7 +112,14 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
         g_string_append (launch, "audioresample ! ");    /* wasapisink must resample from 44.1 kHz to 48 kHz */
         g_string_append (launch, "volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
-        g_string_append (launch, " sync=false");
+        switch(i) {
+        case 1:  /*ALAC*/
+            g_string_append (launch, " sync=true");
+            break;
+        default:
+            g_string_append (launch, " sync=false");
+            break;
+        }
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
 	if (error) {
           g_error ("gst_parse_launch error (audio %d):\n %s\n", i+1, error->message);

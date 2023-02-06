@@ -54,6 +54,7 @@ struct raop_rtp_s {
     // Time and sync
     raop_ntp_t *ntp;
     double rtp_clock_rate;
+    unsigned int audio_delay_rtp;
     int64_t rtp_sync_offset;
     raop_rtp_sync_data_t sync_data[RAOP_RTP_SYNC_DATA_COUNT];
     int sync_data_index;
@@ -551,14 +552,12 @@ raop_rtp_thread_udp(void *arg)
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
                 uint64_t sync_ntp_remote = raop_ntp_timestamp_to_nano_seconds(sync_ntp_raw, true);
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
-                int64_t shift;
+                int64_t shift = 0;
                 switch (raop_rtp->ct) {
-                case 0x08:                   /*AAC-ELD */
-                    shift = -11025;           /* 44100/4 */
+                case 0x02:  /* ALAC audio-only mode */ 
                     break;
-                case 0x02:
                 default:
-                    shift = 0;   /* not needed for ALAC (audio only) */
+                    shift  -= (int64_t) raop_rtp->audio_delay_rtp;  /* remove delay in Mirror mode */
                     break;
                 }
                 char *str = utils_data_to_string(packet, packetlen, 20);
@@ -710,8 +709,8 @@ raop_rtp_thread_udp(void *arg)
 
 // Start rtp service, three udp ports
 void
-raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport,
-                     unsigned short *control_lport, unsigned short *data_lport, unsigned char *ct, unsigned int *sr)
+raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport, unsigned short *control_lport,
+                     unsigned short *data_lport, unsigned char *ct, unsigned int *sr, unsigned int *ad)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
     int use_ipv6 = 0;
@@ -726,6 +725,7 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_
 
     raop_rtp->ct = *ct;
     raop_rtp->rtp_clock_rate = SECOND_IN_NSECS / *sr;
+    raop_rtp->audio_delay_rtp = *ad;
 
     /* Initialize ports and sockets */
     raop_rtp->control_lport = *control_lport;

@@ -1,4 +1,4 @@
-# UxPlay 1.62: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.63: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -404,17 +404,11 @@ for help with this or other problems.
     "`feh -R 1 <name>`" in the foreground; terminate feh and then Uxplay
     with "`ctrl-C fg ctrl-C`".
 
--   If you wish to listen in Audio-Only mode on the server while
-    watching the client screen (for video or Apple Music song lyrics,
-    etc.), the video on the client is delayed by about 5 seconds behind
-    the the audio on the server (*this is a Legacy mode issue: the
-    client does not receive latency information to sync its video with
-    audio played on the server*). Since UxPlay-1.62, this can be
-    corrected with the **audio offset** option `-ao x` with an *x* of
-    about 5.0 (allowed values are decimal numbers between 0 and 10.0
-    seconds); this workaround just delays playing of audio on the server
-    by *x* seconds, so the effect of pausing or changing tracks on the
-    client will also be delayed.
+-   In Audio-Only mode the server needs to specify a latency to the
+    client so the client can show video in sync with audio played on the
+    server. The default is 0.25 seconds: this can be changed with the
+    `-ao x.y` option, where x.y is a decimal like 0.25 in the range
+    \[0.0, 10.0\], with microsecond resolution.
 
 **One common problem involves GStreamer attempting to use
 incorrectly-configured or absent accelerated hardware h264 video
@@ -808,16 +802,11 @@ name. (Some choices of audiosink might not work on your system.)
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
 
-**-ao x.y** adds an audio offset time in (decimal) seconds to Audio-only
-(ALAC) streams to allow synchronization of sound playing on the UxPlay
-server with video on the client which delays playing the audio by *x.y*
-seconds (a decimal number). In the AirPlay Legacy mode used by UxPlay,
-the client cannot obtain audio latency information from the server, and
-appears to assume a latency of about 5 seconds. This can be compensated
-for with offset values such as `-ao 5` (but the effect of a pause in
-play etc., on the client will also be delayed). The -ao option accepts
-values in the range \[0,10\], which it converts to a whole number of
-milliseconds (-ao 1.2345 gives 1234 msec audio delay).
+**-ao x.y** specifies an audio latency) in (decimal) seconds in
+Audio-only (ALAC), that is reported to the client so it can synchronise
+its video with audio played on the server. Values in the range \[0.0,
+10.0\] seconds are allowed, and will be converted to a whole number of
+microseconds. Default is 0.25 sec (250000 usec).
 
 **-ca *filename*** provides a file (where *filename* can include a full
 path) used for output of "cover art" (from Apple Music, *etc.*,) in
@@ -1182,6 +1171,12 @@ the client by the AirPlay server) to be set. The "features" code and
 other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+
+1.63 2023-02-06 Corrected -ao option. Now allows audio latency reported
+to client to be changed from default of 0.25 sec (may not be necessary).
+Synchronisation of audio on server with video on client in audio-only
+ALAC mode now works, as sync=true is now used in the ALAC GStreamer
+pipeline. Internal change: all times are now given in nanoseconds.
 
 1.62 2023-01-18 Added Audio-only mode time offset -ao x to allow user
 synchronization of ALAC audio playing on the server with video, song
