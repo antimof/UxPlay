@@ -503,7 +503,7 @@ raop_handler_setup(raop_conn_t *conn,
                     unsigned short remote_cport = 0;
                     unsigned char ct;
                     unsigned int sr = AUDIO_SAMPLE_RATE; /* all AirPlay audio formats supported so far have sample rate 44.1kHz */
-                    unsigned int ad = (unsigned int) (((uint64_t) conn->raop->audio_delay_micros) * AUDIO_SAMPLE_RATE / SECOND_IN_USECS);
+                    unsigned int ad = (unsigned int) conn->raop->audio_delay_micros;
 
                     uint64_t uint_val = 0;
                     plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
