@@ -333,6 +333,12 @@ per second. (You can see what framerate is actually streaming by using -vs fpsdi
 its current client until that client drops the connection; since UxPlay-1.58, the option `-nohold` modifies this
 behavior so that when a new client requests a connection, it removes the current client and takes over.
 
+* In Audio-Only mode, use the `-sync` option to synchronize audio on the server with video
+on the client. This introduces a delay that the client adds to account for latency.  There is an 
+option `-al x` that sets the audio latency _x_  that the server reports to the client that in principle
+might modify the delay a little (this is not clear).  Here (non-negative decimal) _x_ is given  in seconds, default
+is 0.25. _Without the `-sync` option, there is no audio delay, but the client's video lags behind the server's audio._
+
 * Since UxPlay-1.54, you can display the accompanying "Cover Art" from sources like Apple Music in Audio-Only (ALAC) mode:
 run "`uxplay -ca <name> &`" in the background, then run a image viewer with an autoreload feature: an example
 is "feh": run "``feh -R 1 <name>``"
@@ -566,6 +572,12 @@ Options:
 
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
 
+**-sync** (In Audio-Only (ALAC)) mode: this option synchronizes audio on the server with video on the client,
+   but causes the client to add a delay to account for latency, so pausing the stream will not take effect
+   immediately.  This can be mitigated by using the `-al` audio latency setting to change the latency (default 0.25 secs)
+   that the server reports to the cient.
+
+
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
    request made to the AirPlay client, and perhaps will not
@@ -660,7 +672,7 @@ which will not work if a firewall is running.
 **-al _x_** specifies an audio latency _x_ in (decimal) seconds in Audio-only (ALAC), that is reported to the client.  Values
    in the range [0.0, 10.0] seconds are allowed, and will be converted to a whole number of microseconds.  Default
    is 0.25 sec (250000 usec).   (This replaces the `-ao` option introduced in v1.62, as a workaround for a problem that
-   is now fixed: it is not clear if changing the value of _x_ produces any effects, however.) 
+   is now fixed).
 
 **-ca _filename_** provides a file (where _filename_ can include a full path) used for output of "cover art"
    (from Apple Music, _etc._,) in audio-only ALAC mode.   This file is overwritten with the latest cover art as

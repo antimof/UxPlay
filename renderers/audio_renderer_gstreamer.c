@@ -82,7 +82,7 @@ static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
-void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
@@ -114,7 +114,11 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         g_string_append (launch, audiosink);
         switch(i) {
         case 1:  /*ALAC*/
-            g_string_append (launch, " sync=true");
+	    if (*audio_sync) {
+                g_string_append (launch, " sync=true");
+	    } else {
+                g_string_append (launch, " sync=false");
+	    }
             break;
         default:
             g_string_append (launch, " sync=false");

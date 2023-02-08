@@ -397,6 +397,15 @@ for help with this or other problems.
     modifies this behavior so that when a new client requests a
     connection, it removes the current client and takes over.
 
+-   In Audio-Only mode, use the `-sync` option to synchronize audio on
+    the server with video on the client. This introduces a delay that
+    the client adds to account for latency. There is an option `-al x`
+    that sets the audio latency *x* that the server reports to the
+    client that in principle might modify the delay a little (this is
+    not clear). Here (non-negative decimal) *x* is given in seconds,
+    default is 0.25. *Without the `-sync` option, there is no audio
+    delay, but the client's video lags behind the server's audio.*
+
 -   Since UxPlay-1.54, you can display the accompanying "Cover Art" from
     sources like Apple Music in Audio-Only (ALAC) mode: run
     "`uxplay -ca <name> &`" in the background, then run a image viewer
@@ -691,6 +700,13 @@ will also now be the name shown above the mirror display (X11) window.
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server
 name.
 
+**-sync** (In Audio-Only (ALAC)) mode: this option synchronizes audio on
+the server with video on the client, but causes the client to add a
+delay to account for latency, so pausing the stream will not take effect
+immediately. This can be mitigated by using the `-al` audio latency
+setting to change the latency (default 0.25 secs) that the server
+reports to the cient.
+
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display
 resolution (width and height, in pixels). (This may be a request made to
 the AirPlay client, and perhaps will not be the final resolution you
@@ -801,8 +817,7 @@ Audio-only (ALAC), that is reported to the client. Values in the range
 \[0.0, 10.0\] seconds are allowed, and will be converted to a whole
 number of microseconds. Default is 0.25 sec (250000 usec). (This
 replaces the `-ao` option introduced in v1.62, as a workaround for a
-problem that is now fixed: it is not clear if changing the value of *x*
-produces any effects, however.)
+problem that is now fixed).
 
 **-ca *filename*** provides a file (where *filename* can include a full
 path) used for output of "cover art" (from Apple Music, *etc.*,) in
