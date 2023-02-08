@@ -54,7 +54,6 @@ struct raop_rtp_s {
     // Time and sync
     raop_ntp_t *ntp;
     double rtp_clock_rate;
-    unsigned int audio_delay_micros;
     int64_t rtp_sync_offset;
     raop_rtp_sync_data_t sync_data[RAOP_RTP_SYNC_DATA_COUNT];
     int sync_data_index;
@@ -712,7 +711,7 @@ raop_rtp_thread_udp(void *arg)
 // Start rtp service, three udp ports
 void
 raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport, unsigned short *control_lport,
-                     unsigned short *data_lport, unsigned char *ct, unsigned int *sr, unsigned int *ad)
+                     unsigned short *data_lport, unsigned char *ct, unsigned int *sr)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
     int use_ipv6 = 0;
@@ -727,7 +726,6 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_
 
     raop_rtp->ct = *ct;
     raop_rtp->rtp_clock_rate = SECOND_IN_NSECS / *sr;
-    raop_rtp->audio_delay_micros = *ad;
 
     /* Initialize ports and sockets */
     raop_rtp->control_lport = *control_lport;

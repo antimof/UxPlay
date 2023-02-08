@@ -404,12 +404,6 @@ for help with this or other problems.
     "`feh -R 1 <name>`" in the foreground; terminate feh and then Uxplay
     with "`ctrl-C fg ctrl-C`".
 
--   In Audio-Only mode the server needs to specify a latency to the
-    client so the client can show video in sync with audio played on the
-    server. The default is 0.25 seconds: this can be changed with the
-    `-ao x.y` option, where x.y is a decimal like 0.25 in the range
-    \[0.0, 10.0\], with microsecond resolution.
-
 **One common problem involves GStreamer attempting to use
 incorrectly-configured or absent accelerated hardware h264 video
 decoding (e.g., VAAPI). Try "`uxplay -avdec`" to force software video
@@ -802,11 +796,13 @@ name. (Some choices of audiosink might not work on your system.)
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
 
-**-ao x.y** specifies an audio latency) in (decimal) seconds in
-Audio-only (ALAC), that is reported to the client so it can synchronise
-its video with audio played on the server. Values in the range \[0.0,
-10.0\] seconds are allowed, and will be converted to a whole number of
-microseconds. Default is 0.25 sec (250000 usec).
+**-al *x*** specifies an audio latency *x* in (decimal) seconds in
+Audio-only (ALAC), that is reported to the client. Values in the range
+\[0.0, 10.0\] seconds are allowed, and will be converted to a whole
+number of microseconds. Default is 0.25 sec (250000 usec). (This
+replaces the `-ao` option introduced in v1.62, as a workaround for a
+problem that is now fixed: it is not clear if changing the value of *x*
+produces any effects, however.)
 
 **-ca *filename*** provides a file (where *filename* can include a full
 path) used for output of "cover art" (from Apple Music, *etc.*,) in

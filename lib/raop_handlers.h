@@ -503,7 +503,6 @@ raop_handler_setup(raop_conn_t *conn,
                     unsigned short remote_cport = 0;
                     unsigned char ct;
                     unsigned int sr = AUDIO_SAMPLE_RATE; /* all AirPlay audio formats supported so far have sample rate 44.1kHz */
-                    unsigned int ad = (unsigned int) conn->raop->audio_delay_micros;
 
                     uint64_t uint_val = 0;
                     plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
@@ -549,7 +548,7 @@ raop_handler_setup(raop_conn_t *conn,
                     }
 
                     if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, use_udp, &remote_cport, &cport, &dport, &ct, &sr, &ad);
+                        raop_rtp_start_audio(conn->raop_rtp, use_udp, &remote_cport, &cport, &dport, &ct, &sr);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");

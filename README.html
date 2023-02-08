@@ -400,11 +400,6 @@ from sources like Apple Music in Audio-Only (ALAC) mode: run
 a image viewer with an autoreload feature: an example is “feh”: run
 “<code>feh -R 1 &lt;name&gt;</code>” in the foreground; terminate feh
 and then Uxplay with “<code>ctrl-C fg ctrl-C</code>”.</p></li>
-<li><p>In Audio-Only mode the server needs to specify a latency to the
-client so the client can show video in sync with audio played on the
-server. The default is 0.25 seconds: this can be changed with the
-<code>-ao x.y</code> option, where x.y is a decimal like 0.25 in the
-range [0.0, 10.0], with microsecond resolution.</p></li>
 </ul>
 <p><strong>One common problem involves GStreamer attempting to use
 incorrectly-configured or absent accelerated hardware h264 video
@@ -780,11 +775,13 @@ parameters to be included with the audiosink name. (Some choices of
 audiosink might not work on your system.)</p>
 <p><strong>-as 0</strong> (or just <strong>-a</strong>) suppresses
 playing of streamed audio, but displays streamed video.</p>
-<p><strong>-ao x.y</strong> specifies an audio latency) in (decimal)
-seconds in Audio-only (ALAC), that is reported to the client so it can
-synchronise its video with audio played on the server. Values in the
-range [0.0, 10.0] seconds are allowed, and will be converted to a whole
-number of microseconds. Default is 0.25 sec (250000 usec).</p>
+<p><strong>-al <em>x</em></strong> specifies an audio latency <em>x</em>
+in (decimal) seconds in Audio-only (ALAC), that is reported to the
+client. Values in the range [0.0, 10.0] seconds are allowed, and will be
+converted to a whole number of microseconds. Default is 0.25 sec (250000
+usec). (This replaces the <code>-ao</code> option introduced in v1.62,
+as a workaround for a problem that is now fixed: it is not clear if
+changing the value of <em>x</em> produces any effects, however.)</p>
 <p><strong>-ca <em>filename</em></strong> provides a file (where
 <em>filename</em> can include a full path) used for output of “cover
 art” (from Apple Music, <em>etc.</em>,) in audio-only ALAC mode. This

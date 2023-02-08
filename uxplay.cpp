@@ -388,7 +388,7 @@ static void print_info (char *name) {
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
-    printf("-ao x.y   Audio-only mode latency in seconds (default 0.25) used by client.\n");
+    printf("-al x     Audio latency in seconds (default 0.25) reported to client.\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");
@@ -738,7 +738,7 @@ static void parse_arguments (int argc, char *argv[]) {
             bt709_fix = true;
         } else if (arg == "-nohold") {
             max_connections = 3;
-        } else if (arg == "-ao") {
+        } else if (arg == "-al") {
 	    int n;
             char *end;
             if (i < argc - 1 && *argv[i+1] != '-') {
@@ -748,7 +748,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     continue;
                 }
             }
-            fprintf(stderr, "invalid argument -ao %s: must be a decimal time offset in seconds, range [0,10]\n"
+            fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
 	} else {
@@ -1280,9 +1280,6 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
     if (use_audio) {
-        if (audiodelay >= 0) {
-            LOGI("Audio-only ALAC streams will be delayed by %d microseconds", audiodelay);
-        }
         audio_renderer_init(render_logger, audiosink.c_str());
     } else {
         LOGI("audio_disabled");
