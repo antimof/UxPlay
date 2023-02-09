@@ -573,9 +573,9 @@ raop_rtp_thread_udp(void *arg)
                 uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
                 char *str = utils_data_to_string(packet, packetlen, 20);
                 logger_log(raop_rtp->logger, LOGGER_DEBUG,
-                           "raop_rtp sync: client ntp=%8.6f, ntp = %8.6f, ntp_start_time %8.6f, sync_rtp=%u\n%s",
-                           ((double) sync_ntp_remote) / SEC, ((double)sync_ntp_local) / SEC,
-                           ((double) raop_rtp->ntp_start_time) / SEC, sync_rtp, str);
+                           "raop_rtp sync: client ntp=%8.6f, ntp = %8.6f, ntp_start_time %8.6f\nts_client = %8.6f sync_rtp=%u\n%s",
+                           (double) sync_ntp_remote / SEC, (double) sync_ntp_local / SEC,
+                           (double) raop_rtp->ntp_start_time / SEC, (double) sync_ntp_remote / SEC, sync_rtp, str);
                 free(str);
                 raop_rtp_sync_clock(raop_rtp, &sync_ntp_remote, &sync_rtp64);		
             } else {
