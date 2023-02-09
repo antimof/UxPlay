@@ -51,8 +51,9 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.62"
+#define VERSION "1.63"
 
+#define SECOND_IN_USECS 1000000
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
@@ -64,7 +65,7 @@ static std::string server_name = DEFAULT_NAME;
 static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
-
+static bool audio_sync = false;
 static bool relaunch_video = false;
 static bool reset_loop = false;
 static unsigned int open_connections= 0;
@@ -73,7 +74,7 @@ static videoflip_t videoflip[2] = { NONE , NONE };
 static bool use_video = true;
 static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
-static std::string audiodelay = "";
+static int  audiodelay = -1;
 static bool use_audio = true;
 static bool new_window_closing_behavior = true;
 static bool close_window;
@@ -358,6 +359,7 @@ static void print_info (char *name) {
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
+    printf("-sync     (In Audio-Only mode) sync audio on server with video on client\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -387,7 +389,7 @@ static void print_info (char *name) {
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
-    printf("-ao x.y   Audio offset time in seconds (default 0.0) in Audio-only mode.\n");
+    printf("-al x     Audio latency in seconds (default 0.25) reported to client.\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");
@@ -551,6 +553,8 @@ static void parse_arguments (int argc, char *argv[]) {
             server_name = std::string(argv[++i]);
         } else if (arg == "-nh") {
             do_append_hostname = false;
+        } else if (arg == "-sync") {
+            audio_sync = true;
         } else if (arg == "-s") {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             std::string value(argv[++i]);
@@ -737,24 +741,18 @@ static void parse_arguments (int argc, char *argv[]) {
             bt709_fix = true;
         } else if (arg == "-nohold") {
             max_connections = 3;
-        } else if (arg == "-ao") {
+        } else if (arg == "-al") {
 	    int n;
             char *end;
             if (i < argc - 1 && *argv[i+1] != '-') {
-                n = (int) (1000 * strtof(argv[++i], &end));
-                if (*end == '\0' && n >=0 && n <= 10000) {
-                    audiodelay.erase();
-                    if (n > 0) {
-                        char* delay = new char[6];
-                        snprintf(delay, 6, "%d", n);
-                        audiodelay = delay;
-                        delete[] delay;
-                    }
+	      n = (int) (strtof(argv[++i], &end) * SECOND_IN_USECS);
+                if (*end == '\0' && n >=0 && n <= 10 * SECOND_IN_USECS) {
+                    audiodelay = n;
                     continue;
                 }
             }
-            fprintf(stderr, "invalid argument -ao %s: must be a decimal time offset in seconds, range [0,10]\n"
-                    "(like 5 or 4.8, which will be converted to a whole number of milliseconds)\n", argv[i]);
+            fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
+                    "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
 	} else {
             fprintf(stderr, "unknown option %s, stopping\n",argv[i]);
@@ -1162,6 +1160,7 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
  
     if (show_client_FPS_data) raop_set_plist(raop, "clientFPSdata", 1);
     raop_set_plist(raop, "max_ntp_timeouts", max_ntp_timeouts);
+    if (audiodelay >= 0) raop_set_plist(raop, "audio_delay_micros", audiodelay);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
@@ -1284,10 +1283,7 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
     if (use_audio) {
-        if (audiodelay.c_str()[0]) {
-            LOGI("Audio-only ALAC streams will be delayed by %s milliseconds", audiodelay.c_str());
-        }
-        audio_renderer_init(render_logger, audiosink.c_str(), audiodelay.c_str());
+        audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync);
     } else {
         LOGI("audio_disabled");
     }

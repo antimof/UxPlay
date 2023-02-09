@@ -21,6 +21,7 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include "audio_renderer.h"
+#define SECOND_IN_NSECS 1000000000UL
 
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
@@ -81,7 +82,7 @@ static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
-void audio_renderer_init(logger_t *render_logger, const char* audiosink, const char* audio_delay) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
@@ -100,11 +101,6 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
             g_string_append(launch, "! avdec_aac ! ");
             break;
         case 1:    /* ALAC */
-            if (audio_delay[0]) {
-                g_string_append(launch, "min-threshold-time=");
-                g_string_append(launch, audio_delay);
-                g_string_append(launch, "000000 ");
-            }
             g_string_append(launch, "! avdec_alac ! ");
             break;
         case 3:   /*PCM*/
@@ -116,7 +112,18 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const c
         g_string_append (launch, "audioresample ! ");    /* wasapisink must resample from 44.1 kHz to 48 kHz */
         g_string_append (launch, "volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
-        g_string_append (launch, " sync=false");
+        switch(i) {
+        case 1:  /*ALAC*/
+	    if (*audio_sync) {
+                g_string_append (launch, " sync=true");
+	    } else {
+                g_string_append (launch, " sync=false");
+	    }
+            break;
+        default:
+            g_string_append (launch, " sync=false");
+            break;
+        }
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
 	if (error) {
           g_error ("gst_parse_launch error (audio %d):\n %s\n", i+1, error->message);
@@ -201,11 +208,12 @@ void  audio_renderer_start(unsigned char *ct) {
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {
     GstBuffer *buffer;
     bool valid;
-    GstClockTime pts = (GstClockTime) (*ntp_time * 1000);    /* convert from usec to nsec */
+    GstClockTime pts = (GstClockTime) *ntp_time ;    /* now in nsecs */
     if (pts >= gst_audio_pipeline_base_time) {
         pts -= gst_audio_pipeline_base_time;
     } else {
-        logger_log(logger, LOGGER_ERR, "*** invalid *pts_raw < gst_audio_pipeline_base_time");
+        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_audio_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_audio_pipeline_base_time) / SECOND_IN_NSECS);
         return;
     }
     if (data_len == 0 || renderer == NULL) return;

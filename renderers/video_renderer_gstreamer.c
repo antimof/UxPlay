@@ -21,6 +21,7 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 
+#define SECOND_IN_NSECS 1000000000UL
 #ifdef X_DISPLAY_FIX
 #include <gst/video/navigation.h>
 #include "x_display_fix.h"
@@ -220,11 +221,12 @@ void video_renderer_start() {
 
 void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time) {
     GstBuffer *buffer;
-    GstClockTime pts = (GstClockTime) (*ntp_time * 1000); /*convert from usec to nsec */
+    GstClockTime pts = (GstClockTime) *ntp_time; /*now in nsecs */
     if (pts >= gst_video_pipeline_base_time) {
         pts -= gst_video_pipeline_base_time;
     } else {
-        logger_log(logger, LOGGER_ERR, "*** invalid *pts_raw < gst_video_pipeline_base_time") ;
+        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_video_pipeline_base_time) / SECOND_IN_NSECS);
         return;
     }
     g_assert(data_len != 0);
