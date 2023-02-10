@@ -57,6 +57,7 @@
 #define VERSION "1.63"
 
 #define SECOND_IN_USECS 1000000
+#define SECOND_IN_NSECS 1000000000UL
 #define DEFAULT_NAME "UxPlay"
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
@@ -112,8 +113,7 @@ static int max_connections = 2;
 static unsigned short raop_port;
 static unsigned short airplay_port;
 static uint64_t audio_base_time, audio_start_time, video_base_time, video_start_time;
-
-
+static uint64_t gst_start_time;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -1279,7 +1279,11 @@ int main (int argc, char *argv[]) {
         append_hostname(server_name);
     }
 
-    if (!gstreamer_init()) {
+    if (gstreamer_init()) {
+      struct timespec time;
+      clock_gettime(CLOCK_REALTIME, &time);
+      gst_start_time = ((uint64_t) time.tv_nsec) + (uint64_t) time.tv_sec * SECOND_IN_NSECS;
+    } else {
         LOGE ("stopping");
         exit (1);
     }
