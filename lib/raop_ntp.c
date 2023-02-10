@@ -480,7 +480,7 @@ uint64_t raop_ntp_timestamp_to_nano_seconds(uint64_t ntp_timestamp, bool account
 uint64_t raop_ntp_get_local_time(raop_ntp_t *raop_ntp) {
     struct timespec time;
     clock_gettime(CLOCK_REALTIME, &time);
-    return ((uint64_t)time.tv_sec) * SECOND_IN_NSECS + (uint64_t)(time.tv_nsec);
+    return ((uint64_t) time.tv_nsec) + (uint64_t) time.tv_sec * SECOND_IN_NSECS;
 }
 
 /**
@@ -490,7 +490,7 @@ uint64_t raop_ntp_get_remote_time(raop_ntp_t *raop_ntp) {
     MUTEX_LOCK(raop_ntp->sync_params_mutex);
     int64_t offset = raop_ntp->sync_offset;
     MUTEX_UNLOCK(raop_ntp->sync_params_mutex);
-    return (uint64_t) (((int64_t) raop_ntp_get_local_time(raop_ntp)) + offset);
+    return (uint64_t) ((int64_t) raop_ntp_get_local_time(raop_ntp) + offset);
 }
 
 /**
@@ -500,7 +500,7 @@ uint64_t raop_ntp_convert_remote_time(raop_ntp_t *raop_ntp, uint64_t remote_time
     MUTEX_LOCK(raop_ntp->sync_params_mutex);
     int64_t offset = raop_ntp->sync_offset;
     MUTEX_UNLOCK(raop_ntp->sync_params_mutex);
-    return (uint64_t) (((int64_t) remote_time) - offset);
+    return (uint64_t) ((int64_t) remote_time - offset);
 }
 
 /**
@@ -510,5 +510,5 @@ uint64_t raop_ntp_convert_local_time(raop_ntp_t *raop_ntp, uint64_t local_time) 
     MUTEX_LOCK(raop_ntp->sync_params_mutex);
     int64_t offset = raop_ntp->sync_offset;
     MUTEX_UNLOCK(raop_ntp->sync_params_mutex);
-    return (uint64_t) (((int64_t) local_time) + offset);
+    return (uint64_t) ((int64_t) local_time + offset);
 }
