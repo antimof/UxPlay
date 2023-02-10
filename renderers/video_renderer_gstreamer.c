@@ -34,6 +34,14 @@ static bool alt_keypress = false;
 static unsigned char X11_search_attempts; 
 #endif
 
+static video_renderer_t *renderer = NULL;
+static GstClockTime gst_video_pipeline_base_time = GST_CLOCK_TIME_NONE;
+static GstClockTime gst_video_pipeline_start_time = GST_CLOCK_TIME_NONE;
+static logger_t *logger = NULL;
+static unsigned short width, height, width_source, height_source;  /* not currently used */
+static bool first_packet = false;
+
+
 struct video_renderer_s {
     GstElement *appsrc, *pipeline, *sink;
     GstBus *bus;
@@ -99,12 +107,6 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
         break;
     }
 }	
-
-static video_renderer_t *renderer = NULL;
-static GstClockTime gst_video_pipeline_base_time = GST_CLOCK_TIME_NONE;
-static logger_t *logger = NULL;
-static unsigned short width, height, width_source, height_source;  /* not currently used */
-static bool first_packet = false;
 
 /* apple uses colorimetry=1:3:5:1                                *
  * (not recognized by v4l2 plugin in Gstreamer  < 1.20.4)        *
@@ -212,9 +214,12 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     }
 }
 
-void video_renderer_start() {
+void video_renderer_start(uint64_t *base_time, uint64_t *start_time) {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
+    gst_video_pipeline_start_time = gst_element_get_start_time(renderer->appsrc);
+    *base_time = (uint64_t) gst_video_pipeline_base_time;
+    *start_time = (uint64_t) gst_video_pipeline_start_time;
     renderer->bus = gst_element_get_bus(renderer->pipeline);
     first_packet = true;
 #ifdef X_DISPLAY_FIX

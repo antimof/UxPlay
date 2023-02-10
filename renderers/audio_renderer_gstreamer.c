@@ -26,6 +26,22 @@
 #include "audio_renderer.h"
 #define SECOND_IN_NSECS 1000000000UL
 
+#define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
+
+static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
+static GstClockTime gst_audio_pipeline_start_time = GST_CLOCK_TIME_NONE;
+static logger_t *logger = NULL;
+const char * format[NFORMATS];
+
+typedef struct audio_renderer_s {
+    GstElement *appsrc; 
+    GstElement *pipeline;
+    GstElement *volume;
+    unsigned char ct;
+} audio_renderer_t ;
+static audio_renderer_t *renderer_type[NFORMATS];
+static audio_renderer_t *renderer = NULL;
+
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
 /* ct = 1; linear PCM (uncompressed): 44100/16/2, S16LE */
@@ -40,14 +56,6 @@ static const char aac_lc_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2
 
 /* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 480 */
 static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
-
-typedef struct audio_renderer_s {
-    GstElement *appsrc; 
-    GstElement *pipeline;
-    GstElement *volume;
-    unsigned char ct;
-} audio_renderer_t ;
-
 
 static gboolean check_plugins (void)
 {
@@ -77,13 +85,6 @@ bool gstreamer_init(){
     gst_init(NULL,NULL);    
     return (bool) check_plugins ();
 }
-
-#define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
-static audio_renderer_t *renderer_type[NFORMATS];
-static audio_renderer_t *renderer = NULL;
-static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
-static logger_t *logger = NULL;
-const char * format[NFORMATS];
 
 void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync) {
     GError *error = NULL;
@@ -179,7 +180,7 @@ void audio_renderer_stop() {
     }
 }
 
-void  audio_renderer_start(unsigned char *ct) {
+void  audio_renderer_start(unsigned char *ct, uint64_t *base_time, uint64_t *start_time) {
     unsigned char compression_type = 0, id;
     for (int i = 0; i < NFORMATS; i++) {
         if(renderer_type[i]->ct == *ct) {
@@ -196,16 +197,21 @@ void  audio_renderer_start(unsigned char *ct) {
             renderer = renderer_type[id];
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
             gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
+            *base_time = gst_audio_pipeline_base_time;
+            gst_audio_pipeline_start_time = gst_element_get_start_time(renderer->appsrc);
+            *start_time = gst_audio_pipeline_base_time;
         }
     } else if (compression_type) {
         logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
         gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
+        *base_time = gst_audio_pipeline_base_time;
+        gst_audio_pipeline_start_time = gst_element_get_start_time(renderer->appsrc);
+        *start_time = gst_audio_pipeline_base_time;
     } else {
         logger_log(logger, LOGGER_ERR, "unknown audio compression type ct = %d", *ct);
     }
-    
 }
 
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {

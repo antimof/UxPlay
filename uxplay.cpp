@@ -111,6 +111,9 @@ static bool bt709_fix = false;
 static int max_connections = 2;
 static unsigned short raop_port;
 static unsigned short airplay_port;
+static uint64_t audio_base_time, audio_start_time, video_base_time, video_start_time;
+
+
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -1043,7 +1046,7 @@ extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *
     audio_type = type;
     
     if (use_audio) {
-        audio_renderer_start(ct);
+      audio_renderer_start(ct, &audio_base_time, &audio_start_time);
     }
 
     if (coverart_filename.length()) {
@@ -1294,7 +1297,7 @@ int main (int argc, char *argv[]) {
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                             video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
-        video_renderer_start();
+        video_renderer_start(&video_base_time, &video_start_time);
     }
 
     if (udp[0]) {
@@ -1347,7 +1350,7 @@ int main (int argc, char *argv[]) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
-            video_renderer_start();
+            video_renderer_start(&video_base_time, &video_start_time);
         }
         if (relaunch_video) {
             unsigned short port = raop_get_port(raop);

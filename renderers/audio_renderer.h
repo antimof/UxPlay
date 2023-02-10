@@ -34,7 +34,7 @@ extern "C" {
 
 bool gstreamer_init();
 void audio_renderer_init(logger_t *logger, const char* audiosink, const bool *audio_sync);
-void audio_renderer_start(unsigned char* compression_type);
+void audio_renderer_start(unsigned char* compression_type, uint64_t *base_time, uint64_t *start_time);
 void audio_renderer_stop();
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time);
 void audio_renderer_set_volume(float volume);
