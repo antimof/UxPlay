@@ -994,7 +994,7 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
     }
     if (use_audio) {
-      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time));
+      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_local));
     }
 }
 
@@ -1003,7 +1003,7 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
         dump_video_to_file(data->data, data->data_len);
     }
     if (use_video) {
-        video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time));
+        video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time_local));
     }
 }
 

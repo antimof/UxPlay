@@ -203,7 +203,7 @@ raop_rtp_mirror_thread(void *arg)
     uint64_t ntp_timestamp_nal = 0;
     uint64_t ntp_timestamp_raw = 0;
     uint64_t ntp_timestamp_remote = 0;
-    uint64_t ntp_timestamp;
+    uint64_t ntp_timestamp_local  = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
 
 #ifdef DUMP_H264
@@ -375,11 +375,11 @@ raop_rtp_mirror_thread(void *arg)
                 // ntp time stamps don't include the SECONDS_FROM_1900_TO_1970, so it's really just
                 // counting nano seconds since last boot.
 
-                ntp_timestamp = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
+                ntp_timestamp_local = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
-                int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp);
+                int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local);
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f, ts = %8.6f, %s",
-                           (double) ntp_now / SEC, (double) ntp_timestamp / SEC, (double) latency / SEC, (double) ntp_timestamp_remote / SEC, packet_description);
+                           (double) ntp_now / SEC, (double) ntp_timestamp_local / SEC, (double) latency / SEC, (double) ntp_timestamp_remote / SEC, packet_description);
 
 #ifdef DUMP_H264
                 fwrite(payload, payload_size, 1, file_source);
@@ -448,14 +448,15 @@ raop_rtp_mirror_thread(void *arg)
 #endif
                 payload_decrypted = NULL;
                 h264_decode_struct h264_data;
-                h264_data.ntp_time = ntp_timestamp;
+                h264_data.ntp_time_local = ntp_timestamp_local;
+                h264_data.ntp_time_remote = ntp_timestamp_remote;
                 h264_data.nal_count = nalus_count;   /*nal_count will be the number of nal units in the packet */
                 h264_data.data_len = payload_size;
                 h264_data.data = payload_out;
                 if (prepend_sps_pps) {
                     h264_data.data_len += raop_rtp_mirror->sps_pps_len;
                     h264_data.nal_count += 2;
-                    if (ntp_timestamp_remote != ntp_timestamp_nal) {
+                    if (ntp_timestamp_raw != ntp_timestamp_nal) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "raop_rtp_mirror: prepended sps_pps timestamp does not match that of video payload");
                     }
                 }
@@ -471,7 +472,7 @@ raop_rtp_mirror_thread(void *arg)
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror, discard type 0x01 packet with no payload");
                     break;
                 }
-                ntp_timestamp_nal = ntp_timestamp_remote;
+                ntp_timestamp_nal = ntp_timestamp_raw;
                 float width = byteutils_get_float(packet, 16);
                 float height = byteutils_get_float(packet, 20);
                 float width_source = byteutils_get_float(packet, 40);

@@ -25,13 +25,16 @@ typedef struct {
     int nal_count;
     unsigned char *data;
     int data_len;
-    uint64_t ntp_time;
+    uint64_t ntp_time_local;
+    uint64_t ntp_time_remote;
 } h264_decode_struct;
 
 typedef struct {
     unsigned char *data;
     int data_len;
-    uint64_t ntp_time;
+    int sync_status;
+    uint64_t ntp_time_local;
+    uint64_t ntp_time_remote;
     uint64_t rtp_time;
     unsigned short seqnum;
 } audio_decode_struct;
