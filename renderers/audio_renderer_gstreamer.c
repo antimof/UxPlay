@@ -29,7 +29,6 @@
 #define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
 
 static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
-static GstClockTime gst_audio_pipeline_start_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
@@ -180,7 +179,7 @@ void audio_renderer_stop() {
     }
 }
 
-void  audio_renderer_start(unsigned char *ct, uint64_t *base_time, uint64_t *start_time) {
+void  audio_renderer_start(unsigned char *ct) {
     unsigned char compression_type = 0, id;
     for (int i = 0; i < NFORMATS; i++) {
         if(renderer_type[i]->ct == *ct) {
@@ -197,18 +196,12 @@ void  audio_renderer_start(unsigned char *ct, uint64_t *base_time, uint64_t *sta
             renderer = renderer_type[id];
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
             gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
-            *base_time = gst_audio_pipeline_base_time;
-            gst_audio_pipeline_start_time = gst_element_get_start_time(renderer->appsrc);
-            *start_time = gst_audio_pipeline_base_time;
         }
     } else if (compression_type) {
         logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
         gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
-        *base_time = gst_audio_pipeline_base_time;
-        gst_audio_pipeline_start_time = gst_element_get_start_time(renderer->appsrc);
-        *start_time = gst_audio_pipeline_base_time;
     } else {
         logger_log(logger, LOGGER_ERR, "unknown audio compression type ct = %d", *ct);
     }

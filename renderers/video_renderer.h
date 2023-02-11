@@ -49,7 +49,7 @@ typedef struct video_renderer_s video_renderer_t;
 
 void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
                           const char *decoder, const char *converter, const char *videosink, const bool *fullscreen);
-void video_renderer_start (uint64_t *base_time, uint64_t *start_time);
+void video_renderer_start ();
 void video_renderer_stop ();
 void video_renderer_render_buffer (unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time);
 void video_renderer_flush ();
