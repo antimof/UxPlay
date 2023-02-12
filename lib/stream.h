@@ -31,6 +31,7 @@ typedef struct {
 
 typedef struct {
     unsigned char *data;
+    unsigned char ct;
     int data_len;
     int sync_status;
     uint64_t ntp_time_local;

@@ -70,6 +70,9 @@ static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
 static bool audio_sync = false;
+static bool video_sync = false;
+static int64_t audio_delay_alac = 0;
+static int64_t audio_delay_aac = 0;
 static bool relaunch_video = false;
 static bool reset_loop = false;
 static unsigned int open_connections= 0;
@@ -364,7 +367,9 @@ static void print_info (char *name) {
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
-    printf("-sync     (In Audio-Only mode) sync audio on server with video on client\n");
+    printf("-vsync [x]Mirror mode: sync audio to video (default: stream w/o sync)\n");
+    printf("          x is optional audio delay in millisecs, can be neg., decimal\n");
+    printf("-async [x]Audio-Only mode: sync audio to client video (default: no sync)\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -558,8 +563,36 @@ static void parse_arguments (int argc, char *argv[]) {
             server_name = std::string(argv[++i]);
         } else if (arg == "-nh") {
             do_append_hostname = false;
-        } else if (arg == "-sync") {
+        } else if (arg == "-async") {
             audio_sync = true;
+	    if (i <  argc - 1) {
+                char *end;
+                int n = (int) (strtof(argv[i + 1], &end) * 1000);
+                if (*end == '\0') {
+                    i++;
+                    if (n > -SECOND_IN_USECS && n < SECOND_IN_USECS) {
+                        audio_delay_alac = n * 1000; /* units are nsecs */
+                    } else {
+		      fprintf(stderr, "invalid -async %s: requested delays must be smaller than +/- 1000 millisecs\n", argv[i] );
+                        exit (1);
+                    }
+                }
+            }
+        } else if (arg == "-vsync") {
+            video_sync = true;
+	    if (i <  argc - 1) {
+                char *end;
+                int n = (int) (strtof(argv[i + 1], &end) * 1000);
+                if (*end == '\0') {
+                    i++;
+                    if (n > -SECOND_IN_USECS && n < SECOND_IN_USECS) {
+                        audio_delay_aac = n * 1000;     /* units are nsecs */
+                    } else {
+		      fprintf(stderr, "invalid -vsync %s: requested delays must be smaller than +/- 1000 millisecs\n", argv[i]);
+                        exit (1);
+                    }
+                }
+            }
         } else if (arg == "-s") {
             if (!option_has_value(i, argc, argv[i], argv[i+1])) exit(1);
             std::string value(argv[++i]);
@@ -998,10 +1031,15 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
     }
     if (use_audio) {
         if (!remote_clock_offset) {
-	    remote_clock_offset = data->ntp_time_local - data->ntp_time_remote;
+            remote_clock_offset = data->ntp_time_local - data->ntp_time_remote;
         }
         data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
-        audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
+        if (data->ct == 2 && audio_delay_alac) {
+            data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote  + audio_delay_alac);
+        } else if (audio_delay_aac) {
+            data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_aac);
+        }
+      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
     }
 }
 
@@ -1300,14 +1338,14 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
 
     if (use_audio) {
-        audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync);
+      audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync);
     } else {
         LOGI("audio_disabled");
     }
 
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen, &video_sync);
         video_renderer_start();
     }
 
@@ -1360,7 +1398,8 @@ int main (int argc, char *argv[]) {
         if (use_video && close_window) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen);
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen,
+                                &video_sync);
             video_renderer_start();
         }
         if (relaunch_video) {

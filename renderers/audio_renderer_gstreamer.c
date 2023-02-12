@@ -85,7 +85,7 @@ bool gstreamer_init(){
     return (bool) check_plugins ();
 }
 
-void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync, const bool* video_sync) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
@@ -124,7 +124,11 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
 	    }
             break;
         default:
-            g_string_append (launch, " sync=false");
+	    if (*video_sync) {
+                g_string_append (launch, " sync=true");
+	    } else {
+                g_string_append (launch, " sync=false");
+	    }
             break;
         }
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
@@ -211,6 +215,7 @@ void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned s
     GstBuffer *buffer;
     bool valid;
     GstClockTime pts = (GstClockTime) *ntp_time ;    /* now in nsecs */
+    //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
     if (pts >= gst_audio_pipeline_base_time) {
         pts -= gst_audio_pipeline_base_time;
     } else {
@@ -229,6 +234,7 @@ void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned s
     
     buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
     g_assert(buffer != NULL);
+    //g_print("audio latency %8.6f\n", (double) latency / SECOND_IN_NSECS);
     GST_BUFFER_PTS(buffer) = pts;
     gst_buffer_fill(buffer, 0, data, *data_len);
     switch (renderer->ct){
@@ -288,4 +294,3 @@ void audio_renderer_destroy() {
         free(renderer_type[i]);
     }
 }
-

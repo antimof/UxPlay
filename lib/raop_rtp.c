@@ -677,6 +677,7 @@ raop_rtp_thread_udp(void *arg)
                     audio_data.seqnum = seqnum;
                     audio_data.data_len = payload_size;
                     audio_data.data = payload;
+                    audio_data.ct = raop_rtp->ct;
                     if (have_synced) {
                         if (ntp_timestamp == 0) {
                             ntp_timestamp = (uint64_t) (raop_rtp->rtp_sync_offset + (int64_t) (raop_rtp->rtp_clock_rate * rtp64_timestamp));

@@ -13,7 +13,11 @@ UxPlay 1.63: An open\-source AirPlay mirroring (+ audio streaming) server.
 .TP
 \fB\-nh\fR       Do \fBNOT\fR append "@\fIhostname\fR" at end of the AirPlay server name
 .TP
-\fB\-sync\fR     (In Audio-Only mode) sync audio on server with video on client.
+\fB\-vsync\fR    Mirror mode: sync audio to video (default: stream w/o sync)
+.TP
+\fB\-vsync\fI[x]\fR \fIx\fR is optional audio delay in millisecs, can be neg., decimal.
+.TP
+\fB\-async\fR[\fIx\fR] Audio-Only mode: sync audio to client video (default: no sync).
 .TP
 \fB\-s\fR wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]
 .TP

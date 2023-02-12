@@ -128,7 +128,8 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
 }
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
-                          const char *decoder, const char *converter, const char *videosink, const bool *initial_fullscreen) {
+                          const char *decoder, const char *converter, const char *videosink, const bool *initial_fullscreen,
+                          const bool *video_sync) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
@@ -156,7 +157,12 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " ! ");    
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
     g_string_append(launch, videosink);
-    g_string_append(launch, " name=video_sink sync=false");
+    g_string_append(launch, " name=video_sink");
+    if (*video_sync) {
+        g_string_append(launch, " sync=true");
+    } else {
+        g_string_append(launch, " sync=false");
+    }
     logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline will be:\n\"%s\"", launch->str);
     renderer->pipeline = gst_parse_launch(launch->str, &error);
     if (error) {
@@ -226,6 +232,7 @@ void video_renderer_start() {
 void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time) {
     GstBuffer *buffer;
     GstClockTime pts = (GstClockTime) *ntp_time; /*now in nsecs */
+    //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
     if (pts >= gst_video_pipeline_base_time) {
         pts -= gst_video_pipeline_base_time;
     } else {
@@ -247,6 +254,7 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
         }
         buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
         g_assert(buffer != NULL);
+        //g_print("video latency %8.6f\n", (double) latency / SECOND_IN_NSECS);	
         GST_BUFFER_PTS(buffer) = pts;
         gst_buffer_fill(buffer, 0, data, *data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
