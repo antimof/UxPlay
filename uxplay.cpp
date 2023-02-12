@@ -112,7 +112,7 @@ static bool bt709_fix = false;
 static int max_connections = 2;
 static unsigned short raop_port;
 static unsigned short airplay_port;
-static uint64_t gst_start_time;
+static uint64_t remote_clock_offset = 0;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -956,6 +956,7 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
     return 0;
 }
 
+
 // Server callbacks
 extern "C" void conn_init (void *cls) {
     open_connections++;
@@ -967,6 +968,9 @@ extern "C" void conn_destroy (void *cls) {
     //video_renderer_update_background(-1);
     open_connections--;
     //LOGD("Open connections: %i", open_connections);
+    if (open_connections == 0) {
+        remote_clock_offset = 0;
+    }
 }
 
 extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
@@ -993,7 +997,11 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
     }
     if (use_audio) {
-      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_local));
+        if (!remote_clock_offset) {
+	    remote_clock_offset = data->ntp_time_local - data->ntp_time_remote;
+        }
+        data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
+        audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
     }
 }
 
@@ -1002,7 +1010,11 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
         dump_video_to_file(data->data, data->data_len);
     }
     if (use_video) {
-        video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time_local));
+        if (!remote_clock_offset) {
+            remote_clock_offset = data->ntp_time_local - data->ntp_time_remote;
+        }
+        data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
+        video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time_remote));
     }
 }
 
@@ -1278,11 +1290,7 @@ int main (int argc, char *argv[]) {
         append_hostname(server_name);
     }
 
-    if (gstreamer_init()) {
-      struct timespec time;
-      clock_gettime(CLOCK_REALTIME, &time);
-      gst_start_time = ((uint64_t) time.tv_nsec) + (uint64_t) time.tv_sec * SECOND_IN_NSECS;
-    } else {
+    if (!gstreamer_init()) {
         LOGE ("stopping");
         exit (1);
     }
