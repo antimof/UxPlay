@@ -300,7 +300,7 @@ raop_ntp_thread(void *arg)
                                     (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
             if (response_len < 0) {
                 timeout_counter++;
-                char time[28];
+                char time[30];
                 int level = (timeout_counter == 1 ? LOGGER_DEBUG : LOGGER_ERR);
                 ntp_timestamp_to_time(send_time, time, sizeof(time));
                 logger_log(raop_ntp->logger, level, "raop_ntp receive timeout %d (limit %d) (request sent %s)",
