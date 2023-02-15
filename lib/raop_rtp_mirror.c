@@ -10,6 +10,9 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
+ *
+ *==================================================================
+ * modified by fduncanh 2021-2023
  */
 
 #include "raop_rtp_mirror.h"
@@ -48,7 +51,8 @@
 #define CAST
 #endif
 
-#define SEC 1000000
+#define SECOND_IN_NSECS 1000000000UL
+#define SEC SECOND_IN_NSECS
 
 /* for MacOS, where SOL_TCP and TCP_KEEPIDLE are not defined */
 #if !defined(SOL_TCP) && defined(IPPROTO_TCP)
@@ -198,6 +202,8 @@ raop_rtp_mirror_thread(void *arg)
     bool conn_reset = false;
     uint64_t ntp_timestamp_nal = 0;
     uint64_t ntp_timestamp_raw = 0;
+    uint64_t ntp_timestamp_remote = 0;
+    uint64_t ntp_timestamp_local  = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
 
 #ifdef DUMP_H264
@@ -308,7 +314,15 @@ raop_rtp_mirror_thread(void *arg)
 
             /*packet[0:3] contains the payload size */
             int payload_size = byteutils_get_int(packet, 0);
-
+            char packet_description[13] = {0};
+	    char *p = packet_description;
+	    for (int i = 4; i < 8; i++) {
+                sprintf(p, "%2.2x ", (unsigned int) packet[i]);
+                p += 3;
+	    }
+            ntp_timestamp_raw = byteutils_get_long(packet, 8);
+            ntp_timestamp_remote = raop_ntp_timestamp_to_nano_seconds(ntp_timestamp_raw, false);
+	    
             /* packet[4] appears to have one of three possible values:                           *
              * 0x00 : encrypted packet                                                           *    
              * 0x01 : unencrypted packet with a SPS and a PPS NAL, sent initially, and also when *
@@ -359,15 +373,13 @@ raop_rtp_mirror_thread(void *arg)
                 // Conveniently, the video data is already stamped with the remote wall clock time,
                 // so no additional clock syncing needed. The only thing odd here is that the video
                 // ntp time stamps don't include the SECONDS_FROM_1900_TO_1970, so it's really just
-                // counting micro seconds since last boot.
-                ntp_timestamp_raw = byteutils_get_long(packet, 8);
-                uint64_t ntp_timestamp_remote = raop_ntp_timestamp_to_micro_seconds(ntp_timestamp_raw, false);
-                uint64_t ntp_timestamp = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
+                // counting nano seconds since last boot.
 
+                ntp_timestamp_local = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
                 uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
-                int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f",
-                           ((double) ntp_now) / SEC, ((double) ntp_timestamp) / SEC, ((double) latency) / SEC);
+                int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f, ts = %8.6f, %s",
+                           (double) ntp_now / SEC, (double) ntp_timestamp_local / SEC, (double) latency / SEC, (double) ntp_timestamp_remote / SEC, packet_description);
 
 #ifdef DUMP_H264
                 fwrite(payload, payload_size, 1, file_source);
@@ -436,7 +448,8 @@ raop_rtp_mirror_thread(void *arg)
 #endif
                 payload_decrypted = NULL;
                 h264_decode_struct h264_data;
-                h264_data.pts = ntp_timestamp;
+                h264_data.ntp_time_local = ntp_timestamp_local;
+                h264_data.ntp_time_remote = ntp_timestamp_remote;
                 h264_data.nal_count = nalus_count;   /*nal_count will be the number of nal units in the packet */
                 h264_data.data_len = payload_size;
                 h264_data.data = payload_out;
@@ -453,11 +466,13 @@ raop_rtp_mirror_thread(void *arg)
             case 0x01:
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived unencryted codec packet from client: payload_size %d header %s ts_client = %8.6f",
+			   payload_size, packet_description, (double) ntp_timestamp_remote / SEC);
                 if (payload_size == 0) {
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror, discard type 0x01 packet with no payload");
                     break;
                 }
-                ntp_timestamp_nal = byteutils_get_long(packet, 8);
+                ntp_timestamp_nal = ntp_timestamp_raw;
                 float width = byteutils_get_float(packet, 16);
                 float height = byteutils_get_float(packet, 20);
                 float width_source = byteutils_get_float(packet, 40);
@@ -537,7 +552,8 @@ raop_rtp_mirror_thread(void *arg)
 
                 break;
             case 0x05:
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived video streaming performance info packet from client");
+	      logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived video streaming performance info packet from client: payload_size %d header %s ts_raw = %llu",
+                         payload_size, packet_description, ntp_timestamp_raw);
                 /* payloads with packet[4] = 0x05 have no timestamp, and carry video info from the client as a binary plist *
                  * Sometimes (e.g, when the client has a locked screen), there is a 25kB trailer attached to the packet.    *
                  * This 25000 Byte trailer with unidentified content seems to be the same data each time it is sent.        */
@@ -566,7 +582,8 @@ raop_rtp_mirror_thread(void *arg)
                 }
                 break;
             default:
-                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "\nReceived unexpected TCP packet from client, packet[4] = 0x%2.2x", packet[4]);
+                logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "\nReceived unexpected TCP packet from client, size %d, %s ts_raw = raw%llu",
+                           payload_size, packet_description, ntp_timestamp_raw);
                 break;
             }
 

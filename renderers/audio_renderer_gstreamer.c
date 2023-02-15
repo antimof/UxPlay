@@ -1,6 +1,9 @@
 /**
  * RPiPlay - An open-source AirPlay mirroring server for Raspberry Pi
  * Copyright (C) 2019 Florian Draschbacher
+ * Modified for:
+ * UxPlay - An open-source AirPlay mirroring server
+ * Copyright (C) 2021-23 F. Duncanh
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +24,22 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include "audio_renderer.h"
+#define SECOND_IN_NSECS 1000000000UL
+
+#define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
+
+static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
+static logger_t *logger = NULL;
+const char * format[NFORMATS];
+
+typedef struct audio_renderer_s {
+    GstElement *appsrc; 
+    GstElement *pipeline;
+    GstElement *volume;
+    unsigned char ct;
+} audio_renderer_t ;
+static audio_renderer_t *renderer_type[NFORMATS];
+static audio_renderer_t *renderer = NULL;
 
 /* GStreamer Caps strings for Airplay-defined audio compression types (ct) */
 
@@ -36,14 +55,6 @@ static const char aac_lc_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2
 
 /* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 480 */
 static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
-
-typedef struct audio_renderer_s {
-    GstElement *appsrc; 
-    GstElement *pipeline;
-    GstElement *volume;
-    unsigned char ct;
-} audio_renderer_t ;
-
 
 static gboolean check_plugins (void)
 {
@@ -70,33 +81,30 @@ static gboolean check_plugins (void)
 }
 
 bool gstreamer_init(){
-    gst_init(NULL,NULL);
+    gst_init(NULL,NULL);    
     return (bool) check_plugins ();
 }
 
-#define NFORMATS 2     /* set to 4 to enable AAC_LD and PCM:  allowed, but  never seen in real-world use */
-static audio_renderer_t *renderer_type[NFORMATS];
-static audio_renderer_t *renderer = NULL;
-static logger_t *logger = NULL;
-const char * format[NFORMATS];
-
-void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync, const bool* video_sync) {
     GError *error = NULL;
     GstCaps *caps = NULL;
+    GstClock *clock = gst_system_clock_obtain();
+    g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
+
     logger = render_logger;
 
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
         g_assert(renderer_type[i]);
         GString *launch = g_string_new("appsrc name=audio_source ! ");
-        g_string_append(launch, "queue ! ");
+        g_string_append(launch, "queue ");
         switch (i) {
         case 0:    /* AAC-ELD */
         case 2:    /* AAC-LC */
-            g_string_append(launch, "avdec_aac ! ");
+            g_string_append(launch, "! avdec_aac ! ");
             break;
         case 1:    /* ALAC */
-            g_string_append(launch, "avdec_alac ! ");
+            g_string_append(launch, "! avdec_alac ! ");
             break;
         case 3:   /*PCM*/
             break;
@@ -107,15 +115,31 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         g_string_append (launch, "audioresample ! ");    /* wasapisink must resample from 44.1 kHz to 48 kHz */
         g_string_append (launch, "volume name=volume ! level ! ");
         g_string_append (launch, audiosink);
-        g_string_append (launch, " sync=false");
+        switch(i) {
+        case 1:  /*ALAC*/
+	    if (*audio_sync) {
+                g_string_append (launch, " sync=true");
+	    } else {
+                g_string_append (launch, " sync=false");
+	    }
+            break;
+        default:
+	    if (*video_sync) {
+                g_string_append (launch, " sync=true");
+	    } else {
+                g_string_append (launch, " sync=false");
+	    }
+            break;
+        }
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
 	if (error) {
           g_error ("gst_parse_launch error (audio %d):\n %s\n", i+1, error->message);
           g_clear_error (&error);
         }
-        g_string_free(launch, TRUE);
+
         g_assert (renderer_type[i]->pipeline);
- 
+        gst_pipeline_use_clock(GST_PIPELINE_CAST(renderer_type[i]->pipeline), clock);
+
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
         switch (i) {
@@ -142,9 +166,12 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink) {
         default:
             break;
         }
-        logger_log(logger, LOGGER_DEBUG, "supported audio format %d: %s",i+1,format[i]);
+        logger_log(logger, LOGGER_DEBUG, "Audio format %d: %s",i+1,format[i]);
+        logger_log(logger, LOGGER_DEBUG, "GStreamer audio pipeline %d: \"%s\"", i+1, launch->str);
+        g_string_free(launch, TRUE);
         g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
         gst_caps_unref(caps);
+        g_object_unref(clock);
     }
 }
 
@@ -172,21 +199,30 @@ void  audio_renderer_start(unsigned char *ct) {
             logger_log(logger, LOGGER_INFO, "changed audio connection, format %s", format[id]);
             renderer = renderer_type[id];
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+            gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
         }
     } else if (compression_type) {
         logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+        gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
     } else {
         logger_log(logger, LOGGER_ERR, "unknown audio compression type ct = %d", *ct);
     }
-    
 }
 
-void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t ntp_time,
-                                  uint64_t rtp_time, unsigned short seqnum) {
+void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {
     GstBuffer *buffer;
     bool valid;
+    GstClockTime pts = (GstClockTime) *ntp_time ;    /* now in nsecs */
+    //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
+    if (pts >= gst_audio_pipeline_base_time) {
+        pts -= gst_audio_pipeline_base_time;
+    } else {
+        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_audio_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_audio_pipeline_base_time) / SECOND_IN_NSECS);
+        return;
+    }
     if (data_len == 0 || renderer == NULL) return;
 
     /* all audio received seems to be either ct = 8 (AAC_ELD 44100/2 spf 460 ) AirPlay Mirror protocol *
@@ -196,10 +232,11 @@ void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data
      *                   but is 0x80, 0x81 or 0x82: 0x100000(00,01,10) in ios9, ios10 devices          *
      * first byte of AAC_LC should be 0xff (ADTS) (but has never been  seen).                          */
     
-    buffer = gst_buffer_new_and_alloc(data_len);
+    buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
     g_assert(buffer != NULL);
-    GST_BUFFER_PTS(buffer) = (GstClockTime) ntp_time;
-    gst_buffer_fill(buffer, 0, data, data_len);
+    //g_print("audio latency %8.6f\n", (double) latency / SECOND_IN_NSECS);
+    GST_BUFFER_PTS(buffer) = pts;
+    gst_buffer_fill(buffer, 0, data, *data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/
         switch (data[0]){
@@ -257,4 +294,3 @@ void audio_renderer_destroy() {
         free(renderer_type[i]);
     }
 }
-

@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *===================================================================
+ * modified by fduncanh 2021-23
  */
 
 #include <stdlib.h>
@@ -60,6 +63,7 @@ struct raop_s {
     uint8_t overscanned;
     uint8_t clientFPSdata;
 
+    int audio_delay_micros;
     int max_ntp_timeouts;
 };
 
@@ -461,6 +465,7 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     raop->clientFPSdata = 0;
 
     raop->max_ntp_timeouts = 0;
+    raop->audio_delay_micros = 250000;
 
     return raop;
 }
@@ -519,6 +524,11 @@ int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
     } else if (strcmp(plist_item, "max_ntp_timeouts") == 0) {
         raop->max_ntp_timeouts = (value > 0 ? value : 0);
         if (raop->max_ntp_timeouts != value) retval = 1;
+    } else if (strcmp(plist_item, "audio_delay_micros") == 0) {
+        if (value >= 0 && value <= 10 * SECOND_IN_USECS) {     
+            raop->audio_delay_micros = value;
+        }
+        if (raop->audio_delay_micros != value) retval = 1;
     }  else {
         retval = -1;
     }	  

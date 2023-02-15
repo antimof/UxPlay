@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *==================================================================
+ * modified by fduncanh 2021-2023
  */
 
 #include <stdlib.h>
@@ -38,7 +41,8 @@ typedef struct {
 
     /* RTP header */
     unsigned short seqnum;
-    uint64_t timestamp;
+    uint64_t rtp_timestamp;
+    uint64_t ntp_timestamp;
 
     /* Payload data */
     unsigned int payload_size;
@@ -154,11 +158,11 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 
     if (DECRYPTION_TEST) {
         char *str = utils_data_to_string(data,12,12);
-        printf("encrypted 12 byte header %s", str);
+        logger_log(raop_buffer->logger, LOGGER_INFO, "encrypted 12 byte header %s", str);
         free(str);
         if (payload_size) {
             str = utils_data_to_string(&data[12],16,16);
-            printf("len %d before decryption:\n%s", payload_size, str);
+            logger_log(raop_buffer->logger, LOGGER_INFO, "len %d before decryption:\n%s", payload_size, str);
             free(str);
         }
     }
@@ -181,18 +185,17 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
         case 0x20:
 	    break;
         default:
-            printf("***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC\n");
+            logger_log(raop_buffer->logger, LOGGER_INFO, "***ERROR AUDIO FRAME  IS NOT AAC_ELD OR ALAC");
 	    break;
         }
         if (DECRYPTION_TEST == 2) {
-            printf("decrypted audio frame, len = %d\n", *outputlen);
+            logger_log(raop_buffer->logger, LOGGER_INFO, "decrypted audio frame, len = %d", *outputlen);
             char *str = utils_data_to_string(output,payload_size,16);
-	    printf("%s",str);
-            printf("\n");
+            logger_log(raop_buffer->logger, LOGGER_INFO,"%s",str);
             free(str);
         } else {
             char *str = utils_data_to_string(output,16,16);
-            printf("%d after  \n%s\n", payload_size, str);
+            logger_log(raop_buffer->logger, LOGGER_INFO, "%d after  \n%s", payload_size, str);
             free(str);
         }
     }
@@ -207,7 +210,7 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
 }
 
 int
-raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint64_t timestamp, int use_seqnum) {
+raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned short datalen, uint64_t *ntp_timestamp, uint64_t *rtp_timestamp, int use_seqnum) {
     unsigned char empty_packet_marker[] = { 0x00, 0x68, 0x34, 0x00 };
     assert(raop_buffer);
 
@@ -248,7 +251,8 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
 
     /* Update the raop_buffer entry header */
     entry->seqnum = seqnum;
-    entry->timestamp = timestamp;
+    entry->rtp_timestamp = *rtp_timestamp;
+    entry->ntp_timestamp = *ntp_timestamp;
     entry->filled = 1;
 
     entry->payload_data = malloc(payload_size);
@@ -269,7 +273,7 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
 }
 
 void *
-raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint64_t *timestamp, unsigned short *seqnum, int no_resend) {
+raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint64_t *ntp_timestamp, uint64_t *rtp_timestamp, unsigned short *seqnum, int no_resend) {
     assert(raop_buffer);
 
     /* Calculate number of entries in the current buffer */
@@ -301,7 +305,8 @@ raop_buffer_dequeue(raop_buffer_t *raop_buffer, unsigned int *length, uint64_t *
     entry->filled = 0;
 
     /* Return entry payload buffer */
-    *timestamp = entry->timestamp;
+    *rtp_timestamp = entry->rtp_timestamp;
+    *ntp_timestamp = entry->ntp_timestamp;
     *seqnum = entry->seqnum;
     *length = entry->payload_size;
     entry->payload_size = 0;

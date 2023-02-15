@@ -1,6 +1,9 @@
 /**
  * RPiPlay - An open-source AirPlay mirroring server for Raspberry Pi
  * Copyright (C) 2019 Florian Draschbacher
+ * Modified for:
+ * UxPlay - An open-source AirPlay mirroring server
+ * Copyright (C) 2021-23 F. Duncanh
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,14 +30,13 @@ extern "C" {
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "../lib/raop_ntp.h"
+#include "../lib/logger.h"
 
 bool gstreamer_init();
-void audio_renderer_init(logger_t *logger, const char* audiosink);
+void audio_renderer_init(logger_t *logger, const char* audiosink, const bool *audio_sync, const bool *video_sync);
 void audio_renderer_start(unsigned char* compression_type);
 void audio_renderer_stop();
-void audio_renderer_render_buffer(raop_ntp_t *ntp, unsigned char* data, int data_len,
-                                  uint64_t ntp_time, uint64_t rtp_time, unsigned short seqnum);
+void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time);
 void audio_renderer_set_volume(float volume);
 void audio_renderer_flush();
 void audio_renderer_destroy();

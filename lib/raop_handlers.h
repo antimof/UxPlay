@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *===================================================================
+ * modfied by fduncanh 2021-2023
  */
 
 /* This file should be only included from raop.c as it defines static handler
@@ -20,6 +23,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <plist/plist.h>
+#define AUDIO_SAMPLE_RATE 44100   /* all supported AirPlay audio format use this sample rate */
+#define SECOND_IN_USECS 1000000
 
 typedef void (*raop_handler_t)(raop_conn_t *, http_request_t *,
                                http_response_t *, char **, int *);
@@ -500,6 +505,8 @@ raop_handler_setup(raop_conn_t *conn,
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
                     unsigned short remote_cport = 0;
                     unsigned char ct;
+                    unsigned int sr = AUDIO_SAMPLE_RATE; /* all AirPlay audio formats supported so far have sample rate 44.1kHz */
+
                     uint64_t uint_val = 0;
                     plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
                     plist_get_uint_val(req_stream_control_port_node, &uint_val);
@@ -544,7 +551,7 @@ raop_handler_setup(raop_conn_t *conn,
                     }
 
                     if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, use_udp, remote_cport, &cport, &dport, ct);
+                        raop_rtp_start_audio(conn->raop_rtp, use_udp, &remote_cport, &cport, &dport, &ct, &sr);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");
@@ -685,7 +692,10 @@ raop_handler_record(raop_conn_t *conn,
                     http_request_t *request, http_response_t *response,
                     char **response_data, int *response_datalen)
 {
+    char audio_latency[12];
+    unsigned int ad = (unsigned int) (((uint64_t) conn->raop->audio_delay_micros) * AUDIO_SAMPLE_RATE / SECOND_IN_USECS);
+    sprintf(audio_latency, "%u", ad);
     logger_log(conn->raop->logger, LOGGER_DEBUG, "raop_handler_record");
-    http_response_add_header(response, "Audio-Latency", "11025");
+    http_response_add_header(response, "Audio-Latency", audio_latency);
     http_response_add_header(response, "Audio-Jack-Status", "connected; type=analog");
 }

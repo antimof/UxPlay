@@ -10,7 +10,13 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
+ *
+ *=================================================================
+ * modified by fduncanh 2021-23
  */
+ 
+
+#define SECOND_IN_NSECS 1000000000UL
 
 #include <time.h>
 #ifdef _WIN32
@@ -96,23 +102,23 @@ void byteutils_put_int(unsigned char* b, int offset, uint32_t value) {
 }
 
 /**
- * Reads an ntp timestamp and returns it as micro seconds since the Unix epoch
+ * Reads an ntp timestamp and returns it as nano seconds since the Unix epoch
  */
 uint64_t byteutils_get_ntp_timestamp(unsigned char *b, int offset) {
     uint64_t seconds = ntohl(((unsigned int) byteutils_get_int(b, offset))) - SECONDS_FROM_1900_TO_1970;
     uint64_t fraction = ntohl((unsigned int) byteutils_get_int(b, offset + 4));
-    return (seconds * 1000000L) + ((fraction * 1000000L) >> 32);
+    return (seconds * SECOND_IN_NSECS) + ((fraction * SECOND_IN_NSECS) >> 32);
 }
 
 /**
- * Writes a time given as micro seconds since the Unix time epoch as an ntp timestamp
+ * Writes a time given as nano seconds since the Unix time epoch as an ntp timestamp
  * into the buffer at position offset
  */
-void byteutils_put_ntp_timestamp(unsigned char *b, int offset, uint64_t us_since_1970) {
-    uint64_t seconds = us_since_1970 / 1000000L;
-    uint64_t microseconds = us_since_1970 % 1000000L;
+void byteutils_put_ntp_timestamp(unsigned char *b, int offset, uint64_t ns_since_1970) {
+    uint64_t seconds = ns_since_1970 / SECOND_IN_NSECS;
+    uint64_t nanoseconds = ns_since_1970 % SECOND_IN_NSECS;
     seconds += SECONDS_FROM_1900_TO_1970;
-    uint64_t fraction = (microseconds << 32) / 1000000L;
+    uint64_t fraction = (nanoseconds << 32) / SECOND_IN_NSECS;
 
     // Write in big endian!
     byteutils_put_int(b, offset, htonl(seconds));

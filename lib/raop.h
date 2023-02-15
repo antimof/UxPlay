@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *===================================================================
+ * modified by fduncanh 2021-23
  */
 
 #ifndef RAOP_H

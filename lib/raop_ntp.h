@@ -11,6 +11,9 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
+ *
+ *=================================================================
+ * modified by fduncanh 2021-2023
  */
 
 #ifndef RAOP_NTP_H
@@ -31,7 +34,7 @@ unsigned short raop_ntp_get_port(raop_ntp_t *raop_ntp);
 
 void raop_ntp_destroy(raop_ntp_t *raop_rtp);
 
-uint64_t raop_ntp_timestamp_to_micro_seconds(uint64_t ntp_timestamp, bool account_for_epoch_diff);
+uint64_t raop_ntp_timestamp_to_nano_seconds(uint64_t ntp_timestamp, bool account_for_epoch_diff);
 
 uint64_t raop_ntp_get_local_time(raop_ntp_t *raop_ntp);
 uint64_t raop_ntp_get_remote_time(raop_ntp_t *raop_ntp);

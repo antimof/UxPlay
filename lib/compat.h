@@ -34,7 +34,6 @@
 #include <pthread.h>
 #endif
 
-#include "memalign.h"
 #include "sockets.h"
 #include "threads.h"
 

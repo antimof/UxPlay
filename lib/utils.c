@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *=================================================================
+ * modified by fduncanh 2021-2022
  */
 
 #include <stdlib.h>
@@ -18,6 +21,7 @@
 #include <assert.h>
 #include <time.h>
 #include <stdint.h>
+#define SECOND_IN_NSECS 1000000000UL
 
 char *
 utils_strsep(char **stringp, const char *delim)
@@ -215,21 +219,21 @@ char *utils_data_to_text(const char *data, int datalen) {
 }
 
 void ntp_timestamp_to_time(uint64_t ntp_timestamp, char *timestamp, size_t maxsize) {
-    time_t rawtime = (time_t) (ntp_timestamp / 1000000);
+    time_t rawtime = (time_t) (ntp_timestamp / SECOND_IN_NSECS);
     struct tm ts = *localtime(&rawtime);
-    assert(maxsize > 26);
+    assert(maxsize > 29);
 #ifdef _WIN32  /*modification for compiling for Windows */
     strftime(timestamp, 20, "%Y-%m-%d %H:%M:%S", &ts);
 #else
     strftime(timestamp, 20, "%F %T", &ts);
 #endif
-    snprintf(timestamp + 19, 8,".%6.6u", (unsigned int) ntp_timestamp % 1000000);
+    snprintf(timestamp + 19, 11,".%9.9lu", (unsigned long) ntp_timestamp % SECOND_IN_NSECS);
 }
 
 void ntp_timestamp_to_seconds(uint64_t ntp_timestamp, char *timestamp, size_t maxsize) {
-    time_t rawtime = (time_t) (ntp_timestamp / 1000000);
+    time_t rawtime = (time_t) (ntp_timestamp / SECOND_IN_NSECS);
     struct tm ts = *localtime(&rawtime);
-    assert(maxsize > 9);
+    assert(maxsize > 12);
     strftime(timestamp, 3, "%S", &ts);
-    snprintf(timestamp + 2, 8,".%6.6u", (unsigned int) ntp_timestamp % 1000000);
+    snprintf(timestamp + 2, 11,".%9.9lu", (unsigned long) ntp_timestamp % SECOND_IN_NSECS);
 }

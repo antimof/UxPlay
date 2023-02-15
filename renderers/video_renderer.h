@@ -1,6 +1,9 @@
 /**
  * RPiPlay - An open-source AirPlay mirroring server for Raspberry Pi
  * Copyright (C) 2019 Florian Draschbacher
+ * Modified for:
+ * UxPlay - An open-source AirPlay mirroring server
+ * Copyright (C) 2021-23 F. Duncanh
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +35,6 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "../lib/logger.h"
-#include "../lib/raop_ntp.h"
 
 typedef enum videoflip_e {
     NONE,
@@ -46,10 +48,11 @@ typedef enum videoflip_e {
 typedef struct video_renderer_s video_renderer_t;
 
 void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
-                          const char *decoder, const char *converter, const char *videosink, const bool *fullscreen);
+                          const char *decoder, const char *converter, const char *videosink, const bool *fullscreen,
+                          const bool *video_sync);
 void video_renderer_start ();
 void video_renderer_stop ();
-void video_renderer_render_buffer (raop_ntp_t *ntp, unsigned char* data, int data_len, uint64_t pts, int nal_count);
+void video_renderer_render_buffer (unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time);
 void video_renderer_flush ();
 unsigned int video_renderer_listen(void *loop);
 void video_renderer_destroy ();
