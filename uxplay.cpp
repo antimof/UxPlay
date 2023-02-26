@@ -648,7 +648,7 @@ static void parse_arguments (int argc, char *argv[]) {
             use_audio = false;
         } else if (arg == "-d") {
             debug_log = !debug_log;
-        } else if (arg == "-h") {
+        } else if (arg == "-h"  || arg == "--help" || arg == "-?" || arg == "-help") {
             print_info(argv[0]);
             exit(0);
         } else if (arg == "-v") {
@@ -793,7 +793,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
 	} else {
-            fprintf(stderr, "unknown option %s, stopping\n",argv[i]);
+            fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
         }
     }
