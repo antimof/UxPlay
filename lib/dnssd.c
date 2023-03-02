@@ -377,10 +377,10 @@ dnssd_unregister_raop(dnssd_t *dnssd)
         return;
     }
 
+    dnssd->DNSServiceRefDeallocate(dnssd->raop_service);
     /* Deallocate TXT record */
     dnssd->TXTRecordDeallocate(&dnssd->raop_record);
 
-    dnssd->DNSServiceRefDeallocate(dnssd->raop_service);
     dnssd->raop_service = NULL;
 
     if (dnssd->airplay_service == NULL) {
@@ -398,10 +398,12 @@ dnssd_unregister_airplay(dnssd_t *dnssd)
         return;
     }
 
+
+
+    dnssd->DNSServiceRefDeallocate(dnssd->airplay_service);
     /* Deallocate TXT record */
     dnssd->TXTRecordDeallocate(&dnssd->airplay_record);
 
-    dnssd->DNSServiceRefDeallocate(dnssd->airplay_service);
     dnssd->airplay_service = NULL;
 
     if (dnssd->raop_service == NULL) {
