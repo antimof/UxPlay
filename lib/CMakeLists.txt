@@ -42,8 +42,10 @@ endif()
 
 if( APPLE )
   set( ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig" ) # standard location, and Brew
+  set( ENV{PKG_CONFIG_PATH} "/opt/homebrew/lib/pkgconfig" ) # Brew for M1 macs
   set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig/" ) # MacPorts
   set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/opt/openssl@3/lib/pkgconfig" ) # Brew openssl
+  set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/homebrew/opt/openssl@3/lib/pkgconfig" ) # Brew M1 openssl
   message( "PKG_CONFIG_PATH (Apple, lib) = " $ENV{PKG_CONFIG_PATH} )
   find_program( PKG_CONFIG_EXECUTABLE  pkg-config  PATHS /Library/FrameWorks/GStreamer.framework/Commands )
   message( "PKG_CONFIG_EXECUTABLE " ${PKG_CONFIG_EXECUTABLE} )
@@ -98,7 +100,8 @@ target_include_directories( airplay PRIVATE ${PLIST_INCLUDE_DIRS} )
 if( APPLE )
   # use static linking
   # can either compile Openssl 1.1.1 or 3.0.0  from source (install_dev  to /usr/local) or use Macports or Brew
-  # MacPorts needs zlib with it, Brew has a strange "keg-only" installation in usr/local/opt/openssl@3
+  # MacPorts needs zlib with it. Brew has a "keg-only" installation in /usr/local/opt/openssl@3
+  # Brew on M1 macs puts this in  /opt/homebrew/opt/openssl@3
   pkg_check_modules( OPENSSL REQUIRED openssl>=1.1.1)
   message( "OPENSSL_LIBRARY_DIRS " ${OPENSSL_LIBRARY_DIRS} )
   message( "OPENSSL_INCLUDE_DIRS " ${OPENSSL_INCLUDE_DIRS} )
