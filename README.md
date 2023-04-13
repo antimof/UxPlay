@@ -19,7 +19,7 @@
      to select different hardware-appropriate output "videosinks" and
      "audiosinks", and a fully-user-configurable video streaming pipeline).
    * Support for server behind a firewall.
-   * Raspberry Pi support  **both with and without hardware  video decoding** by the Broadcom GPU.  _Tested on Raspberry Pi 4 Model B._
+   * Raspberry Pi support  **both with and without hardware  video decoding** by the Broadcom GPU.  _Tested on Raspberry Pi 4 Model B and  Pi 3 model B+._
    * Support for running on Microsoft Windows (builds with the MinGW-64 compiler in the
      unix-like MSYS2 environment).
 
@@ -357,7 +357,7 @@ your system uses the Wayland compositor for graphics, use "`uxplay -vs waylandsi
 See [Usage](#usage) for more run-time options.
 
 
-### **Special instructions for Raspberry Pi (tested on R Pi 4 model B 8GB)**:
+### **Special instructions for Raspberry Pi (tested on R Pi 4 model B 8GB and  R Pi 3 model B+)**:
 
 * If you use the software-only (h264) video-decoding UxPlay option `-avdec`, you also need
 option  `-vsync`to keep audio and video synchronized (`-vsync`  is a new feature; before
@@ -370,6 +370,11 @@ the [Raspberry Pi kernel tree](https://github.com/raspberrypi/linux), and the
 only distributions for R Pi that are known to supply it include Raspberry Pi OS, Ubuntu, and Manjaro (all available
 from Raspberry Pi with their Raspberry Pi Imager).  Other distributions generally do not
 provide it: **without this kernel module, UxPlay cannot use the decoding firmware in the GPU.**
+
+For use of the GPU, use raspi-config "Performance Options" (on Raspberry Pi OS, use a similar tool on other
+distributions) to allocate sufficient memory for the GPU (on  R. Pi 3 model B+, the maximum (256MB) is suggested).
+Even with GPU video decoding, some frames may be dropped by the lower-power 3 B+, so the -vsync option
+(introduced in UxPlay-1.63) that uses timestamps to synchronize audio and video is needed.
 
 * The plugin in the latest GStreamer-1.22 release works well, but older releases of GStreamer will not
 work unless patched with backports from GStreamer-1.22.  Raspberry Pi OS (Bullseye) now has a
