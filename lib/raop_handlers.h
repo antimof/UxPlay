@@ -694,7 +694,7 @@ raop_handler_record(raop_conn_t *conn,
 {
     char audio_latency[12];
     unsigned int ad = (unsigned int) (((uint64_t) conn->raop->audio_delay_micros) * AUDIO_SAMPLE_RATE / SECOND_IN_USECS);
-    sprintf(audio_latency, "%u", ad);
+    snprintf(audio_latency, sizeof(audio_latency), "%u", ad);
     logger_log(conn->raop->logger, LOGGER_DEBUG, "raop_handler_record");
     http_response_add_header(response, "Audio-Latency", audio_latency);
     http_response_add_header(response, "Audio-Jack-Status", "connected; type=analog");

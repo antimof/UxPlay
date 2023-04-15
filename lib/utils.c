@@ -191,15 +191,19 @@ char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per
     char *str = (char *) calloc(len + 1, sizeof(char));
     assert(str);
     char *p = str;
+    int n = sizeof(str);
     for (int i = 0; i < datalen; i++) {
         if (i > 0 && i % chars_per_line == 0) {
-            sprintf(p,"\n");
+            snprintf(p, n, "\n");
+            n--;
             p++;
         }
-        sprintf(p,"%2.2x ", (unsigned int) data[i]);
+        snprintf(p, n, "%2.2x ", (unsigned int) data[i]);
+        n -= 3;
         p += 3;
     }
-    sprintf(p,"\n");
+    snprintf(p, n, "\n");
+    n--;
     p++;
     assert(p == &(str[len]));
     assert(len == strlen(str));

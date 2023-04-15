@@ -127,7 +127,7 @@ raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *r
         return -1;
     }
     memset(current, 0, sizeof(current));
-    sprintf(current, "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
+    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror parse remote ip = %s", current);
     ret = netutils_parse_address(family, current,
                                  &raop_rtp_mirror->remote_saddr,
@@ -316,8 +316,10 @@ raop_rtp_mirror_thread(void *arg)
             int payload_size = byteutils_get_int(packet, 0);
             char packet_description[13] = {0};
 	    char *p = packet_description;
+            int n = sizeof(packet_description);
 	    for (int i = 4; i < 8; i++) {
-                sprintf(p, "%2.2x ", (unsigned int) packet[i]);
+                snprintf(p, n, "%2.2x ", (unsigned int) packet[i]);
+                n -= 3;
                 p += 3;
 	    }
             ntp_timestamp_raw = byteutils_get_long(packet, 8);

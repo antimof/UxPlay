@@ -126,7 +126,8 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
         return -1;
     }
     memset(current, 0, sizeof(current));
-    sprintf(current, "%d.%d.%d.%d", remote_addr[0], remote_addr[1], remote_addr[2], remote_addr[3]);
+    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote_addr[0], remote_addr[1],
+             remote_addr[2], remote_addr[3]);
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp parse remote ip = %s", current);
     ret = netutils_parse_address(family, current,
                                  &raop_ntp->remote_saddr,

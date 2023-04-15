@@ -296,7 +296,7 @@ static std::string find_mac () {
             }
             mac.erase();
             for (int i = 0; i < 6; i++) {
-                sprintf(str,"%02x", int(address->PhysicalAddress[i]));
+                snprintf(str, sizeof(str), "%02x", int(address->PhysicalAddress[i]));
                 mac = mac + str;
                 if (i < 5) mac = mac + ":";
             }
@@ -329,7 +329,7 @@ static std::string find_mac () {
             if (non_null_octets) {
                 mac.erase();
                 for (int i = 0; i < 6 ; i++) {
-                    sprintf(str,"%02x", octet[i]);
+                    snprintf(str, sizeof(str), "%02x", octet[i]);
                     mac = mac + str;
                     if (i < 5) mac = mac + ":";
                 }

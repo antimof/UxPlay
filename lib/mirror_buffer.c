@@ -50,8 +50,8 @@ mirror_buffer_init_aes(mirror_buffer_t *mirror_buffer, const uint64_t *streamCon
     /* AES key and IV */
     // Need secondary processing to use
     
-    sprintf((char*) aeskey_video, "AirPlayStreamKey%" PRIu64, *streamConnectionID);
-    sprintf((char*) aesiv_video, "AirPlayStreamIV%" PRIu64, *streamConnectionID);
+    snprintf((char*) aeskey_video, sizeof(aeskey_video), "AirPlayStreamKey%" PRIu64, *streamConnectionID);
+    snprintf((char*) aesiv_video, sizeof(aesiv_video), "AirPlayStreamIV%" PRIu64, *streamConnectionID);
 
     sha_ctx_t *ctx = sha_init();
     sha_update(ctx, aeskey_video, strlen((char*) aeskey_video));
