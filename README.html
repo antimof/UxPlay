@@ -502,49 +502,61 @@ developer tools are installed (if Xcode is installed, open the Terminal,
 type “sudo xcode-select –install” and accept the conditions).</p>
 <p>It is also assumed that CMake &gt;= 3.13 is installed: this can be
 done with package managers <a
-href="http://www.macports.org">MacPorts</a>, <a
-href="http://finkproject.org">Fink</a> or <a
-href="http://brew.sh">Homebrew</a>, or by a download from <a
-href="https://cmake.org/download/">https://cmake.org/download/</a>.</p>
-<p>First install OpenSSL and libplist: static versions of these
-libraries will be used, so they can be uninstalled after UxPlay is
-built. These are available in MacPorts and Homebrew, or they can easily
-be built from source (see instructions at the end of this README; this
-requires development tools autoconf, automake, libtool, which can be
-installed using MacPorts, HomeBrew, or Fink).</p>
+href="http://www.macports.org">MacPorts</a>
+(<code>sudo port install cmake</code>), <a
+href="http://brew.sh">Homebrew</a> (<code>brew install cmake</code>), or
+by a download from <a
+href="https://cmake.org/download/">https://cmake.org/download/</a>. Also
+install <code>git</code> if you will use it to fetch UxPlay.</p>
+<p>Next install libplist and openssl-3.x. Note that static versions of
+these libraries will be used in the macOS builds, so they can be
+uninstalled after building uxplay, if you wish.</p>
+<ul>
+<li><p>If you use Homebrew:
+<code>brew install libplist openssl@3</code></p></li>
+<li><p>if you use MacPorts:
+<code>sudo port install plist-devel openssl3</code></p></li>
+</ul>
+<p>Otherwise, build libplist and openssl from source: see instructions
+near the end of this README; requires development tools (autoconf,
+automake, libtool, <em>etc.</em>) to be installed.</p>
 <p>Next get the latest macOS release of GStreamer-1.0.</p>
-<ul>
-<li><p>recommended: install the “official” GStreamer release for macOS
-from <a
+<p><strong>Using “Official” GStreamer (Recommended for both MacPorts and
+Homebrew users)</strong>: install the GStreamer release for macOS from
+<a
 href="https://gstreamer.freedesktop.org/download/">https://gstreamer.freedesktop.org/download/</a>.
-The alternative is to install it from Homebrew. MacPorts packages of
-GStreamer are compiled to use X11 and are <strong>NOT</strong>
-recommended.</p></li>
-<li><p>You could instead compile the “official” GStreamer release from
-source: GStreamer-1.22.0 has been successfully built this way on a
-system using MacPorts: see <a
-href="https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts">the
-UxPlay Wiki</a></p></li>
-</ul>
-<p><strong>For the “official” release</strong>: install both the macOS
-runtime and development installer packages. Assuming that the latest
-release is 1.20.5 install
-<code>gstreamer-1.0-1.20.5-universal.pkg</code> and
-<code>gstreamer-1.0-devel-1.20.5-universal.pkg</code>. Click on them to
-install (they install to /Library/FrameWorks/GStreamer.framework).</p>
+(This release contains its own pkg-config, so you don’t have to install
+one.) Install both the gstreamer-1.0 and gstreamer-1.0-devel packages.
+After downloading, Shift-Click on them to install (they install to
+/Library/FrameWorks/GStreamer.framework). Homebrew or MacPorts users
+should <strong>not</strong> install (or should uninstall) the GStreamer
+supplied by their package manager, if they use the “official”
+release.</p>
 <ul>
-<li><strong>ADDED 2023-01-25: v1.22.0 has just been released, but these
-binaries seem to have problems, perhaps only on older macOS releases;
-use v1.20.5 if they dont work for you.</strong></li>
+<li><strong>ADDED 2023-01-25: in the latest release (now 1.22.2)
+something in the GStreamer macOS binaries appears to not be working
+(UxPlay starts receiving the AirPlay stream, but the video window does
+not open)</strong>. If you have this problem, use the GStreamer-1.20.6
+binary packages until a fix is found. <em>You could instead compile the
+“official” GStreamer-1.22.x release from source: GStreamer-1.22.0 has
+been successfully built this way on a system using MacPorts: see</em> <a
+href="https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts">the
+UxPlay Wiki</a>.</li>
 </ul>
-<p><strong>For Homebrew</strong>: pkgconfig is needed (“brew install
-pkgconfig”). Then “brew install gst-plugins-base gst-plugins-good
-gst-plugins-bad gst-libav”. This appears to be functionally equivalent
-to using GStreamer.framework, but causes a large number of extra
-packages to be installed by Homebrew as dependencies. <strong>You may
-need to set the environment variable
-GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0 to point to the Homebrew
-GStreamer installation.</strong></p>
+<p><strong>Using Homebrew’s GStreamer</strong>: pkg-config is needed:
+(“brew install pkg-config gstreamer”). This causes a large number of
+extra packages to be installed by Homebrew as dependencies. The <a
+href="https://formulae.brew.sh/formula/gstreamer#default">Homebrew
+gstreamer installation</a> has recently been reworked into a single
+“formula” named <code>gstreamer</code>, which now works without needing
+GST_PLUGIN_PATH to be set in the enviroment. Homebrew installs gstreamer
+to <code>(HOMEBREW)/lib/gstreamer-1.0</code> where
+<code>(HOMEBREW)/*</code> is <code>/opt/homebrew/*</code> on Apple
+Silicon Macs, and <code>/usr/local/*</code> on Intel Macs; do not put
+any extra non-Homebrew plugins (that you build yourself) there, and
+instead set GST_PLUGIN_PATH to point to their location (Homebrew does
+not supply a complete GStreamer, but seems to have everything needed for
+UxPlay).</p>
 <p>Finally, build and install uxplay: open a terminal and change into
 the UxPlay source directory (“UxPlay-master” for zipfile downloads,
 “UxPlay” for “git clone” downloads) and build/install with “cmake . ;
@@ -570,21 +582,21 @@ have the correct aspect ratio when it first opens.</p></li>
 </ul>
 <p><strong><em>Using GStreamer installed from MacPorts (not
 recommended):</em></strong></p>
-<p>To install: “sudo port install pkgconfig”; “sudo port install
+<p>To install: “sudo port install pkgconf”; “sudo port install
 gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
 gstreamer1-gst-plugins-bad gstreamer1-gst-libav”. <strong>The MacPorts
-GStreamer is built to use X11</strong>: use the special CMake option
-<code>-DUSE_X11=ON</code> when building UxPlay. Then uxplay must be run
-from an XQuartz terminal, and needs option “-vs ximagesink”. On an
-unibody (non-retina) MacBook Pro, the default resolution wxh = 1920x1080
-was too large, but using option “-s 800x600” worked. The MacPorts
-GStreamer pipeline seems fragile against attempts to change the X11
-window size, or to rotations that switch a connected client between
-portrait and landscape mode while uxplay is running. Using the MacPorts
-X11 GStreamer seems only possible if the image size is left unchanged
-from the initial “-s wxh” setting (also use the iPad/iPhone setting that
-locks the screen orientation against switching between portrait and
-landscape mode as the device is rotated).</p>
+GStreamer is old (v1.16.2) and built to use X11</strong>: use the
+special CMake option <code>-DUSE_X11=ON</code> when building UxPlay.
+Then uxplay must be run from an XQuartz terminal, and needs option “-vs
+ximagesink”. On a unibody (non-retina) MacBook Pro, the default
+resolution wxh = 1920x1080 was too large, but using option “-s 800x600”
+worked. The MacPorts GStreamer pipeline seems fragile against attempts
+to change the X11 window size, or to rotations that switch a connected
+client between portrait and landscape mode while uxplay is running.
+Using the MacPorts X11 GStreamer seems only possible if the image size
+is left unchanged from the initial “-s wxh” setting (also use the
+iPad/iPhone setting that locks the screen orientation against switching
+between portrait and landscape mode as the device is rotated).</p>
 <h2
 id="building-uxplay-on-microsoft-windows-using-msys2-with-the-mingw-64-compiler.">Building
 UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64
