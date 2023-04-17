@@ -191,7 +191,7 @@ char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per
     char *str = (char *) calloc(len + 1, sizeof(char));
     assert(str);
     char *p = str;
-    int n = sizeof(str);
+    int n = len + 1;
     for (int i = 0; i < datalen; i++) {
         if (i > 0 && i % chars_per_line == 0) {
             snprintf(p, n, "\n");

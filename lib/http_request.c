@@ -276,7 +276,7 @@ http_request_get_header_string(http_request_t *request, char **header_str)
     assert(str);
     *header_str = str;
     char *p = str;
-    int n = sizeof(str);
+    int n = len + 1;
     for (int i = 0; i < request->headers_size; i++) {
         int hlen = strlen(request->headers[i]); 
         snprintf(p, n, "%s", request->headers[i]);
