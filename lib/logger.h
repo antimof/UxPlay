@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *=================================================================
+ * modified by fduncanh 2023
  */
 
 #ifndef LOGGER_H
@@ -37,6 +40,7 @@ logger_t *logger_init();
 void logger_destroy(logger_t *logger);
 
 void logger_set_level(logger_t *logger, int level);
+int logger_get_level(logger_t *logger);
 void logger_set_callback(logger_t *logger, logger_callback_t callback, void *cls);
 
 void logger_log(logger_t *logger, int level, const char *fmt, ...);

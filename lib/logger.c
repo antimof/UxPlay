@@ -10,6 +10,9 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *===============================================================
+ * modified by fduncanh 2023
  */
 
 #include <stdlib.h>
@@ -59,6 +62,19 @@ logger_set_level(logger_t *logger, int level)
 	MUTEX_LOCK(logger->lvl_mutex);
 	logger->level = level;
 	MUTEX_UNLOCK(logger->lvl_mutex);
+}
+
+int
+logger_get_level(logger_t *logger)
+{
+        int level;   
+        assert(logger);
+
+	MUTEX_LOCK(logger->lvl_mutex);
+	level = logger->level;
+	MUTEX_UNLOCK(logger->lvl_mutex);
+
+        return level;
 }
 
 void

@@ -272,6 +272,7 @@ raop_ntp_thread(void *arg)
     const unsigned  two_pow_n[RAOP_NTP_DATA_COUNT] = {2, 4, 8, 16, 32, 64, 128, 256};
     int timeout_counter = 0;
     bool conn_reset = false;
+    bool logger_debug = (logger_get_level(raop_ntp->logger) >= LOGGER_DEBUG);
       
     while (1) {
         MUTEX_LOCK(raop_ntp->run_mutex);
@@ -289,10 +290,12 @@ raop_ntp_thread(void *arg)
         byteutils_put_ntp_timestamp(request, 24, send_time);
         int send_len = sendto(raop_ntp->tsock, (char *)request, sizeof(request), 0,
                               (struct sockaddr *) &raop_ntp->remote_saddr, raop_ntp->remote_saddr_len);
-        char *str = utils_data_to_string(request, send_len, 16);
-        logger_log(raop_ntp->logger, LOGGER_DEBUG, "\nraop_ntp send time type_t=%d send_len = %d, now = %8.6f\n%s",
-                   request[1] &~0x80, send_len, (double) send_time / SECOND_IN_NSECS, str);
-        free(str);
+	if (logger_debug) {
+            char *str = utils_data_to_string(request, send_len, 16);
+            logger_log(raop_ntp->logger, LOGGER_DEBUG, "\nraop_ntp send time type_t=%d send_len = %d, now = %8.6f\n%s",
+                       request[1] &~0x80, send_len, (double) send_time / SECOND_IN_NSECS, str);
+            free(str);
+        }
         if (send_len < 0) {
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
@@ -324,11 +327,14 @@ raop_ntp_thread(void *arg)
                 // Local time of the client when the response message leaves the client
                 int64_t t2 = (int64_t) byteutils_get_ntp_timestamp(response, 24);
 
-                char *str = utils_data_to_string(response, response_len, 16);                   
-                logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp receive time type_t=%d packetlen = %d, now = %8.6f t1 = %8.6f, t2 = %8.6f\n%s",
-                           response[1] &~0x80, response_len, (double) t3 / SECOND_IN_NSECS, (double) t1 / SECOND_IN_NSECS, (double) t2 / SECOND_IN_NSECS, str); 
-                free(str);
-
+                if (logger_debug) {
+                    char *str = utils_data_to_string(response, response_len, 16);                   
+                    logger_log(raop_ntp->logger, LOGGER_DEBUG,
+                               "raop_ntp receive time type_t=%d packetlen = %d, now = %8.6f t1 = %8.6f, t2 = %8.6f\n%s",
+                               response[1] &~0x80, response_len, (double) t3 / SECOND_IN_NSECS, (double) t1 / SECOND_IN_NSECS,
+                               (double) t2 / SECOND_IN_NSECS, str); 
+                    free(str);
+                }
 		// The iOS client device sends its time in  seconds relative to an arbitrary Epoch (the last boot).
                 // For a little bonus confusion, they add SECONDS_FROM_1900_TO_1970.
                 // This means we have to expect some rather huge offset, but its growth or shrink over time should be small.
