@@ -205,7 +205,7 @@ raop_rtp_mirror_thread(void *arg)
     uint64_t ntp_timestamp_remote = 0;
     uint64_t ntp_timestamp_local  = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
-
+    bool logger_debug = (logger_get_level(raop_rtp_mirror->logger) >= LOGGER_DEBUG);
 #ifdef DUMP_H264
     // C decrypted
     FILE* file = fopen("/home/pi/Airplay.h264", "wb");
@@ -378,10 +378,14 @@ raop_rtp_mirror_thread(void *arg)
                 // counting nano seconds since last boot.
 
                 ntp_timestamp_local = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
-                uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
-                int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f, ts = %8.6f, %s",
-                           (double) ntp_now / SEC, (double) ntp_timestamp_local / SEC, (double) latency / SEC, (double) ntp_timestamp_remote / SEC, packet_description);
+                if (logger_debug) {
+                    uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
+                    int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local);
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
+                               "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f, ts = %8.6f, %s",
+                               (double) ntp_now / SEC, (double) ntp_timestamp_local / SEC, (double) latency / SEC,
+                               (double) ntp_timestamp_remote / SEC, packet_description);
+                }
 
 #ifdef DUMP_H264
                 fwrite(payload, payload_size, 1, file_source);
@@ -498,22 +502,24 @@ raop_rtp_mirror_thread(void *arg)
                 unsigned char *sequence_parameter_set = payload + 8;
                 short pps_size = byteutils_get_short_be(payload, sps_size + 9);
                 unsigned char *picture_parameter_set = payload + sps_size + 11;
-                int data_size = 6; 
-                char *str = utils_data_to_string(payload, data_size, 16);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: sps/pps header size = %d", data_size);		
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 sps/pps header:\n%s", str);
-                free(str);
-                str = utils_data_to_string(sequence_parameter_set, sps_size,16);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror sps size = %d",  sps_size);		
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
-                free(str);
-                str = utils_data_to_string(picture_parameter_set, pps_size, 16);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror pps size = %d", pps_size);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
-                free(str);
+                int data_size = 6;
+                if (logger_debug) {
+                    char *str = utils_data_to_string(payload, data_size, 16);
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: sps/pps header size = %d", data_size);		
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 sps/pps header:\n%s", str);
+                    free(str);
+                    str = utils_data_to_string(sequence_parameter_set, sps_size,16);
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror sps size = %d",  sps_size);		
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
+                    free(str);
+                    str = utils_data_to_string(picture_parameter_set, pps_size, 16);
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror pps size = %d", pps_size);
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
+                    free(str);
+                }
                 data_size = payload_size - sps_size - pps_size - 11; 
-                if (data_size > 0) {
-                    str = utils_data_to_string (picture_parameter_set + pps_size, data_size, 16);
+                if (data_size > 0 && logger_debug) {
+                    char *str = utils_data_to_string (picture_parameter_set + pps_size, data_size, 16);
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder size = %d", data_size);
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder of sps+pps packet:\n%s", str);
                     free(str);
@@ -568,9 +574,11 @@ raop_rtp_mirror_thread(void *arg)
                     int plist_size = payload_size;
                     if (payload_size > 25000) {
 		        plist_size = payload_size - 25000;
-                        char *str = utils_data_to_string(payload + plist_size, 16, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video_info packet had 25kB trailer; first 16 bytes are:\n%s", str);
+                        if (logger_debug) {
+                            char *str = utils_data_to_string(payload + plist_size, 16, 16);
+                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "video_info packet had 25kB trailer; first 16 bytes are:\n%s", str);
                         free(str);
+                        }
                     }
                     if (plist_size) {
                         char *plist_xml;
