@@ -187,7 +187,12 @@ char *utils_parse_hex(const char *str, int str_len, int *data_len) {
 }
 
 char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per_line) {
-    int len = 3*datalen + ((datalen-1)/chars_per_line ) + 1;
+    assert(datalen >= 0);
+    assert(chars_per_line > 0);
+    int len = 3*datalen + 1;
+    if (datalen > chars_per_line) {
+        len += (datalen-1)/chars_per_line;
+    }
     char *str = (char *) calloc(len + 1, sizeof(char));
     assert(str);
     char *p = str;
