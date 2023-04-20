@@ -352,14 +352,14 @@ installed, depending on how your audio is set up.
     gtk, gl, vulkan, pulse, v4l2, ...), (+ gstreamer1-vaapi for Intel
     graphics).
 
-### Starting UxPlay
+### Starting and running UxPlay
 
-**Finally, run uxplay in a terminal window**. On some systems, you can
-toggle into and out of fullscreen mode with F11 or (held-down left
-Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it when
-done. If the UxPlay server is not seen by the iOS client's drop-down
-"Screen Mirroring" panel, check that your DNS-SD server (usually
-avahi-daemon) is running: do this in a terminal window with
+**Run uxplay in a terminal window**. On some systems, you can toggle
+into and out of fullscreen mode with F11 or (held-down left Alt)+Enter
+keys. Use Ctrl-C (or close the window) to terminate it when done. If the
+UxPlay server is not seen by the iOS client's drop-down "Screen
+Mirroring" panel, check that your DNS-SD server (usually avahi-daemon)
+is running: do this in a terminal window with
 `systemctl status avahi-daemon`. If this shows the avahi-daemon is not
 running, control it with
 `sudo systemctl [start,stop,enable,disable] avahi-daemon` (on
@@ -372,36 +372,47 @@ opened: **if a firewall is active, also open UDP port 5353 (for mDNS
 queries) needed by Avahi**. See [Troubleshooting](#troubleshooting)
 below for help with this or other problems.
 
--   you may find video is improved by the setting -fps 60 that allows
-    some video to be played at 60 frames per second. (You can see what
-    framerate is actually streaming by using -vs fpsdisplaysink, and/or
-    -FPSdata.)
-
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; since UxPlay-1.58, the option `-nohold`
     modifies this behavior so that when a new client requests a
     connection, it removes the current client and takes over.
 
--   In its default mode, Uxplay uses a simple GStreamer mode
-    ("sync=false") that streams without using audio- and
-    video-timestamps for synchronization. UxPlay 1.63 also introduces
-    `-vsync` and `-async` as alternatives that use timestamps in Mirror
-    and Audio-Only modes respectively (GStreamer's "sync=true" mode).
-    Simple default streaming in Mirror mode seems to maintain
-    synchronisation of audio with video on desktop systems, but you may
-    wish to use `-vsync`, which becomes essential in low-powered systems
-    like Raspberry Pi if hardware video decoding is not used (**and is
-    likely to become the default in future releases of UxPlay**). These
-    options also allow an optional positive (or negative) audio-delay
-    adjustment in *milliseconds* for fine-tuning : `-vsync 20.5` delays
-    audio relative to video by 0.0205 secs; a negative value advances
-    it.)
+-   In Mirror mode, GStreamer has a choice of **two** methods to play
+    video with its accompanying audio: the default mode ("sync=false")
+    just plays both streams as soon as possible after they arrive, and
+    the ("sync=true") mode used by the `-vsync` option (first introduced
+    in UxPlay-1.63), uses the timestamps in the streams sent by the
+    Airplay client to play audio and video frames together at the
+    correct time. For playing long video sequences on any UxPlay server,
+    use the -vsync option: this may become the default in future UxPlay
+    releases.
 
--   The `-async` option should be used if you want video on the client
-    to be synchronized with Audio-Only mode audio on the server (*e.g.*
-    for viewing song lyrics in Apple music while listening to ALAC
-    loss-free audio on the server); this introduces a slight delay for
-    events like pausing audio, changing tracks, *etc.*, to be heard.
+Provided the UxPlay host can process the video sufficently fast, the
+default "sync=false" mode seems to work well at keeping video and audio
+synchronized, but on lower decoding-power systems (e.g. Raspberry Pi 3
+Model B+), the -vsync option is definitely needed: this will drop video
+frames that do not get decoded in time to match the audio, perhaps
+making the video "jerky", but keeping it synchronized with the audio.
+
+-   In Audio-only mode the "sync=false" option is also the default, but
+    if you want to keep the audio playing on the server synchronized
+    with the video on the client, use the `-async` option. (An example
+    might be if you want to follow the Apple Music lyrics on the client
+    while listening to superior sound on the UxPlay server). This delays
+    the video on the client to match audio on the server, so leads to a
+    slight delay before a pause or track-change initiated on the client
+    takes effect on the audio played by the server.
+
+The -vsync and -async options also allow an optional positive (or
+negative) audio-delay adjustment in *milliseconds* for fine-tuning :
+`-vsync 20.5` delays audio relative to video by 0.0205 secs; a negative
+value advances it.)
+
+-   you may find video is improved by the setting -fps 60 that allows
+    some video to be played at 60 frames per second. (You can see what
+    framerate is actually streaming by using -vs fpsdisplaysink, and/or
+    -FPSdata.) When using this, you probably should use the -vsync
+    option.
 
 -   Since UxPlay-1.54, you can display the accompanying "Cover Art" from
     sources like Apple Music in Audio-Only (ALAC) mode: run
