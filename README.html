@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.63-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.63: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.64-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.64: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -83,12 +83,14 @@ posts updates pulled from the new main <a
 href="https://github.com/FDH2/UxPlay">UxPlay site</a>).</p>
 <p>UxPlay is tested on a number of systems, including (among others)
 Debian 10.11 “Buster” and 11.2 “Bullseye”, Ubuntu 20.04 LTS and 22.04.1
-LTS, Linux Mint 20.3, Pop!_OS 22.04 (NVIDIA edition), Rocky Linux 8.6 (a
-CentOS successor), Fedora 36, OpenSUSE 15.4, Arch Linux 22.10, macOS
-12.3 (Intel and M1), FreeBSD 13.1, Windows 10 and 11 (64 bit).</p>
+LTS, (also Ubuntu derivatives Linux Mint 20.3, Pop!_OS 22.04 (NVIDIA
+edition)), Rocky Linux 9.1 (a CentOS successor), Fedora 36, OpenSUSE
+15.4, Arch Linux 22.10, macOS 13.3 (Intel and M2), FreeBSD 13.2, Windows
+10 and 11 (64 bit).</p>
 <p>On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye)
-(32- and 64-bit), Ubuntu 22.10, Manjaro RPi4 23.02, and (without
-hardware video decoding) on OpenSUSE 15.4.</p>
+(32- and 64-bit), Ubuntu 22.04 and 22.10, Manjaro RPi4 23.02, and
+(without hardware video decoding) on OpenSUSE 15.4. Also tested on
+Raspberry Pi 3 model B+.</p>
 <p>Its main use is to act like an AppleTV for screen-mirroring (with
 audio) of iOS/iPadOS/macOS clients (iPhone, iPod Touch, iPad, Mac
 computers) on the server display of a host running Linux, macOS, or
@@ -356,6 +358,14 @@ gl, vulkan, pulse, v4l2, …), (+ gstreamer1-vaapi for Intel
 graphics).</p></li>
 </ul>
 <h3 id="starting-and-running-uxplay">Starting and running UxPlay</h3>
+<p>Since UxPlay-1.64, UxPlay can be started with options read from a
+configuration file, which will be the first found of (1) a file with a
+path given by environment variable <code>$UXPLAYRC</code>, (2)
+<code>~/.uxplayrc</code> in the user’s home directory (“~”), (3)
+<code>~/.config/uxplayrc</code>. The format is one option per line,
+omitting the initial <code>"-"</code> of the command-line option. Lines
+in the configuration file beginning with <code>"#"</code> are treated as
+comments and ignored.</p>
 <p><strong>Run uxplay in a terminal window</strong>. On some systems,
 you can toggle into and out of fullscreen mode with F11 or (held-down
 left Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it
@@ -381,31 +391,37 @@ client drops the connection; since UxPlay-1.58, the option
 requests a connection, it removes the current client and takes
 over.</p></li>
 <li><p>In Mirror mode, GStreamer has a choice of <strong>two</strong>
-methods to play video with its accompanying audio: the default mode
-(“sync=false”) just plays both streams as soon as possible after they
-arrive, and the (“sync=true”) mode used by the <code>-vsync</code>
-option (first introduced in UxPlay-1.63), uses the timestamps in the
-streams sent by the Airplay client to play audio and video frames
-together at the correct time. For playing long video sequences on any
-UxPlay server, use the -vsync option: this may become the default in
-future UxPlay releases.</p></li>
+methods to play video with its accompanying audio: prior to UxPlay-1.64,
+the video and audio streams were both played as soon as possible after
+they arrived (the GStreamer “<em>sync=false</em>” method), with a
+GStreamer internal clock used to try to keep them synchronized.
+<strong>Starting with UxPlay-1.64, the other method (GStreamer’s
+“<em>sync-true</em>” mode), which uses timestamps in the audio and video
+streams sent by the client, is the new default</strong>. On
+low-decoding-power UxPlay hosts (such as Raspberry Pi 3 models) this
+will drop video frames that cannot be decoded in time to play with the
+audio, making the video jerky, but still synchronized.</p></li>
 </ul>
-<p>Provided the UxPlay host can process the video sufficently fast, the
-default “sync=false” mode seems to work well at keeping video and audio
-synchronized, but on lower decoding-power systems (e.g. Raspberry Pi 3
-Model B+), the -vsync option is definitely needed: this will drop video
-frames that do not get decoded in time to match the audio, perhaps
-making the video “jerky”, but keeping it synchronized with the
-audio.</p>
+<p>The older method which does not drop late video frames worked well on
+more powerful systems, and is still available with the UxPlay option
+“<code>-vsync no</code>”; this method is adapted to “live streaming”,
+and may be better when Using UxPlay as a second monitor for a Mac
+computer, for example, while the new default timestamp-based method is
+best for watching a video, to keep lip movements and voices
+synchronized. (Without use of timestamps, video will eventually lag
+behind audio if it cannot be decoded fast enough: hardware-accelerated
+video-decoding helped to prevent this previously when timestamps were
+not being used.)</p>
 <ul>
-<li>In Audio-only mode the “sync=false” option is also the default, but
-if you want to keep the audio playing on the server synchronized with
-the video on the client, use the <code>-async</code> option. (An example
-might be if you want to follow the Apple Music lyrics on the client
-while listening to superior sound on the UxPlay server). This delays the
-video on the client to match audio on the server, so leads to a slight
-delay before a pause or track-change initiated on the client takes
-effect on the audio played by the server.</li>
+<li>In Audio-only mode the GStreamer “sync=false” mode (not using
+timestamps) is still the default, but if you want to keep the audio
+playing on the server synchronized with the video showing on the client,
+use the <code>-async</code> timestamp-based option. (An example might be
+if you want to follow the Apple Music lyrics on the client while
+listening to superior sound on the UxPlay server). This delays the video
+on the client to match audio on the server, so leads to a slight delay
+before a pause or track-change initiated on the client takes effect on
+the audio played by the server.</li>
 </ul>
 <p>The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in <em>milliseconds</em> for
@@ -415,8 +431,8 @@ fine-tuning : <code>-vsync 20.5</code> delays audio relative to video by
 <li><p>you may find video is improved by the setting -fps 60 that allows
 some video to be played at 60 frames per second. (You can see what
 framerate is actually streaming by using -vs fpsdisplaysink, and/or
--FPSdata.) When using this, you probably should use the -vsync
-option.</p></li>
+-FPSdata.) When using this, you should use the default timestamp-based
+synchronization option <code>-vsync</code>.</p></li>
 <li><p>Since UxPlay-1.54, you can display the accompanying “Cover Art”
 from sources like Apple Music in Audio-Only (ALAC) mode: run
 “<code>uxplay -ca &lt;name&gt; &amp;</code>” in the background, then run
@@ -438,10 +454,9 @@ instructions for Raspberry Pi (tested on R Pi 4 model B 8GB and R Pi 3
 model B+)</strong>:</h3>
 <ul>
 <li><p>If you use the software-only (h264) video-decoding UxPlay option
-<code>-avdec</code>, you also need option <code>-vsync</code>to keep
-audio and video synchronized (<code>-vsync</code> is a new feature;
-before it was introduced, software decoding on the Pi was not
-viable.)</p></li>
+<code>-avdec</code>, it now works better that earlier, with the new
+default timestamp-based synchronization to keep audio and video
+synchronized.</p></li>
 <li><p>For best performance, the Raspberry Pi needs the GStreamer
 Video4linux2 plugin to use its Broadcom GPU hardware for decoding h264
 video. This needs the bcm2835_codec kernel module which is maintained
@@ -457,9 +472,8 @@ cannot use the decoding firmware in the GPU.</strong></p></li>
 Raspberry Pi OS, use a similar tool on other distributions) to allocate
 sufficient memory for the GPU (on R. Pi 3 model B+, the maximum (256MB)
 is suggested). Even with GPU video decoding, some frames may be dropped
-by the lower-power 3 B+, so the -vsync option (introduced in
-UxPlay-1.63) that uses timestamps to synchronize audio and video is
-needed.</p>
+by the lower-power 3 B+ to keep audio and video synchronized using
+timestamps.</p>
 <ul>
 <li>The plugin in the latest GStreamer-1.22 release works well, but
 older releases of GStreamer will not work unless patched with backports
@@ -470,7 +484,7 @@ href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches"
 with instructions in the UxPlay Wiki</a>.</li>
 </ul>
 <p>The basic uxplay options for R Pi are
-<code>uxplay -vsync [-vs &lt;videosink&gt;]</code>. The choice
+<code>uxplay [-vs &lt;videosink&gt;]</code>. The choice
 <code>&lt;videosink&gt;</code> = <code>glimagesink</code> is sometimes
 useful. On a system without X11 (like R Pi OS Lite) with framebuffer
 video, use <code>&lt;videosink&gt;</code> = <code>kmssink</code>. With
@@ -480,10 +494,10 @@ hardware video decoding, an option <code>-v4l2</code> may be useful: for
 convenience, this also comes combined with various videosink options as
 <code>-rpi</code>, <code>-rpigl</code> <code>-rpifb</code>,
 <code>-rpiwl</code>, respectively provided for X11, X11 with OpenGL,
-framebuffer, and Wayland systems. You may find that just
-“<code>uxplay -vsync</code>”, (<em>without</em> <code>-v4l2</code> or
+framebuffer, and Wayland systems. <strong>You may find that just
+“<code>uxplay</code>”, (<em>without</em> <code>-v4l2</code> or
 <code>-rpi*</code> options, which lets GStreamer try to find the best
-video solution by itself) provides the best results (the
+video solution by itself) provides the best results</strong> (the
 <code>-rpi*</code> options may be removed in a future release of
 UxPlay.)</p>
 <ul>
@@ -723,15 +737,19 @@ the mirror display (X11) window.</p>
 <p><strong>-nh</strong> Do not append “<span class="citation"
 data-cites="_hostname_">@_hostname_</span>” at the end of the AirPlay
 server name.</p>
-<p><strong>-vsync [x]</strong> (In Mirror mode:) this option uses
-timestamps to synchronize audio with video on the server, with an
-optional audio delay in (decimal) milliseconds (<em>x</em> = “20.5”
-means 0.0205 seconds delay: positive or negative delays less than a
-second are allowed.) It is needed on low-power systems such as Raspberry
-Pi without hardware video decoding. Standard desktop systems seem to
-work well without this (streaming without use of timestamps was the only
-behavior prior to UxPlay 1.63), but you may wish to use it there too.
-(It may become the default in future releases.)</p>
+<p><strong>-vsync [x]</strong> (In Mirror mode:) this option
+(<strong>now the default</strong>) uses timestamps to synchronize audio
+with video on the server, with an optional audio delay in (decimal)
+milliseconds (<em>x</em> = “20.5” means 0.0205 seconds delay: positive
+or negative delays less than a second are allowed.) It is needed on
+low-power systems such as Raspberry Pi without hardware video
+decoding.</p>
+<p><strong>-vsync no</strong> (In Mirror mode:) this switches off
+timestamp-based audio-video synchronization, restoring the default
+behavior prior to UxPlay-1.64. Standard desktop systems seem to work
+well without use of timestamps: this mode is appropriate for “live
+streaming” such as using UxPlay as a second monitor for a mac computer,
+or monitoring a webcam; with it, no video frames are dropped.</p>
 <p><strong>-async [x]</strong> (In Audio-Only (ALAC) mode:) this option
 uses timestamps to synchronize audio on the server with video on the
 client, with an optional audio delay in (decimal) milliseconds
@@ -744,6 +762,10 @@ principle be mitigated by using the <code>-al</code> audio latency
 setting to change the latency (default 0.25 secs) that the server
 reports to the client, but at present changing this does not seem to
 have any effect</em>.</p>
+<p><strong>-async no</strong>. This is the still the default behavior in
+Audio-only mode, but this option may be useful as a command-line option
+to switch of a <code>-async</code> option set in a “uxplayrc”
+configuration file.</p>
 <p><strong>-s wxh</strong> (e.g. -s 1920x1080 , which is the default )
 sets the display resolution (width and height, in pixels). (This may be
 a request made to the AirPlay client, and perhaps will not be the final
@@ -1056,8 +1078,8 @@ module that is not in the standard Linux kernel (it is available in
 Raspberry Pi OS, Ubuntu and Manjaro).</p>
 <ul>
 <li><strong>If this kernel module is not available in your Raspberry Pi
-operating system, or if GStreamer &lt; 1.22 is not patched, use options
-<code>-avdec -vsync</code> for software h264-decoding.</strong></li>
+operating system, or if GStreamer &lt; 1.22 is not patched, use option
+<code>-avdec</code> for software h264-decoding.</strong></li>
 </ul>
 <p>Sometimes “autovideosink” may select the OpenGL renderer
 “glimagesink” which may not work correctly on your system. Try the
@@ -1207,6 +1229,10 @@ the client by the AirPlay server) to be set.</p>
 <p>The “features” code and other settings are set in
 <code>UxPlay/lib/dnssdint.h</code>.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.64 2023-04-23 Timestamp-based synchronization of audio and video is
+now the default in Mirror mode. (Use “-vsync no” to restore previous
+behavior.) A configuration file can now be used for startup options.
+Also some internal cleanups and a minor bugfix that fixes #192.</p>
 <p>1.63 2023-02-12 Reworked audio-video synchronization, with new
 options -vsync (for Mirror mode) and -async (for Audio-Only mode, to
 sync with client video). Option -vsync makes software h264 decoding of

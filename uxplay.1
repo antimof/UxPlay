@@ -1,23 +1,27 @@
-.TH UXPLAY "1" "February 2023" "1.63" "User Commands"
+.TH UXPLAY "1" "April 2023" "1.64" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.63: An open\-source AirPlay mirroring (+ audio streaming) server.
+UxPlay 1.64: An open\-source AirPlay mirroring (+ audio streaming) server:
 .SH OPTIONS
 .TP
 .B
 \fB\-n\fR name   Specify the network name of the AirPlay server
 .TP
-\fB\-nh\fR       Do \fBNOT\fR append "@\fIhostname\fR" at end of the AirPlay server name
+\fB\-nh\fR       Do \fBNOT\fR append "@\fIhostname\fR" at end of AirPlay server name
 .TP
-\fB\-vsync\fR    Mirror mode: sync audio to video (default: stream w/o sync)
+\fB\-vsync\fI[x]\fR Mirror mode: sync audio to video using timestamps (default)
+.IP
+   \fIx\fR is optional audio delay: millisecs, decimal, can be neg.
 .TP
-\fB\-vsync\fI[x]\fR \fIx\fR is optional audio delay in millisecs, can be neg., decimal.
+\fB\-vsync\fR no Switch off audio/(server)video timestamp synchronization.
 .TP
-\fB\-async\fR[\fIx\fR] Audio-Only mode: sync audio to client video (default: no sync).
+\fB\-async\fR[\fIx\fR] Audio-Only mode: sync audio to client video (default: no).
+.TP
+\fB\-async\fR no Switch off audio/(client)video timestamp synchronization.
 .TP
 \fB\-s\fR wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]
 .TP
@@ -121,3 +125,25 @@ UxPlay 1.63: An open\-source AirPlay mirroring (+ audio streaming) server.
 \fB\-v\fR        Displays version information
 .TP
 \fB\-h\fR        Displays help information
+.SH
+FILES
+.TP
+Options in one of $UXPLAYRC, or ~/.uxplayrc, or  ~/.config/uxplayrc
+.TP
+are applied first (command-line options may modify them). uxplayrc format:
+.TP
+one option per line,\fI no\fR initial "-"; lines beginning with "#" ignored.
+.SH
+AUTHORS
+.TP
+Various, see website or distribution.
+.SH
+COPYRIGHT
+.TP
+Various, see website or distribution.  License: GPL v3+: GNU GPL version 3 or later.
+.TP
+(some parts LGPL v.2.1 and MIT).
+.SH
+SEE ALSO
+.TP
+Website: <https://github.com/FDH2/UxPlay>

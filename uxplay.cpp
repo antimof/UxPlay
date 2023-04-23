@@ -59,7 +59,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.63"
+#define VERSION "1.64"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -75,7 +75,7 @@ static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
 static bool audio_sync = false;
-static bool video_sync = false;
+static bool video_sync = true;
 static int64_t audio_delay_alac = 0;
 static int64_t audio_delay_aac = 0;
 static bool relaunch_video = false;
@@ -398,17 +398,17 @@ static std::string random_mac () {
 }
 
 static void print_info (char *name) {
-    printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
-    printf("=========== Website: https://github.com/FDH2/UxPlay =============\n");
-    printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
+    printf("UxPlay %s: An open-source AirPlay mirroring server.\n", VERSION);
+    printf("=========== Website: https://github.com/FDH2/UxPlay ==========\n");
+    printf("Usage: %s [-n name] [-s wxh] [-p [n]] [(other options)]\n", name);
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
-    printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
-    printf("-vsync [x]Mirror mode: sync audio to video (default: stream w/o sync)\n");
-    printf("          x is optional audio delay in millisecs, can be neg., decimal\n");
-    printf("-vsync no Switch off vsync audio/(server)video timestamp synchronization \n");
-    printf("-async [x]Audio-Only mode: sync audio to client video (default: no sync)\n");
-    printf("-async no Switch off async audio/(client)video timestamp synchronization\n");
+    printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
+    printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
+    printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
+    printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
+    printf("-async [x]Audio-Only mode: sync audio to client video (default: no)\n");
+    printf("-async no Switch off audio/(client)video timestamp synchronization\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -429,7 +429,7 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osximagesink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    A workaround (bt709 color) that may be needed with -rpi\n"); 
+    printf("-bt709    A workaround (bt709 color) sometimes needed on RPi\n"); 
     printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
     printf("-rpigl    Same as \"-rpi -vs glimagesink\" for RPi.\n");
     printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
@@ -459,6 +459,9 @@ static void print_info (char *name) {
     printf("-d        Enable debug logging\n");
     printf("-v        Displays version information\n");
     printf("-h        Displays this help\n");
+    printf("Startup options in $UXPLAYRC, ~/.uxplayrc, or ~/.config/uxplayrc are\n");
+    printf("applied first (command-line options may modify them): format is one \n");
+    printf("option per line, no initial \"-\"; lines starting with \"#\" are ignored.\n");
 }
 
 bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
