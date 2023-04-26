@@ -325,18 +325,19 @@ installed, depending on how your audio is set up.
 -   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
     Alma Linux):** (sudo dnf install, or sudo yum install)
     gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for
-    intel graphics). *You may need to get some of them (in particular
-    gstreamer1-libav) from [rpmfusion.org](https://rpmfusion.org) (which
-    provides packages including plugins that RedHat does not ship for
-    license reasons). \[In recent **Fedora**, the libav plugin package
-    is renamed to "gstreamer1-plugin-libav", which now needs the RPM
-    Fusion package ffmpeg-libs for the patent-encumbered code which
-    RedHat does not provide: check with "`rpm -qi ffmpeg-libs`" that it
-    lists "Packager" as RPM Fusion; if this is not installed, uxplay
-    will fail to start, with error: **no element "avdec_aac"** \]*.
+    Intel/AMD graphics). *You may need to get some of them (in
+    particular gstreamer1-libav) from
+    [rpmfusion.org](https://rpmfusion.org) (which provides packages
+    including plugins that RedHat does not ship for license reasons).
+    \[In recent **Fedora**, the libav plugin package is renamed to
+    "gstreamer1-plugin-libav", which now needs the RPM Fusion package
+    ffmpeg-libs for the patent-encumbered code which RedHat does not
+    provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
+    as RPM Fusion; if this is not installed, uxplay will fail to start,
+    with error: **no element "avdec_aac"** \]*.
 
 -   **OpenSUSE:** (sudo zypper install) gstreamer-plugins-libav
-    gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel
+    gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel/AMD
     graphics). *In some cases, you may need to use gstreamer or libav\*
     packages for OpenSUSE from
     [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
@@ -347,12 +348,12 @@ installed, depending on how your audio is set up.
     Packman).*
 
 -   **Arch Linux** (sudo pacman -Syu) gst-plugins-good gst-plugins-bad
-    gst-libav (+ gstreamer-vaapi for Intel graphics).
+    gst-libav (+ gstreamer-vaapi for Intel/AMD graphics).
 
 -   **FreeBSD:** (sudo pkg install) gstreamer1-libav,
     gstreamer1-plugins, gstreamer1-plugins-\* (\* = core, good, bad, x,
-    gtk, gl, vulkan, pulse, v4l2, ...), (+ gstreamer1-vaapi for Intel
-    graphics).
+    gtk, gl, vulkan, pulse, v4l2, ...), (+ gstreamer1-vaapi for
+    Intel/AMD graphics).
 
 ### Starting and running UxPlay
 
@@ -392,7 +393,7 @@ below for help with this or other problems.
     and audio streams were both played as soon as possible after they
     arrived (the GStreamer "*sync=false*" method), with a GStreamer
     internal clock used to try to keep them synchronized. **Starting
-    with UxPlay-1.64, the other method (GStreamer's "*sync-true*" mode),
+    with UxPlay-1.64, the other method (GStreamer's "*sync=true*" mode),
     which uses timestamps in the audio and video streams sent by the
     client, is the new default**. On low-decoding-power UxPlay hosts
     (such as Raspberry Pi 3 models) this will drop video frames that
@@ -402,7 +403,7 @@ below for help with this or other problems.
 The older method which does not drop late video frames worked well on
 more powerful systems, and is still available with the UxPlay option
 "`-vsync no`"; this method is adapted to "live streaming", and may be
-better when Using UxPlay as a second monitor for a Mac computer, for
+better when using UxPlay as a second monitor for a Mac computer, for
 example, while the new default timestamp-based method is best for
 watching a video, to keep lip movements and voices synchronized.
 (Without use of timestamps, video will eventually lag behind audio if it
@@ -449,7 +450,7 @@ options.
 ### **Special instructions for Raspberry Pi (tested on R Pi 4 model B 8GB and R Pi 3 model B+)**:
 
 -   If you use the software-only (h264) video-decoding UxPlay option
-    `-avdec`, it now works better that earlier, with the new default
+    `-avdec`, it now works better than earlier, with the new default
     timestamp-based synchronization to keep audio and video
     synchronized.
 
@@ -539,7 +540,7 @@ uninstalled after building uxplay, if you wish.
 
 -   If you use Homebrew: `brew install libplist openssl@3`
 
--   if you use MacPorts: `sudo port install plist-devel openssl3`
+-   if you use MacPorts: `sudo port install libplist-devel openssl3`
 
 Otherwise, build libplist and openssl from source: see instructions near
 the end of this README; requires development tools (autoconf, automake,
@@ -584,6 +585,15 @@ Finally, build and install uxplay: open a terminal and change into the
 UxPlay source directory ("UxPlay-master" for zipfile downloads, "UxPlay"
 for "git clone" downloads) and build/install with "cmake . ; make ; sudo
 make install" (same as for Linux).
+
+-   Running UxPlay while checking for GStreamer warnings (do this with
+    "export GST_DEBUG=2" before runnng UxPlay) reveals that with the
+    default (since UxPlay 1.64) use of timestamps for video
+    synchonization, many video frames are being dropped (only on macOS),
+    perhaps due to another error (about videometa) that shows up in the
+    GStreamer warnings. **Recommendation: use the new UxPlay "no
+    timestamp" option "`-vsync no`"** (you can add a line "vsync no" in
+    the uxplayrc configuration file).
 
 -   On macOS with this installation of GStreamer, the only videosinks
     available seem to be glimagesink (default choice made by
@@ -770,7 +780,7 @@ changing this does not seem to have any effect*.
 
 **-async no**. This is the still the default behavior in Audio-only
 mode, but this option may be useful as a command-line option to switch
-of a `-async` option set in a "uxplayrc" configuration file.
+off a `-async` option set in a "uxplayrc" configuration file.
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display
 resolution (width and height, in pixels). (This may be a request made to
@@ -1099,7 +1109,7 @@ patched (see the UxPlay
 [Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
 for patches). This is fixed in GStreamer-1.22, and by backport patches
 from this in distributions such as Raspberry Pi OS (Bullseye): **use
-option `-bt709` with the GStreamer-1.18.4 from Raspberry Pi OS**.. This
+option `-bt709` with the GStreamer-1.18.4 from Raspberry Pi OS**. This
 also needs the bcm2835-codec kernel module that is not in the standard
 Linux kernel (it is available in Raspberry Pi OS, Ubuntu and Manjaro).
 
