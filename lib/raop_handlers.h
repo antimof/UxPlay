@@ -318,10 +318,10 @@ raop_handler_setup(raop_conn_t *conn,
     int use_udp;
     const char *dacp_id;
     const char *active_remote_header;
-
+    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
+    
     const char *data;
     int data_len;
-
     data = http_request_get_data(request, &data_len);
 
     dacp_id = http_request_get_header(request, "DACP-ID");
@@ -369,9 +369,11 @@ raop_handler_setup(raop_conn_t *conn,
         memcpy(aesiv, eiv, 16);
         free(eiv);	
         logger_log(conn->raop->logger, LOGGER_DEBUG, "eiv_len = %llu", eiv_len);
-        char* str = utils_data_to_string(aesiv, 16, 16);
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
-        free(str);
+	if (logger_debug) {
+            char* str = utils_data_to_string(aesiv, 16, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
+            free(str);
+	}
 
         char* ekey = NULL;
         uint64_t ekey_len = 0;
@@ -380,21 +382,26 @@ raop_handler_setup(raop_conn_t *conn,
         free(ekey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey_len = %llu", ekey_len);
         // eaeskey is 72 bytes, aeskey is 16 bytes
-        str = utils_data_to_string((unsigned char *) eaeskey, ekey_len, 16);
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
-        free (str);
-
+	if (logger_debug) {
+            char *str = utils_data_to_string((unsigned char *) eaeskey, ekey_len, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
+            free (str);
+        }
         int ret = fairplay_decrypt(conn->fairplay, (unsigned char*) eaeskey, aeskey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "fairplay_decrypt ret = %d", ret);
-        str = utils_data_to_string(aeskey, 16, 16);
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
-        free(str);
+        if (logger_debug) {
+            char *str = utils_data_to_string(aeskey, 16, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey (fairplay-decrypted from ekey):\n%s", str);
+            free(str);
+        }
 
         unsigned char ecdh_secret[X25519_KEY_SIZE];
         pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret);
-        str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
-        free(str);
+	if (logger_debug) {
+            char *str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
+            free(str);
+        }
 
         const char *user_agent = http_request_get_header(request, "User-Agent");
         logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s", user_agent);	
@@ -413,9 +420,11 @@ raop_handler_setup(raop_conn_t *conn,
             sha_final(ctx, eaeskey, NULL);
             sha_destroy(ctx);
             memcpy(aeskey, eaeskey, 16);
-            str = utils_data_to_string(aeskey, 16, 16);
-            logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
-            free(str);
+            if (logger_debug) {
+                char *str = utils_data_to_string(aeskey, 16, 16);
+                logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
+                free(str);
+            }
         }
 
         // Time port
@@ -694,7 +703,7 @@ raop_handler_record(raop_conn_t *conn,
 {
     char audio_latency[12];
     unsigned int ad = (unsigned int) (((uint64_t) conn->raop->audio_delay_micros) * AUDIO_SAMPLE_RATE / SECOND_IN_USECS);
-    sprintf(audio_latency, "%u", ad);
+    snprintf(audio_latency, sizeof(audio_latency), "%u", ad);
     logger_log(conn->raop->logger, LOGGER_DEBUG, "raop_handler_record");
     http_response_add_header(response, "Audio-Latency", audio_latency);
     http_response_add_header(response, "Audio-Jack-Status", "connected; type=analog");

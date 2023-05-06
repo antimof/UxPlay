@@ -28,6 +28,9 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sstream>
+#include <iterator>
+#include <sys/stat.h>
 
 #ifdef _WIN32  /*modifications for Windows compilation */
 #include <glib.h>
@@ -39,6 +42,8 @@
 #include <sys/utsname.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
+#include <sys/types.h>
+#include <pwd.h>
 # ifdef __linux__
 # include <netpacket/packet.h>
 # else
@@ -54,7 +59,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.63"
+#define VERSION "1.64"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -70,7 +75,7 @@ static dnssd_t *dnssd = NULL;
 static raop_t *raop = NULL;
 static logger_t *render_logger = NULL;
 static bool audio_sync = false;
-static bool video_sync = false;
+static bool video_sync = true;
 static int64_t audio_delay_alac = 0;
 static int64_t audio_delay_aac = 0;
 static bool relaunch_video = false;
@@ -269,6 +274,37 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     return 0;
 }
 
+static std::string find_uxplay_config_file() {
+    std::string no_config_file = "";
+    const char *homedir = NULL;
+    const char *uxplayrc = NULL;
+    std::string config0, config1, config2;
+    struct stat sb;
+    uxplayrc = getenv("UXPLAYRC");   /* first look for $UXPLAYRC */
+    if (uxplayrc) {
+        config0 = uxplayrc;
+        if (stat(config0.c_str(), &sb) == 0) return config0;
+    }
+    homedir = getenv("XDG_CONFIG_HOMEDIR");
+    if (homedir == NULL) {
+        homedir = getenv("HOME");
+    }
+#ifndef _WIN32
+    if (homedir == NULL){
+        homedir = getpwuid(getuid())->pw_dir;
+    }
+#endif
+    if (homedir) {
+      config1 = homedir;
+      config1.append("/.uxplayrc");
+      if (stat(config1.c_str(), &sb) == 0) return config1;  /* look for ~/.uxplayrc */
+      config2 = homedir;
+      config2.append("/.config/uxplayrc"); /* look for ~/.config/uxplayrc */
+      if (stat(config2.c_str(), &sb) == 0) return config2;
+    }
+    return no_config_file;
+}
+
 static std::string find_mac () {
 /*  finds the MAC address of a network interface *
  *  in a Windows, Linux, *BSD or macOS system.   */
@@ -296,7 +332,7 @@ static std::string find_mac () {
             }
             mac.erase();
             for (int i = 0; i < 6; i++) {
-                sprintf(str,"%02x", int(address->PhysicalAddress[i]));
+                snprintf(str, sizeof(str), "%02x", int(address->PhysicalAddress[i]));
                 mac = mac + str;
                 if (i < 5) mac = mac + ":";
             }
@@ -329,7 +365,7 @@ static std::string find_mac () {
             if (non_null_octets) {
                 mac.erase();
                 for (int i = 0; i < 6 ; i++) {
-                    sprintf(str,"%02x", octet[i]);
+                    snprintf(str, sizeof(str), "%02x", octet[i]);
                     mac = mac + str;
                     if (i < 5) mac = mac + ":";
                 }
@@ -362,14 +398,17 @@ static std::string random_mac () {
 }
 
 static void print_info (char *name) {
-    printf("UxPlay %s: An open-source AirPlay mirroring server based on RPiPlay\n", VERSION);
-    printf("Usage: %s [-n name] [-s wxh] [-p [n]]\n", name);
+    printf("UxPlay %s: An open-source AirPlay mirroring server.\n", VERSION);
+    printf("=========== Website: https://github.com/FDH2/UxPlay ==========\n");
+    printf("Usage: %s [-n name] [-s wxh] [-p [n]] [(other options)]\n", name);
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
-    printf("-nh       Do not add \"@hostname\" at the end of the AirPlay server name\n");
-    printf("-vsync [x]Mirror mode: sync audio to video (default: stream w/o sync)\n");
-    printf("          x is optional audio delay in millisecs, can be neg., decimal\n");
-    printf("-async [x]Audio-Only mode: sync audio to client video (default: no sync)\n");
+    printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
+    printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
+    printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
+    printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
+    printf("-async [x]Audio-Only mode: sync audio to client video (default: no)\n");
+    printf("-async no Switch off audio/(client)video timestamp synchronization\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -390,7 +429,7 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osximagesink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    A workaround (bt709 color) that may be needed with -rpi\n"); 
+    printf("-bt709    A workaround (bt709 color) sometimes needed on RPi\n"); 
     printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
     printf("-rpigl    Same as \"-rpi -vs glimagesink\" for RPi.\n");
     printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
@@ -420,6 +459,9 @@ static void print_info (char *name) {
     printf("-d        Enable debug logging\n");
     printf("-v        Displays version information\n");
     printf("-h        Displays this help\n");
+    printf("Startup options in $UXPLAYRC, ~/.uxplayrc, or ~/.config/uxplayrc are\n");
+    printf("applied first (command-line options may modify them): format is one \n");
+    printf("option per line, no initial \"-\"; lines starting with \"#\" are ignored.\n");
 }
 
 bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
@@ -566,6 +608,11 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-async") {
             audio_sync = true;
 	    if (i <  argc - 1) {
+                if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
+                    audio_sync = false;
+                    i++;
+                    continue;
+		}
                 char *end;
                 int n = (int) (strtof(argv[i + 1], &end) * 1000);
                 if (*end == '\0') {
@@ -581,6 +628,11 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-vsync") {
             video_sync = true;
 	    if (i <  argc - 1) {
+                if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
+                    video_sync = false;
+                    i++;
+                    continue;
+                }
                 char *end;
                 int n = (int) (strtof(argv[i + 1], &end) * 1000);
                 if (*end == '\0') {
@@ -1252,9 +1304,47 @@ static void stop_raop_server () {
     return;
 }
 
+static void read_config_file(const char * filename, const char * uxplay_name) {
+    std::string config_file = filename;
+    std::string option_char = "-";
+    std::vector<std::string> options;
+    options.push_back(uxplay_name);
+    std::ifstream file(config_file);
+    if (file.is_open()) {
+        fprintf(stdout,"UxPlay: reading configuration from  %s\n", config_file.c_str());
+        std::string line;
+        while (std::getline(file, line)) {
+            if (line[0] == '#') continue;
+            std::stringstream ss(line);
+            std::istream_iterator<std::string> begin(ss);
+            std::istream_iterator<std::string> end;
+            std::vector<std::string> tokens(begin,end);
+            if (tokens.size() > 0) {
+	        options.push_back(option_char + tokens[0]);
+	        for (int i = 1; i < tokens.size(); i++) {
+	            options.push_back(tokens[i].c_str());
+	        }
+            }
+        }
+        file.close();
+    } else {
+        fprintf(stderr,"UxPlay: failed to open configuration file at %s\n", config_file.c_str());
+    }
+    if (options.size() > 1) {
+        int argc = options.size();
+        char **argv = (char **) malloc(sizeof(char*) * argc);
+        for (int i = 0; i < argc; i++) {
+            argv[i] = (char *) options[i].c_str();
+        }
+        parse_arguments (argc, argv);
+        free (argv);
+    }
+}
+
 int main (int argc, char *argv[]) {
     std::vector<char> server_hw_addr;
     std::string mac_address;
+    std::string config_file = "";
 
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
     // suppress avahi_compat nag message.  avahi emits a "nag" warning (once)
@@ -1263,6 +1353,10 @@ int main (int argc, char *argv[]) {
     if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
 #endif
 
+    config_file = find_uxplay_config_file();
+    if (config_file.length()) {
+        read_config_file(config_file.c_str(), argv[0]);
+    }
     parse_arguments (argc, argv);
 
 #ifdef _WIN32    /*  use utf-8 terminal output; don't buffer stdout in WIN32 when debug_log = false */

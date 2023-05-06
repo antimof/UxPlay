@@ -136,7 +136,7 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
         return -1;
     }
     memset(current, 0, sizeof(current));
-    sprintf(current, "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
+    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp parse remote ip = %s", current);
     ret = netutils_parse_address(family, current,
                                  &raop_rtp->remote_saddr,
@@ -463,6 +463,7 @@ raop_rtp_thread_udp(void *arg)
     unsigned short seqnum1 = 0, seqnum2 = 0;
 
     assert(raop_rtp);
+    bool logger_debug = (logger_get_level(raop_rtp->logger) >= LOGGER_DEBUG);
     raop_rtp->ntp_start_time = raop_ntp_get_local_time(raop_rtp->ntp);
     raop_rtp->rtp_clock_started = false;
     for (int i = 0; i < RAOP_RTP_SYNC_DATA_COUNT; i++) {
@@ -531,7 +532,7 @@ raop_rtp_thread_udp(void *arg)
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp resent audio packet: seqnum=%u", seqnum);
                     int result = raop_buffer_enqueue(raop_rtp->buffer, resent_packet, resent_packetlen, &ntp_time, &rtp_time, 1);
                     assert(result >= 0);
-                } else {
+                } else if (logger_debug) {
                     /* type_c = 0x56 packets  with length 8 have been reported */
                     char *str = utils_data_to_string(packet, packetlen, 16);
                     logger_log(raop_rtp->logger, LOGGER_DEBUG, "Received empty resent audio packet length %d, seqnum=%u:\n%s",
@@ -557,15 +558,17 @@ raop_rtp_thread_udp(void *arg)
                 }
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
                 uint64_t sync_ntp_remote = raop_ntp_timestamp_to_nano_seconds(sync_ntp_raw, true);
-                uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
-                char *str = utils_data_to_string(packet, packetlen, 20);
-                logger_log(raop_rtp->logger, LOGGER_DEBUG,
-                           "raop_rtp sync: client ntp=%8.6f, ntp = %8.6f, ntp_start_time %8.6f\nts_client = %8.6f sync_rtp=%u\n%s",
-                           (double) sync_ntp_remote / SEC, (double) sync_ntp_local / SEC,
-                           (double) raop_rtp->ntp_start_time / SEC, (double) sync_ntp_remote / SEC, sync_rtp, str);
-                free(str);
+                if (logger_debug) {
+                    uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
+                    char *str = utils_data_to_string(packet, packetlen, 20);
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG,
+                               "raop_rtp sync: client ntp=%8.6f, ntp = %8.6f, ntp_start_time %8.6f\nts_client = %8.6f sync_rtp=%u\n%s",
+                               (double) sync_ntp_remote / SEC, (double) sync_ntp_local / SEC,
+                               (double) raop_rtp->ntp_start_time / SEC, (double) sync_ntp_remote / SEC, sync_rtp, str);
+                    free(str);
+                }
                 raop_rtp_sync_clock(raop_rtp, &sync_ntp_remote, &sync_rtp64);		
-            } else {
+            } else if (logger_debug) {
                 char *str = utils_data_to_string(packet, packetlen, 16);
                 logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp unknown udp control packet\n%s", str);
                 free(str);
@@ -619,9 +622,12 @@ raop_rtp_thread_udp(void *arg)
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
 	    
             if (packetlen < 12)  {
-                char *str = utils_data_to_string(packet, packetlen, 16);                                                                                                                                                                          
-                logger_log(raop_rtp->logger, LOGGER_DEBUG, "Received short type_d = 0x%2x  packet with length %d:\n%s", packet[1] & ~0x80, packetlen, str);                                                                                       
-                free (str);           
+                if (logger_debug) {
+                    char *str = utils_data_to_string(packet, packetlen, 16);
+                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "Received short type_d = 0x%2x  packet with length %d:\n%s",
+                               packet[1] & ~0x80, packetlen, str);
+                    free (str);
+                }
                 continue;
 	    }
 
@@ -694,11 +700,14 @@ raop_rtp_thread_udp(void *arg)
                     }
                     raop_rtp->callbacks.audio_process(raop_rtp->callbacks.cls, raop_rtp->ntp, &audio_data);
                     free(payload);
-                    uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
-                    int64_t latency = ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time_local); 
-                    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp audio: now = %8.6f, ntp = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u",
-                               (double) ntp_now / SEC, (double) audio_data.ntp_time_local / SEC, (double) latency / SEC, (uint32_t) rtp64_timestamp,
-                               seqnum);
+                    if (logger_debug) {
+                        uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp->ntp);
+                        int64_t latency = ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time_local); 
+                        logger_log(raop_rtp->logger, LOGGER_DEBUG,
+                                   "raop_rtp audio: now = %8.6f, ntp = %8.6f, latency = %8.6f, rtp_time=%u seqnum = %u",
+                                   (double) ntp_now / SEC, (double) audio_data.ntp_time_local / SEC, (double) latency / SEC,
+                                   (uint32_t) rtp64_timestamp, seqnum);
+                    }
                 }
 
                 /* Handle possible resend requests */

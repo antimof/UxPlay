@@ -187,19 +187,28 @@ char *utils_parse_hex(const char *str, int str_len, int *data_len) {
 }
 
 char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per_line) {
-    int len = 3*datalen + ((datalen-1)/chars_per_line ) + 1;
+    assert(datalen >= 0);
+    assert(chars_per_line > 0);
+    int len = 3*datalen + 1;
+    if (datalen > chars_per_line) {
+        len += (datalen-1)/chars_per_line;
+    }
     char *str = (char *) calloc(len + 1, sizeof(char));
     assert(str);
     char *p = str;
+    int n = len + 1;
     for (int i = 0; i < datalen; i++) {
         if (i > 0 && i % chars_per_line == 0) {
-            sprintf(p,"\n");
+            snprintf(p, n, "\n");
+            n--;
             p++;
         }
-        sprintf(p,"%2.2x ", (unsigned int) data[i]);
+        snprintf(p, n, "%2.2x ", (unsigned int) data[i]);
+        n -= 3;
         p += 3;
     }
-    sprintf(p,"\n");
+    snprintf(p, n, "\n");
+    n--;
     p++;
     assert(p == &(str[len]));
     assert(len == strlen(str));

@@ -79,14 +79,6 @@ raop_buffer_init(logger_t *logger,
     // Need to be initialized internally
     raop_buffer->aes_ctx = aes_cbc_init(aeskey, aesiv, AES_DECRYPT);
 
-#ifdef DUMP_AUDIO
-    if (file_keyiv != NULL) {
-        fwrite(aeskey, 16, 1, file_keyiv);
-        fwrite(aesiv, 16, 1, file_keyiv);
-        fclose(file_keyiv);
-    }
-#endif
-
     for (int i = 0; i < RAOP_BUFFER_LENGTH; i++) {
         raop_buffer_entry_t *entry = &raop_buffer->entries[i];
         entry->payload_data = NULL;
@@ -113,15 +105,6 @@ raop_buffer_destroy(raop_buffer_t *raop_buffer)
         free(raop_buffer);
     }
 
-#ifdef DUMP_AUDIO
-    if (file_aac != NULL) {
-        fclose(file_aac);
-    }
-    if (file_source != NULL) {
-        fclose(file_source);
-    }
-#endif
-
 }
 
 static short
@@ -130,32 +113,11 @@ seqnum_cmp(unsigned short s1, unsigned short s2)
     return (s1 - s2);
 }
 
-//#define DUMP_AUDIO
-
-#ifdef DUMP_AUDIO
-static FILE* file_aac = NULL;
-static FILE* file_source = NULL;
-static FILE* file_keyiv = NULL;
-#endif
-
-
 int
 raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned char* output, unsigned int payload_size, unsigned int *outputlen)
 {
     assert(raop_buffer);
     int encryptedlen;
-#ifdef DUMP_AUDIO
-    if (file_aac == NULL) {
-        file_aac = fopen("/home/pi/Airplay.aac", "wb");
-        file_source = fopen("/home/pi/Airplay.source", "wb");
-        file_keyiv = fopen("/home/pi/Airplay.keyiv", "wb");
-    }
-    // Undecrypted file
-    if (file_source != NULL) {
-        fwrite(&data[12], payloadsize, 1, file_source);
-    }
-#endif
-
     if (DECRYPTION_TEST) {
         char *str = utils_data_to_string(data,12,12);
         logger_log(raop_buffer->logger, LOGGER_INFO, "encrypted 12 byte header %s", str);
@@ -199,13 +161,6 @@ raop_buffer_decrypt(raop_buffer_t *raop_buffer, unsigned char *data, unsigned ch
             free(str);
         }
     }
-#ifdef DUMP_AUDIO
-    // Decrypted file
-    if (file_aac != NULL) {
-        fwrite(output, payloadsize, 1, file_aac);
-    }
-#endif
-
     return 1;
 }
 

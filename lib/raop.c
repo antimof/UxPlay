@@ -156,13 +156,13 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
 static void
 conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     raop_conn_t *conn = ptr;
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "conn_request");
     const char *method;
     const char *url;
     const char *cseq;
-
     char *response_data = NULL;
     int response_datalen = 0;
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "conn_request");
+    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
 
     method = http_request_get_method(request);
     url = http_request_get_url(request);
@@ -180,7 +180,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         free(header_str);
         int request_datalen;
         const char *request_data = http_request_get_data(request, &request_datalen);
-        if (request_data) {
+        if (request_data && logger_debug) {
             if (request_datalen > 0) {
 	        if (data_is_plist) {
 		    plist_t req_root_node = NULL;
@@ -333,7 +333,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     bool data_is_text = (strstr(header_str,"text/parameters") != NULL);
     free(header_str);
     if (response_data) {
-        if (response_datalen > 0) {
+        if (response_datalen > 0 && logger_debug) {
             if (data_is_plist) {
                 plist_t res_root_node = NULL;
                 plist_from_bin(response_data, response_datalen, &res_root_node);

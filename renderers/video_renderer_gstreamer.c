@@ -328,7 +328,8 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
                      "*** If you are letting the default autovideosink select the videosink,\n"
                      "*** GStreamer may be trying to use non-functional hardware h264 video decoding.\n"
                      "*** Try using option -avdec to force software decoding or use -vs <videosink>\n"
-                     "*** to select a videosink of your choice (see \"man uxplay\")");
+                     "*** to select a videosink of your choice (see \"man uxplay\").\n"
+                     "*** Raspberry Pi OS with GStreamer-1.18.4 needs \"-bt709\" uxplay option");
         }
 	g_error_free (err);
         g_free (debug);
