@@ -77,14 +77,14 @@ is no longer involved in development, but periodically posts updates
 pulled from the new main [UxPlay site](https://github.com/FDH2/UxPlay)).
 
 UxPlay is tested on a number of systems, including (among others) Debian
-10.11 "Buster" and 11.2 "Bullseye", Ubuntu 20.04 LTS and 22.04.1 LTS,
-(also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA
-edition)), Rocky Linux 9.1 (a CentOS successor), Fedora 36, OpenSUSE
-15.4, Arch Linux 22.10, macOS 13.3 (Intel and M2), FreeBSD 13.2, Windows
-10 and 11 (64 bit).
+(10 "Buster", 11 "Bullseye", 12 "Bookworm"), Ubuntu (20.04 LTS, 22.04
+LTS, 23.04; also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04
+(NVIDIA edition)), Red Hat and clones (Fedora 38, Rocky Linux 9.2),
+OpenSUSE 15.4, Arch Linux 23.05, macOS 13.3 (Intel and M2), FreeBSD
+13.2, Windows 10 and 11 (64 bit).
 
 On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye)
-(32- and 64-bit), Ubuntu 22.04 and 22.10, Manjaro RPi4 23.02, and
+(32- and 64-bit), Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02, and
 (without hardware video decoding) on OpenSUSE 15.4. Also tested on
 Raspberry Pi 3 model B+.
 
@@ -284,7 +284,8 @@ installed)
     *(some of these may be in the "CodeReady" add-on repository, called
     "PowerTools" by clones)*
 
--   **OpenSUSE:** (sudo zypper install) libopenssl-devel libplist-devel
+-   **OpenSUSE:** (sudo zypper install) libopenssl-devel
+    libplist-2_0-devel (formerly libplist-devel)
     avahi-compat-mDNSResponder-devel gstreamer-devel
     gstreamer-plugins-base-devel (+ libX11-devel for fullscreen X11).
 
@@ -1454,12 +1455,17 @@ ldconfig".
 avoid this step by installing libplist-dev and libplist3 from Debian 10
 or Ubuntu 18.04.)* As well as the usual build tools (autoconf, automake,
 libtool), you may need to also install some libpython\*-dev package.
-Download the latest source from
-<https://github.com/libimobiledevice/libplist>: get
-[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip),
-then ("unzip libplist-master.zip ; cd libplist-master"), build/install
-("./autogen.sh ; make ; sudo make install"). This will probably install
-libplist-2.0.\* in /usr/local/lib.
+Download the latest source with git from
+<https://github.com/libimobiledevice/libplist>, or get the source from
+the Releases section (use the \*.tar.bz2 release, **not** the \*.zip or
+\*.tar.gz versions): download
+[libplist-2.3.0](https://github.com/libimobiledevice/libplist/releases/download/2.3.0/libplist-2.3.0.tar.bz2),
+then unpack it ("tar -xvjf libplist-2.3.0.tar.bz2 ; cd libplist-2.3.0"),
+and build/install it: ("./configure ; make ; sudo make install"). This
+will probably install libplist-2.0.\* in /usr/local/lib. The new
+libplist-2.3.0 release should be compatible with UxPlay;
+[libplist-2.2.0](https://github.com/libimobiledevice/libplist/releases/download/2.2.0/libplist-2.2.0.tar.bz2)
+is also available if there are any issues.
 
 *(Ignore the following for builds on MacOS:)* On some systems like
 Debian or Ubuntu, you may also need to add a missing entry
