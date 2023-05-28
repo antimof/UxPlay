@@ -1055,6 +1055,9 @@ extern "C" void conn_destroy (void *cls) {
     //LOGD("Open connections: %i", open_connections);
     if (open_connections == 0) {
         remote_clock_offset = 0;
+        if (use_audio) {
+            audio_renderer_stop();
+        }
     }
 }
 
