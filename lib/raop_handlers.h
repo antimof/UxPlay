@@ -395,14 +395,6 @@ raop_handler_setup(raop_conn_t *conn,
             free(str);
         }
 
-        unsigned char ecdh_secret[X25519_KEY_SIZE];
-        pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret);
-	if (logger_debug) {
-            char *str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
-            logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
-            free(str);
-        }
-
         const char *user_agent = http_request_get_header(request, "User-Agent");
         logger_log(conn->raop->logger, LOGGER_INFO, "Client identified as User-Agent: %s", user_agent);	
 
@@ -413,17 +405,33 @@ raop_handler_setup(raop_conn_t *conn,
         if  (old_protocol) {    /* some windows AirPlay-client emulators use old AirPlay 1 protocol with unhashed AES key */
             logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
         } else {
-            memcpy(eaeskey, aeskey, 16);
-            sha_ctx_t *ctx = sha_init();
-            sha_update(ctx, eaeskey, 16);
-            sha_update(ctx, ecdh_secret, 32);
-            sha_final(ctx, eaeskey, NULL);
-            sha_destroy(ctx);
-            memcpy(aeskey, eaeskey, 16);
-            if (logger_debug) {
-                char *str = utils_data_to_string(aeskey, 16, 16);
-                logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
-                free(str);
+            unsigned char ecdh_secret[X25519_KEY_SIZE];
+            if (pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret)) {
+                /* In this case  (legacy) pairing with client was successfully set up and created the shared ecdh_secret:
+                 * aeskey must be hashed with it
+                 *
+                 * If byte 27 of features ("supports legacy pairing") is turned off, the client does not request pairsetup
+                 * and does NOT set up pairing (this eliminates a 5 second delay in connecting with no apparent bad effects).
+                 * This may be because uxplay currently does not support connections with more than one client at a time
+                 * while AppleTV supports up to 12 clients, and uses pairing to give each a distinct SessionID .*/
+
+                if (logger_debug) {
+                    char *str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "32 byte shared ecdh_secret:\n%s", str);
+                    free(str);
+                }
+                memcpy(eaeskey, aeskey, 16);
+                sha_ctx_t *ctx = sha_init();
+                sha_update(ctx, eaeskey, 16);
+                sha_update(ctx, ecdh_secret, 32);
+                sha_final(ctx, eaeskey, NULL);
+                sha_destroy(ctx);
+                memcpy(aeskey, eaeskey, 16);
+                if (logger_debug) {
+                    char *str = utils_data_to_string(aeskey, 16, 16);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aeskey after sha-256 hash with ecdh_secret:\n%s", str);
+                    free(str);
+                }
             }
         }
 

@@ -38,6 +38,6 @@ void pairing_session_destroy(pairing_session_t *session);
 
 void pairing_destroy(pairing_t *pairing);
 
-void pairing_get_ecdh_secret_key(pairing_session_t *session, unsigned char ecdh_secret[X25519_KEY_SIZE]);
+int pairing_get_ecdh_secret_key(pairing_session_t *session, unsigned char ecdh_secret[X25519_KEY_SIZE]);
 
 #endif

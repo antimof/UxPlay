@@ -24,7 +24,8 @@
 #define RAOP_CN "0,1,2,3"       /* Audio codec: PCM, ALAC, AAC, AAC ELD */
 #define RAOP_ET "0,3,5"         /* Encryption type: None, FairPlay, FairPlay SAPv2.5 */
 #define RAOP_VV "2"
-#define FEATURES_1 "0x5A7FFEE6" /* first 32 bits of features */
+#define FEATURES_1 "0x5A7FFEE6" /* first 32 bits of features, with bit 27 ("supports legacy pairing") ON */
+//#define FEATURES_1 "0x527FFEE6" /* first 32 bits of features, with bit 27 ("supports legacy pairing") OFF */
 #define FEATURES_2 "0x0"        /* second 32 bits of features */
 #define RAOP_FT FEATURES_1 "," FEATURES_2
 #define RAOP_RHD "5.6.0.0"
