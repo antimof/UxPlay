@@ -321,11 +321,13 @@ raop_rtp_mirror_thread(void *arg)
 	    /* packet[4] + packet[5] identify the payload type:   values seen are:               *
              * 0x00 0x00: encrypted packet containing a non-IDR  type 1 VCL NAL unit             *
              * 0x00 0x10: encrypted packet containing an IDR type 5 VCL NAL unit                 *
-             * 0x01 0x00  unencrypted packet containing a type 7 SPS NAL + a type 8 PPS NAL unit *
+             * 0x01 0x00: unencrypted packet containing a type 7 SPS NAL + a type 8 PPS NAL unit *
+             * 0x02 0x00: unencryted packet (old protocol) no payload, sent once every second    *
              * 0x05 0x00  unencrypted packet with a "streaming report", sent once per second.    */
 
 	    /* packet[6] + packet[7] may list a payload "option":    values seen are:            *
              * 0x00 0x00 : encrypted and "streaming report" packets                              *
+             * 0x1e 0x00 : old protocol (seen in AirMyPC) no-payload once-per-second packets     *
              * 0x16 0x01 : seen in most unencrypted SPS+PPS packets                              *
              * 0x56 0x01 : occasionally seen in unencrypted  SPS+PPS packets (why different?)    */
 
@@ -400,14 +402,20 @@ raop_rtp_mirror_thread(void *arg)
                  * that has not yet been sent.   This will trigger prepending it to the current NAL, and the prepend_sps_pps 
                  * flag will be set to false after it has been prepended.  */
 
+                if (prepend_sps_pps & (ntp_timestamp_raw != ntp_timestamp_nal)) {
+                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
+                                   "raop_rtp_mirror: prepended sps_pps timestamp does not match timestamp of "
+                                   "video payload\n%llu\n%llu , discarding", ntp_timestamp_raw, ntp_timestamp_nal);
+                        free (sps_pps);
+		        sps_pps = NULL;
+                        prepend_sps_pps = false;
+                }
+		
                 if (prepend_sps_pps) {
                     assert(sps_pps);
                     payload_out = (unsigned char*)  malloc(payload_size + sps_pps_len);
                     payload_decrypted = payload_out + sps_pps_len;
                     if (ntp_timestamp_raw != ntp_timestamp_nal) {
-                        logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
-                                   "raop_rtp_mirror: prepended sps_pps timestamp does not match timestamp of "
-                                   "video payload\n%llu\n%llu", ntp_timestamp_raw, ntp_timestamp_nal);
                     }
                     memcpy(payload_out, sps_pps, sps_pps_len);
                     free (sps_pps);
@@ -441,6 +449,7 @@ raop_rtp_mirror_thread(void *arg)
                     int nalu_type = payload_decrypted[nalu_size] & 0x1f;
                     int ref_idc = (payload_decrypted[nalu_size] >> 5);		    
                     switch (nalu_type) {
+                    case 14:  /* Prefix NALu , seen before all VCL Nalu's in AirMyPc */
                     case 5:   /*IDR, slice_layer_without_partitioning */
                     case 1:   /*non-IDR, slice_layer_without_partitioning */
                         break;
@@ -458,6 +467,24 @@ raop_rtp_mirror_thread(void *arg)
                             logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror SEI NAL size = %d", nc_len);		
                             logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
                                        "raop_rtp_mirror h264 Supplemental Enhancement Information:\n%s", str);
+                            free(str);
+                        }
+                        break;
+                    case 7:
+                        if (logger_debug) {
+                            char *str = utils_data_to_string(payload_decrypted + nalu_size, nc_len, 16); 
+                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror SPS NAL size = %d", nc_len);		
+                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
+                                       "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
+                            free(str);
+                        }
+                        break;
+                    case 8:
+                        if (logger_debug) {
+                            char *str = utils_data_to_string(payload_decrypted + nalu_size, nc_len, 16); 
+                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror PPS NAL size = %d", nc_len);		
+                            logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
+                                       "raop_rtp_mirror h264 Picture Parameter Set :\n%s", str);
                             free(str);
                         }
                         break;
@@ -580,6 +607,10 @@ raop_rtp_mirror_thread(void *arg)
                 // memcpy(h264.picture_parameter_set, picture_parameter_set, pps_size);
 
                 break;
+            case 0x02:
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived old-protocol once-per-second packet from client:"
+                           " payload_size %d header %s ts_raw = %llu", payload_size, packet_description, ntp_timestamp_raw);
+                /* "old protocol" (used by AirMyPC), rest of 128-byte  packet is empty  */
             case 0x05:
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived video streaming performance info packet from client:"
                            " payload_size %d header %s ts_raw = %llu", payload_size, packet_description, ntp_timestamp_raw);
@@ -615,7 +646,7 @@ raop_rtp_mirror_thread(void *arg)
                 break;
             default:
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "\nReceived unexpected TCP packet from client, "
-                           "size %d, %s ts_raw = raw%llu", payload_size, packet_description, ntp_timestamp_raw);
+                           "size %d, %s ts_raw = %llu", payload_size, packet_description, ntp_timestamp_raw);
                 break;
             }
 

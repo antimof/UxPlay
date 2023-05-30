@@ -25,6 +25,7 @@
 
 typedef struct raop_ntp_s raop_ntp_t;
 
+typedef enum timing_protocol_e { NTP, TP_NONE, TP_OTHER, TP_UNSPECIFIED } timing_protocol_t;
 
 void raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_timeouts);
 
@@ -35,6 +36,7 @@ unsigned short raop_ntp_get_port(raop_ntp_t *raop_ntp);
 void raop_ntp_destroy(raop_ntp_t *raop_rtp);
 
 uint64_t raop_ntp_timestamp_to_nano_seconds(uint64_t ntp_timestamp, bool account_for_epoch_diff);
+uint64_t raop_remote_timestamp_to_nano_seconds(raop_ntp_t *raop_ntp, uint64_t timestamp);
 
 uint64_t raop_ntp_get_local_time(raop_ntp_t *raop_ntp);
 uint64_t raop_ntp_get_remote_time(raop_ntp_t *raop_ntp);

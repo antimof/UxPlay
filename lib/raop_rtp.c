@@ -557,7 +557,7 @@ raop_rtp_thread_udp(void *arg)
                     have_synced = true;
                 }
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
-                uint64_t sync_ntp_remote = raop_ntp_timestamp_to_nano_seconds(sync_ntp_raw, true);
+                uint64_t sync_ntp_remote = raop_remote_timestamp_to_nano_seconds(raop_rtp->ntp, sync_ntp_raw);
                 if (logger_debug) {
                     uint64_t sync_ntp_local = raop_ntp_convert_remote_time(raop_rtp->ntp, sync_ntp_remote);
                     char *str = utils_data_to_string(packet, packetlen, 20);
