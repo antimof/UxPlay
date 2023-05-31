@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.64-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.64: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.65-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.65: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -95,14 +95,16 @@ Raspberry Pi 3 model B+.</p>
 audio) of iOS/iPadOS/macOS clients (iPhone, iPod Touch, iPad, Mac
 computers) on the server display of a host running Linux, macOS, or
 other unix (and now also Microsoft Windows). UxPlay supports Apple’s
-AirPlay2 protocol using “Legacy Pairing”, but some features are missing.
-(Details of what is publicly known about Apple’s AirPlay 2 protocol can
-be found <a href="https://openairplay.github.io/airplay-spec/">here</a>,
-<a
+AirPlay2 protocol using “Legacy Protocol”, but some features are
+missing. (Details of what is publicly known about Apple’s AirPlay 2
+protocol can be found <a
+href="https://openairplay.github.io/airplay-spec/">here</a>, <a
 href="https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol">here</a>
-and <a href="https://emanuelecozzi.net/docs/airplay2">here</a>). While
-there is no guarantee that future iOS releases will keep supporting
-“Legacy Pairing”, the recent iOS 16 release continues support.</p>
+and <a href="https://emanuelecozzi.net/docs/airplay2">here</a>; see also
+<a href="https://pyatv.dev/documentation/protocols">pyatv</a> which
+could be a resource for adding modern protocols.) While there is no
+guarantee that future iOS releases will keep supporting “Legacy
+Protocol”, the recent iOS 16 release continues support.</p>
 <p>The UxPlay server and its client must be on the same local area
 network, on which a <strong>Bonjour/Zeroconf mDNS/DNS-SD server</strong>
 is also running (only DNS-SD “Service Discovery” service is strictly
@@ -1128,6 +1130,15 @@ when the client sends the “Stop Mirroring” signal, try the no-close
 option “-nc” that leaves the video window open.</p>
 <h3 id="gstreamer-issues-missing-plugins-etc.">4. GStreamer issues
 (missing plugins, etc.):</h3>
+<ul>
+<li>clearing the user’s GStreamer cache with
+<code>rm -rf ~/.cache/gstreamer-1.0/*</code> may be the solution to
+problems where gst-inspect-1.0 does not show a plugin that you believe
+is installed. The cache will be regenerated next time GStreamer is
+started. <strong>This is the solution to puzzling problems that turn out
+to come from corruption of the cache, and should be tried
+first.</strong></li>
+</ul>
 <p>If UxPlay fails to start, with a message that a required GStreamer
 plugin (such as “libav”) was not found, first check with the GStreamer
 tool gst-inspect-1.0 to see what GStreamer knows is available. (You may
@@ -1139,13 +1150,6 @@ installed (as one user found), try entirely removing and reinstalling
 the package. That user found that a solution to a “<strong>Required
 gstreamer plugin ‘libav’ not found</strong>” message that kept recurring
 was to clear the user’s gstreamer cache.</p>
-<ul>
-<li>clearing the user’s GStreamer cache with
-<code>rm -rf ~/.cache/gstreamer-1.0/*</code> may be the solution to
-problems where gst-inspect-1.0 does not show a plugin that you believe
-is installed. The cache will be regenerated next time GStreamer is
-started.</li>
-</ul>
 <p>If it fails to start with an error like
 ‘<code>no element "avdec_aac"</code>’ this is because even though
 gstreamer-libav is installed. it is incomplete because some plugins are
@@ -1212,6 +1216,21 @@ when it is made.</li>
 id="protocol-issues-such-as-failure-to-decrypt-all-video-and-audio-streams-from-old-or-non-apple-clients">6.
 Protocol issues, such as failure to decrypt ALL video and audio streams
 from old or non-Apple clients:</h3>
+<ul>
+<li><strong>NEW</strong> As UxPlay only connects to one client at any
+time, it can work without the client pairing setup, allowing faster
+connections.</li>
+</ul>
+<p>This is allowed by disabling “Supports Legacy Pairing” (bit 27) in
+the “features” code UxPlay advertises on DNS-SD Service Discovery. Most
+clients will then not attempt to setup the “shared secret key” for
+pairing.</p>
+<ul>
+<li><strong>This new behavior (since UxPlay-1.65) can be reverted to the
+previous behavior by uncommenting the previous “FEATURES_1” setting (and
+commenting out the new one) in lib/dnssdint.h, and then rebuilding
+UxPlay.</strong></li>
+</ul>
 <p>A protocol failure may trigger an unending stream of error messages,
 and means that the audio decryption key (also used in video decryption)
 was not correctly extracted from data sent by the client. This should
@@ -1231,13 +1250,23 @@ thought that it was necessary for UxPlay to claim to be an older 32 bit
 AppleTV model that cannot run modern 64bit tvOS, in order for the client
 to use a “legacy” protocol for pairing with the server. However, UxPlay
 still works if it declares itself as an AppleTV6,2 with sourceVersion
-380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running tvOS 12.2.1);
-it seems that the use of “legacy” protocol just requires bit 27 (listed
-as “SupportsLegacyPairing”) of the “features” plist code (reported to
-the client by the AirPlay server) to be set.</p>
+380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running tvOS 12.2.1).
+It was previously thought that use of “legacy” protocol requires bit 27
+(“SupportsLegacyPairing”) of the “features” plist code (reported to the
+client by the AirPlay server) to be set, but it was recently discovered
+that it was possible to switch that off (after a small protocol
+modification) to eliminate a 5 second delay by the client in making
+connections to the server.</p>
 <p>The “features” code and other settings are set in
 <code>UxPlay/lib/dnssdint.h</code>.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.65 2023-05-31 Eliminate pair_setup part of connection protocol to
+allow faster connections with clients (thanks to <span class="citation"
+data-cites="shuax">@shuax</span> #176 for this discovery); to revert,
+uncomment a line in lib/dnssdint.h. Disconnect from audio device when
+connection closes, to not block its use by other apps if uxplay is
+running but not connected. Fix for AirMyPC client (broken since 1.60),
+so its older non-NTP timestamp protocol works with -vsync.</p>
 <p>1.64 2023-04-23 Timestamp-based synchronization of audio and video is
 now the default in Mirror mode. (Use “-vsync no” to restore previous
 behavior.) A configuration file can now be used for startup options.

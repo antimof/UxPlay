@@ -415,8 +415,6 @@ raop_rtp_mirror_thread(void *arg)
                     assert(sps_pps);
                     payload_out = (unsigned char*)  malloc(payload_size + sps_pps_len);
                     payload_decrypted = payload_out + sps_pps_len;
-                    if (ntp_timestamp_raw != ntp_timestamp_nal) {
-                    }
                     memcpy(payload_out, sps_pps, sps_pps_len);
                     free (sps_pps);
 		    sps_pps = NULL;
