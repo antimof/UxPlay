@@ -1318,17 +1318,62 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
         std::string line;
         while (std::getline(file, line)) {
             if (line[0] == '#') continue;
-            std::stringstream ss(line);
-            std::istream_iterator<std::string> begin(ss);
-            std::istream_iterator<std::string> end;
-            std::vector<std::string> tokens(begin,end);
-            if (tokens.size() > 0) {
-	        options.push_back(option_char + tokens[0]);
-	        for (int i = 1; i < tokens.size(); i++) {
-	            options.push_back(tokens[i].c_str());
-	        }
+            //  first process line into separate option items with '\0' as delimiter
+            bool is_part_of_item, in_quotes;
+            char endchar;
+            is_part_of_item = false;
+            for (int i = 0; i < line.size(); i++) {
+                switch (is_part_of_item) {
+                case false:
+                    if (line[i] == ' ') {
+                        line[i] = '\0';
+                    } else {
+                        // start of new item
+                        is_part_of_item = true;
+                        switch (line[i]) {
+                        case '\'':
+                        case '\"':
+                            endchar = line[i];
+                            line[i] = '\0';
+                            in_quotes = true;
+                            break;
+                        default:
+                            in_quotes = false;
+		            endchar = ' ';
+		            break;
+                        }
+                    }
+                    break;
+                case true:
+	        /* previous character was inside this item */
+                    if (line[i] == endchar) {
+                        if (in_quotes) {
+                            /* cases where endchar is inside quoted item */
+                            if (i > 0 && line[i - 1] == '\\') continue;
+                            if (i + 1 < line.size() && line[i + 1] != ' ') continue;
+		        }
+                        line[i] =  '\0';
+                        is_part_of_item = false;
+                    }
+                    break;
+                }
             }
-        }
+
+            // now tokenize the processed line   
+            std::istringstream iss(line);
+            std::string token;
+            bool first = true;
+            while (std::getline(iss, token, '\0')) {
+                if (token.size() > 0) {
+                    if (first) {
+                        options.push_back(option_char + token.c_str());
+                        first = false;
+                    } else {
+                        options.push_back(token.c_str());
+                    }
+		}
+	    }
+	}
         file.close();
     } else {
         fprintf(stderr,"UxPlay: failed to open configuration file at %s\n", config_file.c_str());
