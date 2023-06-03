@@ -90,13 +90,18 @@ pairing_get_public_key(pairing_t *pairing, unsigned char public_key[ED25519_KEY_
     ed25519_key_get_raw(public_key, pairing->ed);
 }
 
-void
+int
 pairing_get_ecdh_secret_key(pairing_session_t *session, unsigned char ecdh_secret[X25519_KEY_SIZE])
 {
     assert(session);
-    memcpy(ecdh_secret, session->ecdh_secret, X25519_KEY_SIZE);
+    switch (session->status) {
+    case STATUS_INITIAL:
+        return 0;
+    default:
+        memcpy(ecdh_secret, session->ecdh_secret, X25519_KEY_SIZE);
+        return 1;
+    }
 }
-
 
 pairing_session_t *
 pairing_session_init(pairing_t *pairing)

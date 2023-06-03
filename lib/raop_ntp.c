@@ -91,6 +91,8 @@ struct raop_ntp_s {
 
     // UDP socket
     int tsock;
+
+    timing_protocol_t time_protocol;
 };
 
 
@@ -140,7 +142,7 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
 }
 
 raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr,
-                          int remote_addr_len, unsigned short timing_rport) {
+                          int remote_addr_len, unsigned short timing_rport, timing_protocol_t *time_protocol) {
     raop_ntp_t *raop_ntp;
 
     assert(logger);
@@ -150,6 +152,7 @@ raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const u
     if (!raop_ntp) {
         return NULL;
     }
+    raop_ntp->time_protocol = *time_protocol;
     raop_ntp->logger = logger;
     memcpy(&raop_ntp->callbacks, callbacks, sizeof(raop_callbacks_t));    
     raop_ntp->timing_rport = timing_rport;
@@ -322,10 +325,10 @@ raop_ntp_thread(void *arg)
                 int64_t t0 = (int64_t) byteutils_get_ntp_timestamp(response, 8);
 
                 // Local time of the client when the NTP request packet arrives at the client
-                int64_t t1 = (int64_t) byteutils_get_ntp_timestamp(response, 16);
+                int64_t t1 = (int64_t) raop_remote_timestamp_to_nano_seconds(raop_ntp, byteutils_get_long_be(response, 16));
 
                 // Local time of the client when the response message leaves the client
-                int64_t t2 = (int64_t) byteutils_get_ntp_timestamp(response, 24);
+                int64_t t2 = (int64_t) raop_remote_timestamp_to_nano_seconds(raop_ntp, byteutils_get_long_be(response, 24));
 
                 if (logger_debug) {
                     char *str = utils_data_to_string(response, response_len, 16);                   
@@ -480,6 +483,12 @@ uint64_t raop_ntp_timestamp_to_nano_seconds(uint64_t ntp_timestamp, bool account
     return (seconds * SECOND_IN_NSECS) + ((fraction * SECOND_IN_NSECS) >> 32);
 }
 
+uint64_t raop_remote_timestamp_to_nano_seconds(raop_ntp_t *raop_ntp, uint64_t timestamp) {
+    uint64_t seconds = ((timestamp >> 32) & 0xffffffff);
+    if (raop_ntp->time_protocol == NTP) seconds -= SECONDS_FROM_1900_TO_1970;
+    uint64_t fraction = (timestamp & 0xffffffff);
+    return (seconds * SECOND_IN_NSECS) + ((fraction * SECOND_IN_NSECS) >> 32);
+}
 /**
  * Returns the current time in nano seconds according to the local wall clock.
  * The system Unix time is used as the local wall clock.

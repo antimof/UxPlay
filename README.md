@@ -1,4 +1,4 @@
-# UxPlay 1.64:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.65:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -59,23 +59,24 @@ from OpenMAX-based [RPiPlay](https://github.com/FD-/RPiPlay), which in turn deri
 development, but periodically posts updates pulled from the new
 main [UxPlay site](https://github.com/FDH2/UxPlay)). 
 
-UxPlay is tested on a number of systems, including (among others) Debian 10.11 "Buster" and  11.2 "Bullseye",
-Ubuntu 20.04 LTS and 22.04.1 LTS, (also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition)),
-Rocky Linux 9.1 (a CentOS successor), Fedora 36, OpenSUSE 15.4, Arch Linux 22.10, macOS 13.3 (Intel and M2),
+UxPlay is tested on a number of systems, including (among others) Debian (10 "Buster", 11 "Bullseye", 12 "Bookworm"),
+Ubuntu (20.04 LTS, 22.04 LTS, 23.04; also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition)), Red Hat and clones (Fedora 38,
+Rocky Linux 9.2), OpenSUSE 15.4, Arch Linux 23.05, macOS 13.3 (Intel and M2),
 FreeBSD 13.2, Windows 10 and 11 (64 bit).
 
-On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04 and 22.10, Manjaro RPi4 23.02,
+On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02,
 and (without hardware video decoding) on OpenSUSE 15.4. Also tested on Raspberry Pi 3 model B+.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
 (iPhone, iPod Touch, iPad, Mac computers) on the server display
 of a host running Linux, macOS, or other unix (and now also Microsoft Windows).  UxPlay supports
-Apple's AirPlay2 protocol using "Legacy Pairing", but some features are missing.
+Apple's AirPlay2 protocol using "Legacy Protocol", but some features are missing.
 (Details of what is publicly known about Apple's AirPlay 2 protocol can be found
 [here](https://openairplay.github.io/airplay-spec/),
 [here](https://github.com/SteeBono/airplayreceiver/wiki/AirPlay2-Protocol) and
-[here](https://emanuelecozzi.net/docs/airplay2)).   While there is no guarantee that future
-iOS releases will keep supporting "Legacy Pairing", the recent iOS 16 release continues support.
+[here](https://emanuelecozzi.net/docs/airplay2); see also [pyatv](https://pyatv.dev/documentation/protocols) which could be
+a resource for adding modern protocols.)  While there is no guarantee that future
+iOS releases will keep supporting "Legacy Protocol", the recent iOS 16 release continues support.
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server**  is also running
@@ -241,7 +242,7 @@ may be in the "CodeReady" add-on repository, called "PowerTools" by clones)_
 
 
  * **OpenSUSE:**
-(sudo zypper install) libopenssl-devel libplist-devel
+(sudo zypper install) libopenssl-devel libplist-2_0-devel (formerly libplist-devel)
 avahi-compat-mDNSResponder-devel gstreamer-devel 
 gstreamer-plugins-base-devel (+ libX11-devel for fullscreen X11). 
 
@@ -922,6 +923,9 @@ the client sends the "Stop Mirroring" signal, try the no-close option "-nc" that
 
 ### 4. GStreamer issues (missing plugins, etc.): 
 
+* clearing the user's GStreamer cache with  `rm -rf ~/.cache/gstreamer-1.0/*`  may be the solution to problems
+ where gst-inspect-1.0 does not show a plugin that you believe is installed.   The cache will be regenerated next time
+GStreamer is started.  **This is the solution to puzzling problems that turn out to come from corruption of  the cache, and should be tried first.**
 
 If UxPlay fails to start, with a message that  a required GStreamer plugin (such as "libav") was not found, first check with the GStreamer tool
 gst-inspect-1.0 to see what GStreamer knows is available.  (You may need to install some additional GStreamer "tools" package to get gst-inspect-1.0).
@@ -929,11 +933,6 @@ For, _e.g._  a libav problem, check with "`gst-inspect-1.0 libav`".  If it is no
 shows the relevant package as installed (as one user found), try entirely removing and reinstalling the package.
 That user found that a solution to a "**Required gstreamer plugin 'libav' not found**" message that kept recurring was to clear the user's gstreamer 
 cache.
-
-* clearing the user's GStreamer cache with  `rm -rf ~/.cache/gstreamer-1.0/*`  may be the solution to problems
- where gst-inspect-1.0 does not show a plugin that you believe is installed.   The cache will be regenerated next time
-GStreamer is started.
-
  
 If it fails to start with an error like '`no element "avdec_aac"`' this is 
 because even though gstreamer-libav is installed. it is incomplete because some plugins are missing: "`gst-inspect-1.0 | grep avdec_aac`" will 
@@ -984,6 +983,14 @@ new connections, and will be taken over by a new client connection when it is ma
 
 ### 6. Protocol issues, such as failure to decrypt ALL video and audio streams from old or non-Apple clients:
 
+* **NEW** As UxPlay only connects to one client at any time, it can work without the client pairing setup, allowing faster connections.
+
+This is allowed by disabling "Supports Legacy Pairing" (bit 27) in the "features" code UxPlay advertises 
+on DNS-SD Service Discovery.  Most clients will then not attempt to setup the "shared secret key" for pairing.    
+
+* **This new behavior (since UxPlay-1.65) can be reverted to the previous behavior by uncommenting the previous "FEATURES_1" setting 
+(and commenting out the new one) in lib/dnssdint.h, and then rebuilding UxPlay.**
+
 A protocol failure may trigger an unending stream of error messages, and means that the
 audio decryption key (also used in video decryption) 
 was not correctly extracted from data sent by the  client.
@@ -1004,13 +1011,21 @@ AppleTV model that cannot run modern 64bit tvOS, in order for the client
 to use a "legacy" protocol for pairing with the server.
 However, UxPlay still works if it declares itself as an AppleTV6,2 with
 sourceVersion 380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running
-tvOS 12.2.1); it seems that the use of "legacy" protocol just requires bit 27 (listed as
-"SupportsLegacyPairing") of the
-"features" plist code (reported to the client by the AirPlay server) to be set.
+tvOS 12.2.1).  It was previously thought that 
+use of "legacy" protocol requires bit 27 ("SupportsLegacyPairing") of the
+"features" plist code (reported to the client by the AirPlay server) to be set,
+but it was recently discovered that it was possible to switch that off (after a small protocol
+modification) to eliminate a 5 second delay by the client in making connections to the server.
 
 The "features" code and other settings are set in `UxPlay/lib/dnssdint.h`.
 
 # Changelog
+1.65 2023-05-31   Eliminate pair_setup part of connection protocol to allow faster connections with clients
+                  (thanks to @shuax #176 for this discovery); to revert, uncomment a line in lib/dnssdint.h.
+                  Disconnect from audio device when connection closes, to not block its use by other apps if 
+                  uxplay is running but not connected.  Fix for AirMyPC client (broken since 1.60), so its 
+                  older non-NTP timestamp protocol works with -vsync.
+
 1.64 2023-04-23   Timestamp-based synchronization of audio and video is now the default in Mirror mode.
                   (Use "-vsync no" to restore previous behavior.)    A configuration file can now be used
                   for startup options.   Also some internal cleanups and a minor bugfix that fixes #192.
@@ -1159,10 +1174,14 @@ _(Note: on Debian 9 "Stretch" or Ubuntu 16.04 LTS editions, you can avoid this s
 and libplist3 from Debian 10 or Ubuntu 18.04.)_
 As well as the usual build tools (autoconf, automake, libtool), you
 may need to also install some libpython\*-dev package.  Download the latest source
-from [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist): get
-[libplist-master.zip](https://github.com/libimobiledevice/libplist/archive/refs/heads/master.zip), then
-("unzip libplist-master.zip ; cd libplist-master"), build/install
-("./autogen.sh ; make ; sudo make install").   This will probably install libplist-2.0.* in /usr/local/lib.
+with git from [https://github.com/libimobiledevice/libplist](https://github.com/libimobiledevice/libplist), or 
+get the source from the Releases section (use the \*.tar.bz2 release, **not** the \*.zip or \*.tar.gz versions): 
+download [libplist-2.3.0](https://github.com/libimobiledevice/libplist/releases/download/2.3.0/libplist-2.3.0.tar.bz2),
+then unpack it ("tar -xvjf libplist-2.3.0.tar.bz2 ; cd libplist-2.3.0"), and build/install it:
+("./configure ;  make ; sudo make install").   This will probably install libplist-2.0.\* in /usr/local/lib.
+The new libplist-2.3.0 release should be compatible with 
+UxPlay; [libplist-2.2.0](https://github.com/libimobiledevice/libplist/releases/download/2.2.0/libplist-2.2.0.tar.bz2) is 
+also available if there are any issues.  
 
 _(Ignore the following for builds on MacOS:)_  On some systems like
 Debian or Ubuntu, you may also need to add a missing  entry ```/usr/local/lib```
