@@ -481,7 +481,7 @@ synchronized.</p></li>
 <li><p>For best performance, the Raspberry Pi needs the GStreamer
 Video4linux2 plugin to use its Broadcom GPU hardware for decoding h264
 video. This needs the bcm2835_codec kernel module which is maintained
-oustide the mainline Linux kernel by Raspberry Pi in the the <a
+outside the mainline Linux kernel by Raspberry Pi in the the <a
 href="https://github.com/raspberrypi/linux">Raspberry Pi kernel
 tree</a>, and the only distributions for R Pi that are known to supply
 it include Raspberry Pi OS, Ubuntu, and Manjaro (all available from
@@ -663,7 +663,13 @@ compiler.</h2>
 <ol type="1">
 <li><p>Download and install <strong>Bonjour SDK for Windows
 v3.0</strong> from the official Apple site <a
-href="https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows">https://developer.apple.com/download</a></p></li>
+href="https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows">https://developer.apple.com/download</a>.
+(Apple makes you register as a developer to access it; if you do not
+want to go through the registration process, you can download the SDK
+without any registration at <a
+href="https://www.softpedia.com/get/Programming/SDK-DDK/Bonjour-SDK.shtml">softpedia.com</a>.)
+This should install the Bonjour SDK as
+<code>C:\Program Files\Bonjour SDK</code></p></li>
 <li><p>(This is for 64-bit Windows; a build for 32-bit Windows should be
 possible, but is not tested.) The unix-like MSYS2 build environment will
 be used: download and install MSYS2 from the official site <a
@@ -694,7 +700,11 @@ href="https://gstreamer.freedesktop.org/download/">official GStreamer
 site</a>, but only the MinGW 64-bit build on MSYS2 has been
 tested.</p></li>
 <li><p>cd to the UxPlay source directory, then
-“<code>mkdir build</code>” and “<code>cd build</code>”, followed by</p>
+“<code>mkdir build</code>” and “<code>cd build</code>”. The build
+process assumes that the Bonjour SDK is installed at
+<code>C:\Program Files\Bonjour SDK</code>. If is somewhere else, set the
+enviroment variable BONJOUR_SDK_HOME to point to its location. Then
+build UxPlay with</p>
 <p><code>cmake ..</code></p>
 <p><code>ninja</code></p></li>
 <li><p>Assuming no error in either of these, you will have built the

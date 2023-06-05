@@ -483,7 +483,7 @@ See [Usage](#usage) for more run-time options.
 -   For best performance, the Raspberry Pi needs the GStreamer
     Video4linux2 plugin to use its Broadcom GPU hardware for decoding
     h264 video. This needs the bcm2835_codec kernel module which is
-    maintained oustide the mainline Linux kernel by Raspberry Pi in the
+    maintained outside the mainline Linux kernel by Raspberry Pi in the
     the [Raspberry Pi kernel
     tree](https://github.com/raspberrypi/linux), and the only
     distributions for R Pi that are known to supply it include Raspberry
@@ -666,7 +666,13 @@ device is rotated).
 
 1.  Download and install **Bonjour SDK for Windows v3.0** from the
     official Apple site
-    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
+    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows).
+    (Apple makes you register as a developer to access it; if you do not
+    want to go through the registration process, you can download the
+    SDK without any registration at
+    [softpedia.com](https://www.softpedia.com/get/Programming/SDK-DDK/Bonjour-SDK.shtml).)
+    This should install the Bonjour SDK as
+    `C:\Program Files\Bonjour SDK`
 
 2.  (This is for 64-bit Windows; a build for 32-bit Windows should be
     possible, but is not tested.) The unix-like MSYS2 build environment
@@ -702,7 +708,10 @@ device is rotated).
     only the MinGW 64-bit build on MSYS2 has been tested.
 
 5.  cd to the UxPlay source directory, then "`mkdir build`" and
-    "`cd build`", followed by
+    "`cd build`". The build process assumes that the Bonjour SDK is
+    installed at `C:\Program Files\Bonjour SDK`. If is somewhere else,
+    set the enviroment variable BONJOUR_SDK_HOME to point to its
+    location. Then build UxPlay with
 
     `cmake ..`
 
