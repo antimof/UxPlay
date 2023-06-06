@@ -168,7 +168,7 @@ the proprietary NVIDIA drivers.</p></li>
 gstreamer1.0-plugins-bad since GStreamer-1.18.0) can be used for
 accelerated video decoding on the NVIDIA GPU after NVIDIA’s CUDA driver
 <code>libcuda.so</code> is installed. For GStreamer-1.16.3 or earlier,
-use the older plugin <code>nvdec</code>, which must be <a
+the plugin is called <code>nvdec</code>, and must be <a
 href="https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins">built
 by the user</a>.</p></li>
 <li><p><strong>Video4Linux2 support for the Raspberry Pi Broadcom 2835
@@ -451,12 +451,17 @@ depends on your operating system and graphics hardware: use
 “<code>gst-inspect-1.0 | grep sink | grep -e video -e Video -e image</code>”
 to see what is available. Some possibilites on Linux/*BSD are:</p>
 <ul>
-<li><p>glimagesink (OpenGL), waylandsink</p></li>
-<li><p>xvimagesink, ximagesink (X11)</p></li>
-<li><p>kmssink, fbdevsink (console graphics without X11)</p></li>
-<li><p>vaapisink (for Intel/AMD hardware-accelerated graphics); for
-NVIDIA hardware graphics (CUDA) use glimagesink combined with
-<code>-vd nvh264dec</code>.</p></li>
+<li><p><strong>glimagesink</strong> (OpenGL),
+<strong>waylandsink</strong></p></li>
+<li><p><strong>xvimagesink</strong>, <strong>ximagesink</strong>
+(X11)</p></li>
+<li><p><strong>kmssink</strong>, <strong>fbdevsink</strong> (console
+graphics without X11)</p></li>
+<li><p><strong>vaapisink</strong> (for Intel/AMD hardware-accelerated
+graphics); for NVIDIA hardware graphics (with CUDA) use
+<strong>glimagesink</strong> combined with “<code>-vd nvh264dec</code>”
+(or “nvh264sldec”, a new variant which will become “nvh264dec” in
+GStreamer-1.24).</p></li>
 </ul>
 <p>GStreamer also searches for the best “audiosink”; override its choice
 with <code>-as &lt;audiosink&gt;</code>. Choices on Linux include
@@ -467,7 +472,7 @@ incorrectly-configured or absent accelerated hardware h264 video
 decoding (e.g., VAAPI). Try “<code>uxplay -avdec</code>” to force
 software video decoding; if this works you can then try to fix
 accelerated hardware video decoding if you need it, or just uninstall
-the GStreamer VAAPI plugin. </strong></p>
+the GStreamer vaapi plugin.</strong></p>
 <p>See <a href="#usage">Usage</a> for more run-time options.</p>
 <h3
 id="special-instructions-for-raspberry-pi-tested-on-r-pi-4-model-b-8gb-and-r-pi-3-model-b"><strong>Special
@@ -675,13 +680,13 @@ possible, but is not tested.) The unix-like MSYS2 build environment will
 be used: download and install MSYS2 from the official site <a
 href="https://www.msys2.org">https://www.msys2.org/</a>. Accept the
 default installation location <code>C:\mysys64</code>.</p></li>
-<li><p>Next update MSYS2 and install the <strong>MinGW-64</strong>
-compiler and <strong>cmake</strong> (<a
-href="https://packages.msys2.org/package/">MSYS2 packages</a> are
-installed with a variant of the “pacman” package manager used by Arch
-Linux). Open a MSYS2 MinGW x64 terminal from the MSYS2 64 bit tab in the
-Windows Start menu, then run</p>
-<pre><code>pacman -Syu mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc</code></pre>
+<li><p><a href="https://packages.msys2.org/package/">MSYS2 packages</a>
+are installed with a variant of the “pacman” package manager used by
+Arch Linux. Open a “MSYS2 MINGW64” terminal from the MSYS2 tab in the
+Windows Start menu, and update the new MSYS2 installation with “pacman
+-Syu”. Then install the <strong>MinGW-64</strong> compiler and
+<strong>cmake</strong></p>
+<pre><code>pacman -S mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc</code></pre>
 <p>The compiler with all required dependencies will be installed in the
 msys64 directory, with default path <code>C:/msys64/mingw64</code>. Here
 we will simply build UxPlay from the command line in the MSYS2
@@ -702,8 +707,8 @@ tested.</p></li>
 <li><p>cd to the UxPlay source directory, then
 “<code>mkdir build</code>” and “<code>cd build</code>”. The build
 process assumes that the Bonjour SDK is installed at
-<code>C:\Program Files\Bonjour SDK</code>. If is somewhere else, set the
-enviroment variable BONJOUR_SDK_HOME to point to its location. Then
+<code>C:\Program Files\Bonjour SDK</code>. If it is somewhere else, set
+the enviroment variable BONJOUR_SDK_HOME to point to its location. Then
 build UxPlay with</p>
 <p><code>cmake ..</code></p>
 <p><code>ninja</code></p></li>

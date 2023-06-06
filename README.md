@@ -129,12 +129,11 @@ if not, software decoding is used.
 
 * **NVIDIA with proprietary drivers**
 
-   The `nvh264dec` plugin
+   The `nvh264dec` plugin 
    (included in gstreamer1.0-plugins-bad since GStreamer-1.18.0)
    can be used for accelerated video decoding on the NVIDIA GPU after
-   NVIDIA's CUDA driver `libcuda.so` is installed.
-   For GStreamer-1.16.3
-   or earlier, use the older plugin `nvdec`, which
+   NVIDIA's CUDA driver `libcuda.so` is installed. For GStreamer-1.16.3
+   or earlier, the plugin is called `nvdec`, and
    must be [built by the user](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 
 *  **Video4Linux2 support for the Raspberry Pi Broadcom 2835 GPU**
@@ -372,13 +371,14 @@ By default, GStreamer uses an algorithm to search for the best "videosink" (GStr
 You can overide this with the uxplay option `-vs <videosink>`. Which videosinks are available depends on your operating system and
 graphics hardware:  use "`gst-inspect-1.0 | grep sink | grep -e video -e Video -e image`" to see what is available.   Some possibilites on Linux/\*BSD are:
 
-* glimagesink (OpenGL), waylandsink
+* **glimagesink** (OpenGL), **waylandsink**
 
-* xvimagesink, ximagesink (X11)
+* **xvimagesink**, **ximagesink** (X11)
 
-* kmssink, fbdevsink (console graphics without X11)
+* **kmssink**, **fbdevsink** (console graphics without X11)
 
-* vaapisink (for Intel/AMD hardware-accelerated graphics); for NVIDIA hardware graphics (CUDA) use glimagesink combined with `-vd nvh264dec`.
+* **vaapisink** (for Intel/AMD hardware-accelerated graphics); for NVIDIA hardware graphics (with CUDA) use **glimagesink** combined
+  with "`-vd nvh264dec`" (or  "nvh264sldec", a new variant  which will become "nvh264dec" in GStreamer-1.24). 
 
 GStreamer also searches for the best "audiosink"; override its choice  with `-as <audiosink>`. Choices on Linux include
 pulsesink, alsasink, pipewiresink, oss4sink; see what is available with `gst-inspect-1.0 | grep sink | grep -e audio -e Audio`.
@@ -387,7 +387,7 @@ pulsesink, alsasink, pipewiresink, oss4sink; see what is available with `gst-ins
 attempting to use incorrectly-configured or absent accelerated hardware h264
 video decoding (e.g., VAAPI).
 Try "`uxplay -avdec`" to force software video decoding; if this works you can
-then try to fix accelerated hardware video decoding if you need it, or just uninstall the GStreamer VAAPI plugin. **
+then try to fix accelerated hardware video decoding if you need it, or just uninstall the GStreamer vaapi plugin.**
 
 See [Usage](#usage) for more run-time options.
 
@@ -539,14 +539,15 @@ seems fragile against attempts to change the X11 window size, or to rotations th
    unix-like MSYS2 build environment will be used: download and install MSYS2 from the official
    site [https://www.msys2.org/](https://www.msys2.org).  Accept the default installation location `C:\mysys64`.
 
-3. Next update MSYS2 and install the  **MinGW-64** compiler
-   and   **cmake** ([MSYS2 packages](https://packages.msys2.org/package/) are installed with a
-   variant of the "pacman" package manager used by Arch Linux).  Open a MSYS2 MinGW x64 terminal
-   from the MSYS2 64 bit tab in the Windows Start menu, then run 
-   
+3. [MSYS2 packages](https://packages.msys2.org/package/) are installed with a
+   variant of the "pacman" package manager used by Arch Linux.  Open a "MSYS2 MINGW64" terminal
+   from the MSYS2 tab in the Windows Start menu, and update the new
+   MSYS2 installation with "pacman -Syu".  Then install the  **MinGW-64** compiler  and   **cmake**
+      
    ```
-   pacman -Syu mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
+   pacman -S mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
    ```
+
    The compiler with all required dependencies will be installed in the msys64 directory, with
    default path `C:/msys64/mingw64`.  Here we will simply build UxPlay  from the command line
    in the MSYS2 environment (this uses "`ninja`" in place of "``make``" for   the build system).
@@ -563,7 +564,7 @@ seems fragile against attempts to change the X11 window size, or to rotations th
     but only the MinGW 64-bit build on MSYS2 has been tested.
     
 5.  cd to the UxPlay source directory, then "`mkdir build`" and  "``cd build``".  The build process assumes that
-    the Bonjour SDK is installed at `C:\Program Files\Bonjour SDK`.   If is somewhere else, set the enviroment
+    the Bonjour SDK is installed at `C:\Program Files\Bonjour SDK`.   If it is somewhere else, set the enviroment
     variable BONJOUR_SDK_HOME to point to its location.   Then build UxPlay with
 
      `cmake ..`
