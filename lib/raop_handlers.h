@@ -445,12 +445,12 @@ raop_handler_setup(raop_conn_t *conn,
 			   " Only AirPlay v1 protocol (using NTP and timing port) is supported");
             }
 	}
-	uint64_t string_len = 0;
-        const char *timing_protocol;
+        char *timing_protocol = NULL;
 	timing_protocol_t time_protocol;
         plist_t req_timing_protocol_node = plist_dict_get_item(req_root_node, "timingProtocol");
-        timing_protocol = plist_get_string_ptr(req_timing_protocol_node, &string_len);
-        if (string_len) {
+        plist_get_string_val(req_timing_protocol_node, &timing_protocol);
+        if (timing_protocol) {
+             int string_len = strlen(timing_protocol);
              if (strncmp(timing_protocol, "NTP", string_len) == 0) {
                  time_protocol = NTP;
              } else if (strncmp(timing_protocol, "None", string_len) == 0) {
@@ -462,12 +462,13 @@ raop_handler_setup(raop_conn_t *conn,
                  logger_log(conn->raop->logger, LOGGER_ERR, "Client specified timingProtocol=%s,"
                             " but timingProtocol= NTP is required here", timing_protocol);
              }
+             free (timing_protocol);
+             timing_protocol = NULL;
         } else {
             logger_log(conn->raop->logger, LOGGER_DEBUG, "Client did not specify timingProtocol,"
                        " old protocol without offset will be used");
             time_protocol = TP_UNSPECIFIED;
-        }	  
-        timing_protocol = NULL;
+        }
         uint64_t timing_rport = 0;
         plist_t req_timing_port_node = plist_dict_get_item(req_root_node, "timingPort");
 	if (req_timing_port_node) {

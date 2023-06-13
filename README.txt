@@ -80,12 +80,12 @@ UxPlay is tested on a number of systems, including (among others) Debian
 (10 "Buster", 11 "Bullseye", 12 "Bookworm"), Ubuntu (20.04 LTS, 22.04
 LTS, 23.04; also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04
 (NVIDIA edition)), Red Hat and clones (Fedora 38, Rocky Linux 9.2),
-OpenSUSE 15.4, Arch Linux 23.05, macOS 13.3 (Intel and M2), FreeBSD
+openSUSE 15.4, Arch Linux 23.05, macOS 13.3 (Intel and M2), FreeBSD
 13.2, Windows 10 and 11 (64 bit).
 
 On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye)
 (32- and 64-bit), Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02, and
-(without hardware video decoding) on OpenSUSE 15.4. Also tested on
+(without hardware video decoding) on openSUSE 15.4. Also tested on
 Raspberry Pi 3 model B+.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
@@ -162,12 +162,10 @@ used.
 
     The `nvh264dec` plugin (included in gstreamer1.0-plugins-bad since
     GStreamer-1.18.0) can be used for accelerated video decoding on the
-    NVIDIA GPU after NVIDIA's CUDA driver `libcuda.so` is installed.
-    (This plugin should be used with options
-    `uxplay -vd nvh264dec -vs glimagesink`.) For GStreamer-1.16.3 or
-    earlier, replace `nvh264dec` by the older plugin `nvdec`, which must
-    be built by the user: See [these
-    instructions](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
+    NVIDIA GPU after NVIDIA's CUDA driver `libcuda.so` is installed. For
+    GStreamer-1.16.3 or earlier, the plugin is called `nvdec`, and must
+    be [built by the
+    user](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 
 -   **Video4Linux2 support for the Raspberry Pi Broadcom 2835 GPU**
 
@@ -269,13 +267,15 @@ GStreamer \< 1.20 is detected, a fix needed by screen-sharing apps
 5.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run).
 
-The above script installs the executable file "`uxplay`" to
-`/usr/local/bin`, (and installs a manpage to somewhere like
+This installs the executable file "`uxplay`" to `/usr/local/bin`, (and
+installs a manpage to somewhere standard like
 `/usr/local/share/man/man1` and README files to somewhere like
-`/usr/local/share/doc/uxplay`). The uxplay executable can also be found
-in the build directory after the build process, if you wish to test
-before installing (in which case the GStreamer plugins must already be
-installed)
+`/usr/local/share/doc/uxplay`). (If "man uxplay" fails, check if
+\$MANPATH is set: if so, the path to the manpage (usually
+/usr/local/share/man/) needs to be added to \$MANPATH .) The uxplay
+executable can also be found in the build directory after the build
+process, if you wish to test before installing (in which case the
+GStreamer plugins must first be installed).
 
 ### Building on non-Debian Linux and \*BSD
 
@@ -286,8 +286,8 @@ installed)
     *(some of these may be in the "CodeReady" add-on repository, called
     "PowerTools" by clones)*
 
--   **OpenSUSE:** (sudo zypper install) libopenssl-devel
-    libplist-2_0-devel (formerly libplist-devel)
+-   **openSUSE:** (sudo zypper install) libopenssl-3-devel (formerly
+    libopenssl-devel) libplist-2_0-devel (formerly libplist-devel)
     avahi-compat-mDNSResponder-devel gstreamer-devel
     gstreamer-plugins-base-devel (+ libX11-devel for fullscreen X11).
 
@@ -339,10 +339,10 @@ installed, depending on how your audio is set up.
     as RPM Fusion; if this is not installed, uxplay will fail to start,
     with error: **no element "avdec_aac"** \]*.
 
--   **OpenSUSE:** (sudo zypper install) gstreamer-plugins-libav
+-   **openSUSE:** (sudo zypper install) gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel/AMD
     graphics). *In some cases, you may need to use gstreamer or libav\*
-    packages for OpenSUSE from
+    packages for openSUSE from
     [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
     "Essentials" (which provides packages including plugins that
     OpenSUSE does not ship for license reasons; recommendation: after
@@ -441,14 +441,38 @@ value advances it.)
     "`feh -R 1 <name>`" in the foreground; terminate feh and then Uxplay
     with "`ctrl-C fg ctrl-C`".
 
+By default, GStreamer uses an algorithm to search for the best
+"videosink" (GStreamer's term for a graphics driver to display images)
+to use. You can overide this with the uxplay option `-vs <videosink>`.
+Which videosinks are available depends on your operating system and
+graphics hardware: use
+"`gst-inspect-1.0 | grep sink | grep -e video -e Video -e image`" to see
+what is available. Some possibilites on Linux/\*BSD are:
+
+-   **glimagesink** (OpenGL), **waylandsink**
+
+-   **xvimagesink**, **ximagesink** (X11)
+
+-   **kmssink**, **fbdevsink** (console graphics without X11)
+
+-   **vaapisink** (for Intel/AMD hardware-accelerated graphics); for
+    NVIDIA hardware graphics (with CUDA) use **glimagesink** combined
+    with "`-vd nvh264dec`" (or "nvh264sldec", a new variant which will
+    become "nvh264dec" in GStreamer-1.24).
+
+GStreamer also searches for the best "audiosink"; override its choice
+with `-as <audiosink>`. Choices on Linux include pulsesink, alsasink,
+pipewiresink, oss4sink; see what is available with
+`gst-inspect-1.0 | grep sink | grep -e audio -e Audio`.
+
 **One common problem involves GStreamer attempting to use
 incorrectly-configured or absent accelerated hardware h264 video
 decoding (e.g., VAAPI). Try "`uxplay -avdec`" to force software video
 decoding; if this works you can then try to fix accelerated hardware
-video decoding if you need it, or just uninstall the GStreamer VAAPI
-plugin. If your system uses the Wayland compositor for graphics, use
-"`uxplay -vs waylandsink`".** See [Usage](#usage) for more run-time
-options.
+video decoding if you need it, or just uninstall the GStreamer vaapi
+plugin.**
+
+See [Usage](#usage) for more run-time options.
 
 ### **Special instructions for Raspberry Pi (tested on R Pi 4 model B 8GB and R Pi 3 model B+)**:
 
@@ -460,7 +484,7 @@ options.
 -   For best performance, the Raspberry Pi needs the GStreamer
     Video4linux2 plugin to use its Broadcom GPU hardware for decoding
     h264 video. This needs the bcm2835_codec kernel module which is
-    maintained oustide the mainline Linux kernel by Raspberry Pi in the
+    maintained outside the mainline Linux kernel by Raspberry Pi in the
     the [Raspberry Pi kernel
     tree](https://github.com/raspberrypi/linux), and the only
     distributions for R Pi that are known to supply it include Raspberry
@@ -643,7 +667,13 @@ device is rotated).
 
 1.  Download and install **Bonjour SDK for Windows v3.0** from the
     official Apple site
-    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows)
+    [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows).
+    (Apple makes you register as a developer to access it; if you do not
+    want to go through the registration process, you can download the
+    SDK without any registration at
+    [softpedia.com](https://www.softpedia.com/get/Programming/SDK-DDK/Bonjour-SDK.shtml).)
+    This should install the Bonjour SDK as
+    `C:\Program Files\Bonjour SDK`
 
 2.  (This is for 64-bit Windows; a build for 32-bit Windows should be
     possible, but is not tested.) The unix-like MSYS2 build environment
@@ -651,13 +681,13 @@ device is rotated).
     [https://www.msys2.org/](https://www.msys2.org). Accept the default
     installation location `C:\mysys64`.
 
-3.  Next update MSYS2 and install the **MinGW-64** compiler and
-    **cmake** ([MSYS2 packages](https://packages.msys2.org/package/) are
-    installed with a variant of the "pacman" package manager used by
-    Arch Linux). Open a MSYS2 MinGW x64 terminal from the MSYS2 64 bit
-    tab in the Windows Start menu, then run
+3.  [MSYS2 packages](https://packages.msys2.org/package/) are installed
+    with a variant of the "pacman" package manager used by Arch Linux.
+    Open a "MSYS2 MINGW64" terminal from the MSYS2 tab in the Windows
+    Start menu, and update the new MSYS2 installation with "pacman
+    -Syu". Then install the **MinGW-64** compiler and **cmake**
 
-        pacman -Syu mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
+        pacman -S mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
 
     The compiler with all required dependencies will be installed in the
     msys64 directory, with default path `C:/msys64/mingw64`. Here we
@@ -679,7 +709,10 @@ device is rotated).
     only the MinGW 64-bit build on MSYS2 has been tested.
 
 5.  cd to the UxPlay source directory, then "`mkdir build`" and
-    "`cd build`", followed by
+    "`cd build`". The build process assumes that the Bonjour SDK is
+    installed at `C:\Program Files\Bonjour SDK`. If it is somewhere
+    else, set the enviroment variable BONJOUR_SDK_HOME to point to its
+    location. Then build UxPlay with
 
     `cmake ..`
 
@@ -722,9 +755,11 @@ Now test by running "`uxplay`" (in a MSYS2 terminal window). If you need
 to specify the audiosink, there are two main choices on Windows: the
 older DirectSound plugin "`-as directsoundsink`", and the more modern
 Windows Audio Session API (wasapi) plugin "`-as wasapisink`", which
-supports additional options such as
+supports [additional
+options](https://gstreamer.freedesktop.org/documentation/wasapi/wasapisink.html)
+such as
 
-    uxplay -as 'wasapisink low_latency=true device=\"<guid>\"' 
+    uxplay -as 'wasapisink device=\"<guid>\"' 
 
 where `<guid>` specifies an available audio device by its GUID, which
 can be found using "`gst-device-monitor-1.0 Audio`": `<guid>` has a form
@@ -738,7 +773,9 @@ ability to toggle into and out of fullscreen mode using the Alt-Enter
 key combination with option
 `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`. For
 convenience, this option will be added if just `-vs d3d11videosink` (by
-itself) is used.
+itself) is used. (You may wish to add "`vs d3d11videosink`" (no initial
+"`-`") to the UxPlay startup options file; see "man uxplay" or "uxplay
+-h".)
 
 The executable uxplay.exe can also be run without the MSYS2 environment,
 in the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
@@ -1078,15 +1115,20 @@ network.
 
 ### 2. uxplay starts, but stalls after "Initialized server socket(s)" appears, *with the server name showing on the client* (but the client fails to connect when the UxPlay server is selected).
 
-This shows that a *DNS-SD* service is working, but a firewall on the
-server is probably blocking the connection request from the client. (One
-user who insisted that the firewall had been turned off turned out to
-have had *two* active firewalls (*firewalld* and *ufw*) *both* running
-on the server!) If possible, either turn off the firewall to see if that
-is the problem, or get three consecutive network ports, starting at port
-n, all three in the range 1024-65535, opened for both tcp and udp, and
-use "uxplay -p n" (or open UDP 7011,6001,6000 TCP 7100,7000,7001 and use
-"uxplay -p").
+This shows that a *DNS-SD* service is working, clients hear UxPlay is
+available, but the UxPlay server is not receiving the response from the
+client. This is usually because a firewall on the server is blocking the
+connection request from the client. (One user who insisted that the
+firewall had been turned off turned out to have had *two* active
+firewalls (*firewalld* and *ufw*) *both* running on the server!) If
+possible, either turn off the firewall to see if that is the problem, or
+get three consecutive network ports, starting at port n, all three in
+the range 1024-65535, opened for both tcp and udp, and use "uxplay -p n"
+(or open UDP 7011,6001,6000 TCP 7100,7000,7001 and use "uxplay -p").
+
+If you are *really* sure there is no firewall, you may need to
+investigate your network transmissions with a tool like netstat, but
+almost always this is a firewall issue.
 
 ### 3. Problems *after* the client-server connection has been made:
 
@@ -1145,12 +1187,12 @@ in your GStreamer installation: run `gst-inspect-1.0 vaapi`, if this
 reports `0 features`, you need to `export GST_VAAPI_ALL_DRIVERS=1`
 before running uxplay, or set this in the default environment.
 
-You can try to fix audio problems by using the "-as *audiosink*" option
-to choose the GStreamer audiosink , rather than have autoaudiosink pick
-one for you. The command "gst-inspect-1.0 \| grep Sink \| grep Audio" "
-will show you which audiosinks are available on your system. (Replace
-"Audio" by "Video" to see videosinks). Some possible audiosinks are
-pulsesink, alsasink, osssink, oss4sink, and osxaudiosink (macOS).
+You can try to fix audio or video problems by using the
+"`-as <audiosink>`" or "`-vs <videosink>`" options to choose the
+GStreamer audiosink or videosink , rather than letting GStreamer choose
+one for you. (See above, in [Starting and running
+UxPlay](#starting-and-running-uxplay) for choices of `<audiosink>` or
+`<videosink>`.)
 
 The "OpenGL renderer" window created on Linux by "-vs glimagesink"
 sometimes does not close properly when its "close" button is clicked.
@@ -1225,7 +1267,7 @@ replaced by using uxplay options `-vp`, `-vd`, `-vc`, and `-vs`, if
 there is any need to modify it (entries can be given in quotes "..." to
 include options).
 
-### 5. Mirror screen freezes:
+### 5. Mirror screen freezes (a network problem):
 
 This can happen if the TCP video stream from the client stops arriving
 at the server, probably because of network problems (the UDP audio
@@ -1249,59 +1291,52 @@ causes UxPlay to reset the connection.
     connections, and will be taken over by a new client connection when
     it is made.
 
-### 6. Protocol issues, such as failure to decrypt ALL video and audio streams from old or non-Apple clients:
-
--   **NEW** As UxPlay only connects to one client at any time, it can
-    work without the client pairing setup, allowing faster connections.
-
-This is allowed by disabling "Supports Legacy Pairing" (bit 27) in the
-"features" code UxPlay advertises on DNS-SD Service Discovery. Most
-clients will then not attempt to setup the "shared secret key" for
-pairing.
-
--   **This new behavior (since UxPlay-1.65) can be reverted to the
-    previous behavior by uncommenting the previous "FEATURES_1" setting
-    (and commenting out the new one) in lib/dnssdint.h, and then
-    rebuilding UxPlay.**
+### 6. Protocol issues (with decryption of the encrypted audio and video streams sent by the client).
 
 A protocol failure may trigger an unending stream of error messages, and
 means that the audio decryption key (also used in video decryption) was
-not correctly extracted from data sent by the client. This should not
-happen for iOS 9.3 or later clients. However, if a client uses the same
-older version of the protocol that is used by the Windows-based AirPlay
-client emulator *AirMyPC*, the protocol can be switched to the older
-version by the setting `OLD_PROTOCOL_CLIENT_USER_AGENT_LIST` in
-`UxPlay/lib/global.h`. UxPlay reports the client's "User Agent" string
-when it connects. If some other client also fails to decrypt all audio
-and video, try adding its "User Agent" string in place of "xxx" in the
-entry "AirMyPC/2.0;xxx" in global.h and rebuild uxplay.
+not correctly extracted from data sent by the client.
 
-Note that Uxplay declares itself to be an AppleTV3,2 with a
-sourceVersion 220.68; this can also be changed in global.h. It had been
-thought that it was necessary for UxPlay to claim to be an older 32 bit
-AppleTV model that cannot run modern 64bit tvOS, in order for the client
-to use a "legacy" protocol for pairing with the server. However, UxPlay
-still works if it declares itself as an AppleTV6,2 with sourceVersion
-380.20.1 (an AppleTV 4K 1st gen, introduced 2017, running tvOS 12.2.1).
-It was previously thought that use of "legacy" protocol requires bit 27
-("SupportsLegacyPairing") of the "features" plist code (reported to the
-client by the AirPlay server) to be set, but it was recently discovered
-that it was possible to switch that off (after a small protocol
-modification) to eliminate a 5 second delay by the client in making
-connections to the server.
+The protocol was modifed in UxPlay-1.65 after it was discovered that the
+client-server "pairing" step could be avoided (leading to a much quicker
+connection setup, without a 5 second delay) by disabling "Supports
+Legacy Pairing" (bit 27) in the "features" code UxPlay advertises on
+DNS-SD Service Discovery. Most clients will then not attempt the setup
+of a "shared secret key" when pairing, which is used by AppleTV for
+simultaneous handling of multiple clients (UxPlay only supports one
+client at a time). **This change is now well-tested, but in case it
+causes any protocol failures, UxPlay can be reverted to the previous
+behavior by uncommenting the previous "FEATURES_1" setting (and
+commenting out the new one) in lib/dnssdint.h, and then rebuilding
+UxPlay.**
 
-The "features" code and other settings are set in
-`UxPlay/lib/dnssdint.h`.
+Protocol failure should not happen for iOS 9.3 or later clients.
+However, if a client uses the same older version of the protocol that is
+used by the Windows-based AirPlay client emulator *AirMyPC*, the
+protocol can be switched to the older version by the setting
+`OLD_PROTOCOL_CLIENT_USER_AGENT_LIST` in `UxPlay/lib/global.h`. UxPlay
+reports the client's "User Agent" string when it connects. If some other
+client also fails to decrypt all audio and video, try adding its "User
+Agent" string in place of "xxx" in the entry "AirMyPC/2.0;xxx" in
+global.h and rebuild uxplay.
+
+Note that for DNS-SD Service Discovery, Uxplay declares itself to be an
+AppleTV3,2 (a 32 bit device) with a sourceVersion 220.68; this can also
+be changed in global.h. UxPlay also works if it declares itself as an
+AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
+introduced 2017, running tvOS 12.2.1), so it does not seem to matter
+what UxPlay claims to be.
 
 # Changelog
 
-1.65 2023-05-31 Eliminate pair_setup part of connection protocol to
+1.65 2023-06-03 Eliminate pair_setup part of connection protocol to
 allow faster connections with clients (thanks to @shuax #176 for this
 discovery); to revert, uncomment a line in lib/dnssdint.h. Disconnect
 from audio device when connection closes, to not block its use by other
 apps if uxplay is running but not connected. Fix for AirMyPC client
 (broken since 1.60), so its older non-NTP timestamp protocol works with
--vsync.
+-vsync. Corrected parsing of configuration file entries that were in
+quotes.
 
 1.64 2023-04-23 Timestamp-based synchronization of audio and video is
 now the default in Mirror mode. (Use "-vsync no" to restore previous
