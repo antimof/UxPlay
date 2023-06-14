@@ -322,7 +322,7 @@ raop_rtp_mirror_thread(void *arg)
              * 0x00 0x00: encrypted packet containing a non-IDR  type 1 VCL NAL unit             *
              * 0x00 0x10: encrypted packet containing an IDR type 5 VCL NAL unit                 *
              * 0x01 0x00: unencrypted packet containing a type 7 SPS NAL + a type 8 PPS NAL unit *
-             * 0x02 0x00: unencryted packet (old protocol) no payload, sent once every second    *
+             * 0x02 0x00: unencrypted packet (old protocol) no payload, sent once every second    *
              * 0x05 0x00  unencrypted packet with a "streaming report", sent once per second.    */
 
 	    /* packet[6] + packet[7] may list a payload "option":    values seen are:            *
@@ -519,7 +519,7 @@ raop_rtp_mirror_thread(void *arg)
             case 0x01:
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived unencryted codec packet from client:"
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived unencrypted codec packet from client:"
                            " payload_size %d header %s ts_client = %8.6f",
 			   payload_size, packet_description, (double) ntp_timestamp_remote / SEC);
                 if (payload_size == 0) {

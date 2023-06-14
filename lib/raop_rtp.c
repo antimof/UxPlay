@@ -416,8 +416,8 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t *ntp_time, uint64_t *rtp
     raop_rtp->rtp_sync_offset = (int64_t) offset;
     correction += raop_rtp->rtp_sync_offset;
 
-    logger_log(raop_rtp->logger, LOGGER_DEBUG, "dataset %d raop_rtp sync correction=%lld, rtp_sync_offset = %8.6f ",
-               valid_data_count, correction, offset);
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "dataset %d raop_rtp sync correction=%lld, rtp_sync_offset = %lld ",
+               valid_data_count, correction, raop_rtp->rtp_sync_offset);
 }
 
 uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
