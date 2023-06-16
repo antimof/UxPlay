@@ -233,6 +233,14 @@ to set the environment variable OPENSSL_ROOT_DIR (*e.g.* ,
 "`export OPENSSL_ROOT_DIR=/usr/local/lib64`" if that is where it is
 installed).
 
+-   Most users will use the GStreamer supplied by their distribution,
+    but a few (in particular users of Raspberry Pi OS Lite Legacy
+    (Buster) on a Raspberry Pi model 4B who wish to stay on that
+    unsupported Legacy OS for compatibility with other apps) should
+    instead build a newer Gstreamer from source following [these
+    instructions](https://github.com/FDH2/UxPlay/wiki/Building-latest-GStreamer-from-source-on-distributions-with-older-GStreamer-(e.g.-Raspberry-Pi-OS-).)
+    . **Do this *before* building UxPlay**.
+
 In a terminal window, change directories to the source directory of the
 downloaded source code ("UxPlay-\*", "\*" = "master" or the release tag
 for zipfile downloads, "UxPlay" for "git clone" downloads), then follow
@@ -255,16 +263,18 @@ GStreamer \< 1.20 is detected, a fix needed by screen-sharing apps
     UxPlay *without* any X11 dependence, use the cmake option
     `-DNO_X11_DEPS=ON`.
 
-1.  `sudo apt-get install libssl-dev libplist-dev`". (unless you need to
-    build OpenSSL and libplist from source).
-2.  `sudo apt-get install libavahi-compat-libdnssd-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`.
-3.  `cmake .` (For a cleaner build, which is useful if you modify the
-    source, replace this by "`mkdir build; cd build; cmake ..`": you can
-    then delete the `build` directory if needed, without affecting the
-    source.) Also add any cmake "`-D`" options here as needed (e.g,
-    `-DNO_X11_DEPS=ON` or `-DNO_MARCH_NATIVE=ON`).
-4.  `make`
-5.  `sudo make install` (you can afterwards uninstall with
+1.  `sudo apt-get install libssl-dev libplist-dev`". (*unless you need
+    to build OpenSSL and libplist from source*).
+2.  `sudo apt-get install libavahi-compat-libdnssd-dev`
+3.  `sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`.
+    (\**Skip if you built Gstreamer from source*)
+4.  `cmake .` (*For a cleaner build, which is useful if you modify the
+    source, replace this by* "`mkdir build; cd build; cmake ..`": *you
+    can then delete the contents of the `build` directory if needed,
+    without affecting the source.*) Also add any cmake "`-D`" options
+    here as needed (e.g, `-DNO_X11_DEPS=ON` or `-DNO_MARCH_NATIVE=ON`).
+5.  `make`
+6.  `sudo make install` (you can afterwards uninstall with
     `sudo make uninstall` in the same directory in which this was run).
 
 This installs the executable file "`uxplay`" to `/usr/local/bin`, (and
@@ -300,7 +310,7 @@ GStreamer plugins must first be installed).
 
 ## Running UxPlay
 
-### Installing plugins (Debian-based Linux systems)
+### Installing plugins (Debian-based Linux systems) (*skip if you built a complete GStreamer from source*)
 
 Next install the GStreamer plugins that are needed with
 `sudo apt-get install gstreamer1.0-<plugin>`. Values of `<plugin>`
@@ -323,7 +333,7 @@ installed, depending on how your audio is set up.
 -   Also install "**gstreamer1.0-tools**" to get the utility
     gst-inspect-1.0 for examining the GStreamer installation.
 
-### Installing plugins (Non-Debian-based Linux or \*BSD)
+### Installing plugins (Non-Debian-based Linux or \*BSD) (*skip if you built a complete GStreamer from source*)
 
 -   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
     Alma Linux):** (sudo dnf install, or sudo yum install)
@@ -492,6 +502,18 @@ See [Usage](#usage) for more run-time options.
     their Raspberry Pi Imager). Other distributions generally do not
     provide it: **without this kernel module, UxPlay cannot use the
     decoding firmware in the GPU.**
+
+-   On a Raspberry Pi model 4B running the unsupported "Legacy" R Pi OS
+    (Buster), note that this comes with a very old GStreamer-1.14.4
+    **that cannot be patched to access the Broadcom GPU**. If you need
+    to stay on the unsupported "Legacy" OS ("Lite" version), but want to
+    use UxPlay with hardware video decoding, you need to first build a
+    complete newer GStreamer from source using [these
+    instructions](https://github.com/FDH2/UxPlay/wiki/Building-latest-GStreamer-from-source-on-distributions-with-older-GStreamer-(e.g.-Raspberry-Pi-OS-).)
+    before building UxPlay. Note that a model 3B+ Pi running the Legacy
+    OS can access the GPU with GStreamer-1.14's omx plugin (use option
+    "`-vd omxh264dec`"), but this plugin is broken on model 4B's
+    firmware, and omx support was removed in R Pi OS (Bullseye).
 
 For use of the GPU, use raspi-config "Performance Options" (on Raspberry
 Pi OS, use a similar tool on other distributions) to allocate sufficient
