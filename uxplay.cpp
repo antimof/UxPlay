@@ -247,7 +247,6 @@ guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
 #endif
 
 static void main_loop()  {
-    guint connection_watch_id = 0;
     guint gst_bus_watch_id = 0;
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     relaunch_video = false;
@@ -268,7 +267,7 @@ static void main_loop()  {
 }    
 
 static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
-    for (int i = 0; i < str.length(); i += 3) {
+    for (int i = 0; i < (int) str.length(); i += 3) {
         hw_addr.push_back((char) stol(str.substr(i), NULL, 16));
     }
     return 0;
@@ -344,7 +343,7 @@ static std::string find_mac () {
 #else
     struct ifaddrs *ifap, *ifaptr;
     int non_null_octets = 0;
-    unsigned char octet[6], *ptr;
+    unsigned char octet[6];
     if (getifaddrs(&ifap) == 0) {
         for(ifaptr = ifap; ifaptr != NULL; ifaptr = ifaptr->ifa_next) {
             if(ifaptr->ifa_addr == NULL) continue;
@@ -356,7 +355,7 @@ static std::string find_mac () {
             }
 #else    /* macOS and *BSD */
             if (ifaptr->ifa_addr->sa_family != AF_LINK) continue;
-            ptr = (unsigned char *) LLADDR((struct sockaddr_dl *) ifaptr->ifa_addr);
+            unsigned char *ptr = (unsigned char *) LLADDR((struct sockaddr_dl *) ifaptr->ifa_addr);
             for (int i= 0; i < 6 ; i++) {
                 if ((octet[i] = *ptr) != 0) non_null_octets++;
                 ptr++;
@@ -1235,7 +1234,6 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 }
 
 int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
-    int dnssd_error;
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -1322,9 +1320,8 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
             bool is_part_of_item, in_quotes;
             char endchar;
             is_part_of_item = false;
-            for (int i = 0; i < line.size(); i++) {
-                switch (is_part_of_item) {
-                case false:
+            for (int i = 0; i < (int) line.size(); i++) {
+                if (is_part_of_item == false) {
                     if (line[i] == ' ') {
                         line[i] = '\0';
                     } else {
@@ -1343,19 +1340,17 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
 		            break;
                         }
                     }
-                    break;
-                case true:
-	        /* previous character was inside this item */
+                } else {
+                    /* previous character was inside this item */
                     if (line[i] == endchar) {
                         if (in_quotes) {
                             /* cases where endchar is inside quoted item */
                             if (i > 0 && line[i - 1] == '\\') continue;
-                            if (i + 1 < line.size() && line[i + 1] != ' ') continue;
+                            if (i + 1 < (int) line.size() && line[i + 1] != ' ') continue;
 		        }
                         line[i] =  '\0';
                         is_part_of_item = false;
                     }
-                    break;
                 }
             }
 
