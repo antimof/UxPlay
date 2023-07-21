@@ -58,14 +58,14 @@ static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)
 
 static gboolean check_plugins (void)
 {
-    int i;
     gboolean ret;
     GstRegistry *registry;
     const gchar *needed[] = { "app", "libav", "playback", "autodetect", "videoparsersbad",  NULL};
     const gchar *gst[] = {"plugins-base", "libav", "plugins-base", "plugins-good", "plugins-bad", NULL};
+    const gchar *needed_feature[] = { "avdec_aac", "avdec_alac",  NULL};
     registry = gst_registry_get ();
     ret = TRUE;
-    for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
+    for (int i = 0; i < g_strv_length ((gchar **) needed); i++) {
         GstPlugin *plugin;
         plugin = gst_registry_find_plugin (registry, needed[i]);
         if (!plugin) {
@@ -76,6 +76,24 @@ static gboolean check_plugins (void)
         }
         gst_object_unref (plugin);
         plugin = NULL;
+    }
+    if (ret == FALSE) {
+        return ret;
+    }
+    for (int i = 0; i < g_strv_length ((gchar **) needed_feature); i++) {
+        GstPluginFeature *plugin_feature;
+        plugin_feature = gst_registry_find_feature (registry, needed_feature[i], GST_TYPE_ELEMENT_FACTORY);
+        if (!plugin_feature) {
+            g_print ("Required gstreamer libav plugin feature '%s' not found:\n"
+                     "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
+                     "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
+                     "in such cases a complete version for that distribution is usually made available elsewhere)\n\n",
+                     needed_feature[i]);
+            ret = FALSE;
+            continue;
+        }
+        gst_object_unref (plugin_feature);
+        plugin_feature = NULL;
     }
     return ret;
 }
