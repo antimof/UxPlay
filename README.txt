@@ -37,6 +37,23 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
     "`sudo pkg install uxplay`". Also available on Arch-based systems
     through AUR.
 
+-   **NEW**: while no RPM-based distributions have yet packaged UxPlay,
+    a RPM "specfile" **uxplay.spec** is now provided with recent
+    [releases](https://github.com/FDH2/UxPlay/releases) (see their
+    "Assets"), and can also be found in the UxPlay source top directory.
+    To build a RPM package, install rpmdevtools, create a rpmbuild tree
+    with "`rpmdev-setuptree`", and copy uxplay.spec into
+    `~/rpmbuild/SPECS`. In that directory, run
+    "`rpmdev-spectool -g uxplay.spec`" to download the corresponding
+    source file `uxplay-*.tar.gz`, which should then be moved into
+    `~/rpmbuild/SOURCES`; then run "`rpmbuild -ba uxplay.spec`" (you
+    will need to install any required dependencies this reports). This
+    should create an installable uxplay RPM package in a subdirectory of
+    `~/rpmbuild/RPMS`. (**uxplay.spec** is tested on Fedora 38, Rocky
+    Linux 9.2, OpenSUSE Leap 15.5, and Mageia 9; it can be easily
+    modified to include dependency lists for other RPM-based
+    distributions.)
+
 -   On Linux and \*BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local network
     services needed by UxPlay are usually provided by Avahi: **if there
     is a firewall on the server that will host UxPlay, make sure the
@@ -80,12 +97,12 @@ UxPlay is tested on a number of systems, including (among others) Debian
 (10 "Buster", 11 "Bullseye", 12 "Bookworm"), Ubuntu (20.04 LTS, 22.04
 LTS, 23.04; also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04
 (NVIDIA edition)), Red Hat and clones (Fedora 38, Rocky Linux 9.2),
-openSUSE 15.4, Arch Linux 23.05, macOS 13.3 (Intel and M2), FreeBSD
-13.2, Windows 10 and 11 (64 bit).
+Mageia 9, openSUSE 15.5, Arch Linux 23.05, macOS 13.3 (Intel and M2),
+FreeBSD 13.2, Windows 10 and 11 (64 bit).
 
 On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye)
 (32- and 64-bit), Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02, and
-(without hardware video decoding) on openSUSE 15.4. Also tested on
+(without hardware video decoding) on openSUSE 15.5. Also tested on
 Raspberry Pi 3 model B+.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio)
@@ -289,12 +306,20 @@ GStreamer plugins must first be installed).
 
 ### Building on non-Debian Linux and \*BSD
 
+**For those with RPM-based distributions, a RPM spec file uxplay.spec is
+also available for building a rpm package with rpmbuild** (tested on
+Fedora 38, Rocky Linux 9.2 (RHEL clone), OpenSUSE 15.5, and Mageia 9;
+see "Packaging Status" section)
+
 -   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
     Alma Linux):** (sudo dnf install, or sudo yum install) openssl-devel
     libplist-devel avahi-compat-libdns_sd-devel gstreamer1-devel
     gstreamer1-plugins-base-devel (+libX11-devel for fullscreen X11)
     *(some of these may be in the "CodeReady" add-on repository, called
     "PowerTools" by clones)*
+
+-   **Mageia:** Same as Red Hat, except "gstreamer1-" becomes
+    "gstreamer1.0-".
 
 -   **openSUSE:** (sudo zypper install) libopenssl-3-devel (formerly
     libopenssl-devel) libplist-2_0-devel (formerly libplist-devel)
@@ -348,6 +373,13 @@ installed, depending on how your audio is set up.
     provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
     as RPM Fusion; if this is not installed, uxplay will fail to start,
     with error: **no element "avdec_aac"** \]*.
+
+-   **Mageia:** (sudo dnf install, or sudo yum install)
+    gstreamer1.0-libav gstreamer1.0-plugins-bad (+ gstreamer1.0-vaapi
+    for Intel/AMD graphics). *Install ffmpeg from the "tainted"
+    repository (so gstreamer-1.0-libav can provide the required plugin
+    avdec_aac), which also provides a more complete
+    gstreamer1.0-plugins-bad.*
 
 -   **openSUSE:** (sudo zypper install) gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel/AMD
@@ -1246,19 +1278,22 @@ cache.
 
 If it fails to start with an error like '`no element "avdec_aac"`' this
 is because even though gstreamer-libav is installed. it is incomplete
-because some plugins are missing: "`gst-inspect-1.0 | grep avdec_aac`"
-will show if avdec_aac is available. Some distributions (RedHat, SUSE,
-etc) provide incomplete versions of libav because of patent issues with
-codecs used by certain plugins. In those cases there will be some "extra
-package" provider like [RPM fusion](https://rpmfusion.org) (RedHat) or
+because some plugin features are missing:
+"`gst-inspect-1.0 | grep avdec_aac`" will show if avdec_aac is
+available. Unlike other GStreamer plugins, the libav plugin is a front
+end to FFmpeg codecs which provide avdec\_\*. Some distributions
+(RedHat, SUSE, etc) provide incomplete versions of FFmpeg because of
+patent issues with codecs used by certain plugins. In those cases there
+will be some "extra package" provider like [RPM
+fusion](https://rpmfusion.org) (RedHat),
 [packman](http://packman.links2linux.org/) (SUSE) where you can get
 complete packages (your distribution will usually provide instructions
-for this). The packages needed may be "libav\*" or "ffmpeg\*" packages:
-the GStreamer libav plugin package does not contain any codecs itself,
-it just provides a way for GStreamer to use ffmpeg/libav codec libraries
-which must be installed separately. For similar reasons, distributions
-may ship incomplete packages of GStreamer "plugins-bad", which is where
-"license-problematical" plugins go.
+for this, Mageia puts them in an optional "tainted" repo). The packages
+needed may be "ffmpeg\*" or "libav\*" packages: the GStreamer libav
+plugin package does not contain any codecs itself, it just provides a
+way for GStreamer to use ffmpeg/libav codec libraries which must be
+installed separately. For similar reasons, distributions may ship
+incomplete packages of GStreamer "plugins-bad".
 
 To troubleshoot GStreamer execute "export GST_DEBUG=2" to set the
 GStreamer debug-level environment-variable in the terminal where you
@@ -1350,6 +1385,12 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what UxPlay claims to be.
 
 # Changelog
+
+1.65.1 2023-07-22 Add RPM spec file; add graceful exit if required
+gstreamer libav feature "avdec_aac" is missing: (this occurs in
+RPM-based distributions that ship an incomplete FFmpeg for Patent or
+License reasons, and rely on users installing an externally-supplied
+complete FFmpeg).
 
 1.65 2023-06-03 Eliminate pair_setup part of connection protocol to
 allow faster connections with clients (thanks to @shuax #176 for this
