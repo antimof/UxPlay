@@ -78,22 +78,28 @@ static gboolean check_plugins (void)
         plugin = NULL;
     }
     if (ret == FALSE) {
+        g_print ("\nif the plugin is installed, but not found, try clearing your gstreamer cache with:\n"
+                 "\"rm -rf ~/.cache/gstreamer-1.0\"\n\n");
         return ret;
     }
     for (int i = 0; i < g_strv_length ((gchar **) needed_feature); i++) {
         GstPluginFeature *plugin_feature;
         plugin_feature = gst_registry_find_feature (registry, needed_feature[i], GST_TYPE_ELEMENT_FACTORY);
         if (!plugin_feature) {
-            g_print ("Required gstreamer libav plugin feature '%s' not found:\n"
+            g_print ("Required gstreamer libav plugin feature '%s' not found:\n\n"
                      "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
                      "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
-                     "in such cases a complete version for that distribution is usually made available elsewhere)\n\n",
+                     "in such cases a complete version for that distribution is usually made available elsewhere)\n",
                      needed_feature[i]);
             ret = FALSE;
             continue;
         }
         gst_object_unref (plugin_feature);
         plugin_feature = NULL;
+    }
+    if (ret == FALSE) {
+        g_print ("\nif the plugin feature is installed, but not found, try clearing your gstreamer cache with:\n"
+                 "\"rm -rf ~/.cache/gstreamer-1.0\"\n\n");
     }
     return ret;
 }

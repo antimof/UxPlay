@@ -1386,7 +1386,7 @@ what UxPlay claims to be.
 
 # Changelog
 
-1.65.1 2023-07-22 Add RPM spec file; add graceful exit if required
+1.65.2 2023-07-22 Add RPM spec file; add graceful exit if required
 gstreamer libav feature "avdec_aac" is missing: (this occurs in
 RPM-based distributions that ship an incomplete FFmpeg for Patent or
 License reasons, and rely on users installing an externally-supplied
