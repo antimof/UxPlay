@@ -1011,6 +1011,8 @@ needed may be "ffmpeg\*" or "libav\*" packages: the GStreamer libav plugin packa
 for GStreamer to use ffmpeg/libav codec libraries which must be installed separately.  For similar reasons, distributions may ship incomplete packages 
 of GStreamer "plugins-bad".
 
+* starting with release UxPlay-1.65.3, UxPlay will continue to function, but without audio in mirror mode, if avdec_aac is missing.
+
 To troubleshoot GStreamer execute  "export GST_DEBUG=2"
 to set the GStreamer debug-level environment-variable in the terminal
 where you will run uxplay, so that you see warning and error messages;
@@ -1080,7 +1082,7 @@ tvOS 12.2.1), so it does not seem to matter what UxPlay claims to be.
 
 
 # Changelog
-1.65.2 2023-07-22 Add RPM spec file; add graceful exit if required gstreamer libav feature "avdec_aac" is 
+1.65.3 2023-07-23 Add RPM spec file; add graceful exit if required gstreamer libav feature "avdec_aac" is 
                   missing: (this occurs in RPM-based distributions that ship an incomplete FFmpeg for Patent
                   or License reasons, and rely on users installing an externally-supplied complete FFmpeg).
 
