@@ -32,6 +32,12 @@ static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
+static const gchar *avdec_aac = "avdec_aac";
+static const gchar *avdec_alac = "avdec_alac";
+static gboolean aac = FALSE;
+static gboolean alac = FALSE;
+static gboolean render_audio = FALSE;
+
 typedef struct audio_renderer_s {
     GstElement *appsrc; 
     GstElement *pipeline;
@@ -62,7 +68,6 @@ static gboolean check_plugins (void)
     GstRegistry *registry;
     const gchar *needed[] = { "app", "libav", "playback", "autodetect", "videoparsersbad",  NULL};
     const gchar *gst[] = {"plugins-base", "libav", "plugins-base", "plugins-good", "plugins-bad", NULL};
-    const gchar *needed_feature[] = { "avdec_aac", "avdec_alac",  NULL};
     registry = gst_registry_get ();
     ret = TRUE;
     for (int i = 0; i < g_strv_length ((gchar **) needed); i++) {
@@ -78,27 +83,35 @@ static gboolean check_plugins (void)
         plugin = NULL;
     }
     if (ret == FALSE) {
-        g_print ("\nif the plugin is installed, but not found, try clearing your gstreamer cache with:\n"
+        g_print ("\nif the plugin is installed, but not found, your gstreamer registry may have been corrupted.\n"
+                 "to rebuild it when gstreamer next starts, clear your gstreamer cache with:\n"
                  "\"rm -rf ~/.cache/gstreamer-1.0\"\n\n");
-        return ret;
     }
-    for (int i = 0; i < g_strv_length ((gchar **) needed_feature); i++) {
-        GstPluginFeature *plugin_feature;
-        plugin_feature = gst_registry_find_feature (registry, needed_feature[i], GST_TYPE_ELEMENT_FACTORY);
-        if (!plugin_feature) {
-            g_print ("Required gstreamer libav plugin feature '%s' not found:\n\n"
-                     "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
-                     "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
-                     "in such cases a complete version for that distribution is usually made available elsewhere)\n",
-                     needed_feature[i]);
-            ret = FALSE;
-            continue;
-        }
-        gst_object_unref (plugin_feature);
-        plugin_feature = NULL;
+    return ret;
+}
+
+static gboolean check_plugin_feature (const gchar *needed_feature)
+{
+    gboolean ret;
+    GstPluginFeature *plugin_feature;
+    GstRegistry *registry = gst_registry_get ();
+    ret = TRUE;
+
+    plugin_feature = gst_registry_find_feature (registry, needed_feature, GST_TYPE_ELEMENT_FACTORY);
+    if (!plugin_feature) {
+      g_print ("Required gstreamer libav plugin feature '%s' not found:\n\n"
+	       "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
+	       "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
+	       "in such cases a complete version for that distribution is usually made available elsewhere)\n",
+	       needed_feature);
+      ret = FALSE;
+    } else {
+      gst_object_unref (plugin_feature);
+      plugin_feature = NULL;
     }
     if (ret == FALSE) {
-        g_print ("\nif the plugin feature is installed, but not found, try clearing your gstreamer cache with:\n"
+        g_print ("\nif the plugin feature is installed, but not found, your gstreamer registry may have been corrupted.\n"
+                 "to rebuild it when gstreamer next starts, clear your gstreamer cache with:\n"
                  "\"rm -rf ~/.cache/gstreamer-1.0\"\n\n");
     }
     return ret;
@@ -117,18 +130,21 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
 
     logger = render_logger;
 
+    aac = check_plugin_feature (avdec_aac);
+    alac = check_plugin_feature (avdec_alac);
+
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
         g_assert(renderer_type[i]);
         GString *launch = g_string_new("appsrc name=audio_source ! ");
-        g_string_append(launch, "queue ");
+        g_string_append(launch, "queue ! ");
         switch (i) {
         case 0:    /* AAC-ELD */
         case 2:    /* AAC-LC */
-            g_string_append(launch, "! avdec_aac ! ");
+            if (aac) g_string_append(launch, "avdec_aac ! ");
             break;
         case 1:    /* ALAC */
-            g_string_append(launch, "! avdec_alac ! ");
+            if (alac) g_string_append(launch, "avdec_alac ! ");
             break;
         case 3:   /*PCM*/
             break;
@@ -207,15 +223,49 @@ void audio_renderer_stop() {
     }
 }
 
-void  audio_renderer_start(unsigned char *ct) {
-    unsigned char compression_type = 0, id;
+static void get_renderer_type(unsigned char *ct, unsigned char* compression_type, int * id) {
+    render_audio = FALSE;
+    *compression_type = 0;
+    *id = -1;
+
     for (int i = 0; i < NFORMATS; i++) {
-        if(renderer_type[i]->ct == *ct) {
-            compression_type = *ct;
-	    id = i;
+        if (renderer_type[i]->ct == *ct) {
+            *compression_type = *ct;
+	    *id = i;
             break;
         }
     }
+
+    switch (*id) {
+    case 2:
+    case 0:
+        if (aac) {
+            render_audio = TRUE;
+        } else {
+            logger_log(logger, LOGGER_INFO, "*** GStreamer libav plugin feature avdec_aac is missing, cannot decode AAC audio");
+        }
+        break;
+    case 1:
+        if (alac) {
+            render_audio = TRUE;
+        } else {
+            logger_log(logger, LOGGER_INFO, "*** GStreamer libav plugin feature avdec_alac is missing, cannot decode ALAC audio");
+        }
+        break;
+    case 3:
+        render_audio = TRUE;
+        break;
+    default:
+        break;
+    }
+}
+
+void  audio_renderer_start(unsigned char *ct) {
+    unsigned char compression_type = 0;
+    int id = 0;
+
+    get_renderer_type(ct, &compression_type, &id);
+
     if (compression_type && renderer) {
         if(compression_type != renderer->ct) {
             gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
@@ -238,6 +288,9 @@ void  audio_renderer_start(unsigned char *ct) {
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {
     GstBuffer *buffer;
     bool valid;
+
+    if (!render_audio) return;    /* do nothing unless render_audio == TRUE */
+
     GstClockTime pts = (GstClockTime) *ntp_time ;    /* now in nsecs */
     //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
     if (pts >= gst_audio_pipeline_base_time) {
