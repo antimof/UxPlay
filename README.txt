@@ -44,15 +44,16 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
     To build a RPM package, install rpmdevtools, create a rpmbuild tree
     with "`rpmdev-setuptree`", and copy uxplay.spec into
     `~/rpmbuild/SPECS`. In that directory, run
-    "`rpmdev-spectool -g uxplay.spec`" to download the corresponding
-    source file `uxplay-*.tar.gz`, which should then be moved into
+    "`spectool -g uxplay.spec`" (spectool may also be called
+    "rpmdev-spectool") to download the corresponding source file
+    `uxplay-*.tar.gz`, which should then be moved into
     `~/rpmbuild/SOURCES`; then run "`rpmbuild -ba uxplay.spec`" (you
     will need to install any required dependencies this reports). This
     should create an installable uxplay RPM package in a subdirectory of
     `~/rpmbuild/RPMS`. (**uxplay.spec** is tested on Fedora 38, Rocky
-    Linux 9.2, OpenSUSE Leap 15.5, and Mageia 9; it can be easily
-    modified to include dependency lists for other RPM-based
-    distributions.)
+    Linux 9.2, OpenSUSE Leap 15.5, Mageia 9, OpenMandriva, pclinuxos; it
+    can be easily modified to include dependency lists for other
+    RPM-based distributions.)
 
 -   On Linux and \*BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local network
     services needed by UxPlay are usually provided by Avahi: **if there
@@ -97,8 +98,8 @@ UxPlay is tested on a number of systems, including (among others) Debian
 (10 "Buster", 11 "Bullseye", 12 "Bookworm"), Ubuntu (20.04 LTS, 22.04
 LTS, 23.04; also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04
 (NVIDIA edition)), Red Hat and clones (Fedora 38, Rocky Linux 9.2),
-Mageia 9, openSUSE 15.5, Arch Linux 23.05, macOS 13.3 (Intel and M2),
-FreeBSD 13.2, Windows 10 and 11 (64 bit).
+Mageia 9, OpenMandriva "ROME", openSUSE 15.5, Arch Linux 23.05, macOS
+13.3 (Intel and M2), FreeBSD 13.2, Windows 10 and 11 (64 bit).
 
 On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye)
 (32- and 64-bit), Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02, and
@@ -318,8 +319,12 @@ see "Packaging Status" section)
     *(some of these may be in the "CodeReady" add-on repository, called
     "PowerTools" by clones)*
 
--   **Mageia:** Same as Red Hat, except "gstreamer1-" becomes
-    "gstreamer1.0-".
+-   **Mageia, pclinuxos, OpenMandriva:** Same as Red Hat, except for
+    name changes: (Mageia) "gstreamer1.0-devel",
+    "gstreamer-plugins-base1.0-devel"; (OpenMandriva)
+    "libopenssl-devel", "gstreamer-devel",
+    "libgst-plugins-base1.0-devel". pclinuxos: same as Mageia, but uses
+    synaptic (or apt) as its package manager
 
 -   **openSUSE:** (sudo zypper install) libopenssl-3-devel (formerly
     libopenssl-devel) libplist-2_0-devel (formerly libplist-devel)
@@ -360,37 +365,34 @@ installed, depending on how your audio is set up.
 
 ### Installing plugins (Non-Debian-based Linux or \*BSD) (*skip if you built a complete GStreamer from source*)
 
+In some cases, because of patent issues, the libav plugin feature
+**avdec_aac** needed for decoding AAC audio in mirror mode is not
+provided in the official distribution: get it from community
+repositories for those distributions.
+
 -   **Red Hat, or clones like CentOS (now continued as Rocky Linux or
     Alma Linux):** (sudo dnf install, or sudo yum install)
     gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi for
-    Intel/AMD graphics). *You may need to get some of them (in
-    particular gstreamer1-libav) from
-    [rpmfusion.org](https://rpmfusion.org) (which provides packages
-    including plugins that RedHat does not ship for license reasons).
-    \[In recent **Fedora**, the libav plugin package is renamed to
-    "gstreamer1-plugin-libav", which now needs the RPM Fusion package
-    ffmpeg-libs for the patent-encumbered code which RedHat does not
-    provide: check with "`rpm -qi ffmpeg-libs`" that it lists "Packager"
-    as RPM Fusion; if this is not installed, uxplay will fail to start,
-    with error: **no element "avdec_aac"** \]*.
+    Intel/AMD graphics). In recent Fedora, gstreamer1-libav is renamed
+    gstreamer1-plugin-libav. **To get avdec_aac, install packages from
+    [rpmfusion.org](https://rpmfusion.org)**: (get ffmpeg-libs from
+    rpmfusion; on RHEL or clones, but not recent Fedora, also get
+    gstreamer1-libav from there).
 
--   **Mageia:** (sudo dnf install, or sudo yum install)
-    gstreamer1.0-libav gstreamer1.0-plugins-bad (+ gstreamer1.0-vaapi
-    for Intel/AMD graphics). *Install ffmpeg from the "tainted"
-    repository (so gstreamer-1.0-libav can provide the required plugin
-    avdec_aac), which also provides a more complete
-    gstreamer1.0-plugins-bad.*
+-   **Mageia, pclinuxos, OpenMandriva:** (sudo dnf install, or sudo yum
+    install) gstreamer1.0-libav gstreamer1.0-plugins-bad (+
+    gstreamer1.0-vaapi for Intel/AMD graphics). **On Mageia, to get
+    avdec_aac, install ffmpeg from the "tainted" repository**, (which
+    also provides a more complete gstreamer1.0-plugins-bad). pclinuxos:
+    same as Mageia, but uses synaptic (or apt) as its package manager.
 
 -   **openSUSE:** (sudo zypper install) gstreamer-plugins-libav
     gstreamer-plugins-bad (+ gstreamer-plugins-vaapi for Intel/AMD
-    graphics). *In some cases, you may need to use gstreamer or libav\*
-    packages for openSUSE from
-    [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
-    "Essentials" (which provides packages including plugins that
-    OpenSUSE does not ship for license reasons; recommendation: after
-    adding the Packman repository, use the option in YaST Software
-    management to switch all system packages for multimedia to
-    Packman).*
+    graphics). **To get avdec_aac, install libav\* packages for openSUSE
+    from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/)
+    "Essentials"**; recommendation: after adding the Packman repository,
+    use the option in YaST Software management to switch all system
+    packages for multimedia to Packman).
 
 -   **Arch Linux** (sudo pacman -Syu) gst-plugins-good gst-plugins-bad
     gst-libav (+ gstreamer-vaapi for Intel/AMD graphics).
