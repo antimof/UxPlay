@@ -223,19 +223,15 @@ void audio_renderer_stop() {
     }
 }
 
-static void get_renderer_type(unsigned char *ct, unsigned char* compression_type, int * id) {
+static void get_renderer_type(unsigned char *ct, int *id) {
     render_audio = FALSE;
-    *compression_type = 0;
     *id = -1;
-
     for (int i = 0; i < NFORMATS; i++) {
         if (renderer_type[i]->ct == *ct) {
-            *compression_type = *ct;
 	    *id = i;
             break;
         }
     }
-
     switch (*id) {
     case 2:
     case 0:
@@ -261,13 +257,10 @@ static void get_renderer_type(unsigned char *ct, unsigned char* compression_type
 }
 
 void  audio_renderer_start(unsigned char *ct) {
-    unsigned char compression_type = 0;
-    int id = 0;
-
-    get_renderer_type(ct, &compression_type, &id);
-
-    if (compression_type && renderer) {
-        if(compression_type != renderer->ct) {
+    int id = -1;
+    get_renderer_type(ct, &id);
+    if (id >= 0 && renderer) {
+        if(*ct != renderer->ct) {
             gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
             gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
             logger_log(logger, LOGGER_INFO, "changed audio connection, format %s", format[id]);
@@ -275,7 +268,7 @@ void  audio_renderer_start(unsigned char *ct) {
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
             gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
         }
-    } else if (compression_type) {
+    } else if (id >= 0) {
         logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
