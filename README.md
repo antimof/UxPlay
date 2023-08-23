@@ -31,12 +31,14 @@
 available on Arch-based systems through AUR.
 
 * **NEW**: while no RPM-based distributions have yet packaged UxPlay, a RPM "specfile" **uxplay.spec** is now provided with recent
-[releases](https://github.com/FDH2/UxPlay/releases) (see their "Assets"), and can also be found in the UxPlay source top directory. To
-build a RPM package, install rpmdevtools, create a rpmbuild tree with "`rpmdev-setuptree`", and copy uxplay.spec into ``~/rpmbuild/SPECS``.
-In that directory, run "`spectool -g uxplay.spec`" (spectool may also be called "rpmdev-spectool") to download the corresponding source file `uxplay-*.tar.gz`, which should then be 
-moved into ``~/rpmbuild/SOURCES``; then run "```rpmbuild -ba uxplay.spec```" (you will need to install
-any required dependencies this reports).  This should create an installable uxplay RPM package in a subdirectory of `~/rpmbuild/RPMS`.
-(**uxplay.spec** is tested on Fedora 38, Rocky Linux 9.2, OpenSUSE Leap 15.5, Mageia 9, OpenMandriva, pclinuxos;
+[releases](https://github.com/FDH2/UxPlay/releases) (see their "Assets"), and can also be found in the UxPlay source top directory.
+This can be used to build an installable RPM package. First-time RPM builders should first install the rpm-build and rpmdevtools packages,
+then create the rpmbuild tree with "`rpmdev-setuptree`".  Then download and
+copy uxplay.spec into ``~/rpmbuild/SPECS``.  In that directory, run "`rpmdev-spectool -g -R  uxplay.spec`" to download the corresponding
+source file `uxplay-*.tar.gz` into ``~/rpmbuild/SOURCES`` ("rpmdev-spectool" may also be just called "spectool"); then
+run "```rpmbuild -ba uxplay.spec```" (you will need to install
+any required dependencies this reports).  This should create the uxplay RPM package in a subdirectory of `~/rpmbuild/RPMS`.
+(**uxplay.spec** is tested on Fedora 38, Rocky Linux 9.2, openSUSE Leap 15.5, Mageia 9, OpenMandriva, PCLinuxOS;
 it can be easily modified to include dependency lists for other RPM-based distributions.)
 
 * On Linux and  \*BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local network services needed by UxPlay are usually provided by Avahi: **if
@@ -57,7 +59,6 @@ that accesses the firmware decoder in the Broadcom GPU)_.
 * To (easily) compile the latest UxPlay from source, see the section [Getting UxPlay](#getting-uxplay).
 
 # Detailed description of UxPlay
-
 This project is a GPLv3 open source unix AirPlay2 Mirror server for Linux, macOS, and \*BSD.
 It was initially developed by
 [antimof](http://github.com/antimof/Uxplay) using code 
@@ -69,9 +70,9 @@ development, but periodically posts updates pulled from the new
 main [UxPlay site](https://github.com/FDH2/UxPlay)). 
 
 UxPlay is tested on a number of systems, including (among others) Debian (10 "Buster", 11 "Bullseye", 12 "Bookworm"),
-Ubuntu (20.04 LTS, 22.04 LTS, 23.04; also Ubuntu derivatives Linux Mint 20.3, Pop!\_OS 22.04 (NVIDIA edition)), Red Hat and clones (Fedora 38,
-Rocky Linux 9.2), Mageia 9, OpenMandriva "ROME", openSUSE 15.5, Arch Linux 23.05, macOS 13.3 (Intel and M2),
-FreeBSD 13.2, Windows 10 and 11 (64 bit).
+Ubuntu (20.04 LTS, 22.04 LTS, 23.04 (also Ubuntu derivatives Linux Mint, Pop!\_OS), Red Hat and clones (Fedora 38,
+Rocky Linux 9.2), openSUSE Leap 15.5, Mageia 9, OpenMandriva "ROME", PCLinuxOS, Arch Linux, Manjaro, and should run on any Linux system.
+Also tested on macOS 13.3 (Intel and M2), FreeBSD 13.2, Windows 10 and 11 (64 bit).
 
 On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye) (32- and 64-bit), Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02,
 and (without hardware video decoding) on openSUSE 15.5. Also tested on Raspberry Pi 3 model B+.
@@ -253,8 +254,7 @@ the GStreamer plugins must first be installed).
 
 ### Building on  non-Debian Linux and \*BSD
 **For those with RPM-based distributions, a RPM spec file uxplay.spec is also available for 
-building a rpm package with rpmbuild** (tested on Fedora 38, Rocky Linux 9.2 (RHEL clone), 
-OpenSUSE 15.5, and Mageia 9; see "Packaging Status" section)
+building a rpm package with rpmbuild**. See ["Packaging Status"](#packaging-status-linux-and-bsd-distributions) section above.
 
 
 * **Red Hat, or clones like CentOS (now continued as Rocky Linux or Alma Linux):** 
@@ -262,10 +262,10 @@ OpenSUSE 15.5, and Mageia 9; see "Packaging Status" section)
 gstreamer1-devel gstreamer1-plugins-base-devel (+libX11-devel for fullscreen X11) _(some of these 
 may be in the "CodeReady" add-on repository, called "PowerTools" by clones)_ 
 
-* **Mageia, pclinuxos, OpenMandriva:**
+* **Mageia, PCLinuxOS, OpenMandriva:**
 Same as Red Hat, except for name changes: (Mageia) "gstreamer1.0-devel", "gstreamer-plugins-base1.0-devel";
-(OpenMandriva) "libopenssl-devel", "gstreamer-devel", "libgst-plugins-base1.0-devel".  pclinuxos: same as Mageia, 
-but uses synaptic (or apt) as its package manager
+(OpenMandriva) "libopenssl-devel", "gstreamer-devel", "libgst-plugins-base1.0-devel".  PCLinuxOS: same as Mageia, 
+but uses synaptic (or apt) as its package manager.
 
  * **openSUSE:**
 (sudo zypper install) libopenssl-3-devel (formerly
@@ -310,31 +310,29 @@ In some cases, because of patent issues,
 the libav plugin feature **avdec_aac** needed for decoding AAC audio in mirror mode is not provided in the official distribution:
 get it from community repositories for those distributions.
 
-* **Red Hat, or clones like CentOS (now continued as Rocky Linux or Alma Linux):** 
-(sudo dnf install, or sudo yum install) gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi
+* **Red Hat, or clones like CentOS (now continued as Rocky Linux or Alma Linux):**
+Install gstreamer1-libav gstreamer1-plugins-bad-free (+ gstreamer1-vaapi
 for Intel/AMD graphics).  In recent Fedora, gstreamer1-libav is renamed gstreamer1-plugin-libav.
 **To get avdec_aac, install packages from [rpmfusion.org](https://rpmfusion.org)**:  (get ffmpeg-libs from rpmfusion;
 on RHEL or clones, but not recent Fedora, also get gstreamer1-libav from there).
 
-* **Mageia, pclinuxos, OpenMandriva:**
-(sudo dnf install, or sudo yum install) gstreamer1.0-libav gstreamer1.0-plugins-bad (+ gstreamer1.0-vaapi
+* **Mageia, PCLinuxOS, OpenMandriva:**
+Install gstreamer1.0-libav gstreamer1.0-plugins-bad (+ gstreamer1.0-vaapi
 for Intel/AMD graphics). **On Mageia, to get avdec_aac, install ffmpeg from the "tainted" repository**,
-(which also provides a more complete gstreamer1.0-plugins-bad). pclinuxos:  same as Mageia, but uses synaptic
-(or apt) as its package manager.
+(which also provides a more complete gstreamer1.0-plugins-bad).
 
- * **openSUSE:**
-(sudo zypper install)
-gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi
+* **openSUSE:**
+Install gstreamer-plugins-libav gstreamer-plugins-bad (+ gstreamer-plugins-vaapi
 for Intel/AMD graphics).  **To get avdec_aac, install libav\* packages for openSUSE
 from [Packman](https://ftp.gwdg.de/pub/linux/misc/packman/suse/) "Essentials"**; recommendation: after adding the
 Packman repository, use the option in YaST Software management to switch
 all system packages for multimedia to Packman).
 
 * **Arch Linux**
-(sudo pacman -Syu) gst-plugins-good gst-plugins-bad gst-libav (+ gstreamer-vaapi
+Install gst-plugins-good gst-plugins-bad gst-libav (+ gstreamer-vaapi
 for Intel/AMD graphics). 
 
- * **FreeBSD:** (sudo pkg install)  gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
+ * **FreeBSD:** Install gstreamer1-libav, gstreamer1-plugins, gstreamer1-plugins-*
 (\* = core, good,  bad, x, gtk, gl, vulkan, pulse, v4l2,  ...), (+ gstreamer1-vaapi for Intel/AMD graphics).
 
 
@@ -570,12 +568,10 @@ seems fragile against attempts to change the X11 window size, or to rotations th
 
 * tested on Windows 10 and 11, 64-bit.
 
-1. Download and install  **Bonjour SDK for Windows v3.0** from the official Apple site
-   [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows). (Apple
-   makes you register as a developer to access it; if you do not want to go through the registration process, you can download
-   the SDK without any registration at [softpedia.com](https://www.softpedia.com/get/Programming/SDK-DDK/Bonjour-SDK.shtml).)
-   This should install the Bonjour SDK as `C:\Program Files\Bonjour SDK`
-
+1. Download and install  **Bonjour SDK for Windows v3.0**.  You can download the SDK without any registration
+   at [softpedia.com](https://www.softpedia.com/get/Programming/SDK-DDK/Bonjour-SDK.shtml), or get it from the official Apple
+   site [https://developer.apple.com/download](https://developer.apple.com/download/all/?q=Bonjour%20SDK%20for%20Windows) (Apple makes
+   you register as a developer to access it from their site).  This should install the Bonjour SDK as `C:\Program Files\Bonjour SDK`.
 
 2. (This is for 64-bit Windows; a build for 32-bit Windows should be possible, but is not tested.) The
    unix-like MSYS2 build environment will be used: download and install MSYS2 from the official
@@ -664,6 +660,9 @@ the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
 # Usage
 
 Options:
+
+* These can also be written (one option per line, without the initial "`-`" character) in the UxPlay startup file (either given by
+environment variable `$UXPLAYRC`, or ``~/.uxplayrc`` or ```~/.config/uxplayrc```).  Command line options supersede  options in the startup file.
 
 **-n server_name** (Default: UxPlay);  server_name@_hostname_ will be the name that appears offering
    AirPlay services to your iPad, iPhone etc, where _hostname_ is the name of the server running uxplay. 
@@ -784,8 +783,7 @@ which will not work if a firewall is running.
 
 **-al _x_** specifies an audio latency _x_ in (decimal) seconds in Audio-only (ALAC), that is reported to the client.  Values
    in the range [0.0, 10.0] seconds are allowed, and will be converted to a whole number of microseconds.  Default
-   is 0.25 sec (250000 usec).   (This replaces the `-ao` option introduced in v1.62, as a workaround for a problem that
-   is now fixed).
+   is 0.25 sec (250000 usec).   _(However, the client appears to ignore this reported latency, so this option seems non-functional.)_
 
 **-ca _filename_** provides a file (where _filename_ can include a full path) used for output of "cover art"
    (from Apple Music, _etc._,) in audio-only ALAC mode.   This file is overwritten with the latest cover art as
@@ -1084,9 +1082,10 @@ tvOS 12.2.1), so it does not seem to matter what UxPlay claims to be.
 
 
 # Changelog
-1.65.3 2023-07-23 Add RPM spec file; add graceful exit if required gstreamer libav feature "avdec_aac" is 
+1.65.3 2023-07-23 Add RPM spec file; add warning if required gstreamer libav feature "avdec_aac" is 
                   missing: (this occurs in RPM-based distributions that ship an incomplete FFmpeg for Patent
                   or License reasons, and rely on users installing an externally-supplied complete FFmpeg).
+		  Mirror-mode airplay will now work without audio if avdec_aac is missing.
 
 1.65 2023-06-03   Eliminate pair_setup part of connection protocol to allow faster connections with clients
                   (thanks to @shuax #176 for this discovery); to revert, uncomment a line in lib/dnssdint.h.

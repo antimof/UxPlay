@@ -50,14 +50,14 @@ Requires:       gstreamer-plugins-bad
 Requires:       gstreamer-plugins-libav
 %endif
 
-#Mageia, OpenMandriva, pclinuxos (Mandrake descendents)
+#Mageia, OpenMandriva, PCLinuxOS (Mandriva/Mandrake descendents)
 %if "%{_host_vendor}" == "mageia" || %{defined omvver} || "%{_host_vendor}" == "mandriva"
 %if "%{_host_vendor}" == "mandriva"
-# "mandriva" is pclinuxos.
-# as of 07/2023,  pclinuxos does not seem to supply openssl >= 3.0
+# host_vendor = "mandriva" identifies PCLinuxOS.
+# As of 07/2023,  PCLinuxOS does not seem to supply openssl >= 3.0.
 # Note that UxPlay does not have a "GPL exception" allowing it to be
-# distributed in binary form when linked to openssl < 3.0, unless
-# openssl < 3.0 can be regarded as a "system library".
+# distributed in binary form when linked to openssl < 3.0, unless that
+# OpenSSL < 3.0 qualifies as a "system library".
 BuildRequires:  pkgconfig
 BuildRequires:  %{mklibname openssl-devel} >= 1.1.1
 Requires:       %{mklibname openssl1.1.0}
@@ -71,14 +71,15 @@ Requires:       %{mklibname openssl3}
 %endif
 %endif
 BuildRequires:  %{mklibname plist-devel} >= 2.0
-Requires:       %{mklibname plist2.0_3}   
 BuildRequires:  %{mklibname avahi-compat-libdns_sd-devel}
 %if %{defined omvver}
 BuildRequires:  %{mklibname gstreamer-devel}
 BuildRequires:  %{mklibname gst-plugins-base1.0-devel}
+Requires:       %{mklibname plist} >= 2.0
 %else
 BuildRequires:  %{mklibname gstreamer1.0-devel}
 BuildRequires:  %{mklibname gstreamer-plugins-base1.0-devel}
+Requires:       %{mklibname plist2.0_3}
 %endif
 Requires:       gstreamer1.0-plugins-base
 Requires:       gstreamer1.0-plugins-good
@@ -133,7 +134,7 @@ cd build
 %{_docdir}/%{name}/llhttp/LICENSE-MIT
 
 %changelog
-* Wed Jul 26 2023 UxPlay maintainer <https://github.com/FDH2/UxPlay>
+* Thu Aug 24 2023 UxPlay maintainer <https://github.com/FDH2/UxPlay>
   Initial uxplay.spec: tested on Fedora 38, Rocky Linux 9.2, OpenSUSE
-  Leap 15.5, Mageia 9, OpenMandriva ROME, pclinuxos
+  Leap 15.5, Mageia 9, OpenMandriva ROME, PCLinuxOS
 - 
