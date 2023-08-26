@@ -513,11 +513,13 @@ the GStreamer release for macOS
 from [https://gstreamer.freedesktop.org/download/](https://gstreamer.freedesktop.org/download/).
 (This release contains its own pkg-config,
 so you don't have to install one.) Install both the gstreamer-1.0 and gstreamer-1.0-devel packages.  After downloading, Shift-Click on them
-to install (they install to /Library/FrameWorks/GStreamer.framework).   Homebrew or MacPorts users should **not** install (or should uninstall) the GStreamer supplied by their package manager, if they use the "official" release.
+to install (they install to /Library/FrameWorks/GStreamer.framework).   Homebrew or MacPorts users should **not** install (or should uninstall)
+the GStreamer supplied by their package manager, if they use the "official" release.
 
-* **ADDED 2023-01-25: in the latest release (now 1.22.2) something in the GStreamer macOS binaries appears to not be
+* **ADDED 2023-01-25: in the current 1.22.x releases  something in the GStreamer macOS binaries appears to not be
 working (UxPlay starts receiving the AirPlay stream, but the video window does not open)**.  If
-you have this problem, use the GStreamer-1.20.6 binary packages until a fix is found.  _You could instead compile the "official" GStreamer-1.22.x release from source: GStreamer-1.22.0 has been successfully
+you have this problem, use the older GStreamer-1.20.7 binary packages until a fix is found.  _You could instead
+compile the "official" GStreamer-1.22.x release from source: GStreamer-1.22.0 has been successfully
 built this way on a system using MacPorts: see_ [the UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts).
 
 **Using Homebrew's GStreamer**:  pkg-config is needed:  ("brew install pkg-config gstreamer").
@@ -741,7 +743,7 @@ which will not work if a firewall is running.
    
 **-vs _videosink_** chooses the GStreamer videosink, instead of the default value
    "autovideosink" which chooses it for you.  Some videosink choices are:  ximagesink, xvimagesink,
-   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osximagesink (for macOS),  kmssink (for
+   vaapisink (for intel graphics), gtksink, glimagesink, waylandsink, osxvideosink (for macOS),  kmssink (for
    systems without X11, like Raspberry Pi OS lite) or
    fpsdisplaysink (which shows the streaming framerate in fps).   Using quotes
    "..." allows some parameters to be included with the videosink name. 

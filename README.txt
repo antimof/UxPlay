@@ -641,10 +641,10 @@ Shift-Click on them to install (they install to
 should **not** install (or should uninstall) the GStreamer supplied by
 their package manager, if they use the "official" release.
 
--   **ADDED 2023-01-25: in the latest release (now 1.22.2) something in
-    the GStreamer macOS binaries appears to not be working (UxPlay
-    starts receiving the AirPlay stream, but the video window does not
-    open)**. If you have this problem, use the GStreamer-1.20.6 binary
+-   **ADDED 2023-01-25: in the current 1.22.x releases something in the
+    GStreamer macOS binaries appears to not be working (UxPlay starts
+    receiving the AirPlay stream, but the video window does not open)**.
+    If you have this problem, use the older GStreamer-1.20.7 binary
     packages until a fix is found. *You could instead compile the
     "official" GStreamer-1.22.x release from source: GStreamer-1.22.0
     has been successfully built this way on a system using MacPorts:
@@ -941,7 +941,7 @@ to be included with the converter name.
 **-vs *videosink*** chooses the GStreamer videosink, instead of the
 default value "autovideosink" which chooses it for you. Some videosink
 choices are: ximagesink, xvimagesink, vaapisink (for intel graphics),
-gtksink, glimagesink, waylandsink, osximagesink (for macOS), kmssink
+gtksink, glimagesink, waylandsink, osxvideosink (for macOS), kmssink
 (for systems without X11, like Raspberry Pi OS lite) or fpsdisplaysink
 (which shows the streaming framerate in fps). Using quotes "..." allows
 some parameters to be included with the videosink name. For example,
