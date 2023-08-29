@@ -1088,12 +1088,22 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
             remote_clock_offset = data->ntp_time_local - data->ntp_time_remote;
         }
         data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
-        if (data->ct == 2 && audio_delay_alac) {
-            data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote  + audio_delay_alac);
-        } else if (audio_delay_aac) {
-            data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_aac);
+        switch (data->ct) {
+        case 2:
+            if (audio_delay_alac) {
+                data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_alac);
+            }
+            break;
+        case 4:
+        case 8:
+            if (audio_delay_aac) {
+                data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_aac);
+            }
+            break;
+        default:
+            break;
         }
-      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
+        audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
     }
 }
 
