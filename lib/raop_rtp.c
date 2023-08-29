@@ -459,7 +459,6 @@ raop_rtp_thread_udp(void *arg)
     unsigned char no_data_marker[] = {0x00, 0x68, 0x34, 0x00 };
     int rtp_count = 0;
     double sync_adjustment = 0;
-    uint64_t delay = 0;
     unsigned short seqnum1 = 0, seqnum2 = 0;
 
     assert(raop_rtp);
@@ -694,7 +693,7 @@ raop_rtp_thread_udp(void *arg)
                     } else {
                         double elapsed_time =  raop_rtp->rtp_clock_rate * (rtp64_timestamp - raop_rtp->rtp_start_time) + sync_adjustment
                             + DELAY_AAC * SECOND_IN_NSECS; 
-                        audio_data.ntp_time_local = raop_rtp->ntp_start_time + delay + (uint64_t) elapsed_time;
+                        audio_data.ntp_time_local = raop_rtp->ntp_start_time + (uint64_t) elapsed_time;
                         audio_data.ntp_time_remote = raop_ntp_convert_local_time(raop_rtp->ntp, audio_data.ntp_time_local);
                         audio_data.sync_status = 0;
                     }
