@@ -247,7 +247,7 @@ raop_rtp_resend_callback(void *opaque, unsigned short seqnum, unsigned short cou
 }
 
 static int
-raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6, int use_udp)
+raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6)
 {
     assert(raop_rtp);
 
@@ -730,9 +730,9 @@ raop_rtp_thread_udp(void *arg)
     return 0;
 }
 
-// Start rtp service, three udp ports
+// Start rtp service, using two udp ports
 void
-raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport, unsigned short *control_lport,
+raop_rtp_start_audio(raop_rtp_t *raop_rtp,  unsigned short *control_rport, unsigned short *control_lport,
                      unsigned short *data_lport, unsigned char *ct, unsigned int *sr)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
@@ -757,7 +757,7 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_
         use_ipv6 = 1;
     }
     //use_ipv6 = 0;
-    if (raop_rtp_init_sockets(raop_rtp, use_ipv6, use_udp) < 0) {
+    if (raop_rtp_init_sockets(raop_rtp, use_ipv6) < 0) {
         logger_log(raop_rtp->logger, LOGGER_ERR, "raop_rtp initializing sockets failed");
         MUTEX_UNLOCK(raop_rtp->run_mutex);
         return;

@@ -701,7 +701,7 @@ raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 }
 
 void
-raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport,
+raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, unsigned short *mirror_data_lport,
                       uint8_t show_client_FPS_data)
 {
     logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror starting mirroring");

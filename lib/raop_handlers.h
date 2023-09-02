@@ -314,8 +314,6 @@ raop_handler_setup(raop_conn_t *conn,
                    http_request_t *request, http_response_t *response,
                    char **response_data, int *response_datalen)
 {
-    const char *transport;
-    int use_udp;
     const char *dacp_id;
     const char *active_remote_header;
     bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
@@ -333,15 +331,6 @@ raop_handler_setup(raop_conn_t *conn,
         if (conn->raop_rtp) {
             raop_rtp_remote_control_id(conn->raop_rtp, dacp_id, active_remote_header);
         }
-    }
-
-    transport = http_request_get_header(request, "Transport");
-    if (transport) {
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "Transport: %s", transport);
-        use_udp = strncmp(transport, "RTP/AVP/TCP", 11);
-    } else {
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "Transport: null");
-        use_udp = 0;
     }
 
     // Parsing bplist
@@ -543,7 +532,7 @@ raop_handler_setup(raop_conn_t *conn,
 
                     if (conn->raop_rtp_mirror) {
                         raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, &stream_connection_id);
-                        raop_rtp_start_mirror(conn->raop_rtp_mirror, use_udp, &dport, conn->raop->clientFPSdata);
+                        raop_rtp_start_mirror(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "Mirroring not initialized at SETUP, playing will fail!");
@@ -609,7 +598,7 @@ raop_handler_setup(raop_conn_t *conn,
                     }
 
                     if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, use_udp, &remote_cport, &cport, &dport, &ct, &sr);
+                        raop_rtp_start_audio(conn->raop_rtp, &remote_cport, &cport, &dport, &ct, &sr);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");
