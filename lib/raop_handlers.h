@@ -482,7 +482,6 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_rtp_mirror = NULL;
         if (conn->remotelen == 4 || conn->remotelen == 16) {
             char remote[40];
-            memset(remote, 0, sizeof(remote));
             if (conn->remotelen == 4) {
                 /* IPV4 */
                 snprintf(remote, sizeof(remote), "%d.%d.%d.%d", conn->remote[0], conn->remote[1],
