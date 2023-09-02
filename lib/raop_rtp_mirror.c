@@ -107,9 +107,8 @@ struct raop_rtp_mirror_s {
 };
 
 static int
-raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *remote, int remotelen)
+raop_rtp_mirror_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const char *remote, int remotelen)
 {
-    char current[25];
     int family;
     int ret;
     assert(raop_rtp_mirror);
@@ -120,10 +119,8 @@ raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *r
     } else {
         return -1;
     }
-    memset(current, 0, sizeof(current));
-    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
-    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror parse remote ip = %s", current);
-    ret = netutils_parse_address(family, current,
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror parse remote ip = %s", remote);
+    ret = netutils_parse_address(family, remote,
                                  &raop_rtp_mirror->remote_saddr,
                                  sizeof(raop_rtp_mirror->remote_saddr));
     if (ret < 0) {
@@ -135,7 +132,7 @@ raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *r
 
 #define NO_FLUSH (-42)
 raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp,
-                                        const unsigned char *remote, int remotelen, const unsigned char *aeskey)
+                                        const char *remote, int remotelen, const unsigned char *aeskey)
 {
     raop_rtp_mirror_t *raop_rtp_mirror;
 
@@ -155,7 +152,7 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
         free(raop_rtp_mirror);
         return NULL;
     }
-    if (raop_rtp_parse_remote(raop_rtp_mirror, remote, remotelen) < 0) {
+    if (raop_rtp_mirror_parse_remote(raop_rtp_mirror, remote, remotelen) < 0) {
         free(raop_rtp_mirror);
         return NULL;
     }
@@ -723,7 +720,7 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
     if (raop_rtp_mirror->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
     }
-    use_ipv6 = 0;
+    //use_ipv6 = 0;
      
     raop_rtp_mirror->mirror_data_lport = *mirror_data_lport;
     if (raop_rtp_init_mirror_sockets(raop_rtp_mirror, use_ipv6) < 0) {

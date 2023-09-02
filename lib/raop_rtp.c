@@ -122,9 +122,8 @@ struct raop_rtp_s {
 };
 
 static int
-raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int remotelen)
+raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const char *remote, int remotelen)
 {
-    char current[25];
     int family;
     int ret;
     assert(raop_rtp);
@@ -135,10 +134,8 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
     } else {
         return -1;
     }
-    memset(current, 0, sizeof(current));
-    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
-    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp parse remote ip = %s", current);
-    ret = netutils_parse_address(family, current,
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp parse remote ip = %s", remote);
+    ret = netutils_parse_address(family, remote,
                                  &raop_rtp->remote_saddr,
                                  sizeof(raop_rtp->remote_saddr));
     if (ret < 0) {
@@ -149,7 +146,7 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
 }
 
 raop_rtp_t *
-raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, 
+raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const char *remote, 
               int remotelen, const unsigned char *aeskey, const unsigned char *aesiv)
 {
     raop_rtp_t *raop_rtp;
@@ -753,7 +750,7 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_
     if (raop_rtp->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
     }
-    use_ipv6 = 0;
+    //use_ipv6 = 0;
     if (raop_rtp_init_sockets(raop_rtp, use_ipv6, use_udp) < 0) {
         logger_log(raop_rtp->logger, LOGGER_ERR, "raop_rtp initializing sockets failed");
         MUTEX_UNLOCK(raop_rtp->run_mutex);
