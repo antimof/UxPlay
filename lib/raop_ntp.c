@@ -299,8 +299,7 @@ raop_ntp_thread(void *arg)
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
             // Read response
-            response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0,
-                                    (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
+            response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0, NULL, NULL);
             if (response_len < 0) {
                 timeout_counter++;
                 char time[30];

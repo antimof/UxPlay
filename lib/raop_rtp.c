@@ -449,6 +449,7 @@ raop_rtp_thread_udp(void *arg)
     unsigned int packetlen;
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
+    bool got_remote_control_saddr = false;
 
     /* for initial rtp to ntp conversions */    
     bool have_synced = false;
@@ -504,12 +505,18 @@ raop_rtp_thread_udp(void *arg)
         }
 
         if (FD_ISSET(raop_rtp->csock, &rfds)) {
-            saddrlen = sizeof(saddr);
-            packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0,
-                                 (struct sockaddr *)&saddr, &saddrlen);
-
-            memcpy(&raop_rtp->control_saddr, &saddr, saddrlen);
-            raop_rtp->control_saddr_len = saddrlen;
+            if (got_remote_control_saddr== false) {
+                saddrlen = sizeof(saddr);
+                packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0,
+                                     (struct sockaddr *)&saddr, &saddrlen);
+                if (packetlen > 0) {
+                    memcpy(&raop_rtp->control_saddr, &saddr, saddrlen);
+                    raop_rtp->control_saddr_len = saddrlen;
+                    got_remote_control_saddr = true;
+                }
+	    } else {
+                packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0, NULL, NULL);
+            }
             int type_c = packet[1] & ~0x80;
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "\nraop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
 
@@ -611,8 +618,7 @@ raop_rtp_thread_udp(void *arg)
             //logger_log(raop_rtp->logger, LOGGER_INFO, "Would have data packet in queue");
             // Receiving audio data here
             saddrlen = sizeof(saddr);
-            packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0,
-                                 (struct sockaddr *)&saddr, &saddrlen);
+            packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0, NULL, NULL);
             // rtp payload type
             //int type_d = packet[1] & ~0x80;
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
