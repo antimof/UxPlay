@@ -39,7 +39,7 @@ static GstClockTime gst_video_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
-
+static bool sync = false;
 
 struct video_renderer_s {
     GstElement *appsrc, *pipeline, *sink;
@@ -160,8 +160,10 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " name=video_sink");
     if (*video_sync) {
         g_string_append(launch, " sync=true");
+        sync = true;
     } else {
         g_string_append(launch, " sync=false");
+        sync = false;
     }
     logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline will be:\n\"%s\"", launch->str);
     renderer->pipeline = gst_parse_launch(launch->str, &error);
@@ -233,12 +235,14 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
     GstBuffer *buffer;
     GstClockTime pts = (GstClockTime) *ntp_time; /*now in nsecs */
     //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
-    if (pts >= gst_video_pipeline_base_time) {
-        pts -= gst_video_pipeline_base_time;
-    } else {
-        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
-                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_video_pipeline_base_time) / SECOND_IN_NSECS);
-        return;
+    if (sync) {
+        if (pts >= gst_video_pipeline_base_time) {
+            pts -= gst_video_pipeline_base_time;
+        } else {
+            logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                       ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_video_pipeline_base_time) / SECOND_IN_NSECS);
+            return;
+        }
     }
     g_assert(data_len != 0);
     /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
@@ -254,8 +258,10 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
         }
         buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
         g_assert(buffer != NULL);
-        //g_print("video latency %8.6f\n", (double) latency / SECOND_IN_NSECS);	
-        GST_BUFFER_PTS(buffer) = pts;
+        //g_print("video latency %8.6f\n", (double) latency / SECOND_IN_NSECS);
+        if (sync) {
+            GST_BUFFER_PTS(buffer) = pts;
+        }
         gst_buffer_fill(buffer, 0, data, *data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
