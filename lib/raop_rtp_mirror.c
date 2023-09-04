@@ -510,6 +510,7 @@ raop_rtp_mirror_thread(void *arg)
                     h264_data.nal_count += 2;
 		    prepend_sps_pps =  false;
                 }
+                raop_rtp_mirror->callbacks.video_resume(raop_rtp_mirror->callbacks.cls);
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 free(payload_out);
                 break;
@@ -600,7 +601,7 @@ raop_rtp_mirror_thread(void *arg)
                 // h264.pps_size = pps_size;
                 // h264.picture_parameter_set = malloc(h264.pps_size);
                 // memcpy(h264.picture_parameter_set, picture_parameter_set, pps_size);
-
+                raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
                 break;
             case 0x02:
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived old-protocol once-per-second packet from client:"

@@ -1120,6 +1120,19 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
     }
 }
 
+extern "C" void video_pause (void *cls) {
+    if (use_video) {
+        video_renderer_pause();
+    }
+}
+
+extern "C" void video_resume (void *cls) {
+    if (use_video) {
+        video_renderer_resume();
+    }
+}
+
+
 extern "C" void audio_flush (void *cls) {
     if (use_audio) {
         audio_renderer_flush();
@@ -1254,6 +1267,8 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.video_process = video_process;
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
+    raop_cbs.video_pause = video_pause;
+    raop_cbs.video_resume = video_resume;
     raop_cbs.audio_set_volume = audio_set_volume;
     raop_cbs.audio_get_format = audio_get_format;
     raop_cbs.video_report_size = video_report_size;
