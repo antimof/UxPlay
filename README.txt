@@ -436,7 +436,7 @@ below for help with this or other problems.
     connection, it removes the current client and takes over. UxPlay
     1.66 introduces a mechanism ( `-restrict`, `-allow <id>`,
     `-block <id>`) to control which clients are allowed to connect,
-    using their immutable "clientID".
+    using their "deviceID" (which appears to be immutable).
 
 -   In Mirror mode, GStreamer has a choice of **two** methods to play
     video with its accompanying audio: prior to UxPlay-1.64, the video
@@ -845,7 +845,8 @@ Options:
 -   These can also be written (one option per line, without the initial
     "`-`" character) in the UxPlay startup file (either given by
     environment variable `$UXPLAYRC`, or `~/.uxplayrc` or
-    `~/.config/uxplayrc`). Command line options supersede options in the
+    `~/.config/uxplayrc`); lines begining with "`#`" are treated as
+    comments, and ignored. Command line options supersede options in the
     startup file.
 
 **-n server_name** (Default: UxPlay); server_name@\_hostname\_ will be
@@ -1030,19 +1031,23 @@ connect. Without this option, the current client maintains exclusive
 ownership of UxPlay until it disconnects.
 
 **-restrict** Restrict clients allowed to connect to those specified by
-`-allow <clientID>`. The ClientID is the true MAC address (in iOS it is
-listed in Settings-\>General-\>Wi Fi Address), which is displayed by
-UxPlay when the client attempts to connect. It has the format
-`XX:XX:XX:XX:XX:XX`, X = 0-9,A-F.
+`-allow <deviceID>`. The deviceID has the form of a MAC address which is
+displayed by UxPlay when the client attempts to connect, and appears to
+be immutable. It has the format `XX:XX:XX:XX:XX:XX`, X = 0-9,A-F, and is
+possibly the "true" hardware MAC address of the device. Note that iOS
+clients generally expose different random "private Wi_Fi addresses"
+("fake" MAC addresses) to different networks (for privacy reasons, to
+prevent tracking), which may change, and do not correpond to the
+deviceID.
 
 **-restrict no** Remove restrictions (default). This is useful as a
 command-line argument to overide restrictions set in the Startup file.
 
-**-allow *id*** Adds the clientID = *id* to the list of allowed clients
+**-allow *id*** Adds the deviceID = *id* to the list of allowed clients
 when client restrictions are being enforced. Usually this will be an
 entry in the uxplayrc startup file.
 
-**-block *id*** Always block clients with clientID = *id*, even when
+**-block *id*** Always block clients with deviceID = *id*, even when
 client restrictions are not being enforced generally. Usually this will
 be an entry in the uxplayrc startup file.
 
@@ -1417,8 +1422,9 @@ what UxPlay claims to be.
 # Changelog
 
 1.66 2023-09-05 Fix IPV6 support. Add option to restrict clients to
-those on a list of allowed clientIDs, or to block connections from
-clients on a list of blocked clientIDs.
+those on a list of allowed deviceIDs, or to block connections from
+clients on a list of blocked deviceIDs. Fix for #207 from @thiccaxe
+(screen lag in vsync mode after client wakes from sleep).
 
 1.65.3 2023-07-23 Add RPM spec file; add warning if required gstreamer
 libav feature "avdec_aac" is missing: (this occurs in RPM-based

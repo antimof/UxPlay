@@ -445,11 +445,11 @@ static void print_info (char *name) {
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
-    printf("-restrict Restrict clients to those specified by \"-allow <clientID>\"\n");
-    printf("          UxPlay displays clientID when a client attempts connection\n");
+    printf("-restrict Restrict clients to those specified by \"-allow <deviceID>\"\n");
+    printf("          UxPlay displays deviceID when a client attempts to connect\n");
     printf("          Use \"-restrict no\" for no client restrictions (default)\n");
-    printf("-allow <i>Permit clientID = <i> to connect if restrictions are imposed\n");
-    printf("-block <i>Always block connections from clientID = <i>\n");
+    printf("-allow <i>Permit deviceID = <i> to connect if restrictions are imposed\n");
+    printf("-block <i>Always block connections from deviceID = <i>\n");
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
