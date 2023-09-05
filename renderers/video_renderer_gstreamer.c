@@ -221,6 +221,25 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     }
 }
 
+void video_renderer_pause() {
+    logger_log(logger, LOGGER_DEBUG, "video renderer paused");
+    gst_element_set_state(renderer->pipeline, GST_STATE_PAUSED);
+}
+
+void video_renderer_resume() {
+    if (video_renderer_is_paused()) {
+        logger_log(logger, LOGGER_DEBUG, "video renderer resumed");
+        gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+        gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
+    }
+}
+
+bool video_renderer_is_paused() {
+    GstState state;
+    gst_element_get_state(renderer->pipeline, &state, NULL, 0);
+    return (state == GST_STATE_PAUSED);
+}
+
 void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
