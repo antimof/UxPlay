@@ -354,6 +354,33 @@ raop_handler_setup(raop_conn_t *conn,
         // First setup
         char* eiv = NULL;
         uint64_t eiv_len = 0;
+
+        char *deviceID = NULL;
+        char *model = NULL;
+        char *name = NULL;
+        bool admit_client = true;
+        plist_t req_deviceid_node = plist_dict_get_item(req_root_node, "deviceID");
+        plist_get_string_val(req_deviceid_node, &deviceID);  
+        plist_t req_model_node = plist_dict_get_item(req_root_node, "model");
+        plist_get_string_val(req_model_node, &model);  
+        plist_t req_name_node = plist_dict_get_item(req_root_node, "name");
+        plist_get_string_val(req_name_node, &name);  
+	if (conn->raop->callbacks.report_client_request) {
+            conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
+        }
+        free (deviceID);
+        deviceID = NULL;
+        free (model);
+        model = NULL;
+        free (name);
+        name = NULL;
+        if (admit_client == false) {
+            /* client is not authorized to connect */
+            plist_free(res_root_node);
+            plist_free(req_root_node);
+            return;
+	}
+
         plist_get_data_val(req_eiv_node, &eiv, &eiv_len);
         memcpy(aesiv, eiv, 16);
         free(eiv);	
