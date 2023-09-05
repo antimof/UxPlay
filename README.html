@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.65-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.65: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.66-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.66: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -124,7 +124,7 @@ and <a href="https://emanuelecozzi.net/docs/airplay2">here</a>; see also
 <a href="https://pyatv.dev/documentation/protocols">pyatv</a> which
 could be a resource for adding modern protocols.) While there is no
 guarantee that future iOS releases will keep supporting “Legacy
-Protocol”, the recent iOS 16 release continues support.</p>
+Protocol”, iOS 17 continues support.</p>
 <p>The UxPlay server and its client must be on the same local area
 network, on which a <strong>Bonjour/Zeroconf mDNS/DNS-SD server</strong>
 is also running (only DNS-SD “Service Discovery” service is strictly
@@ -441,8 +441,11 @@ other problems.</p>
 <li><p>By default, UxPlay is locked to its current client until that
 client drops the connection; since UxPlay-1.58, the option
 <code>-nohold</code> modifies this behavior so that when a new client
-requests a connection, it removes the current client and takes
-over.</p></li>
+requests a connection, it removes the current client and takes over.
+UxPlay 1.66 introduces a mechanism ( <code>-restrict</code>,
+<code>-allow &lt;id&gt;</code>, <code>-block &lt;id&gt;</code>) to
+control which clients are allowed to connect, using their immutable
+“clientID”.</p></li>
 <li><p>In Mirror mode, GStreamer has a choice of <strong>two</strong>
 methods to play video with its accompanying audio: prior to UxPlay-1.64,
 the video and audio streams were both played as soon as possible after
@@ -1013,6 +1016,23 @@ when the GStreamer pipeline is closed.</em></p>
 <p><strong>-nohold</strong> Drops the current connection when a new
 client attempts to connect. Without this option, the current client
 maintains exclusive ownership of UxPlay until it disconnects.</p>
+<p><strong>-restrict</strong> Restrict clients allowed to connect to
+those specified by <code>-allow &lt;clientID&gt;</code>. The ClientID is
+the true MAC address (in iOS it is listed in Settings-&gt;General-&gt;Wi
+Fi Address), which is displayed by UxPlay when the client attempts to
+connect. It has the format <code>XX:XX:XX:XX:XX:XX</code>, X =
+0-9,A-F.</p>
+<p><strong>-restrict no</strong> Remove restrictions (default). This is
+useful as a command-line argument to overide restrictions set in the
+Startup file.</p>
+<p><strong>-allow <em>id</em></strong> Adds the clientID = <em>id</em>
+to the list of allowed clients when client restrictions are being
+enforced. Usually this will be an entry in the uxplayrc startup
+file.</p>
+<p><strong>-block <em>id</em></strong> Always block clients with
+clientID = <em>id</em>, even when client restrictions are not being
+enforced generally. Usually this will be an entry in the uxplayrc
+startup file.</p>
 <p><strong>-FPSdata</strong> Turns on monitoring of regular reports
 about video streaming performance that are sent by the client. These
 will be displayed in the terminal window if this option is used. The
@@ -1366,6 +1386,9 @@ an AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
 introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what UxPlay claims to be.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.66 2023-09-05 Fix IPV6 support. Add option to restrict clients to
+those on a list of allowed clientIDs, or to block connections from
+clients on a list of blocked clientIDs.</p>
 <p>1.65.3 2023-07-23 Add RPM spec file; add warning if required
 gstreamer libav feature “avdec_aac” is missing: (this occurs in
 RPM-based distributions that ship an incomplete FFmpeg for Patent or

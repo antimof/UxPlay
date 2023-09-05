@@ -1,4 +1,4 @@
-# UxPlay 1.65: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.66: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
@@ -119,8 +119,8 @@ is publicly known about Apple's AirPlay 2 protocol can be found
 and [here](https://emanuelecozzi.net/docs/airplay2); see also
 [pyatv](https://pyatv.dev/documentation/protocols) which could be a
 resource for adding modern protocols.) While there is no guarantee that
-future iOS releases will keep supporting "Legacy Protocol", the recent
-iOS 16 release continues support.
+future iOS releases will keep supporting "Legacy Protocol", iOS 17
+continues support.
 
 The UxPlay server and its client must be on the same local area network,
 on which a **Bonjour/Zeroconf mDNS/DNS-SD server** is also running (only
@@ -433,7 +433,10 @@ below for help with this or other problems.
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; since UxPlay-1.58, the option `-nohold`
     modifies this behavior so that when a new client requests a
-    connection, it removes the current client and takes over.
+    connection, it removes the current client and takes over. UxPlay
+    1.66 introduces a mechanism ( `-restrict`, `-allow <id>`,
+    `-block <id>`) to control which clients are allowed to connect,
+    using their immutable "clientID".
 
 -   In Mirror mode, GStreamer has a choice of **two** methods to play
     video with its accompanying audio: prior to UxPlay-1.64, the video
@@ -1026,6 +1029,23 @@ closed.*
 connect. Without this option, the current client maintains exclusive
 ownership of UxPlay until it disconnects.
 
+**-restrict** Restrict clients allowed to connect to those specified by
+`-allow <clientID>`. The ClientID is the true MAC address (in iOS it is
+listed in Settings-\>General-\>Wi Fi Address), which is displayed by
+UxPlay when the client attempts to connect. It has the format
+`XX:XX:XX:XX:XX:XX`, X = 0-9,A-F.
+
+**-restrict no** Remove restrictions (default). This is useful as a
+command-line argument to overide restrictions set in the Startup file.
+
+**-allow *id*** Adds the clientID = *id* to the list of allowed clients
+when client restrictions are being enforced. Usually this will be an
+entry in the uxplayrc startup file.
+
+**-block *id*** Always block clients with clientID = *id*, even when
+client restrictions are not being enforced generally. Usually this will
+be an entry in the uxplayrc startup file.
+
 **-FPSdata** Turns on monitoring of regular reports about video
 streaming performance that are sent by the client. These will be
 displayed in the terminal window if this option is used. The data is
@@ -1395,6 +1415,10 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what UxPlay claims to be.
 
 # Changelog
+
+1.66 2023-09-05 Fix IPV6 support. Add option to restrict clients to
+those on a list of allowed clientIDs, or to block connections from
+clients on a list of blocked clientIDs.
 
 1.65.3 2023-07-23 Add RPM spec file; add warning if required gstreamer
 libav feature "avdec_aac" is missing: (this occurs in RPM-based

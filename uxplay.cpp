@@ -59,7 +59,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.65"
+#define VERSION "1.66"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -121,6 +121,9 @@ static int max_connections = 2;
 static unsigned short raop_port;
 static unsigned short airplay_port;
 static uint64_t remote_clock_offset = 0;
+static std::vector<std::string> allowed_clients;
+static std::vector<std::string> blocked_clients;
+static bool restrict_clients;
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -442,6 +445,11 @@ static void print_info (char *name) {
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
+    printf("-restrict Restrict clients to those specified by \"-allow <clientID>\"\n");
+    printf("          UxPlay displays clientID when a client attempts connection\n");
+    printf("          Use \"-restrict no\" for no client restrictions (default)\n");
+    printf("-allow <i>Permit clientID = <i> to connect if restrictions are imposed\n");
+    printf("-block <i>Always block connections from clientID = <i>\n");
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
@@ -599,7 +607,24 @@ static void parse_arguments (int argc, char *argv[]) {
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
-        if (arg == "-n") {
+	if (arg == "-allow") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            i++;
+	    allowed_clients.push_back(argv[i]);
+	} else if (arg == "-block") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            i++;
+	    blocked_clients.push_back(argv[i]);    
+	} else if (arg == "-restrict") {
+            if (i <  argc - 1) {
+                if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
+                    restrict_clients = false;
+                    i++;
+                    continue;
+                }
+	    } 
+            restrict_clients = true;
+        } else if (arg == "-n") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             server_name = std::string(argv[++i]);
         } else if (arg == "-nh") {
@@ -1040,6 +1065,29 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
     return 0;
 }
 
+static bool check_client(char *deviceid) {
+    bool ret = false;
+    int list =  allowed_clients.size();
+    for (int i = 0; i < list ; i++) {
+        if (!strcmp(deviceid,allowed_clients[i].c_str())) {
+	    ret = true;
+	    break;
+        }
+    }
+    return ret;
+}
+
+static bool check_blocked_client(char *deviceid) {
+    bool ret = false;
+    int list =  blocked_clients.size();
+    for (int i = 0; i < list ; i++) {
+        if (!strcmp(deviceid,blocked_clients[i].c_str())) {
+	    ret = true;
+	    break;
+        }
+    }
+    return ret;
+}
 
 // Server callbacks
 extern "C" void conn_init (void *cls) {
@@ -1076,6 +1124,23 @@ extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
 extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) {
     if (*teardown_110 && close_window) {
         reset_loop = true;
+    }
+}
+
+extern "C" void report_client_request(void *cls, char *deviceid, char * model, char *name, bool * admit) {
+    LOGI("connection request from %s (%s) with deviceID = %s\n", name, model, deviceid);
+    if (restrict_clients) {
+        *admit = check_client(deviceid);
+	if (*admit == false) {
+            LOGI("client connections have been restricted to those with listed deviceID,\nuse \"-allow %s\" to allow this client to connect.\n",
+                 deviceid);
+	}
+    } else {
+        *admit = true;
+    }
+    if (check_blocked_client(deviceid)) {
+        *admit = false;
+        LOGI("*** attempt to connect by blocked client (clientID %s): DENIED\n", deviceid);
     }
 }
 
@@ -1274,7 +1339,8 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.video_report_size = video_report_size;
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
-    
+    raop_cbs.report_client_request = report_client_request;
+
     /* set max number of connections = 2 to protect against capture by new client */
     raop = raop_init(max_connections, &raop_cbs);
     if (raop == NULL) {
