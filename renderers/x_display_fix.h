@@ -49,13 +49,13 @@ Window enum_windows(const char * str, Display * display, Window window, int dept
     int i;
     XTextProperty text;
     XGetWMName(display, window, &text);
-    char* name;
+    char* name = NULL;
     XFetchName(display, window, &name);
     if (name != 0 &&  strcmp(str, name) == 0) {
         return window;
     }
     Window _root, parent;
-    Window* children;
+    Window* children = NULL;
     unsigned int n;
     XQueryTree(display, window, &_root, &parent, &children, &n);
     if (children != NULL) {
@@ -68,9 +68,16 @@ Window enum_windows(const char * str, Display * display, Window window, int dept
     return (Window) NULL;
 }
 
+int X11_error_catcher( Display *disp, XErrorEvent *xe ) {
+    // do nothing
+    return 0;
+}
+
 void get_x_window(X11_Window_t * X11, const char * name) {
-    Window root = XDefaultRootWindow(X11->display);     
+    Window root = XDefaultRootWindow(X11->display);
+    XSetErrorHandler(X11_error_catcher);
     X11->window  = enum_windows(name, X11->display, root, 0);
+    XSetErrorHandler(NULL);
 #ifdef ZOOM_WINDOW_NAME_FIX
     if (X11->window) {
         Atom _NET_WM_NAME = XInternAtom(X11->display, "_NET_WM_NAME", 0);
