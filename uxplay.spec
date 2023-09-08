@@ -98,6 +98,7 @@ server in non-mirror mode
 
 %autosetup -n UxPlay-%{version}
 
+# if you are building for a distribution, add cmake option -DNO_MARCH_NATIVE=ON
 %cmake -DCMAKE_INSTALL_DOCDIR=%{_docdir}/%{name}
 
 %build
