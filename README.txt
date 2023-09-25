@@ -645,15 +645,13 @@ Shift-Click on them to install (they install to
 should **not** install (or should uninstall) the GStreamer supplied by
 their package manager, if they use the "official" release.
 
--   **ADDED 2023-01-25: in the current 1.22.x releases something in the
-    GStreamer macOS binaries appears to not be working (UxPlay starts
-    receiving the AirPlay stream, but the video window does not open)**.
-    If you have this problem, use the older GStreamer-1.20.7 binary
-    packages until a fix is found. *You could instead compile the
-    "official" GStreamer-1.22.x release from source: GStreamer-1.22.0
-    has been successfully built this way on a system using MacPorts:
-    see* [the UxPlay
-    Wiki](https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts).
+-   Since GStreamer v1.22, the "Official" (gstreamer.freedesktop.org)
+    macOS binaries require a wrapper "gst_macos_main" around the actual
+    main program (uxplay). This should have been applied during the
+    UxPlay compilation process, and the initial UxPlay terminal message
+    should confirm it is being used. (UxPlay can also be built using
+    "Official" GStreamer v.1.20.7 binaries, which work without the
+    wrapper.)
 
 **Using Homebrew's GStreamer**: pkg-config is needed: ("brew install
 pkg-config gstreamer"). This causes a large number of extra packages to
@@ -668,10 +666,27 @@ Homebrew installs gstreamer to `(HOMEBREW)/lib/gstreamer-1.0` where
 point to their location (Homebrew does not supply a complete GStreamer,
 but seems to have everything needed for UxPlay).
 
-Finally, build and install uxplay: open a terminal and change into the
-UxPlay source directory ("UxPlay-master" for zipfile downloads, "UxPlay"
-for "git clone" downloads) and build/install with "cmake . ; make ; sudo
-make install" (same as for Linux).
+**Using GStreamer installed from MacPorts**: this is **not**
+recommended, as currently the MacPorts GStreamer is old (v1.16.2),
+unmaintained, and built to use X11:
+
+-   Instead [build gstreamer
+    yourself](https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts)
+    if you use MacPorts and do not want to use the "Official" Gstreamer
+    binaries.
+
+*(If you really wish to use the MacPorts GStreamer-1.16.2, install
+pkgconf ("sudo port install pkgconf"), then "sudo port install
+gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
+gstreamer1-gst-plugins-bad gstreamer1-gst-libav". For X11 support on
+macOS, compile UxPlay using a special cmake option `-DUSE_X11=ON`, and
+run it from an XQuartz terminal with -vs ximagesink; older non-retina
+macs require a lower resolution when using X11: `uxplay -s 800x600`.)*
+
+After installing GStreamer, build and install uxplay: open a terminal
+and change into the UxPlay source directory ("UxPlay-master" for zipfile
+downloads, "UxPlay" for "git clone" downloads) and build/install with
+"cmake . ; make ; sudo make install" (same as for Linux).
 
 -   Running UxPlay while checking for GStreamer warnings (do this with
     "export GST_DEBUG=2" before runnng UxPlay) reveals that with the
@@ -702,24 +717,6 @@ make install" (same as for Linux).
     changes when the window width is changed by dragging its side; the
     option "-vs osxvideosink force-aspect-ratio=true" can be used to
     make the window have the correct aspect ratio when it first opens.
-
-***Using GStreamer installed from MacPorts (not recommended):***
-
-To install: "sudo port install pkgconf"; "sudo port install
-gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
-gstreamer1-gst-plugins-bad gstreamer1-gst-libav". **The MacPorts
-GStreamer is old (v1.16.2) and built to use X11**: use the special CMake
-option `-DUSE_X11=ON` when building UxPlay. Then uxplay must be run from
-an XQuartz terminal, and needs option "-vs ximagesink". On a unibody
-(non-retina) MacBook Pro, the default resolution wxh = 1920x1080 was too
-large, but using option "-s 800x600" worked. The MacPorts GStreamer
-pipeline seems fragile against attempts to change the X11 window size,
-or to rotations that switch a connected client between portrait and
-landscape mode while uxplay is running. Using the MacPorts X11 GStreamer
-seems only possible if the image size is left unchanged from the initial
-"-s wxh" setting (also use the iPad/iPhone setting that locks the screen
-orientation against switching between portrait and landscape mode as the
-device is rotated).
 
 ## Building UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64 compiler.
 

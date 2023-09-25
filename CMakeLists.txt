@@ -42,6 +42,11 @@ add_subdirectory( lib/playfair )
 add_subdirectory( lib )
 add_subdirectory( renderers )
 
+if  ( GST_MACOS )
+     add_definitions( -DGST_MACOS )
+     message ( STATUS "define GST_MACOS" )
+endif()
+
 add_executable( uxplay uxplay.cpp )
 target_link_libraries( uxplay
                    renderers
