@@ -94,43 +94,43 @@ raop_handler_info(raop_conn_t *conn,
     plist_t status_flags_node = plist_new_uint(68);
     plist_dict_set_item(r_node, "statusFlags", status_flags_node);
 
-    plist_t keep_alive_low_power_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
-
     plist_t source_version_node = plist_new_string(GLOBAL_VERSION);
     plist_dict_set_item(r_node, "sourceVersion", source_version_node);
 
     plist_t pk_node = plist_new_data(pk, pk_len);
     plist_dict_set_item(r_node, "pk", pk_node);
 
-    plist_t keep_alive_send_stats_as_body_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
-
     plist_t device_id_node = plist_new_string(hw_addr);
     plist_dict_set_item(r_node, "deviceID", device_id_node);
 
     plist_t audio_latencies_node = plist_new_array();
     plist_t audio_latencies_0_node = plist_new_dict();
-    plist_t audio_latencies_0_output_latency_micros_node = plist_new_bool(0);
-    plist_t audio_latencies_0_type_node = plist_new_uint(100);
     plist_t audio_latencies_0_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_0_input_latency_micros_node = plist_new_bool(0);
-    plist_dict_set_item(audio_latencies_0_node, "outputLatencyMicros", audio_latencies_0_output_latency_micros_node);
-    plist_dict_set_item(audio_latencies_0_node, "type", audio_latencies_0_type_node);
+    plist_t audio_latencies_0_input_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_type_node = plist_new_uint(100);
     plist_dict_set_item(audio_latencies_0_node, "audioType", audio_latencies_0_audio_type_node);
     plist_dict_set_item(audio_latencies_0_node, "inputLatencyMicros", audio_latencies_0_input_latency_micros_node);
+    plist_dict_set_item(audio_latencies_0_node, "outputLatencyMicros", audio_latencies_0_output_latency_micros_node);
+    plist_dict_set_item(audio_latencies_0_node, "type", audio_latencies_0_type_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_0_node);
     plist_t audio_latencies_1_node = plist_new_dict();
-    plist_t audio_latencies_1_output_latency_micros_node = plist_new_bool(0);
-    plist_t audio_latencies_1_type_node = plist_new_uint(101);
     plist_t audio_latencies_1_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_1_input_latency_micros_node = plist_new_bool(0);
+    plist_t audio_latencies_1_input_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_type_node = plist_new_uint(101);
+    plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node); 
+    plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_dict_set_item(audio_latencies_1_node, "outputLatencyMicros", audio_latencies_1_output_latency_micros_node);
     plist_dict_set_item(audio_latencies_1_node, "type", audio_latencies_1_type_node);
-    plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node);
-    plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_1_node);
     plist_dict_set_item(r_node, "audioLatencies", audio_latencies_node);
+
+    plist_t keep_alive_low_power_node = plist_new_bool(1);
+    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
+
+    plist_t keep_alive_send_stats_as_body_node = plist_new_bool(1);
+    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
 
     plist_t model_node = plist_new_string(GLOBAL_MODEL);
     plist_dict_set_item(r_node, "model", model_node);
@@ -152,7 +152,6 @@ raop_handler_info(raop_conn_t *conn,
     plist_t displays_0_max_fps_node = plist_new_uint(conn->raop->maxFPS);
     plist_t displays_0_overscanned_node = plist_new_bool(conn->raop->overscanned);
     plist_t displays_0_features = plist_new_uint(14);
-
     plist_dict_set_item(displays_0_node, "uuid", displays_0_uuid_node);
     plist_dict_set_item(displays_0_node, "widthPhysical", displays_0_width_physical_node);
     plist_dict_set_item(displays_0_node, "heightPhysical", displays_0_height_physical_node);
