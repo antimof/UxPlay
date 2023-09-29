@@ -114,9 +114,8 @@ raop_ntp_compare(const void* av, const void* bv)
 }
 
 static int
-raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_addr, int remote_addr_len)
+raop_ntp_parse_remote(raop_ntp_t *raop_ntp, const char *remote, int remote_addr_len)
 {
-    char current[25];
     int family;
     int ret;
     assert(raop_ntp);
@@ -127,11 +126,8 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
     } else {
         return -1;
     }
-    memset(current, 0, sizeof(current));
-    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote_addr[0], remote_addr[1],
-             remote_addr[2], remote_addr[3]);
-    logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp parse remote ip = %s", current);
-    ret = netutils_parse_address(family, current,
+    logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp parse remote ip = %s", remote);
+    ret = netutils_parse_address(family, remote,
                                  &raop_ntp->remote_saddr,
                                  sizeof(raop_ntp->remote_saddr));
     if (ret < 0) {
@@ -141,7 +137,7 @@ raop_ntp_parse_remote_address(raop_ntp_t *raop_ntp, const unsigned char *remote_
     return 0;
 }
 
-raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const unsigned char *remote_addr,
+raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const char *remote,
                           int remote_addr_len, unsigned short timing_rport, timing_protocol_t *time_protocol) {
     raop_ntp_t *raop_ntp;
 
@@ -157,7 +153,7 @@ raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const u
     memcpy(&raop_ntp->callbacks, callbacks, sizeof(raop_callbacks_t));    
     raop_ntp->timing_rport = timing_rport;
 
-    if (raop_ntp_parse_remote_address(raop_ntp, remote_addr, remote_addr_len) < 0) {
+    if (raop_ntp_parse_remote(raop_ntp, remote, remote_addr_len) < 0) {
         free(raop_ntp);
         return NULL;
     }
@@ -303,8 +299,7 @@ raop_ntp_thread(void *arg)
             logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
         } else {
             // Read response
-            response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0,
-                                    (struct sockaddr *) &raop_ntp->remote_saddr, &raop_ntp->remote_saddr_len);
+            response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0, NULL, NULL);
             if (response_len < 0) {
                 timeout_counter++;
                 char time[30];
@@ -418,7 +413,7 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_t
     if (raop_ntp->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
     }
-    use_ipv6 = 0;
+    //use_ipv6 = 0;
     if (raop_ntp_init_socket(raop_ntp, use_ipv6) < 0) {
         logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp initializing timing socket failed");
         MUTEX_UNLOCK(raop_ntp->run_mutex);

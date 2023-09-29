@@ -29,10 +29,10 @@
 
 typedef struct raop_rtp_s raop_rtp_t;
 
-raop_rtp_t *raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, 
+raop_rtp_t *raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const char *remote, 
                           int remotelen, const unsigned char *aeskey, const unsigned char *aesiv);
 
-void raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport, unsigned short *control_lport,
+void raop_rtp_start_audio(raop_rtp_t *raop_rtp, unsigned short *control_rport, unsigned short *control_lport,
                           unsigned short *data_lport, unsigned char *ct, unsigned int *sr);
 
 void raop_rtp_set_volume(raop_rtp_t *raop_rtp, float volume);

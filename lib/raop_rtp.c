@@ -122,9 +122,8 @@ struct raop_rtp_s {
 };
 
 static int
-raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int remotelen)
+raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const char *remote, int remotelen)
 {
-    char current[25];
     int family;
     int ret;
     assert(raop_rtp);
@@ -135,10 +134,8 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
     } else {
         return -1;
     }
-    memset(current, 0, sizeof(current));
-    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
-    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp parse remote ip = %s", current);
-    ret = netutils_parse_address(family, current,
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp parse remote ip = %s", remote);
+    ret = netutils_parse_address(family, remote,
                                  &raop_rtp->remote_saddr,
                                  sizeof(raop_rtp->remote_saddr));
     if (ret < 0) {
@@ -149,7 +146,7 @@ raop_rtp_parse_remote(raop_rtp_t *raop_rtp, const unsigned char *remote, int rem
 }
 
 raop_rtp_t *
-raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const unsigned char *remote, 
+raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, const char *remote, 
               int remotelen, const unsigned char *aeskey, const unsigned char *aesiv)
 {
     raop_rtp_t *raop_rtp;
@@ -250,7 +247,7 @@ raop_rtp_resend_callback(void *opaque, unsigned short seqnum, unsigned short cou
 }
 
 static int
-raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6, int use_udp)
+raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6)
 {
     assert(raop_rtp);
 
@@ -416,8 +413,8 @@ void raop_rtp_sync_clock(raop_rtp_t *raop_rtp, uint64_t *ntp_time, uint64_t *rtp
     raop_rtp->rtp_sync_offset = (int64_t) offset;
     correction += raop_rtp->rtp_sync_offset;
 
-    logger_log(raop_rtp->logger, LOGGER_DEBUG, "dataset %d raop_rtp sync correction=%lld, rtp_sync_offset = %8.6f ",
-               valid_data_count, correction, offset);
+    logger_log(raop_rtp->logger, LOGGER_DEBUG, "dataset %d raop_rtp sync correction=%lld, rtp_sync_offset = %lld ",
+               valid_data_count, correction, raop_rtp->rtp_sync_offset);
 }
 
 uint64_t rtp64_time (raop_rtp_t *raop_rtp, const uint32_t *rtp32) {
@@ -452,6 +449,7 @@ raop_rtp_thread_udp(void *arg)
     unsigned int packetlen;
     struct sockaddr_storage saddr;
     socklen_t saddrlen;
+    bool got_remote_control_saddr = false;
 
     /* for initial rtp to ntp conversions */    
     bool have_synced = false;
@@ -459,7 +457,6 @@ raop_rtp_thread_udp(void *arg)
     unsigned char no_data_marker[] = {0x00, 0x68, 0x34, 0x00 };
     int rtp_count = 0;
     double sync_adjustment = 0;
-    uint64_t delay = 0;
     unsigned short seqnum1 = 0, seqnum2 = 0;
 
     assert(raop_rtp);
@@ -508,12 +505,18 @@ raop_rtp_thread_udp(void *arg)
         }
 
         if (FD_ISSET(raop_rtp->csock, &rfds)) {
-            saddrlen = sizeof(saddr);
-            packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0,
-                                 (struct sockaddr *)&saddr, &saddrlen);
-
-            memcpy(&raop_rtp->control_saddr, &saddr, saddrlen);
-            raop_rtp->control_saddr_len = saddrlen;
+            if (got_remote_control_saddr== false) {
+                saddrlen = sizeof(saddr);
+                packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0,
+                                     (struct sockaddr *)&saddr, &saddrlen);
+                if (packetlen > 0) {
+                    memcpy(&raop_rtp->control_saddr, &saddr, saddrlen);
+                    raop_rtp->control_saddr_len = saddrlen;
+                    got_remote_control_saddr = true;
+                }
+	    } else {
+                packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0, NULL, NULL);
+            }
             int type_c = packet[1] & ~0x80;
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "\nraop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
 
@@ -615,8 +618,7 @@ raop_rtp_thread_udp(void *arg)
             //logger_log(raop_rtp->logger, LOGGER_INFO, "Would have data packet in queue");
             // Receiving audio data here
             saddrlen = sizeof(saddr);
-            packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0,
-                                 (struct sockaddr *)&saddr, &saddrlen);
+            packetlen = recvfrom(raop_rtp->dsock, (char *)packet, sizeof(packet), 0, NULL, NULL);
             // rtp payload type
             //int type_d = packet[1] & ~0x80;
             //logger_log(raop_rtp->logger, LOGGER_DEBUG, "raop_rtp_thread_udp type_d 0x%02x, packetlen = %d", type_d, packetlen);
@@ -694,7 +696,7 @@ raop_rtp_thread_udp(void *arg)
                     } else {
                         double elapsed_time =  raop_rtp->rtp_clock_rate * (rtp64_timestamp - raop_rtp->rtp_start_time) + sync_adjustment
                             + DELAY_AAC * SECOND_IN_NSECS; 
-                        audio_data.ntp_time_local = raop_rtp->ntp_start_time + delay + (uint64_t) elapsed_time;
+                        audio_data.ntp_time_local = raop_rtp->ntp_start_time + (uint64_t) elapsed_time;
                         audio_data.ntp_time_remote = raop_ntp_convert_local_time(raop_rtp->ntp, audio_data.ntp_time_local);
                         audio_data.sync_status = 0;
                     }
@@ -728,9 +730,9 @@ raop_rtp_thread_udp(void *arg)
     return 0;
 }
 
-// Start rtp service, three udp ports
+// Start rtp service, using two udp ports
 void
-raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_rport, unsigned short *control_lport,
+raop_rtp_start_audio(raop_rtp_t *raop_rtp,  unsigned short *control_rport, unsigned short *control_lport,
                      unsigned short *data_lport, unsigned char *ct, unsigned int *sr)
 {
     logger_log(raop_rtp->logger, LOGGER_INFO, "raop_rtp starting audio");
@@ -754,8 +756,8 @@ raop_rtp_start_audio(raop_rtp_t *raop_rtp, int use_udp, unsigned short *control_
     if (raop_rtp->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
     }
-    use_ipv6 = 0;
-    if (raop_rtp_init_sockets(raop_rtp, use_ipv6, use_udp) < 0) {
+    //use_ipv6 = 0;
+    if (raop_rtp_init_sockets(raop_rtp, use_ipv6) < 0) {
         logger_log(raop_rtp->logger, LOGGER_ERR, "raop_rtp initializing sockets failed");
         MUTEX_UNLOCK(raop_rtp->run_mutex);
         return;

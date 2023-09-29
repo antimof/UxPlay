@@ -107,9 +107,8 @@ struct raop_rtp_mirror_s {
 };
 
 static int
-raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *remote, int remotelen)
+raop_rtp_mirror_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const char *remote, int remotelen)
 {
-    char current[25];
     int family;
     int ret;
     assert(raop_rtp_mirror);
@@ -120,10 +119,8 @@ raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *r
     } else {
         return -1;
     }
-    memset(current, 0, sizeof(current));
-    snprintf(current, sizeof(current), "%d.%d.%d.%d", remote[0], remote[1], remote[2], remote[3]);
-    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror parse remote ip = %s", current);
-    ret = netutils_parse_address(family, current,
+    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror parse remote ip = %s", remote);
+    ret = netutils_parse_address(family, remote,
                                  &raop_rtp_mirror->remote_saddr,
                                  sizeof(raop_rtp_mirror->remote_saddr));
     if (ret < 0) {
@@ -135,7 +132,7 @@ raop_rtp_parse_remote(raop_rtp_mirror_t *raop_rtp_mirror, const unsigned char *r
 
 #define NO_FLUSH (-42)
 raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp,
-                                        const unsigned char *remote, int remotelen, const unsigned char *aeskey)
+                                        const char *remote, int remotelen, const unsigned char *aeskey)
 {
     raop_rtp_mirror_t *raop_rtp_mirror;
 
@@ -155,7 +152,7 @@ raop_rtp_mirror_t *raop_rtp_mirror_init(logger_t *logger, raop_callbacks_t *call
         free(raop_rtp_mirror);
         return NULL;
     }
-    if (raop_rtp_parse_remote(raop_rtp_mirror, remote, remotelen) < 0) {
+    if (raop_rtp_mirror_parse_remote(raop_rtp_mirror, remote, remotelen) < 0) {
         free(raop_rtp_mirror);
         return NULL;
     }
@@ -322,7 +319,7 @@ raop_rtp_mirror_thread(void *arg)
              * 0x00 0x00: encrypted packet containing a non-IDR  type 1 VCL NAL unit             *
              * 0x00 0x10: encrypted packet containing an IDR type 5 VCL NAL unit                 *
              * 0x01 0x00: unencrypted packet containing a type 7 SPS NAL + a type 8 PPS NAL unit *
-             * 0x02 0x00: unencryted packet (old protocol) no payload, sent once every second    *
+             * 0x02 0x00: unencrypted packet (old protocol) no payload, sent once every second    *
              * 0x05 0x00  unencrypted packet with a "streaming report", sent once per second.    */
 
 	    /* packet[6] + packet[7] may list a payload "option":    values seen are:            *
@@ -513,13 +510,14 @@ raop_rtp_mirror_thread(void *arg)
                     h264_data.nal_count += 2;
 		    prepend_sps_pps =  false;
                 }
+                raop_rtp_mirror->callbacks.video_resume(raop_rtp_mirror->callbacks.cls);
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &h264_data);
                 free(payload_out);
                 break;
             case 0x01:
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived unencryted codec packet from client:"
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived unencrypted codec packet from client:"
                            " payload_size %d header %s ts_client = %8.6f",
 			   payload_size, packet_description, (double) ntp_timestamp_remote / SEC);
                 if (payload_size == 0) {
@@ -603,7 +601,7 @@ raop_rtp_mirror_thread(void *arg)
                 // h264.pps_size = pps_size;
                 // h264.picture_parameter_set = malloc(h264.pps_size);
                 // memcpy(h264.picture_parameter_set, picture_parameter_set, pps_size);
-
+                raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
                 break;
             case 0x02:
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived old-protocol once-per-second packet from client:"
@@ -704,7 +702,7 @@ raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 }
 
 void
-raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned short *mirror_data_lport,
+raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, unsigned short *mirror_data_lport,
                       uint8_t show_client_FPS_data)
 {
     logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror starting mirroring");
@@ -723,7 +721,7 @@ raop_rtp_start_mirror(raop_rtp_mirror_t *raop_rtp_mirror, int use_udp, unsigned 
     if (raop_rtp_mirror->remote_saddr.ss_family == AF_INET6) {
         use_ipv6 = 1;
     }
-    use_ipv6 = 0;
+    //use_ipv6 = 0;
      
     raop_rtp_mirror->mirror_data_lport = *mirror_data_lport;
     if (raop_rtp_init_mirror_sockets(raop_rtp_mirror, use_ipv6) < 0) {

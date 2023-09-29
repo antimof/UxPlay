@@ -32,6 +32,15 @@ static GstClockTime gst_audio_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 const char * format[NFORMATS];
 
+static const gchar *avdec_aac = "avdec_aac";
+static const gchar *avdec_alac = "avdec_alac";
+static gboolean aac = FALSE;
+static gboolean alac = FALSE;
+static gboolean render_audio = FALSE;
+static gboolean async = FALSE;
+static gboolean vsync = FALSE;
+static gboolean sync = FALSE;
+
 typedef struct audio_renderer_s {
     GstElement *appsrc; 
     GstElement *pipeline;
@@ -58,14 +67,13 @@ static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)
 
 static gboolean check_plugins (void)
 {
-    int i;
     gboolean ret;
     GstRegistry *registry;
     const gchar *needed[] = { "app", "libav", "playback", "autodetect", "videoparsersbad",  NULL};
     const gchar *gst[] = {"plugins-base", "libav", "plugins-base", "plugins-good", "plugins-bad", NULL};
     registry = gst_registry_get ();
     ret = TRUE;
-    for (i = 0; i < g_strv_length ((gchar **) needed); i++) {
+    for (int i = 0; i < g_strv_length ((gchar **) needed); i++) {
         GstPlugin *plugin;
         plugin = gst_registry_find_plugin (registry, needed[i]);
         if (!plugin) {
@@ -76,6 +84,38 @@ static gboolean check_plugins (void)
         }
         gst_object_unref (plugin);
         plugin = NULL;
+    }
+    if (ret == FALSE) {
+        g_print ("\nif the plugin is installed, but not found, your gstreamer registry may have been corrupted.\n"
+                 "to rebuild it when gstreamer next starts, clear your gstreamer cache with:\n"
+                 "\"rm -rf ~/.cache/gstreamer-1.0\"\n\n");
+    }
+    return ret;
+}
+
+static gboolean check_plugin_feature (const gchar *needed_feature)
+{
+    gboolean ret;
+    GstPluginFeature *plugin_feature;
+    GstRegistry *registry = gst_registry_get ();
+    ret = TRUE;
+
+    plugin_feature = gst_registry_find_feature (registry, needed_feature, GST_TYPE_ELEMENT_FACTORY);
+    if (!plugin_feature) {
+      g_print ("Required gstreamer libav plugin feature '%s' not found:\n\n"
+	       "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
+	       "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
+	       "in such cases a complete version for that distribution is usually made available elsewhere)\n",
+	       needed_feature);
+      ret = FALSE;
+    } else {
+      gst_object_unref (plugin_feature);
+      plugin_feature = NULL;
+    }
+    if (ret == FALSE) {
+        g_print ("\nif the plugin feature is installed, but not found, your gstreamer registry may have been corrupted.\n"
+                 "to rebuild it when gstreamer next starts, clear your gstreamer cache with:\n"
+                 "\"rm -rf ~/.cache/gstreamer-1.0\"\n\n");
     }
     return ret;
 }
@@ -93,18 +133,21 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
 
     logger = render_logger;
 
+    aac = check_plugin_feature (avdec_aac);
+    alac = check_plugin_feature (avdec_alac);
+
     for (int i = 0; i < NFORMATS ; i++) {
         renderer_type[i] = (audio_renderer_t *)  calloc(1,sizeof(audio_renderer_t));
         g_assert(renderer_type[i]);
         GString *launch = g_string_new("appsrc name=audio_source ! ");
-        g_string_append(launch, "queue ");
+        g_string_append(launch, "queue ! ");
         switch (i) {
         case 0:    /* AAC-ELD */
         case 2:    /* AAC-LC */
-            g_string_append(launch, "! avdec_aac ! ");
+            if (aac) g_string_append(launch, "avdec_aac ! ");
             break;
         case 1:    /* ALAC */
-            g_string_append(launch, "! avdec_alac ! ");
+            if (alac) g_string_append(launch, "avdec_alac ! ");
             break;
         case 3:   /*PCM*/
             break;
@@ -117,18 +160,22 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
         g_string_append (launch, audiosink);
         switch(i) {
         case 1:  /*ALAC*/
-	    if (*audio_sync) {
+            if (*audio_sync) {
                 g_string_append (launch, " sync=true");
-	    } else {
+                async = TRUE;
+            } else {
                 g_string_append (launch, " sync=false");
-	    }
+                async = FALSE;
+            }
             break;
         default:
 	    if (*video_sync) {
                 g_string_append (launch, " sync=true");
-	    } else {
+                vsync = TRUE;
+            } else {
                 g_string_append (launch, " sync=false");
-	    }
+                vsync = FALSE;
+            }
             break;
         }
         renderer_type[i]->pipeline  = gst_parse_launch(launch->str, &error);
@@ -183,17 +230,47 @@ void audio_renderer_stop() {
     }
 }
 
-void  audio_renderer_start(unsigned char *ct) {
-    unsigned char compression_type = 0, id;
+static void get_renderer_type(unsigned char *ct, int *id) {
+    render_audio = FALSE;
+    *id = -1;
     for (int i = 0; i < NFORMATS; i++) {
-        if(renderer_type[i]->ct == *ct) {
-            compression_type = *ct;
-	    id = i;
+        if (renderer_type[i]->ct == *ct) {
+	    *id = i;
             break;
         }
     }
-    if (compression_type && renderer) {
-        if(compression_type != renderer->ct) {
+    switch (*id) {
+    case 2:
+    case 0:
+        if (aac) {
+            render_audio = TRUE;
+        } else {
+            logger_log(logger, LOGGER_INFO, "*** GStreamer libav plugin feature avdec_aac is missing, cannot decode AAC audio");
+        }
+        sync = vsync;
+        break;
+    case 1:
+        if (alac) {
+            render_audio = TRUE;
+        } else {
+            logger_log(logger, LOGGER_INFO, "*** GStreamer libav plugin feature avdec_alac is missing, cannot decode ALAC audio");
+        }
+        sync = async;
+        break;
+    case 3:
+        render_audio = TRUE;
+	sync = FALSE;
+        break;
+    default:
+        break;
+    }
+}
+
+void  audio_renderer_start(unsigned char *ct) {
+    int id = -1;
+    get_renderer_type(ct, &id);
+    if (id >= 0 && renderer) {
+        if(*ct != renderer->ct) {
             gst_app_src_end_of_stream(GST_APP_SRC(renderer->appsrc));
             gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
             logger_log(logger, LOGGER_INFO, "changed audio connection, format %s", format[id]);
@@ -201,7 +278,7 @@ void  audio_renderer_start(unsigned char *ct) {
             gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
             gst_audio_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
         }
-    } else if (compression_type) {
+    } else if (id >= 0) {
         logger_log(logger, LOGGER_INFO, "start audio connection, format %s", format[id]);
         renderer = renderer_type[id];
         gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
@@ -214,14 +291,19 @@ void  audio_renderer_start(unsigned char *ct) {
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time) {
     GstBuffer *buffer;
     bool valid;
+
+    if (!render_audio) return;    /* do nothing unless render_audio == TRUE */
+
     GstClockTime pts = (GstClockTime) *ntp_time ;    /* now in nsecs */
     //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
-    if (pts >= gst_audio_pipeline_base_time) {
-        pts -= gst_audio_pipeline_base_time;
-    } else {
-        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_audio_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
-                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_audio_pipeline_base_time) / SECOND_IN_NSECS);
-        return;
+    if (sync) {
+        if (pts >= gst_audio_pipeline_base_time) {
+            pts -= gst_audio_pipeline_base_time;
+        } else {
+            logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_audio_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                       ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_audio_pipeline_base_time) / SECOND_IN_NSECS);
+            return;
+        }
     }
     if (data_len == 0 || renderer == NULL) return;
 
@@ -235,7 +317,9 @@ void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned s
     buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
     g_assert(buffer != NULL);
     //g_print("audio latency %8.6f\n", (double) latency / SECOND_IN_NSECS);
-    GST_BUFFER_PTS(buffer) = pts;
+    if (sync) {
+        GST_BUFFER_PTS(buffer) = pts;
+    }
     gst_buffer_fill(buffer, 0, data, *data_len);
     switch (renderer->ct){
     case 8: /*AAC-ELD*/

@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "June 2023" "1.65" "User Commands"
+.TH UXPLAY "1" "September 2023" "1.66" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.65: An open\-source AirPlay mirroring (+ audio streaming) server:
+UxPlay 1.66: An open\-source AirPlay mirroring (+ audio streaming) server:
 .SH OPTIONS
 .TP
 .B
@@ -56,7 +56,7 @@ UxPlay 1.65: An open\-source AirPlay mirroring (+ audio streaming) server:
 .IP
    choices: ximagesink,xvimagesink,vaapisink,glimagesink,
 .IP
-   gtksink,waylandsink,osximagesink,kmssink,d3d11videosink,...
+   gtksink,waylandsink,osxvideosink,kmssink,d3d11videosink,...
 .PP
 .TP
 \fB\-vs\fR 0     Streamed audio only, with no video display window.
@@ -91,6 +91,16 @@ UxPlay 1.65: An open\-source AirPlay mirroring (+ audio streaming) server:
 \fB\-nc\fR       Do not close video window when client stops mirroring
 .TP
 \fB\-nohold\fR   Drop current connection when new client connects.
+.TP
+\fB\-restrict\fR Restrict clients to those specified by "-allow deviceID".
+.IP
+   Uxplay displays deviceID when a client attempts to connect.
+.IP
+   Use "-restrict no" for no client restrictions (default).
+.PP
+\fB\-allow\fR id Permit deviceID = id to connect if restrictions are imposed.
+.TP
+\fB\-block\fR id Always block connections from deviceID = id.
 .TP
 \fB\-FPSdata\fR  Show video-streaming performance reports sent by client.
 .TP

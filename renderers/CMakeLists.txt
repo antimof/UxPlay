@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.5)
 
 if (APPLE )
   set( ENV{PKG_CONFIG_PATH} "/Library/FrameWorks/GStreamer.framework/Libraries/pkgconfig" ) # GStreamer.framework, preferred
@@ -44,6 +44,11 @@ target_link_libraries ( renderers PUBLIC airplay )
 if( GST_INCLUDE_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/include" )
   set( GST_INCLUDE_DIRS "/Library/FrameWorks/GStreamer.framework/Headers")
   message( STATUS  "GST_INCLUDE_DIRS" ${GST_INCLUDE_DIRS} )
+# fix to use -DGST_MACOS for "Official" GStreamer >= 1.22 packages
+  pkg_check_modules ( GST122 gstreamer-1.0>=1.22 )
+  if ( GST122_FOUND )
+    set( GST_MACOS "1" CACHE STRING "define GST_MACOS in uxplay.cpp" )
+  endif()
 endif()
 target_include_directories ( renderers PUBLIC ${GST_INCLUDE_DIRS} )
 
@@ -60,5 +65,6 @@ elseif( CMAKE_VERSION VERSION_LESS "3.12" )
 else()		  
   target_link_libraries( renderers PUBLIC ${GST_LINK_LIBRARIES} )
 endif()
+
 
 

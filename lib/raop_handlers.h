@@ -94,43 +94,43 @@ raop_handler_info(raop_conn_t *conn,
     plist_t status_flags_node = plist_new_uint(68);
     plist_dict_set_item(r_node, "statusFlags", status_flags_node);
 
-    plist_t keep_alive_low_power_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
-
     plist_t source_version_node = plist_new_string(GLOBAL_VERSION);
     plist_dict_set_item(r_node, "sourceVersion", source_version_node);
 
     plist_t pk_node = plist_new_data(pk, pk_len);
     plist_dict_set_item(r_node, "pk", pk_node);
 
-    plist_t keep_alive_send_stats_as_body_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
-
     plist_t device_id_node = plist_new_string(hw_addr);
     plist_dict_set_item(r_node, "deviceID", device_id_node);
 
     plist_t audio_latencies_node = plist_new_array();
     plist_t audio_latencies_0_node = plist_new_dict();
-    plist_t audio_latencies_0_output_latency_micros_node = plist_new_bool(0);
-    plist_t audio_latencies_0_type_node = plist_new_uint(100);
     plist_t audio_latencies_0_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_0_input_latency_micros_node = plist_new_bool(0);
-    plist_dict_set_item(audio_latencies_0_node, "outputLatencyMicros", audio_latencies_0_output_latency_micros_node);
-    plist_dict_set_item(audio_latencies_0_node, "type", audio_latencies_0_type_node);
+    plist_t audio_latencies_0_input_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_type_node = plist_new_uint(100);
     plist_dict_set_item(audio_latencies_0_node, "audioType", audio_latencies_0_audio_type_node);
     plist_dict_set_item(audio_latencies_0_node, "inputLatencyMicros", audio_latencies_0_input_latency_micros_node);
+    plist_dict_set_item(audio_latencies_0_node, "outputLatencyMicros", audio_latencies_0_output_latency_micros_node);
+    plist_dict_set_item(audio_latencies_0_node, "type", audio_latencies_0_type_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_0_node);
     plist_t audio_latencies_1_node = plist_new_dict();
-    plist_t audio_latencies_1_output_latency_micros_node = plist_new_bool(0);
-    plist_t audio_latencies_1_type_node = plist_new_uint(101);
     plist_t audio_latencies_1_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_1_input_latency_micros_node = plist_new_bool(0);
+    plist_t audio_latencies_1_input_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_type_node = plist_new_uint(101);
+    plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node); 
+    plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_dict_set_item(audio_latencies_1_node, "outputLatencyMicros", audio_latencies_1_output_latency_micros_node);
     plist_dict_set_item(audio_latencies_1_node, "type", audio_latencies_1_type_node);
-    plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node);
-    plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_1_node);
     plist_dict_set_item(r_node, "audioLatencies", audio_latencies_node);
+
+    plist_t keep_alive_low_power_node = plist_new_bool(1);
+    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
+
+    plist_t keep_alive_send_stats_as_body_node = plist_new_bool(1);
+    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
 
     plist_t model_node = plist_new_string(GLOBAL_MODEL);
     plist_dict_set_item(r_node, "model", model_node);
@@ -152,7 +152,6 @@ raop_handler_info(raop_conn_t *conn,
     plist_t displays_0_max_fps_node = plist_new_uint(conn->raop->maxFPS);
     plist_t displays_0_overscanned_node = plist_new_bool(conn->raop->overscanned);
     plist_t displays_0_features = plist_new_uint(14);
-
     plist_dict_set_item(displays_0_node, "uuid", displays_0_uuid_node);
     plist_dict_set_item(displays_0_node, "widthPhysical", displays_0_width_physical_node);
     plist_dict_set_item(displays_0_node, "heightPhysical", displays_0_height_physical_node);
@@ -314,8 +313,6 @@ raop_handler_setup(raop_conn_t *conn,
                    http_request_t *request, http_response_t *response,
                    char **response_data, int *response_datalen)
 {
-    const char *transport;
-    int use_udp;
     const char *dacp_id;
     const char *active_remote_header;
     bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
@@ -333,15 +330,6 @@ raop_handler_setup(raop_conn_t *conn,
         if (conn->raop_rtp) {
             raop_rtp_remote_control_id(conn->raop_rtp, dacp_id, active_remote_header);
         }
-    }
-
-    transport = http_request_get_header(request, "Transport");
-    if (transport) {
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "Transport: %s", transport);
-        use_udp = strncmp(transport, "RTP/AVP/TCP", 11);
-    } else {
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "Transport: null");
-        use_udp = 0;
     }
 
     // Parsing bplist
@@ -365,6 +353,33 @@ raop_handler_setup(raop_conn_t *conn,
         // First setup
         char* eiv = NULL;
         uint64_t eiv_len = 0;
+
+        char *deviceID = NULL;
+        char *model = NULL;
+        char *name = NULL;
+        bool admit_client = true;
+        plist_t req_deviceid_node = plist_dict_get_item(req_root_node, "deviceID");
+        plist_get_string_val(req_deviceid_node, &deviceID);  
+        plist_t req_model_node = plist_dict_get_item(req_root_node, "model");
+        plist_get_string_val(req_model_node, &model);  
+        plist_t req_name_node = plist_dict_get_item(req_root_node, "name");
+        plist_get_string_val(req_name_node, &name);  
+	if (conn->raop->callbacks.report_client_request) {
+            conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
+        }
+        free (deviceID);
+        deviceID = NULL;
+        free (model);
+        model = NULL;
+        free (name);
+        name = NULL;
+        if (admit_client == false) {
+            /* client is not authorized to connect */
+            plist_free(res_root_node);
+            plist_free(req_root_node);
+            return;
+	}
+
         plist_get_data_val(req_eiv_node, &eiv, &eiv_len);
         memcpy(aesiv, eiv, 16);
         free(eiv);	
@@ -408,12 +423,18 @@ raop_handler_setup(raop_conn_t *conn,
             unsigned char ecdh_secret[X25519_KEY_SIZE];
             if (pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret)) {
                 /* In this case  (legacy) pairing with client was successfully set up and created the shared ecdh_secret:
-                 * aeskey must be hashed with it
+                 * aeskey must now be hashed with it
                  *
                  * If byte 27 of features ("supports legacy pairing") is turned off, the client does not request pairsetup
                  * and does NOT set up pairing (this eliminates a 5 second delay in connecting with no apparent bad effects).
-                 * This may be because uxplay currently does not support connections with more than one client at a time
-                 * while AppleTV supports up to 12 clients, and uses pairing to give each a distinct SessionID .*/
+                 * In this case, ecdh_secret does not exist, so aeskey should NOT be hashed with it.
+
+                 * UxPlay may be able to function with byte 27 turned off because it currently does not support connections 
+                 * with more than one client at a time. AppleTV supports up to 12 clients, uses pairing to give each a distinct
+                 * SessionID and ecdh_secret.
+            
+                 * The "old protocol" Windows AirPlay client AirMyPC seems not to respect the byte 27 setting, and always sets
+                 * up the  ecdh_secret, but decryption fails if aeskey is hashed.*/
 
                 if (logger_debug) {
                     char *str = utils_data_to_string(ecdh_secret, X25519_KEY_SIZE, 16);
@@ -481,14 +502,33 @@ raop_handler_setup(raop_conn_t *conn,
                        " may be using unsupported AirPlay2 \"Remote Control\" protocol");
         }
         unsigned short timing_lport = conn->raop->timing_lport;
-        conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, conn->remote,
-                                       conn->remotelen, (unsigned short) timing_rport, &time_protocol);
-        raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
 
-        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
-                                       conn->remote, conn->remotelen, aeskey, aesiv);
-        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
-                                                     conn->raop_ntp, conn->remote, conn->remotelen, aeskey);
+        conn->raop_ntp = NULL;
+        conn->raop_rtp = NULL;
+        conn->raop_rtp_mirror = NULL;
+        if (conn->remotelen == 4 || conn->remotelen == 16) {
+            char remote[40];
+            if (conn->remotelen == 4) {
+                /* IPV4 */
+                snprintf(remote, sizeof(remote), "%d.%d.%d.%d", conn->remote[0], conn->remote[1],
+                         conn->remote[2], conn->remote[3]);
+            } else {
+                /*IPV6*/
+                logger_log(conn->raop->logger, LOGGER_INFO, "client is using IPV6 (untested!)");
+                snprintf(remote, sizeof(remote), "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+                         conn->remote[0], conn->remote[1], conn->remote[2], conn->remote[3],
+                         conn->remote[4], conn->remote[5], conn->remote[6], conn->remote[7],
+                         conn->remote[8], conn->remote[9], conn->remote[10], conn->remote[11],
+                         conn->remote[12], conn->remote[13], conn->remote[14], conn->remote[15]);
+            }
+            conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, remote,
+                                           conn->remotelen, (unsigned short) timing_rport, &time_protocol);
+            raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
+            conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
+                                           remote, conn->remotelen, aeskey, aesiv);
+            conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
+                                                         conn->raop_ntp, remote, conn->remotelen, aeskey);
+        }
 
         plist_t res_event_port_node = plist_new_uint(conn->raop->port);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);
@@ -523,7 +563,7 @@ raop_handler_setup(raop_conn_t *conn,
 
                     if (conn->raop_rtp_mirror) {
                         raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, &stream_connection_id);
-                        raop_rtp_start_mirror(conn->raop_rtp_mirror, use_udp, &dport, conn->raop->clientFPSdata);
+                        raop_rtp_start_mirror(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "Mirroring not initialized at SETUP, playing will fail!");
@@ -589,7 +629,7 @@ raop_handler_setup(raop_conn_t *conn,
                     }
 
                     if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, use_udp, &remote_cport, &cport, &dport, &ct, &sr);
+                        raop_rtp_start_audio(conn->raop_rtp, &remote_cport, &cport, &dport, &ct, &sr);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");

@@ -1,4 +1,8 @@
-cmake_minimum_required( VERSION 3.4.3 )
+if ( APPLE )
+  cmake_minimum_required( VERSION 3.13 )
+else ()
+  cmake_minimum_required( VERSION 3.5 )
+endif ()
 
 project( uxplay )
 
@@ -37,6 +41,11 @@ add_subdirectory( lib/llhttp )
 add_subdirectory( lib/playfair )
 add_subdirectory( lib )
 add_subdirectory( renderers )
+
+if  ( GST_MACOS )
+     add_definitions( -DGST_MACOS )
+     message ( STATUS "define GST_MACOS" )
+endif()
 
 add_executable( uxplay uxplay.cpp )
 target_link_libraries( uxplay

@@ -39,7 +39,7 @@ static GstClockTime gst_video_pipeline_base_time = GST_CLOCK_TIME_NONE;
 static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
-
+static bool sync = false;
 
 struct video_renderer_s {
     GstElement *appsrc, *pipeline, *sink;
@@ -160,8 +160,10 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " name=video_sink");
     if (*video_sync) {
         g_string_append(launch, " sync=true");
+        sync = true;
     } else {
         g_string_append(launch, " sync=false");
+        sync = false;
     }
     logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline will be:\n\"%s\"", launch->str);
     renderer->pipeline = gst_parse_launch(launch->str, &error);
@@ -219,6 +221,25 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     }
 }
 
+void video_renderer_pause() {
+    logger_log(logger, LOGGER_DEBUG, "video renderer paused");
+    gst_element_set_state(renderer->pipeline, GST_STATE_PAUSED);
+}
+
+void video_renderer_resume() {
+    if (video_renderer_is_paused()) {
+        logger_log(logger, LOGGER_DEBUG, "video renderer resumed");
+        gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+        gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
+    }
+}
+
+bool video_renderer_is_paused() {
+    GstState state;
+    gst_element_get_state(renderer->pipeline, &state, NULL, 0);
+    return (state == GST_STATE_PAUSED);
+}
+
 void video_renderer_start() {
     gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
     gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
@@ -233,12 +254,14 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
     GstBuffer *buffer;
     GstClockTime pts = (GstClockTime) *ntp_time; /*now in nsecs */
     //GstClockTimeDiff latency = GST_CLOCK_DIFF(gst_element_get_current_clock_time (renderer->appsrc), pts);
-    if (pts >= gst_video_pipeline_base_time) {
-        pts -= gst_video_pipeline_base_time;
-    } else {
-        logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
-                   ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_video_pipeline_base_time) / SECOND_IN_NSECS);
-        return;
+    if (sync) {
+        if (pts >= gst_video_pipeline_base_time) {
+            pts -= gst_video_pipeline_base_time;
+        } else {
+            logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+                       ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_video_pipeline_base_time) / SECOND_IN_NSECS);
+            return;
+        }
     }
     g_assert(data_len != 0);
     /* first four bytes of valid  h264  video data are 0x00, 0x00, 0x00, 0x01.    *
@@ -254,8 +277,10 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
         }
         buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
         g_assert(buffer != NULL);
-        //g_print("video latency %8.6f\n", (double) latency / SECOND_IN_NSECS);	
-        GST_BUFFER_PTS(buffer) = pts;
+        //g_print("video latency %8.6f\n", (double) latency / SECOND_IN_NSECS);
+        if (sync) {
+            GST_BUFFER_PTS(buffer) = pts;
+        }
         gst_buffer_fill(buffer, 0, data, *data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
@@ -324,12 +349,12 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
         if (strstr(err->message,"Internal data stream error")) {
             logger_log(logger, LOGGER_INFO,
                      "*** This is a generic GStreamer error that usually means that GStreamer\n"
-                     "*** was unable to construct a working video pipeline.\n"
+                     "*** was unable to construct a working video pipeline.\n\n"
                      "*** If you are letting the default autovideosink select the videosink,\n"
                      "*** GStreamer may be trying to use non-functional hardware h264 video decoding.\n"
                      "*** Try using option -avdec to force software decoding or use -vs <videosink>\n"
-                     "*** to select a videosink of your choice (see \"man uxplay\").\n"
-                     "*** Raspberry Pi OS with GStreamer-1.18.4 needs \"-bt709\" uxplay option");
+                     "*** to select a videosink of your choice (see \"man uxplay\").\n\n"
+                     "*** Raspberry Pi OS with (unpatched) GStreamer-1.18.4 needs \"-bt709\" uxplay option");
         }
 	g_error_free (err);
         g_free (debug);

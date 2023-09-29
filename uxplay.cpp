@@ -31,6 +31,8 @@
 #include <sstream>
 #include <iterator>
 #include <sys/stat.h>
+#include <cstdio>
+#include <stdarg.h>
 
 #ifdef _WIN32  /*modifications for Windows compilation */
 #include <glib.h>
@@ -51,7 +53,6 @@
 # endif
 #endif
 
-#include "log.h"
 #include "lib/raop.h"
 #include "lib/stream.h"
 #include "lib/logger.h"
@@ -59,7 +60,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.65"
+#define VERSION "1.66"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -116,11 +117,44 @@ static bool do_append_hostname = true;
 static bool use_random_hw_addr = false;
 static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
+static int log_level = LOGGER_INFO;
 static bool bt709_fix = false;
 static int max_connections = 2;
 static unsigned short raop_port;
 static unsigned short airplay_port;
 static uint64_t remote_clock_offset = 0;
+static std::vector<std::string> allowed_clients;
+static std::vector<std::string> blocked_clients;
+static bool restrict_clients;
+
+/* logging */
+
+void log(int level, const char* format, ...) {
+    va_list vargs;
+    if (level > log_level) return;
+    switch (level) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+        printf("*** ERROR: ");
+        break;
+    case 4:
+        printf("*** WARNING: ");
+        break;
+    default:
+        break;
+    }
+    va_start(vargs, format);
+    vprintf(format, vargs);
+    printf("\n");
+    va_end(vargs);
+}
+
+#define LOGD(...) log(LOGGER_DEBUG, __VA_ARGS__)
+#define LOGI(...) log(LOGGER_INFO, __VA_ARGS__)
+#define LOGW(...) log(LOGGER_WARNING, __VA_ARGS__)
+#define LOGE(...) log(LOGGER_ERR, __VA_ARGS__)
 
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
@@ -247,7 +281,6 @@ guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
 #endif
 
 static void main_loop()  {
-    guint connection_watch_id = 0;
     guint gst_bus_watch_id = 0;
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     relaunch_video = false;
@@ -268,7 +301,7 @@ static void main_loop()  {
 }    
 
 static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
-    for (int i = 0; i < str.length(); i += 3) {
+    for (int i = 0; i < (int) str.length(); i += 3) {
         hw_addr.push_back((char) stol(str.substr(i), NULL, 16));
     }
     return 0;
@@ -344,7 +377,7 @@ static std::string find_mac () {
 #else
     struct ifaddrs *ifap, *ifaptr;
     int non_null_octets = 0;
-    unsigned char octet[6], *ptr;
+    unsigned char octet[6];
     if (getifaddrs(&ifap) == 0) {
         for(ifaptr = ifap; ifaptr != NULL; ifaptr = ifaptr->ifa_next) {
             if(ifaptr->ifa_addr == NULL) continue;
@@ -356,7 +389,7 @@ static std::string find_mac () {
             }
 #else    /* macOS and *BSD */
             if (ifaptr->ifa_addr->sa_family != AF_LINK) continue;
-            ptr = (unsigned char *) LLADDR((struct sockaddr_dl *) ifaptr->ifa_addr);
+            unsigned char *ptr = (unsigned char *) LLADDR((struct sockaddr_dl *) ifaptr->ifa_addr);
             for (int i= 0; i < 6 ; i++) {
                 if ((octet[i] = *ptr) != 0) non_null_octets++;
                 ptr++;
@@ -423,10 +456,10 @@ static void print_info (char *name) {
     printf("          nvdec, nvh264dec, vaapih64dec, vtdec,etc.\n");
     printf("          choices: avdec_h264,vaapih264dec,nvdec,nvh264dec,v4l2h264dec\n");
     printf("-vc ...   Choose the GStreamer videoconverter; default \"videoconvert\"\n");
-    printf("          another choice when using v4l2h264decode: v4l2convert\n");
+    printf("          another choice when using v4l2h264dec: v4l2convert\n");
     printf("-vs ...   Choose the GStreamer videosink; default \"autovideosink\"\n");
     printf("          some choices: ximagesink,xvimagesink,vaapisink,glimagesink,\n");
-    printf("          gtksink,waylandsink,osximagesink,kmssink,d3d11videosink etc.\n");
+    printf("          gtksink,waylandsink,osxvideosink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
     printf("-bt709    A workaround (bt709 color) sometimes needed on RPi\n"); 
@@ -443,6 +476,11 @@ static void print_info (char *name) {
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
     printf("-nc       do Not Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
+    printf("-restrict Restrict clients to those specified by \"-allow <deviceID>\"\n");
+    printf("          UxPlay displays deviceID when a client attempts to connect\n");
+    printf("          Use \"-restrict no\" for no client restrictions (default)\n");
+    printf("-allow <i>Permit deviceID = <i> to connect if restrictions are imposed\n");
+    printf("-block <i>Always block connections from deviceID = <i>\n");
     printf("-FPSdata  Show video-streaming performance reports sent by client.\n");
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
@@ -600,7 +638,24 @@ static void parse_arguments (int argc, char *argv[]) {
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
-        if (arg == "-n") {
+	if (arg == "-allow") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            i++;
+	    allowed_clients.push_back(argv[i]);
+	} else if (arg == "-block") {
+            if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
+            i++;
+	    blocked_clients.push_back(argv[i]);    
+	} else if (arg == "-restrict") {
+            if (i <  argc - 1) {
+                if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
+                    restrict_clients = false;
+                    i++;
+                    continue;
+                }
+	    } 
+            restrict_clients = true;
+        } else if (arg == "-n") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             server_name = std::string(argv[++i]);
         } else if (arg == "-nh") {
@@ -1041,18 +1096,41 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
     return 0;
 }
 
+static bool check_client(char *deviceid) {
+    bool ret = false;
+    int list =  allowed_clients.size();
+    for (int i = 0; i < list ; i++) {
+        if (!strcmp(deviceid,allowed_clients[i].c_str())) {
+	    ret = true;
+	    break;
+        }
+    }
+    return ret;
+}
+
+static bool check_blocked_client(char *deviceid) {
+    bool ret = false;
+    int list =  blocked_clients.size();
+    for (int i = 0; i < list ; i++) {
+        if (!strcmp(deviceid,blocked_clients[i].c_str())) {
+	    ret = true;
+	    break;
+        }
+    }
+    return ret;
+}
 
 // Server callbacks
 extern "C" void conn_init (void *cls) {
     open_connections++;
-    //LOGD("Open connections: %i", open_connections);
+    LOGD("Open connections: %i", open_connections);
     //video_renderer_update_background(1);
 }
 
 extern "C" void conn_destroy (void *cls) {
     //video_renderer_update_background(-1);
     open_connections--;
-    //LOGD("Open connections: %i", open_connections);
+    LOGD("Open connections: %i", open_connections);
     if (open_connections == 0) {
         remote_clock_offset = 0;
         if (use_audio) {
@@ -1080,6 +1158,23 @@ extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) 
     }
 }
 
+extern "C" void report_client_request(void *cls, char *deviceid, char * model, char *name, bool * admit) {
+    LOGI("connection request from %s (%s) with deviceID = %s\n", name, model, deviceid);
+    if (restrict_clients) {
+        *admit = check_client(deviceid);
+	if (*admit == false) {
+            LOGI("client connections have been restricted to those with listed deviceID,\nuse \"-allow %s\" to allow this client to connect.\n",
+                 deviceid);
+	}
+    } else {
+        *admit = true;
+    }
+    if (check_blocked_client(deviceid)) {
+        *admit = false;
+        LOGI("*** attempt to connect by blocked client (clientID %s): DENIED\n", deviceid);
+    }
+}
+
 extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *data) {
     if (dump_audio) {
         dump_audio_to_file(data->data, data->data_len, (data->data)[0] & 0xf0);
@@ -1089,12 +1184,22 @@ extern "C" void audio_process (void *cls, raop_ntp_t *ntp, audio_decode_struct *
             remote_clock_offset = data->ntp_time_local - data->ntp_time_remote;
         }
         data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
-        if (data->ct == 2 && audio_delay_alac) {
-            data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote  + audio_delay_alac);
-        } else if (audio_delay_aac) {
-            data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_aac);
+        switch (data->ct) {
+        case 2:
+            if (audio_delay_alac) {
+                data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_alac);
+            }
+            break;
+        case 4:
+        case 8:
+            if (audio_delay_aac) {
+                data->ntp_time_remote = (uint64_t) ((int64_t) data->ntp_time_remote + audio_delay_aac);
+            }
+            break;
+        default:
+            break;
         }
-      audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
+        audio_renderer_render_buffer(data->data, &(data->data_len), &(data->seqnum), &(data->ntp_time_remote));
     }
 }
 
@@ -1110,6 +1215,19 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
         video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time_remote));
     }
 }
+
+extern "C" void video_pause (void *cls) {
+    if (use_video) {
+        video_renderer_pause();
+    }
+}
+
+extern "C" void video_resume (void *cls) {
+    if (use_video) {
+        video_renderer_resume();
+    }
+}
+
 
 extern "C" void audio_flush (void *cls) {
     if (use_audio) {
@@ -1235,7 +1353,6 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
 }
 
 int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
-    int dnssd_error;
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -1246,12 +1363,15 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.video_process = video_process;
     raop_cbs.audio_flush = audio_flush;
     raop_cbs.video_flush = video_flush;
+    raop_cbs.video_pause = video_pause;
+    raop_cbs.video_resume = video_resume;
     raop_cbs.audio_set_volume = audio_set_volume;
     raop_cbs.audio_get_format = audio_get_format;
     raop_cbs.video_report_size = video_report_size;
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
-    
+    raop_cbs.report_client_request = report_client_request;
+
     /* set max number of connections = 2 to protect against capture by new client */
     raop = raop_init(max_connections, &raop_cbs);
     if (raop == NULL) {
@@ -1277,7 +1397,7 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_set_udp_ports(raop, udp);
     
     raop_set_log_callback(raop, log_callback, NULL);
-    raop_set_log_level(raop, debug_log ? RAOP_LOG_DEBUG : LOGGER_INFO);
+    raop_set_log_level(raop, log_level);
 
     raop_port = raop_get_port(raop);
     raop_start(raop, &raop_port);
@@ -1322,9 +1442,8 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
             bool is_part_of_item, in_quotes;
             char endchar;
             is_part_of_item = false;
-            for (int i = 0; i < line.size(); i++) {
-                switch (is_part_of_item) {
-                case false:
+            for (int i = 0; i < (int) line.size(); i++) {
+                if (is_part_of_item == false) {
                     if (line[i] == ' ') {
                         line[i] = '\0';
                     } else {
@@ -1343,19 +1462,17 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
 		            break;
                         }
                     }
-                    break;
-                case true:
-	        /* previous character was inside this item */
+                } else {
+                    /* previous character was inside this item */
                     if (line[i] == endchar) {
                         if (in_quotes) {
                             /* cases where endchar is inside quoted item */
                             if (i > 0 && line[i - 1] == '\\') continue;
-                            if (i + 1 < line.size() && line[i + 1] != ' ') continue;
+                            if (i + 1 < (int) line.size() && line[i + 1] != ' ') continue;
 		        }
                         line[i] =  '\0';
                         is_part_of_item = false;
                     }
-                    break;
                 }
             }
 
@@ -1388,8 +1505,21 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
         free (argv);
     }
 }
+#ifdef GST_MACOS
+/* workaround for GStreamer >= 1.22 "Official Builds" on macOS */
+#include <TargetConditionals.h>
+#include <gst/gstmacos.h>
+void real_main (int argc, char *argv[]);
 
 int main (int argc, char *argv[]) {
+  printf("*=== Using gst_macos_main wrapper for GStreamer >= 1.22 on macOS ===*\n");
+  return  gst_macos_main ((GstMainFunc) real_main, argc, argv , NULL);
+}
+
+void real_main (int argc, char *argv[]) {
+#else
+int main (int argc, char *argv[]) {
+#endif
     std::vector<char> server_hw_addr;
     std::string mac_address;
     std::string config_file = "";
@@ -1407,6 +1537,8 @@ int main (int argc, char *argv[]) {
     }
     parse_arguments (argc, argv);
 
+    log_level = (debug_log ? LOGGER_DEBUG : LOGGER_INFO);
+    
 #ifdef _WIN32    /*  use utf-8 terminal output; don't buffer stdout in WIN32 when debug_log = false */
     SetConsoleOutputCP(CP_UTF8);
     if (!debug_log) {
@@ -1477,7 +1609,7 @@ int main (int argc, char *argv[]) {
 
     render_logger = logger_init();
     logger_set_callback(render_logger, log_callback, NULL);
-    logger_set_level(render_logger, debug_log ? LOGGER_DEBUG : LOGGER_INFO);
+    logger_set_level(render_logger, log_level);
 
     if (use_audio) {
       audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync);
