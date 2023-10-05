@@ -47,47 +47,41 @@ format by Fedora 38 (“<code>sudo dnf install uxplay</code>”).</p></li>
 UxPlay, a RPM “specfile” <strong>uxplay.spec</strong> is now provided
 with recent <a
 href="https://github.com/FDH2/UxPlay/releases">releases</a> (see their
-“Assets”), and can also be found in the UxPlay source top directory.
-This can be used to build an installable RPM package. First-time RPM
-builders should first install the rpm-build and rpmdevtools packages,
-then create the rpmbuild tree with “<code>rpmdev-setuptree</code>”. Then
-download and copy uxplay.spec into <code>~/rpmbuild/SPECS</code>. In
-that directory, run “<code>rpmdev-spectool -g -R  uxplay.spec</code>” to
-download the corresponding source file <code>uxplay-*.tar.gz</code> into
-<code>~/rpmbuild/SOURCES</code> (“rpmdev-spectool” may also be just
-called “spectool”); then run “<code>rpmbuild -ba uxplay.spec</code>”
-(you will need to install any required dependencies this reports). This
-should create the uxplay RPM package in a subdirectory of
-<code>~/rpmbuild/RPMS</code>. (<strong>uxplay.spec</strong> is tested on
-Fedora 38, Rocky Linux 9.2, openSUSE Leap 15.5, Mageia 9, OpenMandriva,
-PCLinuxOS; it can be easily modified to include dependency lists for
-other RPM-based distributions.)</p></li>
-<li><p>On Linux and *BSD the mDNS/DNS-SD (Bonjour/ZeroConf) local
-network services needed by UxPlay are usually provided by Avahi:
-<strong>if there is a firewall on the server that will host UxPlay, make
-sure the default network port for mDNS queries (UDP 5353) is
-open</strong>. (Uxplay can work without this port by using only the
-host’s loopback interface, but its visibility to clients will be
-degraded.) See the <a href="#troubleshooting">Troubleshooting</a>
-section below for more details. (With a firewall, you also need to open
-ports for UxPlay, and use the <code>-p &lt;n&gt;</code> option; see
-<code>man uxplay</code> or <code>uxplay -h</code>.)</p></li>
+“Assets”), and can also be found in the UxPlay source top directory. See
+the section on using this specfile for <a
+href="#building-an-installable-rpm-package">building an installable RPM
+package</a>.</p></li>
+</ul>
+<p>After installation:</p>
+<ul>
+<li><p>(On Linux and *BSD): if a firewall is active on the server
+hosting UxPlay, make sure the default network port (UDP 5353) for
+mDNS/DNS-SD queries is open (see <a
+href="#troubleshooting">Troubleshooting</a> below for more details);
+also open three UDP and three TCP ports for Uxplay, and use the “uxplay
+-p <n>” option (see “<code>man uxplay</code>” or
+“<code>uxplay -h</code>”).</p></li>
 <li><p>Even if you install your distribution’s pre-compiled uxplay
 binary package, you may need to read the instructions below for <a
 href="#running-uxplay">running UxPlay</a> to see which of your
 distribution’s <strong>GStreamer plugin packages</strong> you should
 also install.</p></li>
-<li><p>For hardware-accelerated video decoding on Raspberry Pi, Ubuntu
-&lt; 23.04 needs GStreamer to be <a
+<li><p>For Audio-only mode (Apple Music, etc.) best quality is obtained
+with the option “uxplay -async”, but there is then a 2 second latency
+imposed by iOS.</p></li>
+<li><p>Add any UxPlay options you want to use as defaults to a startup
+file <code>~/.uxplayrc</code> (see “<code>man uxplay</code>” or
+“<code>uxplay -h</code>” for format and other possible
+locations).</p></li>
+<li><p>On Raspberry Pi: If you use Ubuntu 22.10 or earlier, GStreamer
+must be <a
 href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">patched</a>
-(recommended but optional for Raspberry Pi OS (Bullseye), no longer
-needed for Manjaro &gt;= 23.02). <em>(Only these three distributions
-supply a kernel module maintained by Raspberry Pi outside the mainline
-Linux kernel that accesses the firmware decoder in the Broadcom
-GPU)</em>.</p></li>
-<li><p>To (easily) compile the latest UxPlay from source, see the
-section <a href="#getting-uxplay">Getting UxPlay</a>.</p></li>
+to use hardware video decoding by the Broadcom GPU (also recommended but
+optional for Raspberry Pi OS (Bullseye): use option
+“<code>uxplay -bt709</code>” if you do not use the patch).</p></li>
 </ul>
+<p>To (easily) compile the latest UxPlay from source, see the section <a
+href="#getting-uxplay">Getting UxPlay</a>.</p>
 <h1 id="detailed-description-of-uxplay">Detailed description of
 UxPlay</h1>
 <p>This project is a GPLv3 open source unix AirPlay2 Mirror server for
@@ -204,7 +198,9 @@ href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches"
 Wiki</a>). Also requires the out-of-mainline Linux kernel module
 bcm2835-codec maintained by Raspberry Pi, so far only included in
 Raspberry Pi OS, and two other distributions (Ubuntu, Manjaro) available
-with Raspberry Pi Imager.</p></li>
+with Raspberry Pi Imager. <em>Note: The latest Raspberry Pi model 5 does
+not provide hardware-accelerated (GPU) H264 decoding as its CPU is
+powerful enough for satisfactory software decoding.</em></p></li>
 </ul>
 <h3 id="note-to-packagers">Note to packagers:</h3>
 <p>UxPlay’s GPLv3 license does not have an added “GPL exception”
@@ -314,11 +310,10 @@ build process, if you wish to test before installing (in which case the
 GStreamer plugins must first be installed).</p>
 <h3 id="building-on-non-debian-linux-and-bsd">Building on non-Debian
 Linux and *BSD</h3>
-<p><strong>For those with RPM-based distributions, a RPM spec file
-uxplay.spec is also available for building a rpm package with
-rpmbuild</strong>. See <a
-href="#packaging-status-linux-and-bsd-distributions">“Packaging
-Status”</a> section above.</p>
+<p>**For those with RPM-based distributions, a RPM spec file uxplay.spec
+is also available: see <a
+href="#building-an-installable-rpm-package">Building an installable rpm
+package</a>.</p>
 <ul>
 <li><p><strong>Red Hat, or clones like CentOS (now continued as Rocky
 Linux or Alma Linux):</strong> (sudo dnf install, or sudo yum install)
@@ -344,6 +339,22 @@ Either avahi-libdns or mDNSResponder must also be installed to provide
 the dns_sd library. OpenSSL is already installed as a System
 Library.</p></li>
 </ul>
+<h4 id="building-an-installable-rpm-package">Building an installable RPM
+package</h4>
+<p>First-time RPM builders should first install the rpm-build and
+rpmdevtools packages, then create the rpmbuild tree with
+“<code>rpmdev-setuptree</code>”. Then download and copy uxplay.spec into
+<code>~/rpmbuild/SPECS</code>. In that directory, run
+“<code>rpmdev-spectool -g -R  uxplay.spec</code>” to download the
+corresponding source file <code>uxplay-*.tar.gz</code> into
+<code>~/rpmbuild/SOURCES</code> (“rpmdev-spectool” may also be just
+called “spectool”); then run “<code>rpmbuild -ba uxplay.spec</code>”
+(you will need to install any required dependencies this reports). This
+should create the uxplay RPM package in a subdirectory of
+<code>~/rpmbuild/RPMS</code>. (<strong>uxplay.spec</strong> is tested on
+Fedora 38, Rocky Linux 9.2, openSUSE Leap 15.5, Mageia 9, OpenMandriva,
+PCLinuxOS; it can be easily modified to include dependency lists for
+other RPM-based distributions.)</p>
 <h2 id="running-uxplay">Running UxPlay</h2>
 <h3
 id="installing-plugins-debian-based-linux-systems-skip-if-you-built-a-complete-gstreamer-from-source">Installing
@@ -537,10 +548,11 @@ model B+)</strong>:</h3>
 <code>-avdec</code>, it now works better than earlier, with the new
 default timestamp-based synchronization to keep audio and video
 synchronized.</p></li>
-<li><p>For best performance, the Raspberry Pi needs the GStreamer
-Video4linux2 plugin to use its Broadcom GPU hardware for decoding h264
-video. This needs the bcm2835_codec kernel module which is maintained
-outside the mainline Linux kernel by Raspberry Pi in the the <a
+<li><p>For best performance, a Raspberry Pi <strong>older than model
+5</strong> needs the GStreamer Video4linux2 plugin to use its Broadcom
+GPU hardware for decoding h264 video. This needs the bcm2835_codec
+kernel module which is maintained outside the mainline Linux kernel by
+Raspberry Pi in the the <a
 href="https://github.com/raspberrypi/linux">Raspberry Pi kernel
 tree</a>, and the only distributions for R Pi that are known to supply
 it include Raspberry Pi OS, Ubuntu, and Manjaro (all available from
