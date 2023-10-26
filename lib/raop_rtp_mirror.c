@@ -195,6 +195,7 @@ raop_rtp_mirror_thread(void *arg)
     uint64_t ntp_timestamp_local  = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
     bool logger_debug = (logger_get_level(raop_rtp_mirror->logger) >= LOGGER_DEBUG);
+    bool h265_video_detected = false;
 
     while (1) {
         fd_set rfds;
@@ -442,7 +443,22 @@ raop_rtp_mirror_thread(void *arg)
                         break;
                     }
                     int nalu_type = payload_decrypted[nalu_size] & 0x1f;
-                    int ref_idc = (payload_decrypted[nalu_size] >> 5);		    
+                    int ref_idc = (payload_decrypted[nalu_size] >> 5);
+                    /* check for unsupported h265 video (sometimes sent by macOS in high-def screen mirroring) */
+                    if (payload_decrypted[nalu_size + 1] == 0x01) {
+                        switch (payload_decrypted[nalu_size]) {
+                        case 0x28:    // h265 IDR type 20 NAL
+                        case 0x02:    // h265 non-IDR type 1 NAL
+                            ref_idc = 0;
+                            h265_video_detected = true;
+                            break;
+                        default:
+                            break;
+                        }
+                        if (h265_video_detected) {
+                            break;
+                        }
+                    }
                     switch (nalu_type) {
                     case 14:  /* Prefix NALu , seen before all VCL Nalu's in AirMyPc */
                     case 5:   /*IDR, slice_layer_without_partitioning */
@@ -491,6 +507,12 @@ raop_rtp_mirror_thread(void *arg)
 			break;
 		    }
                     nalu_size += nc_len;
+                }
+                if (h265_video_detected) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
+                               "unsupported h265 video detected");
+                    free (payload_out);
+                    break;
                 }
                 if (nalu_size != payload_size) valid_data = false;
                 if(!valid_data) {
