@@ -1321,19 +1321,23 @@ is because even though gstreamer-libav is installed. it is incomplete
 because some plugin features are missing:
 "`gst-inspect-1.0 | grep avdec_aac`" will show if avdec_aac is
 available. Unlike other GStreamer plugins, the libav plugin is a front
-end to FFmpeg codecs which provide avdec\_\*. Some distributions
-(RedHat, SUSE, etc) provide incomplete versions of FFmpeg because of
-patent issues with codecs used by certain plugins. In those cases there
-will be some "extra package" provider like [RPM
-fusion](https://rpmfusion.org) (RedHat),
-[packman](http://packman.links2linux.org/) (SUSE) where you can get
-complete packages (your distribution will usually provide instructions
-for this, Mageia puts them in an optional "tainted" repo). The packages
-needed may be "ffmpeg\*" or "libav\*" packages: the GStreamer libav
-plugin package does not contain any codecs itself, it just provides a
-way for GStreamer to use ffmpeg/libav codec libraries which must be
-installed separately. For similar reasons, distributions may ship
-incomplete packages of GStreamer "plugins-bad".
+end to FFmpeg codecs which provide avdec\_\*.
+
+-   Some distributions (RedHat, SUSE, etc) provide incomplete versions
+    of FFmpeg because of patent issues with codecs used by certain
+    plugins. In those cases there will be some "extra package" provider
+    like [RPM fusion](https://rpmfusion.org) (RedHat),
+    [packman](http://packman.links2linux.org/) (SUSE) where you can get
+    complete packages (your distribution will usually provide
+    instructions for this, Mageia puts them in an optional "tainted"
+    repo). The packages needed may be "ffmpeg\*" or "libav\*" packages:
+    the GStreamer libav plugin package does not contain any codecs
+    itself, it just provides a way for GStreamer to use ffmpeg/libav
+    codec libraries which must be installed separately. For similar
+    reasons, distributions may ship incomplete packages of GStreamer
+    "plugins-bad". Use user on Fedora thought they had installed from
+    rpmfusion, but the system had not obeyed: *"Adding --allowerasing to
+    the dnf command fixed it after a restart"*.
 
 -   starting with release UxPlay-1.65.3, UxPlay will continue to
     function, but without audio in mirror mode, if avdec_aac is missing.
