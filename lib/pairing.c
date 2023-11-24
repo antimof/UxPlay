@@ -12,17 +12,17 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *==================================================================
- * modified by fduncanh 2021
+ * modified by fduncanh 2021, 2023
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
 #include <openssl/sha.h> // for SHA512_DIGEST_LENGTH
 
 #include "pairing.h"
 #include "crypto.h"
+#include "srp.h"
 
 #define SALT_KEY "Pair-Verify-AES-Key"
 #define SALT_IV "Pair-Verify-AES-IV"
@@ -30,6 +30,12 @@
 struct pairing_s {
     ed25519_key_t *ed;
 };
+
+typedef struct srp_user_s {
+    char username[SRP_USERNAME_SIZE];   
+    unsigned char salt[SRP_SALT_SIZE];
+    unsigned char verifier[SRP_VERIFIER_SIZE];
+} srp_user_t;
 
 typedef enum {
     STATUS_INITIAL,
@@ -47,6 +53,11 @@ struct pairing_session_s {
     x25519_key_t *ecdh_ours;
     x25519_key_t *ecdh_theirs;
     unsigned char ecdh_secret[X25519_KEY_SIZE];
+
+    /* srp items */
+    srp_user_t *srp_user;
+    unsigned char srp_session_key[SRP_SESSION_KEY_SIZE];
+
 };
 
 static int
@@ -291,6 +302,131 @@ random_pin() {
     return (int) random_short; 
 }
 
+int
+srp_new_user(pairing_session_t *session, pairing_t *pairing, const char *device_id, const char *pin,
+                        const char **salt, int *len_salt, const char **pk, int *len_pk) {
+    if (strlen(device_id) >= SRP_USERNAME_SIZE) {
+        return -1;
+    }
+
+    if (session->srp_user) {
+        free (session->srp_user);
+    }
+    session->srp_user = (srp_user_t *) malloc(sizeof(srp_user_t));
+    if (!session->srp_user) {
+        return -2;
+    }
+    memset(session->srp_user, 0, sizeof(srp_user_t));
+    strncpy(session->srp_user->username, device_id, strlen(device_id) + 1);
+
+    const unsigned char *srp_b = srp_private_key(pairing);
+    unsigned char * srp_B;
+    unsigned char * srp_s;
+    unsigned char * srp_v;
+    int len_b = ED25519_KEY_SIZE;
+    int len_B;
+    int len_s;
+    int len_v;
+    srp_create_salted_verification_key(SRP_SHA, SRP_NG, device_id,
+                                       (const unsigned char *) pin, strlen (pin),
+                                       (const unsigned char **) &srp_s, &len_s,
+                                       (const unsigned char **) &srp_v, &len_v,
+                                       NULL, NULL);
+    if (len_s != SRP_SALT_SIZE || len_v != SRP_VERIFIER_SIZE) {
+        return -3;
+    }
 
 
 
+    memcpy(session->srp_user->salt, srp_s, SRP_SALT_SIZE);
+    memcpy(session->srp_user->verifier, srp_v, SRP_VERIFIER_SIZE);
+
+    *salt = (char *) session->srp_user->salt;
+    *len_salt = len_s;
+
+    srp_create_server_ephemeral_key(SRP_SHA, SRP_NG,
+                                    srp_v, len_v,
+                                    srp_b, len_b,
+                                    (const unsigned char **) &srp_B, &len_B,
+                                    NULL, NULL, 1);
+
+    *pk = (char *) srp_B;
+    *len_pk = len_B;
+
+    return 0;
+}
+
+int
+srp_validate_proof(pairing_session_t *session, pairing_t *pairing, const unsigned char *A,
+                    int len_A, unsigned char *proof, int client_proof_len, int proof_len) {
+    int authenticated  = 0;
+    const unsigned char *B =  NULL;
+    const unsigned char *b = srp_private_key(pairing);
+    int len_b = ED25519_KEY_SIZE;
+    int len_B = 0;
+    int len_K = 0;
+    const unsigned char *session_key  = NULL;
+    const unsigned char *M2 = NULL;
+
+    struct SRPVerifier *verifier = srp_verifier_new(SRP_SHA, SRP_NG, (const char *) session->srp_user->username,
+                                                    (const unsigned char *) session->srp_user->salt, SRP_SALT_SIZE,
+                                                    (const unsigned char *) session->srp_user->verifier, SRP_VERIFIER_SIZE,
+                                                    A, len_A,
+                                                    b, len_b,
+                                                    &B, &len_B, NULL, NULL, 1);
+
+    srp_verifier_verify_session(verifier, proof, &M2);
+    authenticated = srp_verifier_is_authenticated(verifier);
+    if (authenticated == 0) {
+        /* HTTP 470 should be sent to client if not verified.*/
+        srp_verifier_delete(verifier);
+        free (session->srp_user);
+	session->srp_user = NULL;
+        return -1;
+    }
+    session_key = srp_verifier_get_session_key(verifier, &len_K);
+    if (len_K != SRP_SESSION_KEY_SIZE) {
+        return -2;
+    }
+    memcpy(session->srp_session_key, session_key, len_K);
+    memcpy(proof, M2, proof_len);
+    srp_verifier_delete(verifier);
+    return 0;
+}
+int
+srp_confirm_pair_setup(pairing_session_t *session, const unsigned char *pk,
+                       unsigned char *epk, unsigned char *auth_tag) {
+    unsigned char aesKey[16], aesIV[16];
+    unsigned char hash[SHA512_DIGEST_LENGTH];
+    unsigned char pk_client[ED25519_KEY_SIZE];
+    int pk_len_client, epk_len;
+
+    /* decrypt client epk to get client pk, authenticate with auth_tag*/ 
+
+    const char *salt = "Pair-Setup-AES-Key";
+    sha_ctx_t *ctx = sha_init();
+    sha_update(ctx, (const unsigned char *) salt, strlen(salt));
+    sha_update(ctx, session->srp_session_key, SRP_SESSION_KEY_SIZE);
+    sha_final(ctx, hash, NULL);
+    sha_destroy(ctx);
+    memcpy(aesKey, hash, 16);
+
+    salt = "Pair-Setup-AES-IV";
+    ctx = sha_init();
+    sha_update(ctx, (const unsigned char *) salt, strlen(salt));
+    sha_update(ctx, session->srp_session_key, SRP_SESSION_KEY_SIZE);
+    sha_final(ctx, hash, NULL);
+    sha_destroy(ctx);
+    memcpy(aesIV, hash, 16);
+    aesIV[15]++;
+
+    pk_len_client  = gcm_decrypt(epk, ED25519_KEY_SIZE, pk_client, aesKey, aesIV, auth_tag);
+    if (pk_len_client <= 0) {
+       /* authentication failed */
+         return pk_len_client;
+    }
+    /* the previously undocumented necessary "nonce" */
+    aesIV[15]++;
+    epk_len = gcm_encrypt(pk, ED25519_KEY_SIZE, epk, aesKey, aesIV, auth_tag);
+    return epk_len;    
+}

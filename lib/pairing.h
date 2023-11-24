@@ -20,6 +20,18 @@
 
 #define PAIRING_SIG_SIZE (2 * X25519_KEY_SIZE)
 
+
+#define SRP_USERNAME_SIZE 24 /* accomodates up to an 8-octet MAC address */
+#define SRP_SESSION_KEY_SIZE 40
+#define SRP_VERIFIER_SIZE 256
+#define SRP_SALT_SIZE 16
+#define SRP_PK_SIZE 256
+#define SRP_SHA SRP_SHA1
+#define SRP_NG SRP_NG_2048
+#define SRP_M2_SIZE 64
+#define GCM_AUTHTAG_SIZE 16
+#define SHA512_KEY_LENGTH 64
+
 typedef struct pairing_s pairing_t;
 typedef struct pairing_session_s pairing_session_t;
 
@@ -41,4 +53,10 @@ void pairing_destroy(pairing_t *pairing);
 
 int pairing_get_ecdh_secret_key(pairing_session_t *session, unsigned char ecdh_secret[X25519_KEY_SIZE]);
 
+int srp_new_user(pairing_session_t *session, pairing_t *pairing, const char *device_id, const char *pin,
+		 const char **salt, int *len_salt, const char **pk, int *len_pk);
+int srp_validate_proof(pairing_session_t *session, pairing_t *pairing, const unsigned char *A,
+		       int len_A, unsigned char *proof, int client_proof_len, int proof_len);
+int srp_confirm_pair_setup(pairing_session_t *session, const unsigned char *pk,
+                           unsigned char *epk, unsigned char *auth_tag);
 #endif

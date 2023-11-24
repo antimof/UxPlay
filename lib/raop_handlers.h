@@ -200,9 +200,161 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
                            http_request_t *request, http_response_t *response,
                            char **response_data, int *response_datalen) {
 
-  /* does nothing yet */
+    const char *request_data;
+    int request_datalen;
+    bool data_is_plist = false;
+    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
+    request_data = http_request_get_data(request, &request_datalen);
+    logger_log(conn->raop->logger, LOGGER_INFO, "client requested pair-setup-pin, datalen = %d", request_datalen);
+    if (request_datalen > 0) {
+        char *header_str= NULL; 
+        http_request_get_header_string(request, &header_str);
+        logger_log(conn->raop->logger, LOGGER_INFO, "request header: %s", header_str);
+        data_is_plist = (strstr(header_str,"apple-binary-plist") != NULL);
+        free(header_str);
+    }
+    if (!data_is_plist) {
+        logger_log(conn->raop->logger, LOGGER_INFO, "did not receive expected plist from client, request_datalen = %d");
+        goto authentication_failed;
+    }
 
+    /* process the pair-setup-pin request */
+    plist_t req_root_node = NULL;
+    plist_from_bin(request_data, request_datalen, &req_root_node);
+    plist_t req_method_node = plist_dict_get_item(req_root_node, "method");
+    plist_t req_user_node = plist_dict_get_item(req_root_node, "user");
+    plist_t req_pk_node = plist_dict_get_item(req_root_node, "pk");
+    plist_t req_proof_node = plist_dict_get_item(req_root_node, "proof");
+    plist_t req_epk_node = plist_dict_get_item(req_root_node, "epk");
+    plist_t req_authtag_node = plist_dict_get_item(req_root_node, "authTag");
   
+    if (PLIST_IS_STRING(req_method_node) && PLIST_IS_STRING(req_user_node)) {
+        /* this is the initial pair-setup-pin request */
+        const char *salt;
+	char pin[6];
+	const char *pk;
+	int len_pk, len_salt;
+        char *method = NULL;
+        char *user = NULL;
+        plist_get_string_val(req_method_node, &method);
+        if (strncmp(method, "pin", strlen (method))) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "error, required method is \"pin\", client requested \"%s\"", method);
+            *response_data = NULL;
+            response_datalen = 0;
+	    free (method);
+	    plist_free (req_root_node);
+            return;
+        }
+        free (method);
+	plist_get_string_val(req_user_node, &user);
+        logger_log(conn->raop->logger, LOGGER_INFO, "pair-setup-pin:  device_id = %s", user);
+        snprintf(pin, 6, "%04u", conn->raop->pin);
+	conn->raop->pin = 0;
+	int ret = srp_new_user(conn->pairing, conn->raop->pairing, (const char *) user,
+                               (const char *) pin, &salt, &len_salt, &pk, &len_pk);
+        free(user);	
+        plist_free(req_root_node);
+        if (ret < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "failed to create user, err = %d", ret);
+            goto authentication_failed;
+        }
+        plist_t res_root_node = plist_new_dict();
+        plist_t res_salt_node = plist_new_data(salt, len_salt);
+        plist_t res_pk_node = plist_new_data(pk, len_pk);
+        plist_dict_set_item(res_root_node, "pk", res_pk_node);	
+        plist_dict_set_item(res_root_node, "salt", res_salt_node);
+        plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+        plist_free(res_root_node);
+        http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+	return;
+    } else if (PLIST_IS_DATA(req_pk_node) && PLIST_IS_DATA(req_proof_node)) {
+        /* this is the second part of pair-setup-pin request */
+        char *client_pk = NULL;
+        char *client_proof = NULL;
+	unsigned char proof[64];
+	memset(proof, 0, sizeof(proof));
+        uint64_t client_pk_len;
+        uint64_t client_proof_len;
+        plist_get_data_val(req_pk_node, &client_pk, &client_pk_len); 
+        plist_get_data_val(req_proof_node, &client_proof, &client_proof_len);
+        if (logger_debug) {
+	  char *str = utils_data_to_string((const unsigned char *) client_proof, client_proof_len, 20);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "client SRP6a proof <M> :\n%s", str);	    
+            free (str);
+        }
+        memcpy(proof, client_proof, (int) client_proof_len);
+        free (client_proof);
+        int ret = srp_validate_proof(conn->pairing, conn->raop->pairing, (const unsigned char *) client_pk,
+                                     (int) client_pk_len, proof, (int) client_proof_len, (int) sizeof(proof));
+        free (client_pk);
+        plist_free(req_root_node);
+        if (ret < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Client Authentication Failure (client proof not validated)");
+            goto authentication_failed;
+        }
+        if (logger_debug) {
+	    char *str = utils_data_to_string((const unsigned char *) proof, sizeof(proof), 20);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "server SRP6a proof <M1> :\n%s", str);
+            free (str);
+        }
+        plist_t res_root_node = plist_new_dict();
+        plist_t res_proof_node = plist_new_data((const char *) proof, 20);
+        plist_dict_set_item(res_root_node, "proof", res_proof_node);	
+        plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+        plist_free(res_root_node);
+        http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+	return;
+    } else if (PLIST_IS_DATA(req_epk_node) && PLIST_IS_DATA(req_authtag_node)) {
+        /* this is the third part of pair-setup-pin request */
+        char *client_epk = NULL;
+        char *client_authtag = NULL;
+        uint64_t client_epk_len;
+        uint64_t client_authtag_len;
+        unsigned char epk[ED25519_KEY_SIZE];
+	unsigned char authtag[GCM_AUTHTAG_SIZE];
+	unsigned char public_key[32];
+	int ret;
+        plist_get_data_val(req_epk_node, &client_epk, &client_epk_len); 
+        plist_get_data_val(req_authtag_node, &client_authtag, &client_authtag_len);
+
+	if (logger_debug) {
+            char *str = utils_data_to_string((const unsigned char *) client_epk, client_epk_len, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "client_epk %d:\n%s\n", (int) client_epk_len, str);
+            str = utils_data_to_string((const unsigned char *) client_authtag, client_authtag_len, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "client_authtag  %d:\n%s\n", (int) client_authtag_len, str);
+            free (str);
+	}
+
+	memcpy(epk, client_epk, ED25519_KEY_SIZE);
+	memcpy(authtag, client_authtag, GCM_AUTHTAG_SIZE);
+        free (client_authtag);
+        free (client_epk);
+        plist_free(req_root_node);
+        pairing_get_public_key(conn->raop->pairing, public_key);
+	ret = srp_confirm_pair_setup(conn->pairing, public_key, epk, authtag);
+        if (ret < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
+            goto authentication_failed;
+        } else {
+            logger_log(conn->raop->logger, LOGGER_INFO, "pair-pin-setup success\n");
+	}
+        pairing_session_set_setup_status(conn->pairing);
+        plist_t res_root_node = plist_new_dict();
+        plist_t res_epk_node = plist_new_data((const char *) epk, 32);
+	plist_t res_authtag_node = plist_new_data((const char *) authtag, 16);
+        plist_dict_set_item(res_root_node, "epk", res_epk_node);
+        plist_dict_set_item(res_root_node, "authTag", res_authtag_node);	
+        plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+        plist_free(res_root_node);
+        http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+	return;
+    }
+ authentication_failed:;
+    http_response_destroy(response);
+    response = http_response_init("RTSP/1.0", 470, "Client Authentication Failure");
+    const char *cseq = http_request_get_header(request, "CSeq");
+    http_response_add_header(response, "CSeq", cseq);
+    http_response_add_header(response, "Server", "AirTunes/"GLOBAL_VERSION);
     *response_data = NULL;
     response_datalen = 0;
     return;

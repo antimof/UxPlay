@@ -388,7 +388,6 @@ int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
       if ('a' <= *data && *data <= 'f') val = 10 + *data - 'a';
       if ('A' <= *data && *data <= 'F') val = 10 + *data - 'A';
       if (val == 64) {
-	//printf("[%c]\n", *data);
 	data++;
 	continue;
       }
@@ -396,7 +395,6 @@ int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
       part = part% 2;
       switch (part) {
       case 1:
-	//printf("%d %d [%c] %u\n", i, part, *data, val);
 	part1 = val;
 	data++;     
 	break;
