@@ -171,7 +171,177 @@ size_t write_coverart(const char *filename, const void *image, size_t len) {
     fclose(fp);
     return count;
 }
+
+char * ascii_art_digits (int n, int *width, int *height) {
+    /*  returns an "Ascii-art" image of the integer n, provided it is
+     * in the range [0,9].
+     * In this implementation the input values of width and height (in ascii characters)
+     * are ignored, and only width x height = 16 x 10 characters is implemented.
+     *
+     * The image is a character array where "0" is the background and "1" is the image of
+     * the single-digit integer n.
+     *
+     * On return, width and height values are overwritten with the values 16, 10 used in
+     * this ascii-art.
+     *
+     * NOTE: the user must free the returned image after use.       */
   
+    const int w = 16;
+    const int h = 10;
+    const unsigned char zero[20] = { 0x07, 0xC0, 0x1C, 0x38, 0x38, 0x1C, 0x70, 0x0E, 0x70, 0x0E,
+                                     0x70, 0x0E, 0x70, 0x0E, 0x38, 0x1C, 0x1C, 0x38, 0x07, 0xC0 };
+    const unsigned char one[20]  = { 0x03, 0xC0, 0x0F, 0xC0, 0x19, 0xC0, 0x01, 0xC0, 0x01, 0xC0,
+                                     0x01, 0xC0, 0x01, 0xC0, 0x01, 0xC0, 0x01, 0xC0, 0x0F, 0xF8 };
+    const unsigned char two[20]  = { 0x07, 0xF0, 0x1F, 0xFC, 0x38, 0x1C, 0x00, 0x1C, 0x00, 0x38,
+                                     0x00, 0xE0, 0x03, 0x80, 0x1C, 0x00, 0x7F, 0xFE, 0x7F, 0xFE };
+    const unsigned char three[20]= { 0x07, 0xE0, 0x1F, 0xF8, 0x38, 0x1C, 0x00, 0x38, 0x07, 0xE0,
+                                     0x07, 0xE0, 0x00, 0x38, 0x38, 0x1C, 0x1C, 0xF8, 0x07, 0xE0 };
+    const unsigned char four[20] = { 0x01, 0xF8, 0x03, 0xF8, 0x07, 0x38, 0x0E, 0x38, 0x1C, 0x38,
+                                     0x38, 0x38, 0x7F, 0xFE, 0x7F, 0xFE, 0x00, 0x38, 0x00, 0xFE };
+    const unsigned char five[20] = { 0x7F, 0xFE, 0x7F, 0xFE, 0x70, 0x00, 0x70, 0x00, 0x7F, 0xF0,
+                                     0x7F, 0xFC, 0x00, 0x0E, 0x00, 0x0E, 0x7F, 0xFC, 0x7F, 0xF0 };
+    const unsigned char six[20]  = { 0x07, 0xF0, 0x1E, 0x38, 0x38, 0x0E, 0x70, 0x00, 0x77, 0xF8,
+                                     0x7C, 0x1E, 0x78, 0x0E, 0x38, 0x0E, 0x1C, 0x1C, 0x07, 0xF0 };
+    const unsigned char seven[20]= { 0x7F, 0xFE, 0x7F, 0xFC, 0x00, 0x38, 0x00, 0x70, 0x00, 0xE0,
+                                     0x01, 0xC0, 0x03, 0x80, 0x07, 0x00, 0x0E, 0x00, 0x3F, 0x00 };
+    const unsigned char eight[20]= { 0x07, 0xE0, 0x3F, 0xFC, 0x70, 0x0E, 0x70, 0x0E, 0x3F, 0xFE,
+                                     0x3F, 0xFC, 0x70, 0x0E, 0x70, 0x0E, 0x3F, 0xFC, 0x07, 0xE0 };
+    const unsigned char nine[20] = { 0x0F, 0xF0, 0x3C, 0x3C, 0x70, 0x0E, 0x70, 0x0E, 0x3C, 0x1E,
+                                     0x1F, 0xFC, 0x00, 0x38, 0x00, 0x70, 0x00, 0xE0, 0x01, 0xC0 };
+
+    char * image;
+    const unsigned char* digit; 
+    unsigned char mask;
+    switch (n) {
+    case 0:
+        digit = zero;
+        break;
+    case 1:
+        digit = one;
+        break;
+    case 2:
+        digit = two;
+        break;
+    case 3:
+        digit = three;
+        break;
+    case 4:
+        digit = four;
+        break;
+    case 5:
+        digit = five;
+        break;
+    case 6:
+        digit = six;
+        break;
+    case 7:
+        digit = seven;
+        break;
+    case 8:
+        digit = eight;
+        break;
+    case 9:
+        digit = nine;
+        break;
+    default:
+        return NULL;
+    }
+    *width = w;
+    *height = h;
+    image = (char *) malloc(w*h);
+    if (!image) return NULL;
+    memset (image, '0', w*h);
+
+    mask = 0x0;
+    int pos = 0;
+    int entry;
+    for (int i = 0; i < h; i++) {
+      for (int j = 0; j < w; j++) {
+            if (! mask) mask = 0x80;    
+            entry = pos / 8;
+            if (mask & digit[entry]) image[pos] = '1';
+            mask = mask >> 1;
+            pos++;
+        }
+    }
+    return image;
+}
+
+int get_pin_image(char *pin_str, char *buf, size_t buflen, unsigned int margin) {
+    /*  creates an ascii-art character image of a 4-digit numerical pin in buf
+     *  
+     *  If buf == NULL, or buflen is too small, the minimum required buflen 
+     *  is returned, and nothing is written to *buf.
+     *  otherwise, the image is written and return value is 0
+     *
+     *  The pin is provided as a character string of 4 decimal digits.
+     *  if the pin is invalid nothing is printed and return value is -1.  
+     *  return value -2 is  used for memory allocation errors
+     *
+     *  if margin > 0, a a blank left margin of margin characters is added.
+     */
+
+    int digits[4];
+    char *image = NULL;
+    char *full_image = NULL;
+    int width;
+    int height;
+    char background = '.';
+    char foreground = '@';
+
+    char *end;
+    long pin = strtol(pin_str, &end, 10);
+    if (strlen(pin_str) !=  4 || pin < 0 || *end) {
+        return -1;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        digits[3-i] = pin %10 ;
+        pin = pin/10;
+    }
+  
+    for (int i = 0; i < 4; i++) {
+        image = ascii_art_digits(digits[i], &width, &height);
+        if (!image) {
+            return -2;
+        }
+        if (i == 0) {
+            int fullwidth =  4*width + 1 + margin;
+            int imagelen = (height + 2) * fullwidth;
+            if (!buf || !(buflen > imagelen)) {
+                free(image);
+                return imagelen + 1;
+            } else {
+                full_image = buf;
+                memset(full_image, background, imagelen);
+                for (int j = 0;  j < height + 2; j++) {
+                    int pos = j * fullwidth;
+                    memset(full_image + pos, ' ', margin);
+                    full_image[pos + fullwidth -1] = '\n';
+                }
+            }
+        }
+        int pos1 = 0;
+        int pos2 = margin + 4*width + 1;
+        for (int k = 0; k < height; k++) {
+            for (int j = 0; j < width; j++) {
+                if (j == 0) pos2 += margin + i * width;
+                if (image[pos1] == '1') {
+                    full_image[pos2] = foreground;
+                }
+                pos1++;
+                pos2++;
+                if (j == width - 1) {
+                    pos2 += (3-i) * width + 1;
+                }
+            }
+        }
+        if (image) free (image);
+	image = NULL;
+    }
+    return 0;
+}
+
 static void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
         char suffix[20];
@@ -899,6 +1069,9 @@ static void parse_arguments (int argc, char *argv[]) {
             fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
+        } else if (arg == "-pair") {
+            setup_legacy_pairing = true;
+            require_password = true;    /* for testing purposed only ??? */
 	} else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
@@ -1045,7 +1218,9 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
 }
 
 static int register_dnssd() {
-    int dnssd_error;    
+    int dnssd_error;
+    uint64_t features;
+    
     if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
         if (dnssd_error == -65537) {
              LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
@@ -1062,6 +1237,9 @@ static int register_dnssd() {
              "(see Apple's dns_sd.h)", dnssd_error);
         return -4;
     }
+
+    LOGD("register_dnssd: advertised AirPlay service with \"Features\" code = 0x%X",
+         dnssd_get_airplay_features(dnssd));
     return 0;
 }
 
@@ -1084,15 +1262,18 @@ static void stop_dnssd() {
 
 static int start_dnssd(std::vector<char> hw_addr, std::string name) {
     int dnssd_error;
+    int require_pw = (require_password ? 1 : 0);
     if (dnssd) {
         LOGE("start_dnssd error: dnssd != NULL");
         return 2;
     }
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error, require_pw);
     if (dnssd_error) {
-        LOGE("Could not initialize dnssd library!");
+        LOGE("Could not initialize dnssd library!: error %d", dnssd_error);
         return 1;
     }
+    /* bit 27 of Features determines whether the AirPlay2 client-pairing protocol will be used (1) or not (0) */
+    dnssd_set_airplay_features(dnssd, 27, (int) setup_legacy_pairing);
     return 0;
 }
 
@@ -1121,6 +1302,28 @@ static bool check_blocked_client(char *deviceid) {
 }
 
 // Server callbacks
+
+extern "C" void display_pin(void *cls, char *pin) {
+    int buflen = get_pin_image(pin , NULL, 0, 10);
+    char *image = (char *) calloc(buflen, sizeof(char));
+    if (!image) {
+        LOGE("Could not allocate memory for pin image");
+    } else {
+        int ret;
+        if ((ret = get_pin_image(pin, image, buflen, 10))) {
+            if (ret == -1) {
+                LOGE("format of pin \"%s\" provided by server is invalid", pin);
+                return;
+            } else  {
+                LOGE("Could not create pin image, return  value=%d", ret);
+            }
+        } else {
+            LOGI("%s\n",image);     
+            free (image);
+        }
+    }
+}
+
 extern "C" void conn_init (void *cls) {
     open_connections++;
     LOGD("Open connections: %i", open_connections);
@@ -1371,6 +1574,7 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
     raop_cbs.report_client_request = report_client_request;
+    raop_cbs.display_pin = display_pin;
 
     /* set max number of connections = 2 to protect against capture by new client */
     raop = raop_init(max_connections, &raop_cbs);
