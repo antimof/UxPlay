@@ -350,8 +350,12 @@ struct ed25519_key_s {
     unsigned char ed_secret[ED25519_KEY_SIZE];
 };
 
-int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
+const unsigned char* ed25519_secret_key(const ed25519_key_t *key) {
+    assert(key);
+    return (const unsigned char *) key->ed_secret;
+}
 
+int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
     int count = 0;
     unsigned int val;
     unsigned int part1 = 0;
