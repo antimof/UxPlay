@@ -178,18 +178,23 @@ raop_handler_pairpinstart(raop_conn_t *conn,
                           http_request_t *request, http_response_t *response,
                           char **response_data, int *response_datalen) {
     logger_log(conn->raop->logger, LOGGER_INFO, "client sent PAIR-PIN-START request");
-    int pin_4 = random_pin();
-    conn->raop->pin = (unsigned short) pin_4;
-    if (pin_4 < 0) {
-        logger_log(conn->raop->logger, LOGGER_ERR, "Failed to generate random pin");
+    int pin_4;
+    if (conn->raop->pin > 9999) {
+        pin_4 = conn->raop->pin % 10000;
     } else {
-        char pin[6];
-        snprintf(pin, 5, "%04u", pin_4);
-        if (conn->raop->callbacks.display_pin) {
-            conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
+        pin_4 = random_pin();
+        if (pin_4 < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Failed to generate random pin");
+        } else {
+            conn->raop->pin = (unsigned short) pin_4 % 10000;
         }
-        logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", pin);
     }
+    char pin[6];
+    snprintf(pin, 5, "%04u", pin_4);
+    if (conn->raop->callbacks.display_pin) {
+         conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
+    }
+    logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", pin);
     *response_data = NULL;
     response_datalen = 0;
     return;
@@ -248,8 +253,10 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         free (method);
 	plist_get_string_val(req_user_node, &user);
         logger_log(conn->raop->logger, LOGGER_INFO, "pair-setup-pin:  device_id = %s", user);
-        snprintf(pin, 6, "%04u", conn->raop->pin);
-	conn->raop->pin = 0;
+        snprintf(pin, 6, "%04u", conn->raop->pin % 10000);
+        if (conn->raop->pin < 10000) {
+            conn->raop->pin = 0;
+        }
 	int ret = srp_new_user(conn->pairing, conn->raop->pairing, (const char *) user,
                                (const char *) pin, &salt, &len_salt, &pk, &len_pk);
         free(user);	

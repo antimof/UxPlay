@@ -535,7 +535,9 @@ int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
             raop->audio_delay_micros = value;
         }
         if (raop->audio_delay_micros != value) retval = 1;
-    }  else {
+    } else if (strcmp(plist_item, "pin") == 0) {
+        raop->pin = value;
+    } else {
         retval = -1;
     }	  
     return retval;

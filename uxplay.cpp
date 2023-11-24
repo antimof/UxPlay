@@ -60,7 +60,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.66"
+#define VERSION "1.67"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -126,8 +126,9 @@ static uint64_t remote_clock_offset = 0;
 static std::vector<std::string> allowed_clients;
 static std::vector<std::string> blocked_clients;
 static bool restrict_clients;
-static bool setup_legacy_pairing = true;
+static bool setup_legacy_pairing = false;
 static bool require_password = false;
+static unsigned short pin = 0;
 
 /* logging */
 
@@ -609,7 +610,8 @@ static void print_info (char *name) {
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
-    printf("-pair     Support Airplay (legacy) client-pairing (default: not used)\n");
+    printf("-pin[xxxx]Use a 4=digit pin code to control client access (default: no)\n");
+    printf("          [optionally choose fixed pin]; default pin varies randomly\n");
     printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
     printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
     printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
@@ -1072,10 +1074,18 @@ static void parse_arguments (int argc, char *argv[]) {
             fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
-        } else if (arg == "-pair") {
+        } else if (arg == "-pin") {
             setup_legacy_pairing = true;
-            require_password = true;    /* for testing purposed only ??? */
-	} else {
+            require_password = true;
+            if (option_has_value(i, argc, arg, argv[i+1])) {
+                unsigned int n = 9999;
+                if (!get_value(argv[++i], &n)) {
+                    fprintf(stderr, "invalid \"-pin %s\"; -pin nnnn : max nnnn=9999, (4 digits)\n", argv[i]);
+                    exit(1);
+                }
+                pin = n + 10000;
+            }
+        } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
         }
@@ -1594,10 +1604,11 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     if (display[2]) raop_set_plist(raop, "refreshRate", (int) display[2]);
     if (display[3]) raop_set_plist(raop, "maxFPS", (int) display[3]);
     if (display[4]) raop_set_plist(raop, "overscanned", (int) display[4]);
- 
+
     if (show_client_FPS_data) raop_set_plist(raop, "clientFPSdata", 1);
     raop_set_plist(raop, "max_ntp_timeouts", max_ntp_timeouts);
     if (audiodelay >= 0) raop_set_plist(raop, "audio_delay_micros", audiodelay);
+    if (pin) raop_set_plist(raop, "pin", (int) pin);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
