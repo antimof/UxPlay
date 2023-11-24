@@ -25,6 +25,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
+ *===========================================================================
+ * updated (2023) by fduncanh to replace deprecated openssl SHA* hash functions
+ * modified (2023) by fduncanh for use with Apple's pair-setup-pin protocol
  */
 
 /* 
@@ -56,7 +59,7 @@
 
 #ifndef SRP_H
 #define SRP_H
-
+#define APPLE_VARIANT
 
 struct SRPVerifier;
 struct SRPUser;
@@ -118,7 +121,24 @@ void srp_create_salted_verification_key( SRP_HashAlgorithm alg,
                                          const unsigned char ** bytes_s, int * len_s, 
                                          const unsigned char ** bytes_v, int * len_v,
                                          const char * n_hex, const char * g_hex );
-                                          
+
+
+#ifdef APPLE_VARIANT
+/* Out: bytes_B, len_B
+ * On failure, bytes_B will be set to NULL and len_B will be set to 0
+ *
+ * The n_hex and g_hex parameters should be 0 unless SRP_NG_CUSTOM is used for ng_type
+ *
+ * bytes_b should be a pointer to a cryptographically secure random array of length 
+ * len_b bytes (for example, produced with OpenSSL's RAND_bytes(bytes_b, len_b)).
+ */
+void srp_create_server_ephemeral_key( SRP_HashAlgorithm alg, SRP_NGType ng_type,
+                                      const unsigned char * bytes_v, int len_v,  
+                                      const unsigned char * bytes_b, int len_b,
+                                      const unsigned char ** bytes_B, int * len_B,
+				      const char * n_hex, const char * g_hex,
+				      int rfc5054_compat );
+#endif
 
 /* Out: bytes_B, len_B.
  * 
@@ -134,6 +154,9 @@ struct SRPVerifier *  srp_verifier_new( SRP_HashAlgorithm alg, SRP_NGType ng_typ
                                         const unsigned char * bytes_s, int len_s, 
                                         const unsigned char * bytes_v, int len_v,
                                         const unsigned char * bytes_A, int len_A,
+#ifdef APPLE_VARIANT
+					const unsigned char * bytes_b, int len_b,
+#endif
                                         const unsigned char ** bytes_B, int * len_B,
                                         const char * n_hex, const char * g_hex,
                                         int rfc5054_compat );
@@ -155,6 +178,7 @@ int                   srp_verifier_get_session_key_length( struct SRPVerifier * 
 
 
 /* user_M must be exactly srp_verifier_get_session_key_length() bytes in size */
+/* (in APPLE_VARIANT case, session_key_length is DOUBLE the length of user_M) */
 void                  srp_verifier_verify_session( struct SRPVerifier * ver,
                                                    const unsigned char * user_M, 
                                                    const unsigned char ** bytes_HAMK );
@@ -190,12 +214,14 @@ void                  srp_user_start_authentication( struct SRPUser * usr, const
 
 /* Output: bytes_M, len_M  (len_M may be null and will always be 
  *                          srp_user_get_session_key_length() bytes in size) */
+/* (in APPLE_VARIANT case, session_key_length is DOUBLE the length of bytes_M) */
 void                  srp_user_process_challenge( struct SRPUser * usr, 
                                                   const unsigned char * bytes_s, int len_s, 
                                                   const unsigned char * bytes_B, int len_B,
                                                   const unsigned char ** bytes_M, int * len_M );
                                                   
 /* bytes_HAMK must be exactly srp_user_get_session_key_length() bytes in size */
+/* (in APPLE_VARIANT case, session_key_length is DOUBLE the length of bytes_HAMK) */
 void                  srp_user_verify_session( struct SRPUser * usr, const unsigned char * bytes_HAMK );
 
 #endif /* Include Guard */

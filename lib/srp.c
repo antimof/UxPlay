@@ -25,7 +25,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
+ *===========================================================================
+ * updated (2023) by fduncanh to replace deprecated openssl SHA* hash functions
+ * modified (2023) by fduncanh for use with Apple's pair-setup-pin protocol
  */
+#define APPLE_VARIANT
 #ifdef WIN32
 # include <Wincrypt.h>
 #else
@@ -34,7 +38,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 #include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 #include <openssl/sha.h>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
@@ -161,7 +168,8 @@ static NGConstant * new_ng( SRP_NGType ng_type, const char * n_hex, const char *
     if ( ng_type != SRP_NG_CUSTOM )
     {
         int idx = ng_type;
-        
+        if ( ng_type > SRP_NG_CUSTOM )
+           idx -= 1;
         n_hex = global_Ng_constants[ idx ].n_hex;
         g_hex = global_Ng_constants[ idx ].g_hex;
     }
@@ -183,12 +191,10 @@ static void delete_ng( NGConstant * ng )
    }
 }
 
-typedef union
-{
-    SHA_CTX    sha;
-    SHA256_CTX sha256;
-    SHA512_CTX sha512;
-} HashCTX;
+typedef struct HashCTX_s {
+   EVP_MD_CTX *digest_ctx;
+} HashCTX_t;
+
 
 struct SRPVerifier
 {
@@ -200,7 +206,11 @@ struct SRPVerifier
     int                   rfc5054;
     unsigned char M           [SHA512_DIGEST_LENGTH];
     unsigned char H_AMK       [SHA512_DIGEST_LENGTH];
+#ifdef APPLE_VARIANT
+    unsigned char session_key [2 * SHA512_DIGEST_LENGTH];
+#else
     unsigned char session_key [SHA512_DIGEST_LENGTH];
+#endif
 };
 
 struct SRPUser
@@ -222,49 +232,84 @@ struct SRPUser
 
     unsigned char M           [SHA512_DIGEST_LENGTH];
     unsigned char H_AMK       [SHA512_DIGEST_LENGTH];
+#ifdef APPLE_VARIANT
+    unsigned char session_key [2 * SHA512_DIGEST_LENGTH];
+#else
     unsigned char session_key [SHA512_DIGEST_LENGTH];
+#endif
+  
 };
 
-static int hash_init( SRP_HashAlgorithm alg, HashCTX *c )
-{
-    switch (alg)
-    {
-      case SRP_SHA1  : return SHA1_Init( &c->sha );
-      case SRP_SHA224: return SHA224_Init( &c->sha256 );
-      case SRP_SHA256: return SHA256_Init( &c->sha256 );
-      case SRP_SHA384: return SHA384_Init( &c->sha512 );
-      case SRP_SHA512: return SHA512_Init( &c->sha512 );
-      default:
-        return -1;
-    };
+static void handle_error(const char* location) {
+    long error = ERR_get_error();
+    const char* error_str = ERR_error_string(error, NULL);
+    fprintf(stderr, "SRP error at %s: %s\n", location, error_str);
+    exit(EXIT_FAILURE);
 }
 
-static int hash_update( SRP_HashAlgorithm alg, HashCTX *c, const void *data, size_t len )
-{
-    switch (alg)
-    {
-      case SRP_SHA1  : return SHA1_Update( &c->sha, data, len );
-      case SRP_SHA224: return SHA224_Update( &c->sha256, data, len );
-      case SRP_SHA256: return SHA256_Update( &c->sha256, data, len );
-      case SRP_SHA384: return SHA384_Update( &c->sha512, data, len );
-      case SRP_SHA512: return SHA512_Update( &c->sha512, data, len );
-      default:
-        return -1;
-    };
+static void hash_destroy( HashCTX_t *ctx) {
+    if (ctx) {
+        EVP_MD_CTX_free(ctx->digest_ctx);
+        free(ctx);
+    }
 }
 
-static int hash_final( SRP_HashAlgorithm alg, HashCTX *c, unsigned char *md )
+static HashCTX_t *hash_create()
 {
-    switch (alg)
+  HashCTX_t *ctx = (HashCTX_t *) malloc(sizeof(HashCTX_t));
+  assert(ctx != NULL);
+  ctx->digest_ctx = EVP_MD_CTX_new();
+  assert(ctx->digest_ctx != NULL);
+  return ctx;
+}
+		    
+int hash_reset( HashCTX_t *ctx)
+{
+  return EVP_MD_CTX_reset( ctx->digest_ctx); 
+}
+
+static int hash_init( SRP_HashAlgorithm alg, HashCTX_t *ctx)
+{
+  int ret;
+  switch (alg)
     {
-      case SRP_SHA1  : return SHA1_Final( md, &c->sha );
-      case SRP_SHA224: return SHA224_Final( md, &c->sha256 );
-      case SRP_SHA256: return SHA256_Final( md, &c->sha256 );
-      case SRP_SHA384: return SHA384_Final( md, &c->sha512 );
-      case SRP_SHA512: return SHA512_Final( md, &c->sha512 );
+      case SRP_SHA1  :
+        ret = EVP_DigestInit_ex(ctx->digest_ctx, EVP_sha1(), NULL);
+        break;
+      case SRP_SHA224  :
+        ret = EVP_DigestInit_ex(ctx->digest_ctx, EVP_sha224(), NULL);
+        break;
+      case SRP_SHA256  :
+        ret = EVP_DigestInit_ex(ctx->digest_ctx, EVP_sha256(), NULL);
+        break;
+      case SRP_SHA384  :
+        ret = EVP_DigestInit_ex(ctx->digest_ctx, EVP_sha384(), NULL);
+        break;
+      case SRP_SHA512  :
+        ret = EVP_DigestInit_ex(ctx->digest_ctx, EVP_sha512(), NULL);
+        break;
       default:
         return -1;
-    };
+    }
+    return ret;    
+}
+
+static int hash_update( SRP_HashAlgorithm alg, HashCTX_t *ctx, const void *data, size_t len )
+{
+    int ret = EVP_DigestUpdate(ctx->digest_ctx, data, len);
+    if (!ret) {  
+        handle_error(__func__);
+    }
+    return ret;
+}
+
+static int hash_final( SRP_HashAlgorithm alg, HashCTX_t *ctx, unsigned char *md, unsigned int *md_len )
+{
+    int ret = EVP_DigestFinal_ex(ctx->digest_ctx, md, md_len);
+    if (!ret) {
+        handle_error(__func__);
+    }
+    return  ret;
 }
 
 static unsigned char * hash( SRP_HashAlgorithm alg, const unsigned char *d, size_t n, unsigned char *md )
@@ -351,19 +396,20 @@ static BIGNUM * H_ns( SRP_HashAlgorithm alg, const BIGNUM * n, const unsigned ch
 static BIGNUM * calculate_x( SRP_HashAlgorithm alg, const BIGNUM * salt, const char * username, const unsigned char * password, int password_len )
 {
     unsigned char ucp_hash[SHA512_DIGEST_LENGTH];
-    HashCTX       ctx;
+    unsigned int ucp_hash_len;
+    HashCTX_t *ctx = hash_create();
 
-    hash_init( alg, &ctx );
-
-    hash_update( alg, &ctx, username, strlen(username) );
-    hash_update( alg, &ctx, ":", 1 );
-    hash_update( alg, &ctx, password, password_len );
-    hash_final( alg, &ctx, ucp_hash );
+    hash_init( alg, ctx);
+    hash_update( alg, ctx, username, strlen(username) );
+    hash_update( alg, ctx, ":", 1 );
+    hash_update( alg, ctx, password, password_len );
+    hash_final( alg, ctx, ucp_hash, &ucp_hash_len );
+    hash_destroy ( ctx);
 
     return H_ns( alg, salt, ucp_hash, hash_length(alg) );
 }
 
-static void update_hash_n( SRP_HashAlgorithm alg, HashCTX *ctx, const BIGNUM * n )
+static void update_hash_n( SRP_HashAlgorithm alg, HashCTX_t *ctx, const BIGNUM * n )
 {
     unsigned long len = BN_num_bytes(n);
     unsigned char * n_bytes = (unsigned char *) malloc( len );
@@ -385,6 +431,41 @@ static void hash_num( SRP_HashAlgorithm alg, const BIGNUM * n, unsigned char * d
     free(bin);
 }
 
+#ifdef APPLE_VARIANT
+/* added for compatibility with Apple's modified srp
+ * see https://htmlpreview.github.io/?https://github.com/philippe44/RAOP-Player/blob/master/doc/auth_protocol.html
+ */
+  
+static int hash_session_key( SRP_HashAlgorithm alg, const BIGNUM * n, unsigned char * dest )
+{
+    HashCTX_t *ctx;
+    int             nbytes = BN_num_bytes(n);
+    unsigned char * bin    = (unsigned char *) malloc( nbytes );
+    unsigned char fourbytes[4] = { 0 };  //Apple's modified SRP protocol
+    unsigned int len1, len2;
+    if(!bin)
+       return -1;
+    BN_bn2bin(n, bin);
+    
+    ctx = hash_create();
+    hash_init(alg, ctx);
+    hash_update( alg, ctx, bin, nbytes);
+    hash_update( alg, ctx, fourbytes, sizeof(fourbytes));
+    hash_final( alg, ctx, dest, &len1);
+    hash_reset( ctx);
+
+    fourbytes[3] = 1;
+    hash_init(alg, ctx);
+    hash_update( alg, ctx, bin, nbytes);
+    hash_update( alg, ctx, fourbytes, sizeof(fourbytes));
+    hash_final( alg, ctx, dest + len1, &len2);
+    hash_destroy( ctx);
+
+    free(bin);
+    return len1 + len2;
+}
+#endif
+
 static void calculate_M( SRP_HashAlgorithm alg, NGConstant *ng, unsigned char * dest, const char * I, const BIGNUM * s,
                          const BIGNUM * A, const BIGNUM * B, const unsigned char * K )
 {
@@ -392,7 +473,8 @@ static void calculate_M( SRP_HashAlgorithm alg, NGConstant *ng, unsigned char * 
     unsigned char H_g[ SHA512_DIGEST_LENGTH ];
     unsigned char H_I[ SHA512_DIGEST_LENGTH ];
     unsigned char H_xor[ SHA512_DIGEST_LENGTH ];
-    HashCTX       ctx;
+    unsigned int dest_len;
+    HashCTX_t *ctx;
     int           i = 0;
     int           hash_len = hash_length(alg);
 
@@ -403,30 +485,41 @@ static void calculate_M( SRP_HashAlgorithm alg, NGConstant *ng, unsigned char * 
     for (i=0; i < hash_len; i++ )
         H_xor[i] = H_N[i] ^ H_g[i];
 
-    hash_init( alg, &ctx );
-
-    hash_update( alg, &ctx, H_xor, hash_len );
-    hash_update( alg, &ctx, H_I,   hash_len );
-    update_hash_n( alg, &ctx, s );
-    update_hash_n( alg, &ctx, A );
-    update_hash_n( alg, &ctx, B );
-    hash_update( alg, &ctx, K, hash_len );
-
-    hash_final( alg, &ctx, dest );
+    ctx = hash_create();
+    hash_init( alg, ctx);
+    hash_update( alg, ctx, H_xor, hash_len );
+    hash_update( alg, ctx, H_I,   hash_len );
+    update_hash_n( alg, ctx, s );
+    update_hash_n( alg, ctx, A );
+    update_hash_n( alg, ctx, B );
+#ifdef APPLE_VARIANT  /* Apple's SRP session key length  is 2 x hash_len */
+    hash_update( alg, ctx, K, 2 * hash_len );
+#else
+    hash_update( alg, ctx, K, hash_len );
+#endif
+    hash_final( alg, ctx, dest, &dest_len );
+    hash_destroy ( ctx);
+    
 }
 
 static void calculate_H_AMK( SRP_HashAlgorithm alg, unsigned char *dest, const BIGNUM * A, const unsigned char * M, const unsigned char * K )
 {
-    HashCTX ctx;
+    HashCTX_t *ctx;
+    unsigned int dest_len;
 
-    hash_init( alg, &ctx );
-
-    update_hash_n( alg, &ctx, A );
-    hash_update( alg, &ctx, M, hash_length(alg) );
-    hash_update( alg, &ctx, K, hash_length(alg) );
-
-    hash_final( alg, &ctx, dest );
+    ctx = hash_create();
+    hash_init( alg, ctx);
+    update_hash_n( alg, ctx, A );
+    hash_update( alg, ctx, M, hash_length(alg) );
+#ifdef APPLE_VARIANT
+    hash_update( alg, ctx, K, 2 * hash_length(alg) );
+#else
+    hash_update( alg, ctx, K, hash_length(alg) );
+#endif
+    hash_final( alg, ctx, dest, &dest_len );
+    hash_destroy ( ctx);
 }
+
 
 
 static void init_random()
@@ -493,7 +586,11 @@ void srp_create_salted_verification_key( SRP_HashAlgorithm alg,
 
     init_random(); /* Only happens once */
 
+#ifdef APPLE_VARIANT  //use a 16 byte salt
+    BN_rand(s, 128, -1, 0);
+#else
     BN_rand(s, 32, -1, 0);
+#endif    
     x = calculate_x( alg, s, username, password, len_password );
 
     if( !x )
@@ -520,6 +617,71 @@ void srp_create_salted_verification_key( SRP_HashAlgorithm alg,
     BN_free(x);
     BN_CTX_free(ctx);
 }
+#ifdef APPLE_VARIANT
+
+/* Out: bytes_B, len_B, bytes_b, len_b 
+ * On failure, bytes_B and bytes_b  will be set to NULL 
+ * len_B  and len_will be set to 0
+ */
+void srp_create_server_ephemeral_key( SRP_HashAlgorithm alg, SRP_NGType ng_type,
+                                      const unsigned char * bytes_v, int len_v,  
+                                      const unsigned char * bytes_b, int len_b,
+                                      const unsigned char ** bytes_B, int * len_B,
+                                      const char * n_hex, const char * g_hex,
+                                      int rfc5054_compat ) {
+  BIGNUM             *v    = BN_bin2bn(bytes_v, len_v, NULL);
+  BIGNUM             *tmp1 = BN_new();
+  BIGNUM             *tmp2 = BN_new();
+  BIGNUM             *B    = BN_new();
+  BIGNUM             *b    = BN_new();
+  BIGNUM             *k    = 0;
+  BN_CTX             *ctx  = BN_CTX_new();
+  NGConstant         *ng   = new_ng( ng_type, n_hex, g_hex );
+
+  *len_B   = 0;
+  *bytes_B = 0;
+
+  if( !v || !B || !b || !tmp1 || !tmp2 || !ctx || !ng )
+    goto cleanup_and_exit;
+
+  b = BN_bin2bn(bytes_b, len_b, NULL);
+  
+  if (rfc5054_compat)
+    k = H_nn_rfc5054(alg, ng->N, ng->N, ng->g);
+  else
+    k = H_nn_orig(alg, ng->N, ng->g);
+  
+  if(!k)
+    goto cleanup_and_exit;
+
+  /* B = kv + g^b */
+  if (rfc5054_compat)
+    {
+      BN_mod_mul(tmp1, k, v, ng->N, ctx);
+      BN_mod_exp(tmp2, ng->g, b, ng->N, ctx);
+      BN_mod_add(B, tmp1, tmp2, ng->N, ctx);
+    }
+  else
+    {
+      BN_mul(tmp1, k, v, ctx);
+      BN_mod_exp(tmp2, ng->g, b, ng->N, ctx);
+      BN_add(B, tmp1, tmp2);
+    }
+
+  *len_B   = BN_num_bytes(B);
+  *bytes_B = (const unsigned char *)malloc( *len_B );
+   BN_bn2bin( B, (unsigned char *) *bytes_B );  
+
+ cleanup_and_exit:
+   BN_free(v);
+   if (k) BN_free(k);
+   BN_free(B);
+   BN_free(b);
+   BN_free(tmp1);
+   BN_free(tmp2);
+   BN_CTX_free(ctx);
+}
+#endif
 
 /* Out: bytes_B, len_B.
  *
@@ -529,6 +691,9 @@ struct SRPVerifier *  srp_verifier_new( SRP_HashAlgorithm alg, SRP_NGType ng_typ
                                         const unsigned char * bytes_s, int len_s,
                                         const unsigned char * bytes_v, int len_v,
                                         const unsigned char * bytes_A, int len_A,
+#ifdef APPLE_VARIANT
+					const unsigned char * bytes_b, int len_b,
+#endif
                                         const unsigned char ** bytes_B, int * len_B,
                                         const char * n_hex, const char * g_hex,
                                         int rfc5054_compat )
@@ -581,7 +746,15 @@ struct SRPVerifier *  srp_verifier_new( SRP_HashAlgorithm alg, SRP_NGType ng_typ
     BN_mod(tmp1, A, ng->N, ctx);
     if ( !BN_is_zero(tmp1) )
     {
+#ifdef APPLE_VARIANT
+       if ( !len_b || !bytes_b) {
+#endif
        BN_rand(b, 256, -1, 0);
+#ifdef APPLE_VARIANT
+       } else {
+           b = BN_bin2bn(bytes_b, len_b, NULL);
+       }
+#endif
 
        if (rfc5054_compat)
           k = H_nn_rfc5054(alg, ng->N, ng->N, ng->g);
@@ -626,8 +799,11 @@ struct SRPVerifier *  srp_verifier_new( SRP_HashAlgorithm alg, SRP_NGType ng_typ
        BN_mul(tmp2, A, tmp1, ctx);
        BN_mod_exp(S, tmp2, b, ng->N, ctx);
 
+#ifdef APPLE_VARIANT
+       hash_session_key(alg, S, ver->session_key);
+#else
        hash_num(alg, S, ver->session_key);
-
+#endif
        calculate_M( alg, ng, ver->M, username, s, A, B, ver->session_key );
        calculate_H_AMK( alg, ver->H_AMK, A, ver->M, ver->session_key );
 
@@ -692,13 +868,21 @@ const char * srp_verifier_get_username( struct SRPVerifier * ver )
 const unsigned char * srp_verifier_get_session_key( struct SRPVerifier * ver, int * key_length )
 {
     if (key_length)
-        *key_length = hash_length( ver->hash_alg );
+#ifdef APPLE_VARIANT
+      *key_length = 2 * hash_length( ver->hash_alg );
+#else
+      *key_length = hash_length( ver->hash_alg );
+#endif
     return ver->session_key;
 }
 
-int                   srp_verifier_get_session_key_length( struct SRPVerifier * ver )
+int srp_verifier_get_session_key_length( struct SRPVerifier * ver )
 {
+#ifdef APPLE_VARIANT
+    return 2 * hash_length( ver->hash_alg );
+#else
     return hash_length( ver->hash_alg );
+#endif
 }
 
 /* user_M must be exactly SHA512_DIGEST_LENGTH bytes in size */
@@ -805,13 +989,21 @@ const char * srp_user_get_username( struct SRPUser * usr )
 const unsigned char * srp_user_get_session_key( struct SRPUser * usr, int * key_length )
 {
     if (key_length)
+#ifdef APPLE_VARIANT
+        *key_length = 2 * hash_length( usr->hash_alg );
+#else
         *key_length = hash_length( usr->hash_alg );
+#endif
     return usr->session_key;
 }
 
-int                   srp_user_get_session_key_length( struct SRPUser * usr )
+int srp_user_get_session_key_length( struct SRPUser * usr )
 {
+#ifdef APPLE_VARIANT
+    return 2 * hash_length( usr->hash_alg );
+#else
     return hash_length( usr->hash_alg );
+#endif
 }
 
 /* Output: username, bytes_A, len_A */
@@ -896,7 +1088,11 @@ void  srp_user_process_challenge( struct SRPUser * usr,
         BN_sub(tmp1, B, tmp3);                  /* tmp1 = (B - K*(g^x)) */
         BN_mod_exp(usr->S, tmp1, tmp2, usr->ng->N, ctx);
 
+#ifdef APPLE_VARIANT    
+        hash_session_key(usr->hash_alg, usr->S, usr->session_key);
+#else
         hash_num(usr->hash_alg, usr->S, usr->session_key);
+#endif
         calculate_M( usr->hash_alg, usr->ng, usr->M, usr->username, s, usr->A, B, usr->session_key );
         calculate_H_AMK( usr->hash_alg, usr->H_AMK, usr->A, usr->M, usr->session_key );
         *bytes_M = usr->M;
