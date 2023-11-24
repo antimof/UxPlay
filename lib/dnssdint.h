@@ -20,7 +20,7 @@
 
 #include "global.h"
 
-#define PK "b07727d6f6cd6e08b58ede525ec3cdeaa252ad9f683feb212ef8a205246554e7"
+//#define PK "b07727d6f6cd6e08b58ede525ec3cdeaa252ad9f683feb212ef8a205246554e7"
 
 #define RAOP_TXTVERS "1"
 #define RAOP_CH "2"             /* Audio channels: 2 */

@@ -48,7 +48,8 @@ DNSSD_API const char *dnssd_get_name(dnssd_t *dnssd, int *length);
 DNSSD_API const char *dnssd_get_hw_addr(dnssd_t *dnssd, int *length);
 DNSSD_API void dnssd_set_airplay_features(dnssd_t *dnssd, int bit, int val);
 DNSSD_API uint64_t dnssd_get_airplay_features(dnssd_t *dnssd);
-  
+DNSSD_API void dnssd_set_pk(dnssd_t *dnssd, char * pk_str);
+
 DNSSD_API void dnssd_destroy(dnssd_t *dnssd);
 
 #ifdef __cplusplus

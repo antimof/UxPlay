@@ -146,6 +146,8 @@ struct dnssd_s {
     char *hw_addr;
     int hw_addr_len;
 
+    char *pk;
+
     uint32_t features1;
     uint32_t features2;
 
@@ -313,7 +315,7 @@ dnssd_register_raop(dnssd_t *dnssd, unsigned short port)
     dnssd->TXTRecordSetValue(&dnssd->raop_record, "sf", strlen(RAOP_SF), RAOP_SF);
     dnssd->TXTRecordSetValue(&dnssd->raop_record, "vs", strlen(RAOP_VS), RAOP_VS);
     dnssd->TXTRecordSetValue(&dnssd->raop_record, "vn", strlen(RAOP_VN), RAOP_VN);
-    dnssd->TXTRecordSetValue(&dnssd->raop_record, "pk", strlen(PK), PK);
+    dnssd->TXTRecordSetValue(&dnssd->raop_record, "pk", strlen(dnssd->pk), dnssd->pk);
 
     /* Convert hardware address to string */
     if (utils_hwaddr_raop(servname, sizeof(servname), dnssd->hw_addr, dnssd->hw_addr_len) < 0) {
@@ -365,7 +367,7 @@ dnssd_register_airplay(dnssd_t *dnssd, unsigned short port)
     dnssd->TXTRecordSetValue(&dnssd->airplay_record, "features", strlen(features), features);
     dnssd->TXTRecordSetValue(&dnssd->airplay_record, "flags", strlen(AIRPLAY_FLAGS), AIRPLAY_FLAGS);
     dnssd->TXTRecordSetValue(&dnssd->airplay_record, "model", strlen(GLOBAL_MODEL), GLOBAL_MODEL);
-    dnssd->TXTRecordSetValue(&dnssd->airplay_record, "pk", strlen(PK), PK);
+    dnssd->TXTRecordSetValue(&dnssd->airplay_record, "pk", strlen(dnssd->pk), dnssd->pk);
     if (dnssd->require_pw) {
         dnssd->TXTRecordSetValue(&dnssd->airplay_record, "pw", strlen("true"), "true");
     } else {
@@ -454,6 +456,10 @@ uint64_t dnssd_get_airplay_features(dnssd_t *dnssd) {
   uint64_t features = ((uint64_t) dnssd->features2) << 32;
   features += (uint64_t) dnssd->features1;
   return features;
+}
+
+void dnssd_set_pk(dnssd_t *dnssd, char * pk_str) {
+  dnssd->pk = pk_str;
 }
 
 void dnssd_set_airplay_features(dnssd_t *dnssd, int bit, int val) {

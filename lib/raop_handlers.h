@@ -50,7 +50,7 @@ raop_handler_info(raop_conn_t *conn,
     utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
 
     int pk_len = 0;
-    char *pk = utils_parse_hex(PK, strlen(PK), &pk_len);
+    char *pk = utils_parse_hex(conn->raop->pk_str, strlen(conn->raop->pk_str), &pk_len);
 
     plist_t r_node = plist_new_dict();
 

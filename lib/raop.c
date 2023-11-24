@@ -68,6 +68,9 @@ struct raop_s {
 
      /* for temporary storage of pin during pair-pin start */
      unsigned short pin;
+
+     /* public key as string */
+     char pk_str[2*ED25519_KEY_SIZE + 1];
 };
 
 struct raop_conn_s {
@@ -431,6 +434,13 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
         return NULL;
     }
 
+    /* store PK as a string in raop->pk_str */
+    unsigned char public_key[ED25519_KEY_SIZE];
+    pairing_get_public_key(pairing, public_key);
+    char *pk_str = utils_pk_to_string(public_key, ED25519_KEY_SIZE);
+    strncpy(raop->pk_str, (const char *) pk_str, 2*ED25519_KEY_SIZE + 1);
+    free(pk_str);
+
     /* Set HTTP callbacks to our handlers */
     memset(&httpd_cbs, 0, sizeof(httpd_cbs));
     httpd_cbs.opaque = raop;
@@ -586,6 +596,7 @@ raop_set_log_callback(raop_t *raop, raop_log_callback_t callback, void *cls) {
 void
 raop_set_dnssd(raop_t *raop, dnssd_t *dnssd) {
     assert(dnssd);
+    dnssd_set_pk(dnssd, raop->pk_str);
     raop->dnssd = dnssd;
 }
 
