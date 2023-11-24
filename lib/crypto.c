@@ -25,6 +25,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -263,7 +264,6 @@ void x25519_derive_secret(unsigned char secret[X25519_KEY_SIZE], const x25519_ke
 
 // ED25519
 
-
 struct ed25519_key_s {
     EVP_PKEY *pkey;
     unsigned char ed_secret[ED25519_KEY_SIZE];
@@ -496,4 +496,8 @@ void sha_destroy(sha_ctx_t *ctx) {
         EVP_MD_CTX_free(ctx->digest_ctx);
         free(ctx);
     }
+}
+
+int get_random_bytes(unsigned char *buf, int num) {
+    return RAND_bytes(buf, num);
 }

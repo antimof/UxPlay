@@ -269,3 +269,23 @@ pairing_destroy(pairing_t *pairing)
         free(pairing);
     }
 }
+
+int
+random_pin() {
+    unsigned char random_bytes[2] = { 0 };
+    unsigned short random_short = 0;
+    int ret;
+    /* create a random unsigned short in range 1-9999 */
+    while (!random_short) {
+        if ((ret = get_random_bytes(random_bytes, sizeof(random_bytes))  < 1)) {
+            return -1;
+        }
+         memcpy(&random_short, random_bytes, sizeof(random_bytes));
+         random_short = random_short % 10000;
+    }
+    return (int) random_short; 
+}
+
+
+
+

@@ -32,6 +32,7 @@ int pairing_session_check_handshake_status(pairing_session_t *session);
 int pairing_session_handshake(pairing_session_t *session, const unsigned char ecdh_key[X25519_KEY_SIZE],
                               const unsigned char ed_key[ED25519_KEY_SIZE]);
 int pairing_session_get_public_key(pairing_session_t *session, unsigned char ecdh_key[X25519_KEY_SIZE]);
+int random_pin();
 int pairing_session_get_signature(pairing_session_t *session, unsigned char signature[PAIRING_SIG_SIZE]);
 int pairing_session_finish(pairing_session_t *session, const unsigned char signature[PAIRING_SIG_SIZE]);
 void pairing_session_destroy(pairing_session_t *session);
