@@ -263,9 +263,81 @@ void x25519_derive_secret(unsigned char secret[X25519_KEY_SIZE], const x25519_ke
 
 // ED25519
 
+
 struct ed25519_key_s {
     EVP_PKEY *pkey;
+    unsigned char ed_secret[ED25519_KEY_SIZE];
 };
+
+int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
+
+    int count = 0;
+    unsigned int val;
+    unsigned int part1 = 0;
+    int part = 0;
+    unsigned char start[4] = { 0x20, 0x20, 0x20, 0x20 }; 
+
+    int bufsize = 512;  /*should be big enough */
+    void *buf = malloc(bufsize);
+    BIO *bp = BIO_new(BIO_s_mem());
+    EVP_PKEY_print_private(bp, key, 0, NULL);
+    BIO_read(bp, buf, bufsize);
+    BIO_free(bp);
+
+    char *data = (char *) buf;
+    //printf("%s\n", data);
+    
+    for (int i = 0; i < bufsize ; i ++ ) {
+      if (memcmp(data, start, 4)) {
+	data ++;
+      } else {
+	data += 4;
+	break;
+      }
+    }
+
+    int datalen = strlen(data);    
+    for (int i = 0; (count < keylen && i < datalen); i++) {
+      val = 64;
+      if ('0' <= *data && *data <= '9') val = *data - '0';
+      if ('a' <= *data && *data <= 'f') val = 10 + *data - 'a';
+      if ('A' <= *data && *data <= 'F') val = 10 + *data - 'A';
+      if (val == 64) {
+	//printf("[%c]\n", *data);
+	data++;
+	continue;
+      }
+      part++;
+      part = part% 2;
+      switch (part) {
+      case 1:
+	//printf("%d %d [%c] %u\n", i, part, *data, val);
+	part1 = val;
+	data++;     
+	break;
+      case 0:
+	privkey[count] =  (unsigned char) (val  + (part1 << 4));
+	count++;
+	data++;
+	break;
+      default:
+        break;
+      }
+     }
+
+    free (buf);    
+    if (count != keylen) goto error;
+
+    //for (int i = 0; i < keylen; i++) {
+    //  printf("%2.2x ", *(privkey + i));
+    //}
+    //printf("\n");
+
+    return 0;
+ error:;
+    memset(privkey, 0, keylen);
+    return -1;
+}
 
 ed25519_key_t *ed25519_key_generate(void) {
     ed25519_key_t *key;
@@ -285,6 +357,8 @@ ed25519_key_t *ed25519_key_generate(void) {
         handle_error(__func__);
     }
     EVP_PKEY_CTX_free(pctx);
+
+    extract_evp_private_key(key->ed_secret, ED25519_KEY_SIZE, *(&key->pkey));
 
     return key;
 }
