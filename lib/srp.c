@@ -31,6 +31,7 @@
  */
 #define APPLE_VARIANT
 #ifdef WIN32
+# include <Windows.h>
 # include <Wincrypt.h>
 #else
 # include <sys/time.h>
