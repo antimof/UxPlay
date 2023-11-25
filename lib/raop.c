@@ -435,11 +435,15 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     }
 
     /* store PK as a string in raop->pk_str */
+#ifdef PK
+    strncpy(raop->pk_str, PK, 2*ED25519_KEY_SIZE + 1);
+#else
     unsigned char public_key[ED25519_KEY_SIZE];
     pairing_get_public_key(pairing, public_key);
     char *pk_str = utils_pk_to_string(public_key, ED25519_KEY_SIZE);
     strncpy(raop->pk_str, (const char *) pk_str, 2*ED25519_KEY_SIZE + 1);
     free(pk_str);
+#endif
 
     /* Set HTTP callbacks to our handlers */
     memset(&httpd_cbs, 0, sizeof(httpd_cbs));
