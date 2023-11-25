@@ -610,7 +610,7 @@ static void print_info (char *name) {
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
-    printf("-pin[xxxx]Use a 4=digit pin code to control client access (default: no)\n");
+    printf("-pin[xxxx]Use a 4-digit pin code to control client access (default: no)\n");
     printf("          [optionally choose fixed pin]; default pin varies randomly\n");
     printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
     printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
@@ -1077,7 +1077,7 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-pin") {
             setup_legacy_pairing = true;
             require_password = true;
-            if (option_has_value(i, argc, arg, argv[i+1])) {
+	    if (i < argc - 1 && *argv[i+1] != '-') {
                 unsigned int n = 9999;
                 if (!get_value(argv[++i], &n)) {
                     fprintf(stderr, "invalid \"-pin %s\"; -pin nnnn : max nnnn=9999, (4 digits)\n", argv[i]);
