@@ -32,7 +32,7 @@ struct pairing_s {
 };
 
 typedef struct srp_user_s {
-    char username[SRP_USERNAME_SIZE];   
+    char username[SRP_USERNAME_SIZE + 1];   
     unsigned char salt[SRP_SALT_SIZE];
     unsigned char verifier[SRP_VERIFIER_SIZE];
 } srp_user_t;
@@ -304,8 +304,8 @@ random_pin() {
 
 int
 srp_new_user(pairing_session_t *session, pairing_t *pairing, const char *device_id, const char *pin,
-                        const char **salt, int *len_salt, const char **pk, int *len_pk) {
-    if (strlen(device_id) >= SRP_USERNAME_SIZE) {
+             const char **salt, int *len_salt, const char **pk, int *len_pk) {
+    if (strlen(device_id) > SRP_USERNAME_SIZE) {
         return -1;
     }
 
@@ -317,7 +317,7 @@ srp_new_user(pairing_session_t *session, pairing_t *pairing, const char *device_
         return -2;
     }
     memset(session->srp_user, 0, sizeof(srp_user_t));
-    strncpy(session->srp_user->username, device_id, strlen(device_id) + 1);
+    strncpy(session->srp_user->username, device_id, SRP_USERNAME_SIZE);
 
     const unsigned char *srp_b = srp_private_key(pairing);
     unsigned char * srp_B;
