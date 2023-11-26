@@ -319,7 +319,6 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         uint64_t client_authtag_len;
         unsigned char epk[ED25519_KEY_SIZE];
 	unsigned char authtag[GCM_AUTHTAG_SIZE];
-	unsigned char public_key[32];
 	int ret;
         plist_get_data_val(req_epk_node, &client_epk, &client_epk_len); 
         plist_get_data_val(req_authtag_node, &client_authtag, &client_authtag_len);
@@ -337,8 +336,7 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         free (client_authtag);
         free (client_epk);
         plist_free(req_root_node);
-        pairing_get_public_key(conn->raop->pairing, public_key);
-	ret = srp_confirm_pair_setup(conn->session, public_key, epk, authtag);
+	ret = srp_confirm_pair_setup(conn->session, conn->raop->pairing, epk, authtag);
         if (ret < 0) {
             logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
             goto authentication_failed;

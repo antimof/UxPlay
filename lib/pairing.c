@@ -27,15 +27,15 @@
 #define SALT_KEY "Pair-Verify-AES-Key"
 #define SALT_IV "Pair-Verify-AES-IV"
 
-struct pairing_s {
-    ed25519_key_t *ed;
-};
-
 typedef struct srp_user_s {
     char username[SRP_USERNAME_SIZE + 1];   
     unsigned char salt[SRP_SALT_SIZE];
     unsigned char verifier[SRP_VERIFIER_SIZE];
 } srp_user_t;
+
+struct pairing_s {
+    ed25519_key_t *ed;
+};
 
 typedef enum {
     STATUS_INITIAL,
@@ -394,11 +394,11 @@ srp_validate_proof(pairing_session_t *session, pairing_t *pairing, const unsigne
     return 0;
 }
 int
-srp_confirm_pair_setup(pairing_session_t *session, const unsigned char *pk,
+srp_confirm_pair_setup(pairing_session_t *session, pairing_t *pairing,
                        unsigned char *epk, unsigned char *auth_tag) {
     unsigned char aesKey[16], aesIV[16];
     unsigned char hash[SHA512_DIGEST_LENGTH];
-    unsigned char pk_client[ED25519_KEY_SIZE];
+    unsigned char pk[ED25519_KEY_SIZE];
     int pk_len_client, epk_len;
 
     /* decrypt client epk to get client pk, authenticate with auth_tag*/ 
@@ -420,12 +420,17 @@ srp_confirm_pair_setup(pairing_session_t *session, const unsigned char *pk,
     memcpy(aesIV, hash, 16);
     aesIV[15]++;
 
-    pk_len_client  = gcm_decrypt(epk, ED25519_KEY_SIZE, pk_client, aesKey, aesIV, auth_tag);
+    /* decrypt client epk to authenticate client using auth_tag */
+    pk_len_client  = gcm_decrypt(epk, ED25519_KEY_SIZE, pk, aesKey, aesIV, auth_tag);
     if (pk_len_client <= 0) {
        /* authentication failed */
          return pk_len_client;
     }
-    /* the previously undocumented necessary "nonce" */
+
+    /* encrypt server epk so client can authenticate server using auth_tag */
+    pairing_get_public_key(pairing, pk);
+
+    /* encryption  needs this previously undocumented additional "nonce" */
     aesIV[15]++;
     epk_len = gcm_encrypt(pk, ED25519_KEY_SIZE, epk, aesKey, aesIV, auth_tag);
     return epk_len;    

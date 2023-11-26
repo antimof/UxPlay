@@ -57,6 +57,6 @@ int srp_new_user(pairing_session_t *session, pairing_t *pairing, const char *dev
 		 const char **salt, int *len_salt, const char **pk, int *len_pk);
 int srp_validate_proof(pairing_session_t *session, pairing_t *pairing, const unsigned char *A,
 		       int len_A, unsigned char *proof, int client_proof_len, int proof_len);
-int srp_confirm_pair_setup(pairing_session_t *session, const unsigned char *pk,
-                           unsigned char *epk, unsigned char *auth_tag);
+int srp_confirm_pair_setup(pairing_session_t *session, pairing_t *pairing, unsigned char *epk,
+                           unsigned char *auth_tag);
 #endif
