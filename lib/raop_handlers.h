@@ -257,7 +257,7 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         if (conn->raop->pin < 10000) {
             conn->raop->pin = 0;
         }
-	int ret = srp_new_user(conn->pairing, conn->raop->pairing, (const char *) user,
+	int ret = srp_new_user(conn->session, conn->raop->pairing, (const char *) user,
                                (const char *) pin, &salt, &len_salt, &pk, &len_pk);
         free(user);	
         plist_free(req_root_node);
@@ -291,7 +291,7 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         }
         memcpy(proof, client_proof, (int) client_proof_len);
         free (client_proof);
-        int ret = srp_validate_proof(conn->pairing, conn->raop->pairing, (const unsigned char *) client_pk,
+        int ret = srp_validate_proof(conn->session, conn->raop->pairing, (const unsigned char *) client_pk,
                                      (int) client_pk_len, proof, (int) client_proof_len, (int) sizeof(proof));
         free (client_pk);
         plist_free(req_root_node);
@@ -338,14 +338,14 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         free (client_epk);
         plist_free(req_root_node);
         pairing_get_public_key(conn->raop->pairing, public_key);
-	ret = srp_confirm_pair_setup(conn->pairing, public_key, epk, authtag);
+	ret = srp_confirm_pair_setup(conn->session, public_key, epk, authtag);
         if (ret < 0) {
             logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
             goto authentication_failed;
         } else {
             logger_log(conn->raop->logger, LOGGER_INFO, "pair-pin-setup success\n");
 	}
-        pairing_session_set_setup_status(conn->pairing);
+        pairing_session_set_setup_status(conn->session);
         plist_t res_root_node = plist_new_dict();
         plist_t res_epk_node = plist_new_data((const char *) epk, 32);
 	plist_t res_authtag_node = plist_new_data((const char *) authtag, 16);
@@ -384,7 +384,7 @@ raop_handler_pairsetup(raop_conn_t *conn,
     }
 
     pairing_get_public_key(conn->raop->pairing, public_key);
-    pairing_session_set_setup_status(conn->pairing);
+    pairing_session_set_setup_status(conn->session);
 
     *response_data = malloc(sizeof(public_key));
     if (*response_data) {
@@ -399,7 +399,7 @@ raop_handler_pairverify(raop_conn_t *conn,
                         http_request_t *request, http_response_t *response,
                         char **response_data, int *response_datalen)
 {
-    if (pairing_session_check_handshake_status(conn->pairing)) {
+    if (pairing_session_check_handshake_status(conn->session)) {
         return;
     }
     unsigned char public_key[X25519_KEY_SIZE];
@@ -419,13 +419,13 @@ raop_handler_pairverify(raop_conn_t *conn,
                 return;
             }
             /* We can fall through these errors, the result will just be garbage... */
-            if (pairing_session_handshake(conn->pairing, data + 4, data + 4 + X25519_KEY_SIZE)) {
+            if (pairing_session_handshake(conn->session, data + 4, data + 4 + X25519_KEY_SIZE)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error initializing pair-verify handshake");
             }
-            if (pairing_session_get_public_key(conn->pairing, public_key)) {
+            if (pairing_session_get_public_key(conn->session, public_key)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ECDH public key");
             }
-            if (pairing_session_get_signature(conn->pairing, signature)) {
+            if (pairing_session_get_signature(conn->session, signature)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ED25519 signature");
             }
             *response_data = malloc(sizeof(public_key) + sizeof(signature));
@@ -443,7 +443,7 @@ raop_handler_pairverify(raop_conn_t *conn,
                 return;
             }
 
-            if (pairing_session_finish(conn->pairing, data + 4)) {
+            if (pairing_session_finish(conn->session, data + 4)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Incorrect pair-verify signature");
                 http_response_set_disconnect(response, 1);
                 return;
@@ -614,7 +614,7 @@ raop_handler_setup(raop_conn_t *conn,
             logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
         } else {
             unsigned char ecdh_secret[X25519_KEY_SIZE];
-            if (pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret)) {
+            if (pairing_get_ecdh_secret_key(conn->session, ecdh_secret)) {
                 /* In this case  (legacy) pairing with client was successfully set up and created the shared ecdh_secret:
                  * aeskey must now be hashed with it
                  *

@@ -79,7 +79,7 @@ struct raop_conn_s {
     raop_rtp_t *raop_rtp;
     raop_rtp_mirror_t *raop_rtp_mirror;
     fairplay_t *fairplay;
-    pairing_session_t *pairing;
+    pairing_session_t *session;
 
     unsigned char *local;
     int locallen;
@@ -113,8 +113,8 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
         free(conn);
         return NULL;
     }
-    conn->pairing = pairing_session_init(raop->pairing);
-    if (!conn->pairing) {
+    conn->session = pairing_session_init(raop->pairing);
+    if (!conn->session) {
         fairplay_destroy(conn->fairplay);
         free(conn);
         return NULL;
@@ -391,7 +391,7 @@ conn_destroy(void *ptr) {
 
     free(conn->local);
     free(conn->remote);
-    pairing_session_destroy(conn->pairing);
+    pairing_session_destroy(conn->session);
     fairplay_destroy(conn->fairplay);
     free(conn);
 }
