@@ -397,9 +397,9 @@ raop_handler_pairverify(raop_conn_t *conn,
                         http_request_t *request, http_response_t *response,
                         char **response_data, int *response_datalen)
 {
-    if (pairing_session_check_handshake_status(conn->session)) {
-        return;
-    }
+    //if (pairing_session_check_handshake_status(conn->session)) {
+    //     return;
+    // }
     unsigned char public_key[X25519_KEY_SIZE];
     unsigned char signature[PAIRING_SIG_SIZE];
     const unsigned char *data;
