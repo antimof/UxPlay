@@ -30,4 +30,6 @@ char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per
 char *utils_data_to_text(const char *data, int datalen);
 void ntp_timestamp_to_time(uint64_t ntp_timestamp, char *timestamp, size_t maxsize);
 void ntp_timestamp_to_seconds(uint64_t ntp_timestamp, char *timestamp, size_t maxsize);
+
+int private_key_from_EVP_PKEY_print_private(unsigned char *privkey, int keylen, char *data);
 #endif

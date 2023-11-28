@@ -196,6 +196,60 @@ char *utils_pk_to_string(const unsigned char *pk, int pk_len) {
     return pk_str;
 }
 
+int
+private_key_from_EVP_PKEY_print_private(unsigned char *privkey, int keylen, char *data)  {
+    int count = 0;
+    unsigned int val;
+    unsigned int part1 = 0;
+    int part = 0;
+    unsigned char start[4] = { 0x20, 0x20, 0x20, 0x20 }; 
+
+    /* data must be output of EVP_PKEY_print_private */
+
+    for (int i = 0; i < strlen(data); i ++ ) {
+      if (memcmp(data, start, 4)) {
+	data ++;
+      } else {
+	data += 4;
+	break;
+      }
+    }
+
+    int datalen = strlen(data);    
+    for (int i = 0; (count < keylen && i < datalen); i++) {
+      val = 64;
+      if ('0' <= *data && *data <= '9') val = *data - '0';
+      if ('a' <= *data && *data <= 'f') val = 10 + *data - 'a';
+      if ('A' <= *data && *data <= 'F') val = 10 + *data - 'A';
+      if (val == 64) {
+	data++;
+	continue;
+      }
+      part++;
+      part = part% 2;
+      switch (part) {
+      case 1:
+	part1 = val;
+	data++;     
+	break;
+      case 0:
+	privkey[count] =  (unsigned char) (val  + (part1 << 4));
+	count++;
+	data++;
+	break;
+      default:
+        break;
+      }
+     }
+
+    if (count != keylen) goto error;
+
+    return 0;
+ error:;
+    memset(privkey, 0, keylen);
+    return -1;
+}
+
 char *utils_data_to_string(const unsigned char *data, int datalen, int chars_per_line) {
     assert(datalen >= 0);
     assert(chars_per_line > 0);

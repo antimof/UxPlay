@@ -26,11 +26,14 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/pem.h>
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+#include "utils.h"
 
 struct aes_ctx_s {
     EVP_CIPHER_CTX *cipher_ctx;
@@ -355,24 +358,17 @@ const unsigned char* ed25519_secret_key(const ed25519_key_t *key) {
     return (const unsigned char *) key->ed_secret;
 }
 
-int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
+int
+extract_evp_private_key(unsigned char *privkey, int keylen, char *data)  {
     int count = 0;
     unsigned int val;
     unsigned int part1 = 0;
     int part = 0;
     unsigned char start[4] = { 0x20, 0x20, 0x20, 0x20 }; 
 
-    int bufsize = 512;  /*should be big enough */
-    void *buf = malloc(bufsize);
-    BIO *bp = BIO_new(BIO_s_mem());
-    EVP_PKEY_print_private(bp, key, 0, NULL);
-    BIO_read(bp, buf, bufsize);
-    BIO_free(bp);
+    printf("%s\n", data);
 
-    char *data = (char *) buf;
-    //printf("%s\n", data);
-    
-    for (int i = 0; i < bufsize ; i ++ ) {
+    for (int i = 0; i < strlen(data); i ++ ) {
       if (memcmp(data, start, 4)) {
 	data ++;
       } else {
@@ -408,13 +404,12 @@ int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
       }
      }
 
-    free (buf);    
     if (count != keylen) goto error;
 
-    //for (int i = 0; i < keylen; i++) {
-    //  printf("%2.2x ", *(privkey + i));
-    //}
-    //printf("\n");
+    for (int i = 0; i < keylen; i++) {
+        printf("%2.2x ", *(privkey + i));
+    }
+    printf("\n");
 
     return 0;
  error:;
@@ -422,27 +417,68 @@ int extract_evp_private_key(unsigned char *privkey, int keylen, EVP_PKEY *key) {
     return -1;
 }
 
-ed25519_key_t *ed25519_key_generate(void) {
+ed25519_key_t *ed25519_key_generate(const char *keyfile) {
     ed25519_key_t *key;
     EVP_PKEY_CTX *pctx;
-
+    BIO *bp;
+    FILE *file;
+    bool new_pk = false;
+    
+    
     key = calloc(1, sizeof(ed25519_key_t));
     assert(key);
-
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
-    if (!pctx) {
-        handle_error(__func__);
+    
+    if (keyfile) {
+        file = fopen(keyfile, "r");
+        if (file) {
+            bp = BIO_new_fp(file, BIO_NOCLOSE);
+            key->pkey = PEM_read_PrivateKey(file, NULL, NULL, NULL);
+            BIO_free(bp);
+            fclose(file);
+            if (!key->pkey) {
+                new_pk = true;
+            }
+        } else {
+            new_pk = true;
+        }
+    } else {
+        new_pk = true;
     }
-    if (!EVP_PKEY_keygen_init(pctx)) {
-        handle_error(__func__);
-    }
-    if (!EVP_PKEY_keygen(pctx, &key->pkey)) {
-        handle_error(__func__);
-    }
-    EVP_PKEY_CTX_free(pctx);
 
-    extract_evp_private_key(key->ed_secret, ED25519_KEY_SIZE, *(&key->pkey));
+    if (new_pk) {
+        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
+        if (!pctx) {
+            handle_error(__func__);
+        }
+        if (!EVP_PKEY_keygen_init(pctx)) {
+            handle_error(__func__);
+        }
+        if (!EVP_PKEY_keygen(pctx, &key->pkey)) {
+            handle_error(__func__);
+        }
+        EVP_PKEY_CTX_free(pctx);
+        if (keyfile) {
+            file = fopen(keyfile, "w");
+            if (file) {
+                bp = BIO_new_fp(file, BIO_NOCLOSE);
+                PEM_write_bio_PrivateKey(bp, key->pkey, NULL, NULL, 0, NULL, NULL);
+                BIO_free(bp);
+                fclose(file);
+            } else {
+	      printf("fopen failed, errno = %d\n", errno);
+            }
+        }
+    }
 
+    int bufsize = 512;  /*should be big enough */
+    void *buf = malloc(bufsize);
+    bp = BIO_new(BIO_s_mem());
+    EVP_PKEY_print_private(bp, key->pkey, 0, NULL);
+    BIO_read(bp, buf, bufsize);
+    BIO_free(bp);
+
+    private_key_from_EVP_PKEY_print_private(key->ed_secret, ED25519_KEY_SIZE, (char *) buf);
+    free(buf);
     return key;
 }
 
