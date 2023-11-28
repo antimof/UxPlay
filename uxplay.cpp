@@ -480,6 +480,19 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     return 0;
 }
 
+const char *get_homedir() {
+    const char *homedir = getenv("XDG_CONFIG_HOMEDIR");
+    if (homedir == NULL) {
+        homedir = getenv("HOME");
+    }
+#ifndef _WIN32
+    if (homedir == NULL){
+        homedir = getpwuid(getuid())->pw_dir;
+    }
+#endif
+    return homedir;
+}
+
 static std::string find_uxplay_config_file() {
     std::string no_config_file = "";
     const char *homedir = NULL;
@@ -491,15 +504,7 @@ static std::string find_uxplay_config_file() {
         config0 = uxplayrc;
         if (stat(config0.c_str(), &sb) == 0) return config0;
     }
-    homedir = getenv("XDG_CONFIG_HOMEDIR");
-    if (homedir == NULL) {
-        homedir = getenv("HOME");
-    }
-#ifndef _WIN32
-    if (homedir == NULL){
-        homedir = getpwuid(getuid())->pw_dir;
-    }
-#endif
+    homedir = get_homedir();
     if (homedir) {
       config1 = homedir;
       config1.append("/.uxplayrc");
