@@ -80,7 +80,7 @@ derive_key_internal(pairing_session_t *session, const unsigned char *salt, unsig
 }
 
 pairing_t *
-pairing_init_generate()
+pairing_init_generate(const char * keyfile)
 {
     pairing_t *pairing;
 
@@ -89,7 +89,7 @@ pairing_init_generate()
         return NULL;
     }
 
-    pairing->ed = ed25519_key_generate();
+    pairing->ed = ed25519_key_generate(keyfile);
 
     return pairing;
 }

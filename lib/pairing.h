@@ -35,7 +35,7 @@
 typedef struct pairing_s pairing_t;
 typedef struct pairing_session_s pairing_session_t;
 
-pairing_t *pairing_init_generate();
+pairing_t *pairing_init_generate(const char * keyfile);
 void pairing_get_public_key(pairing_t *pairing, unsigned char public_key[ED25519_KEY_SIZE]);
 
 pairing_session_t *pairing_session_init(pairing_t *pairing);

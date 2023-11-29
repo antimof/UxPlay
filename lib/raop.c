@@ -397,7 +397,7 @@ conn_destroy(void *ptr) {
 }
 
 raop_t *
-raop_init(int max_clients, raop_callbacks_t *callbacks) {
+raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
     raop_t *raop;
     pairing_t *pairing;
     httpd_t *httpd;
@@ -428,7 +428,7 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     raop->logger = logger_init();
 
     /* create a new public key for pairing */
-    pairing = pairing_init_generate();
+    pairing = pairing_init_generate(keyfile);
     if (!pairing) {
         free(raop);
         return NULL;
@@ -610,6 +610,7 @@ int
 raop_start(raop_t *raop, unsigned short *port) {
     assert(raop);
     assert(port);
+    logger_log(raop->logger, LOGGER_DEBUG, "using Public Key:\n%s", raop->pk_str);
     return httpd_start(raop->httpd, port);
 }
 

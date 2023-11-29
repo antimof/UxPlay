@@ -129,6 +129,7 @@ static bool restrict_clients;
 static bool setup_legacy_pairing = false;
 static bool require_password = false;
 static unsigned short pin = 0;
+static std::string keyfile = "";
 
 /* logging */
 
@@ -666,6 +667,7 @@ static void print_info (char *name) {
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
+    printf("-key <fn> Store private key in file <fn> (default:$HOME/.uxplay.pem)\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
     printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
     printf("          x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n\n");
@@ -1089,6 +1091,14 @@ static void parse_arguments (int argc, char *argv[]) {
                     exit(1);
                 }
                 pin = n + 10000;
+            }
+        } else if (arg == "-key") {
+            keyfile.erase();
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                keyfile.append(argv[++i]);
+            } else {
+                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
+                exit(1);
             }
         } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
@@ -1595,7 +1605,7 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.display_pin = display_pin;
 
     /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs);
+    raop = raop_init(max_connections, &raop_cbs, keyfile.c_str());
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;
@@ -1812,8 +1822,8 @@ int main (int argc, char *argv[]) {
 
     if (videosink == "d3d11videosink"  && use_video) {
         videosink.append(" fullscreen-toggle-mode=alt-enter");  
-        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
-               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
+        LOGI("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
+               "Use Alt-Enter key combination to toggle into/out of full-screen mode");
     }
 
     if (bt709_fix && use_video) {
@@ -1821,6 +1831,21 @@ int main (int argc, char *argv[]) {
         video_parser.append(BT709_FIX);
     }
 
+    if (require_password && keyfile == "") {
+        const char * homedir = get_homedir();
+        if (homedir) {
+            keyfile.erase();
+            keyfile = homedir;
+            keyfile.append("/.uxplay.pem");
+        } else {
+	    LOGE("could not determine $HOME: public key wiil no be saved, and so will not be persistent");
+        }
+    }
+
+    if (keyfile != "") {
+        LOGI("public key storage (for persistence) is in %s", keyfile.c_str());
+    }
+    
     if (do_append_hostname) {
         append_hostname(server_name);
     }

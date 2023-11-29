@@ -116,6 +116,8 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
 .TP
+\fB\-key\fI fn \fR  Store private key in file fn (Default: $HOME/.uxplay.pem)
+.TP
 \fB\-vdmp\fR [n] Dump h264 video output to "fn.h264"; fn="videodump", change
 .IP
    with "-vdmp [n] filename". If [n] is given, file fn.x.h264
@@ -141,6 +143,7 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 \fB\-h\fR        Displays help information
 .SH
 FILES
+Private key stored (for persistence) in $HOME/.uxplay.pem (can be changed)
 .TP
 Options in one of $UXPLAYRC, or ~/.uxplayrc, or  ~/.config/uxplayrc
 .TP

@@ -423,12 +423,12 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile) {
     BIO *bp;
     FILE *file;
     bool new_pk = false;
-    
-    
+    bool use_keyfile = strlen(keyfile);
+
     key = calloc(1, sizeof(ed25519_key_t));
     assert(key);
     
-    if (keyfile) {
+    if (use_keyfile) {
         file = fopen(keyfile, "r");
         if (file) {
             bp = BIO_new_fp(file, BIO_NOCLOSE);
@@ -457,15 +457,13 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile) {
             handle_error(__func__);
         }
         EVP_PKEY_CTX_free(pctx);
-        if (keyfile) {
+        if (use_keyfile) {
             file = fopen(keyfile, "w");
             if (file) {
                 bp = BIO_new_fp(file, BIO_NOCLOSE);
                 PEM_write_bio_PrivateKey(bp, key->pkey, NULL, NULL, 0, NULL, NULL);
                 BIO_free(bp);
                 fclose(file);
-            } else {
-	      printf("fopen failed, errno = %d\n", errno);
             }
         }
     }
