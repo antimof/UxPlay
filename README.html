@@ -1,6 +1,6 @@
 <h1
-id="uxplay-1.66-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.66: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.67-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.67: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted.">Now
@@ -9,28 +9,32 @@ href="https://github.com/FDH2/UxPlay">https://github.com/FDH2/UxPlay</a>
 (where all user issues should be posted).</h3>
 <h2 id="highlights">Highlights:</h2>
 <ul>
-<li>GPLv3, open source.</li>
-<li>Originally supported only AirPlay Mirror protocol, now has added
+<li><p>GPLv3, open source.</p></li>
+<li><p>Originally supported only AirPlay Mirror protocol, now has added
 support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
 current iOS/iPadOS clients. <strong>There is no support for Airplay2
-video-streaming protocol, and none is planned.</strong></li>
-<li>macOS computers (2011 or later, both Intel and “Apple Silicon” M1/M2
-systems) can act either as AirPlay clients, or as the server running
-UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
-clients.</li>
-<li>Support for older iOS clients (such as 32-bit iPad 2nd gen., iPod
+video-streaming protocol, and none is planned.</strong></p></li>
+<li><p>macOS computers (2011 or later, both Intel and “Apple Silicon”
+M1/M2 systems) can act either as AirPlay clients, or as the server
+running UxPlay. Using AirPlay, UxPlay can emulate a second display for
+macOS clients.</p></li>
+<li><p>Support for older iOS clients (such as 32-bit iPad 2nd gen., iPod
 Touch 5th gen. and iPhone 4S, when upgraded to iOS 9.3.5, or later
-64-bit devices), plus a Windows AirPlay-client emulator, AirMyPC.</li>
-<li>Uses GStreamer plugins for audio and video rendering (with options
-to select different hardware-appropriate output “videosinks” and
+64-bit devices), plus a Windows AirPlay-client emulator,
+AirMyPC.</p></li>
+<li><p>Uses GStreamer plugins for audio and video rendering (with
+options to select different hardware-appropriate output “videosinks” and
 “audiosinks”, and a fully-user-configurable video streaming
-pipeline).</li>
-<li>Support for server behind a firewall.</li>
-<li>Raspberry Pi support <strong>both with and without hardware video
-decoding</strong> by the Broadcom GPU. <em>Tested on Raspberry Pi 4
-Model B and Pi 3 model B+.</em></li>
-<li>Support for running on Microsoft Windows (builds with the MinGW-64
-compiler in the unix-like MSYS2 environment).</li>
+pipeline).</p></li>
+<li><p>Support for server behind a firewall.</p></li>
+<li><p>Raspberry Pi support <strong>both with and without hardware video
+decoding</strong> by the Broadcom GPU. <em>Tested on Raspberry Pi 5, Pi
+4 Model B and Pi 3 model B+.</em></p></li>
+<li><p>Support for running on Microsoft Windows (builds with the
+MinGW-64 compiler in the unix-like MSYS2 environment).</p></li>
+<li><p><em>NEW in v1.67: support for one-time Apple-style “pin” code
+client authentication (“client-server pairing”) when the option “-pin”
+is used.</em></p></li>
 </ul>
 <h2 id="packaging-status-linux-and-bsd-distributions">Packaging status
 (Linux and *BSD distributions)</h2>
@@ -867,6 +871,22 @@ the mirror display (X11) window.</p>
 <p><strong>-nh</strong> Do not append “<span class="citation"
 data-cites="_hostname_">@_hostname_</span>” at the end of the AirPlay
 server name.</p>
+<p><strong>-pin [nnnn]</strong>: use Apple-style (one-time) “pin”
+authentication when a new client connects for the first time: a
+four-digit pin code is displayed on the terminal, and the client screen
+shows a login prompt for this to be entered. When “-pin” is used by
+itself, a new randon pin code is chosen for each authentication; “-pin
+nnnn” (e.g., “-pin 3939”) will set an unchanging fixed code. Persistence
+of client authentication requires that the public key of the UxPlay
+server remains the same each time it is started: this is achieved by
+storing the key in a file (which by default is $HOME/.uxplay.pem, but
+which can be changed with the <code>"-key &lt;filename&gt;"</code>
+option) which (if it does not exist) is created the first time the -pin
+option is used, and is subsequently read each time the server starts. So
+long as this file is not deleted or moved, clients will not have to
+authenticate again after their first successful authentication. <em>(Add
+a “pin” entry in the UxPlay startup file if you wish the UxPlay server
+to use this protocol).</em></p>
 <p><strong>-vsync [x]</strong> (In Mirror mode:) this option
 (<strong>now the default</strong>) uses timestamps to synchronize audio
 with video on the server, with an optional audio delay in (decimal)
@@ -1079,6 +1099,13 @@ card, (more specifically, the MAC address used by the first active
 network interface detected) a random MAC address will be used even if
 option <strong>-m</strong> was not specified. (Note that a random MAC
 address will be different each time UxPlay is started).</p>
+<p><strong>-key <em>filename</em></strong>: By default, the storage of
+the Server private key is in the file $HOME/.uxplay.pem. Use the “-key
+<em>filename</em>” option to change this location. This option should be
+set in the UxPlay startup file as a line “<code>key filename</code>” (no
+initial “-”), where <code>filename</code> is a full path. The filename
+may be enclosed in quotes (<code>"...."</code>), (and must be, if the
+filename has any blank spaces).</p>
 <p><strong>-t <em>timeout</em></strong> [This option was removed in
 UxPlay v.1.61.]</p>
 <p><strong>-vdmp</strong> Dumps h264 video to file videodump.h264. -vdmp
@@ -1403,6 +1430,10 @@ an AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
 introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what UxPlay claims to be.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.67 2023-11-29 Add support for Apple-style one-time pin
+authentication of clients with option “-pin”: (SRP6a authentication
+protocol) and public key persistence. Detection of (so far) unsupported
+H265 video when requesting high resolution over wired ethernet.</p>
 <p>1.66 2023-09-05 Fix IPV6 support. Add option to restrict clients to
 those on a list of allowed deviceIDs, or to block connections from
 clients on a list of blocked deviceIDs. Fix for #207 from <span

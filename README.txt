@@ -1,31 +1,42 @@
-# UxPlay 1.66: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.67: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where all user issues should be posted).
 
 ## Highlights:
 
 -   GPLv3, open source.
+
 -   Originally supported only AirPlay Mirror protocol, now has added
     support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
     current iOS/iPadOS clients. **There is no support for Airplay2
     video-streaming protocol, and none is planned.**
+
 -   macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
     systems) can act either as AirPlay clients, or as the server running
     UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
     clients.
+
 -   Support for older iOS clients (such as 32-bit iPad 2nd gen., iPod
     Touch 5th gen. and iPhone 4S, when upgraded to iOS 9.3.5, or later
     64-bit devices), plus a Windows AirPlay-client emulator, AirMyPC.
+
 -   Uses GStreamer plugins for audio and video rendering (with options
     to select different hardware-appropriate output "videosinks" and
     "audiosinks", and a fully-user-configurable video streaming
     pipeline).
+
 -   Support for server behind a firewall.
+
 -   Raspberry Pi support **both with and without hardware video
-    decoding** by the Broadcom GPU. *Tested on Raspberry Pi 4 Model B
-    and Pi 3 model B+.*
+    decoding** by the Broadcom GPU. *Tested on Raspberry Pi 5, Pi 4
+    Model B and Pi 3 model B+.*
+
 -   Support for running on Microsoft Windows (builds with the MinGW-64
     compiler in the unix-like MSYS2 environment).
+
+-   *NEW in v1.67: support for one-time Apple-style "pin" code client
+    authentication ("client-server pairing") when the option "-pin" is
+    used.*
 
 ## Packaging status (Linux and \*BSD distributions)
 
@@ -865,6 +876,22 @@ will also now be the name shown above the mirror display (X11) window.
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server
 name.
 
+**-pin \[nnnn\]**: use Apple-style (one-time) "pin" authentication when
+a new client connects for the first time: a four-digit pin code is
+displayed on the terminal, and the client screen shows a login prompt
+for this to be entered. When "-pin" is used by itself, a new randon pin
+code is chosen for each authentication; "-pin nnnn" (e.g., "-pin 3939")
+will set an unchanging fixed code. Persistence of client authentication
+requires that the public key of the UxPlay server remains the same each
+time it is started: this is achieved by storing the key in a file (which
+by default is \$HOME/.uxplay.pem, but which can be changed with the
+`"-key <filename>"` option) which (if it does not exist) is created the
+first time the -pin option is used, and is subsequently read each time
+the server starts. So long as this file is not deleted or moved, clients
+will not have to authenticate again after their first successful
+authentication. *(Add a "pin" entry in the UxPlay startup file if you
+wish the UxPlay server to use this protocol).*
+
 **-vsync \[x\]** (In Mirror mode:) this option (**now the default**)
 uses timestamps to synchronize audio with video on the server, with an
 optional audio delay in (decimal) milliseconds (*x* = "20.5" means
@@ -1094,6 +1121,13 @@ card, (more specifically, the MAC address used by the first active
 network interface detected) a random MAC address will be used even if
 option **-m** was not specified. (Note that a random MAC address will be
 different each time UxPlay is started).
+
+**-key *filename***: By default, the storage of the Server private key
+is in the file \$HOME/.uxplay.pem. Use the "-key *filename*" option to
+change this location. This option should be set in the UxPlay startup
+file as a line "`key filename`" (no initial "-"), where `filename` is a
+full path. The filename may be enclosed in quotes (`"...."`), (and must
+be, if the filename has any blank spaces).
 
 **-t *timeout*** \[This option was removed in UxPlay v.1.61.\]
 
@@ -1432,6 +1466,11 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what UxPlay claims to be.
 
 # Changelog
+
+1.67 2023-11-29 Add support for Apple-style one-time pin authentication
+of clients with option "-pin": (SRP6a authentication protocol) and
+public key persistence. Detection of (so far) unsupported H265 video
+when requesting high resolution over wired ethernet.
 
 1.66 2023-09-05 Fix IPV6 support. Add option to restrict clients to
 those on a list of allowed deviceIDs, or to block connections from

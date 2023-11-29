@@ -1,4 +1,4 @@
-# UxPlay 1.66:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.67:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where all user issues should be posted).
 
@@ -19,10 +19,12 @@
      to select different hardware-appropriate output "videosinks" and
      "audiosinks", and a fully-user-configurable video streaming pipeline).
    * Support for server behind a firewall.
-   * Raspberry Pi support  **both with and without hardware  video decoding** by the Broadcom GPU.  _Tested on Raspberry Pi 4 Model B and  Pi 3 model B+._
+   * Raspberry Pi support  **both with and without hardware  video decoding** by the Broadcom GPU.  _Tested on Raspberry Pi 5, Pi 4 Model B and  Pi 3 model B+._
    * Support for running on Microsoft Windows (builds with the MinGW-64 compiler in the
      unix-like MSYS2 environment).
 
+   * _NEW in v1.67: support for one-time Apple-style "pin" code client authentication ("client-server pairing") when the option "-pin" is used._
+   
 ## Packaging status (Linux and \*BSD distributions)
 
 [![Current Packaging status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repology.org/project/uxplay/versions).
@@ -687,6 +689,15 @@ with "`#`" are treated as comments, and ignored.  Command line options supersede
 
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
 
+**-pin [nnnn]**: use Apple-style (one-time) "pin" authentication when a new client connects for the first time: a four-digit pin code is
+   displayed on the terminal, and the client screen shows a login prompt for this to be entered.    When "-pin" is used by itself, a new randon
+   pin code is chosen for each authentication; "-pin nnnn" (e.g., "-pin 3939") will set an unchanging  fixed code.   Persistence of client
+   authentication requires that the public key of the UxPlay server remains the same each time it is started: this is achieved by storing the key
+   in a file (which by default is $HOME/.uxplay.pem, but which can be changed with the `"-key <filename>"` option) which (if it does not exist) is
+   created the first time the -pin option is used, and is subsequently read each time the server starts.   So long as this file is not deleted or moved,
+   clients will not have to authenticate again after their first successful authentication.   _(Add a "pin" entry in the UxPlay startup file if you wish the
+   UxPlay server to use this protocol)._
+
 **-vsync [x]**  (In Mirror mode:) this option (**now the default**) uses timestamps to synchronize audio with video on the server,
    with an optional audio delay in (decimal) milliseconds   (_x_ = "20.5"   means 0.0205 seconds delay: positive or
    negative delays less than a second are allowed.)   It is needed on low-power systems such as Raspberry Pi without hardware
@@ -869,6 +880,11 @@ which will not work if a firewall is running.
    specifically, the MAC address used by the first active network interface detected)
    a random MAC address will be used even if option **-m** was not specified.
    (Note that a random MAC address will be different each time UxPlay is started).
+
+**-key  _filename_**:  By default, the storage of the Server private key is in the file $HOME/.uxplay.pem. Use
+   the "-key _filename_" option to change this location.   This option should be set in the UxPlay startup file
+   as a line "`key filename`" (no initial "-"),  where ``filename`` is a full path.   The filename may be enclosed
+   in quotes (`"...."`), (and must be, if the filename has any blank spaces).
 
 **-t _timeout_** [This option was removed in UxPlay v.1.61.]
 
@@ -1116,6 +1132,10 @@ tvOS 12.2.1), so it does not seem to matter what UxPlay claims to be.
 
 
 # Changelog
+1.67 2023-11-29   Add support for Apple-style one-time pin authentication of clients with option "-pin":
+                  (SRP6a authentication protocol) and public key persistence.   Detection of (so far)
+                  unsupported H265 video when requesting high resolution over wired ethernet.
+
 1.66 2023-09-05   Fix IPV6 support.  Add option to restrict clients to those on a list of allowed deviceIDs,
                   or to block connections from clients on a list of blocked deviceIDs.   Fix for #207 from
 		  @thiccaxe (screen lag in vsync mode after client wakes from sleep). 
