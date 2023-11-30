@@ -350,72 +350,7 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *pl
 
 struct ed25519_key_s {
     EVP_PKEY *pkey;
-    unsigned char ed_secret[ED25519_KEY_SIZE];
 };
-
-const unsigned char* ed25519_secret_key(const ed25519_key_t *key) {
-    assert(key);
-    return (const unsigned char *) key->ed_secret;
-}
-
-int
-extract_evp_private_key(unsigned char *privkey, int keylen, char *data)  {
-    int count = 0;
-    unsigned int val;
-    unsigned int part1 = 0;
-    int part = 0;
-    unsigned char start[4] = { 0x20, 0x20, 0x20, 0x20 }; 
-
-    printf("%s\n", data);
-
-    for (int i = 0; i < strlen(data); i ++ ) {
-      if (memcmp(data, start, 4)) {
-	data ++;
-      } else {
-	data += 4;
-	break;
-      }
-    }
-
-    int datalen = strlen(data);    
-    for (int i = 0; (count < keylen && i < datalen); i++) {
-      val = 64;
-      if ('0' <= *data && *data <= '9') val = *data - '0';
-      if ('a' <= *data && *data <= 'f') val = 10 + *data - 'a';
-      if ('A' <= *data && *data <= 'F') val = 10 + *data - 'A';
-      if (val == 64) {
-	data++;
-	continue;
-      }
-      part++;
-      part = part% 2;
-      switch (part) {
-      case 1:
-	part1 = val;
-	data++;     
-	break;
-      case 0:
-	privkey[count] =  (unsigned char) (val  + (part1 << 4));
-	count++;
-	data++;
-	break;
-      default:
-        break;
-      }
-     }
-
-    if (count != keylen) goto error;
-
-    for (int i = 0; i < keylen; i++) {
-        printf("%2.2x ", *(privkey + i));
-    }
-    printf("\n");
-
-    return 0;
- error:;
-    memset(privkey, 0, keylen);
-    return -1;
-}
 
 ed25519_key_t *ed25519_key_generate(const char *keyfile) {
     ed25519_key_t *key;
@@ -467,16 +402,6 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile) {
             }
         }
     }
-
-    int bufsize = 512;  /*should be big enough */
-    void *buf = malloc(bufsize);
-    bp = BIO_new(BIO_s_mem());
-    EVP_PKEY_print_private(bp, key->pkey, 0, NULL);
-    BIO_read(bp, buf, bufsize);
-    BIO_free(bp);
-
-    private_key_from_EVP_PKEY_print_private(key->ed_secret, ED25519_KEY_SIZE, (char *) buf);
-    free(buf);
     return key;
 }
 

@@ -57,7 +57,7 @@ struct pairing_session_s {
     /* srp items */
     srp_user_t *srp_user;
     unsigned char srp_session_key[SRP_SESSION_KEY_SIZE];
-
+    unsigned char srp_private_key[SRP_PRIVATE_KEY_SIZE];
 };
 
 static int
@@ -99,11 +99,6 @@ pairing_get_public_key(pairing_t *pairing, unsigned char public_key[ED25519_KEY_
 {
     assert(pairing);
     ed25519_key_get_raw(public_key, pairing->ed);
-}
-
-const unsigned char *srp_private_key(pairing_t *pairing) {
-    assert(pairing);
-    return ed25519_secret_key(pairing->ed);  
 }
 
 int
@@ -272,7 +267,6 @@ pairing_session_destroy(pairing_session_t *session)
 
         x25519_key_destroy(session->ecdh_ours);
         x25519_key_destroy(session->ecdh_theirs);
-
         free(session);
     }
 }
@@ -318,12 +312,13 @@ srp_new_user(pairing_session_t *session, pairing_t *pairing, const char *device_
     }
     memset(session->srp_user, 0, sizeof(srp_user_t));
     strncpy(session->srp_user->username, device_id, SRP_USERNAME_SIZE);
-
-    const unsigned char *srp_b = srp_private_key(pairing);
+    get_random_bytes(session->srp_private_key, SRP_PRIVATE_KEY_SIZE);
+    
+    const unsigned char *srp_b = session->srp_private_key;
     unsigned char * srp_B;
     unsigned char * srp_s;
     unsigned char * srp_v;
-    int len_b = ED25519_KEY_SIZE;
+    int len_b = SRP_PRIVATE_KEY_SIZE;
     int len_B;
     int len_s;
     int len_v;
@@ -361,8 +356,8 @@ srp_validate_proof(pairing_session_t *session, pairing_t *pairing, const unsigne
                     int len_A, unsigned char *proof, int client_proof_len, int proof_len) {
     int authenticated  = 0;
     const unsigned char *B =  NULL;
-    const unsigned char *b = srp_private_key(pairing);
-    int len_b = ED25519_KEY_SIZE;
+    const unsigned char *b = session->srp_private_key;
+    int len_b = SRP_PRIVATE_KEY_SIZE;
     int len_B = 0;
     int len_K = 0;
     const unsigned char *session_key  = NULL;
