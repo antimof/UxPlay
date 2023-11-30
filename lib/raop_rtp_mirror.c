@@ -204,7 +204,7 @@ raop_rtp_mirror_thread(void *arg)
         MUTEX_LOCK(raop_rtp_mirror->run_mutex);
         if (!raop_rtp_mirror->running) {
             MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
-            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror->running is no longer true");
+            logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror->running is no longer true");
             break;
         }
         MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
@@ -290,7 +290,7 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             if (payload == NULL && ret == 0) {
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
                            "raop_rtp_mirror tcp socket is closed, got %d bytes of 128 byte header",readstart);
                 FD_CLR(stream_fd, &rfds);
                 stream_fd = -1;
