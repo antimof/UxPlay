@@ -130,7 +130,7 @@ static bool setup_legacy_pairing = false;
 static bool require_password = false;
 static unsigned short pin = 0;
 static std::string keyfile = "";
-
+static std::string mac_address = "";
 /* logging */
 
 void log(int level, const char* format, ...) {
@@ -593,6 +593,24 @@ static std::string find_mac () {
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
+
+static bool validate_mac(char * mac_address) {
+    char c;
+    if (strlen(mac_address) != 17)  return false;
+    for (int i = 0; i < 17; i++) {
+        c = *(mac_address + i);
+        if (i % 3 == 2) {
+            if (c != ':')  return false;
+        } else {
+            if (c < '0') return false;
+            if (c > '9' && c < 'A') return false;
+            if (c > 'F' && c < 'a') return false;
+            if (c > 'f') return false;
+        }
+    }
+    return true;
+}
+
 static std::string random_mac () {
     char str[3];
     int octet = rand() % 64;
@@ -617,7 +635,7 @@ static void print_info (char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
     printf("-pin[xxxx]Use a 4-digit pin code to control client access (default: no)\n");
-    printf("          [optionally choose fixed pin]; default pin varies randomly\n");
+    printf("          without option, pin is random: optionally use fixed pin xxxx\n");
     printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
     printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
     printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
@@ -643,11 +661,7 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osxvideosink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    A workaround (bt709 color) sometimes needed on RPi\n"); 
-    printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
-    printf("-rpigl    Same as \"-rpi -vs glimagesink\" for RPi.\n");
-    printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
-    printf("-rpiwl    Same as \"-rpi -vs waylandsink\" for RPi using Wayland.\n");
+    printf("-bt709    Sometimes needed for Raspberry Pi with GStreamer < 1.22 \n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");
@@ -666,7 +680,8 @@ static void print_info (char *name) {
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
-    printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
+    printf("-m [mac]  Set MAC address (also Device ID);use for concurrent UxPlays\n");
+    printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random mac is used\n");
     printf("-key <fn> Store private key in file <fn> (default:$HOME/.uxplay.pem)\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
     printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
@@ -932,7 +947,19 @@ static void parse_arguments (int argc, char *argv[]) {
                 }
             }
         } else if (arg == "-m") {
-            use_random_hw_addr  = true;
+	    if (i < argc - 1 && *argv[i+1] != '-') {
+                if (validate_mac(argv[++i])) {
+                    mac_address.erase();
+                    mac_address = argv[i];
+                    use_random_hw_addr = false;
+                } else {
+                    fprintf(stderr,"invalid mac address \"%s\": address must have form"
+                            " \"xx:xx:xx:xx:xx:xx\", x = 0-9, A-F or a-f\n", argv[i]);
+                    exit(1);
+                }
+            } else {
+                use_random_hw_addr  = true;
+            }
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
@@ -976,38 +1003,20 @@ static void parse_arguments (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-        } else if (arg == "-v4l2" || arg == "-rpi") {
-            if (arg == "-rpi") {
-                LOGI("*** -rpi no longer includes -bt709: add it if needed");
-            }
+        } else if (arg == "-v4l2") {
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
-        } else if (arg == "-rpifb") {
-            LOGI("*** -rpifb no longer includes -bt709: add it if needed");
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "kmssink";
-        } else if (arg == "-rpigl") {
-            LOGI("*** -rpigl does not include -bt709: add it if needed");
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "glimagesink";
-        } else if (arg == "-rpiwl" ) {
-            LOGI("*** -rpiwl no longer includes -bt709: add it if needed");
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "waylandsink";
+        } else if (arg == "-rpi" || arg == "-rpifb" || arg == "-rpigl" || arg == "-rpiwl") {
+            fprintf(stderr,"*** -rpi* options do not apply to Raspberry Pi model 5, and have been removed\n");
+            fprintf(stderr,"     For models 3 and 4, use their equivalents, if needed:\n");
+            fprintf(stderr,"     -rpi   was equivalent to \"-v4l2\"\n");
+            fprintf(stderr,"     -rpifb was equivalent to \"-v4l2 -vs kmssink\"\n");
+            fprintf(stderr,"     -rpigl was equivalent to \"-v4l2 -vs glimagesink\"\n");
+            fprintf(stderr,"     -rpiwl was equivalent to \"-v4l2 -vs waylandsink\"\n");
+            fprintf(stderr,"     for GStreamer < 1.22, \"-bt709\" may also be needed\n");
+            exit(1);
         } else if (arg == "-fs" ) {
             fullscreen = true;
 	} else if (arg == "-FPSdata") {
@@ -1754,7 +1763,6 @@ void real_main (int argc, char *argv[]) {
 int main (int argc, char *argv[]) {
 #endif
     std::vector<char> server_hw_addr;
-    std::string mac_address;
     std::string config_file = "";
 
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
@@ -1876,14 +1884,17 @@ int main (int argc, char *argv[]) {
     }
 
     if (!use_random_hw_addr) {
-        mac_address = find_mac();
+        if (strlen(mac_address.c_str()) == 0) {
+            mac_address = find_mac();
+            LOGI("using system MAC address %s",mac_address.c_str());	    
+        } else {
+            LOGI("using user-set MAC address %s",mac_address.c_str());
+        }
     }
     if (mac_address.empty()) {
         srand(time(NULL) * getpid());
         mac_address = random_mac();
         LOGI("using randomly-generated MAC address %s",mac_address.c_str());
-    } else {
-        LOGI("using system MAC address %s",mac_address.c_str());
     }
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();

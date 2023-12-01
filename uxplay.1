@@ -15,7 +15,7 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-pin\fI[nnnn]\fRUse a 4-digit pin code to control client access (default: no)
 .IP
-   [optionally choose fixed pin]; default pin varies randomly.
+   without option, pin is random: optionally use fixed pin xxxx.
 .TP
 \fB\-vsync\fI[x]\fR Mirror mode: sync audio to video using timestamps (default)
 .IP
@@ -67,15 +67,7 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-v4l2\fR     Use Video4Linux2 for GPU hardware h264 video decoding.
 .TP
-\fB\-bt709\fR    A workaround (bt709 color) that may be needed with -rpi.
-.TP
-\fB\-rpi\fR      Same as "-v4l2" (for RPi=Rasberry Pi).
-.TP
-\fB\-rpigl\fR    Same as "-rpi -vs glimagesink" for RPi.
-.TP
-\fB\-rpifb\fR    Same as "-rpi -vs kmssink" for RPi using framebuffer.
-.TP
-\fB\-rpiwl\fR    Same as "-rpi -vs waylandsink" for RPi using Wayland.
+\fB\-bt709\fR    Sometimes needed for Raspberry Pi with GStreamer < 1.22
 .TP
 \fB\-as\fI sink\fR  Choose the GStreamer audiosink; default "autoaudiosink"
 .IP
