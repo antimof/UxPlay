@@ -68,7 +68,8 @@ struct raop_s {
 
      /* for temporary storage of pin during pair-pin start */
      unsigned short pin;
-
+     bool use_pin;
+  
      /* public key as string */
      char pk_str[2*ED25519_KEY_SIZE + 1];
 };
@@ -481,7 +482,8 @@ raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
 
     /* initialise stored pin */
     raop->pin = 0;
-    
+    raop->use_pin = false;
+
     /* initialize switch for display of client's streaming data records */    
     raop->clientFPSdata = 0;
 
@@ -552,6 +554,7 @@ int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
         if (raop->audio_delay_micros != value) retval = 1;
     } else if (strcmp(plist_item, "pin") == 0) {
         raop->pin = value;
+        raop->use_pin = true;
     } else {
         retval = -1;
     }	  
