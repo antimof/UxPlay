@@ -1261,6 +1261,11 @@ static int register_dnssd() {
     if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
         if (dnssd_error == -65537) {
              LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
+        } else if (dnssd_error == -65548) {
+            LOGE("DNSServiceRegister call returned kDNSServiceErr_NameConflict");
+            LOGE("Is another instance of %s running with the same DeviceID (MAC address) or using same network ports?",
+                 DEFAULT_NAME);
+            LOGI("\nUse options -m ... and -p ... to allow multiple instances of %s to run concurrently", DEFAULT_NAME); 
         } else {
              LOGE("dnssd_register_raop failed with error code %d\n"
                   "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
