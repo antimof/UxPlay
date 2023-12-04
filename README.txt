@@ -185,14 +185,15 @@ used.
     be [built by the
     user](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 
--   **Video4Linux2 support for the Raspberry Pi Broadcom 2835 GPU**
+-   **Video4Linux2 support for the Raspberry Pi Broadcom 2835 GPU (Pi 4B
+    and older)**
 
     Raspberry Pi (RPi) computers (tested on Pi 4 Model B) can now run
     UxPlay using software video decoding, but hardware-accelerated
     decoding by firmware in the Pi's GPU is prefered. UxPlay accesses
     this using the GStreamer-1.22 Video4Linux2 (v4l2) plugin; the plugin
-    from older GStreamer needs a patch to backport fixes from v1.22
-    (already applied in Raspberry Pi OS (Bullseye), and available for
+    from older GStreamer \< 1.22 needs a backport patch (already
+    partially applied in Raspberry Pi OS (Bullseye), available for
     1.18.4 and later in the [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)).
     Also requires the out-of-mainline Linux kernel module bcm2835-codec
@@ -450,8 +451,8 @@ below for help with this or other problems.
     entering a 4-digit pin code that is displayed on the UxPlay
     terminal. (This is optional, but sometimes required if the client is
     a corporately-owned and -managed device with MDM Mobile Device
-    Management.) Pairing occurs just once, is only recorded in the
-    client, and persists unless the UxPlay public key (stored in
+    Management.) Pairing occurs just once, is curently only recorded in
+    the client, and persists unless the UxPlay public key (stored in
     \$HOME/.uxplay.pem, or elsewhere if option `-key <filename>` is
     used) is moved or deleted, after which a new key is generated.
     (Non-Apple clients might not implement the persistence feature.)
@@ -1124,12 +1125,17 @@ network interface detected) a random MAC address will be used even if
 option **-m** was not specified. (Note that a random MAC address will be
 different each time UxPlay is started).
 
-**-key *filename***: By default, the storage of the Server private key
-is in the file \$HOME/.uxplay.pem. Use the "-key *filename*" option to
-change this location. This option should be set in the UxPlay startup
+**-key \[*filename*\]**: By default, the storage of the Server private
+key is in the file \$HOME/.uxplay.pem. Use the "-key *filename*" option
+to change this location. This option should be set in the UxPlay startup
 file as a line "`key filename`" (no initial "-"), where `filename` is a
 full path. The filename may be enclosed in quotes (`"...."`), (and must
 be, if the filename has any blank spaces).
+
+**-dacp \[*filename*\]**: Export current client DACP-ID and
+Active-Remote key to file: default is \$HOME/.uxplay.dacp. (optionally
+can be changed to *filename*). Can be used by remote control
+applications. File is transient: only exists while client is connected.
 
 **-vdmp** Dumps h264 video to file videodump.h264. -vdmp n dumps not
 more than n NAL units to videodump.x.h264; x= 1,2,... increases each
@@ -1476,7 +1482,8 @@ unsupported H265 video when requesting high resolution over wired
 ethernet. Removed rpi\* options (which are not valid with new Raspberry
 Pi model 5, and can be replaced by combinations of other options). Added
 optional argument "mac" to "-m" option, to specify a replacement MAC
-address/Device ID. Update llhttp to v. 9.1.3.
+address/Device ID. Update llhttp to v. 9.1.3. Add -dacp option for
+exporting current client DACP info (for remotes).
 
 1.66 2023-09-05 Fix IPV6 support. Add option to restrict clients to
 those on a list of allowed deviceIDs, or to block connections from
