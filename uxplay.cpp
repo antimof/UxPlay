@@ -176,174 +176,76 @@ size_t write_coverart(const char *filename, const void *image, size_t len) {
     return count;
 }
 
-char * ascii_art_digits (int n, int *width, int *height) {
-    /*  returns an "Ascii-art" image of the integer n, provided it is
-     * in the range [0,9].
-     * In this implementation the input values of width and height (in ascii characters)
-     * are ignored, and only width x height = 16 x 10 characters is implemented.
-     *
-     * The image is a character array where "0" is the background and "1" is the image of
-     * the single-digit integer n.
-     *
-     * On return, width and height values are overwritten with the values 16, 10 used in
-     * this ascii-art.
-     *
-     * NOTE: the user must free the returned image after use.       */
-  
-    const int w = 16;
-    const int h = 10;
-    const unsigned char zero[20] = { 0x07, 0xC0, 0x1C, 0x38, 0x38, 0x1C, 0x70, 0x0E, 0x70, 0x0E,
-                                     0x70, 0x0E, 0x70, 0x0E, 0x38, 0x1C, 0x1C, 0x38, 0x07, 0xC0 };
-    const unsigned char one[20]  = { 0x03, 0xC0, 0x0F, 0xC0, 0x19, 0xC0, 0x01, 0xC0, 0x01, 0xC0,
-                                     0x01, 0xC0, 0x01, 0xC0, 0x01, 0xC0, 0x01, 0xC0, 0x0F, 0xF8 };
-    const unsigned char two[20]  = { 0x07, 0xF0, 0x1F, 0xFC, 0x38, 0x1C, 0x00, 0x1C, 0x00, 0x38,
-                                     0x00, 0xE0, 0x03, 0x80, 0x1C, 0x00, 0x7F, 0xFE, 0x7F, 0xFE };
-    const unsigned char three[20]= { 0x07, 0xE0, 0x1F, 0xF8, 0x38, 0x1C, 0x00, 0x38, 0x07, 0xE0,
-                                     0x07, 0xE0, 0x00, 0x38, 0x38, 0x1C, 0x1C, 0xF8, 0x07, 0xE0 };
-    const unsigned char four[20] = { 0x01, 0xF8, 0x03, 0xF8, 0x07, 0x38, 0x0E, 0x38, 0x1C, 0x38,
-                                     0x38, 0x38, 0x7F, 0xFE, 0x7F, 0xFE, 0x00, 0x38, 0x00, 0xFE };
-    const unsigned char five[20] = { 0x7F, 0xFE, 0x7F, 0xFE, 0x70, 0x00, 0x70, 0x00, 0x7F, 0xF0,
-                                     0x7F, 0xFC, 0x00, 0x0E, 0x00, 0x0E, 0x7F, 0xFC, 0x7F, 0xF0 };
-    const unsigned char six[20]  = { 0x07, 0xF0, 0x1E, 0x38, 0x38, 0x0E, 0x70, 0x00, 0x77, 0xF8,
-                                     0x7C, 0x1E, 0x78, 0x0E, 0x38, 0x0E, 0x1C, 0x1C, 0x07, 0xF0 };
-    const unsigned char seven[20]= { 0x7F, 0xFE, 0x7F, 0xFC, 0x00, 0x38, 0x00, 0x70, 0x00, 0xE0,
-                                     0x01, 0xC0, 0x03, 0x80, 0x07, 0x00, 0x0E, 0x00, 0x3F, 0x00 };
-    const unsigned char eight[20]= { 0x07, 0xE0, 0x3F, 0xFC, 0x70, 0x0E, 0x70, 0x0E, 0x3F, 0xFE,
-                                     0x3F, 0xFC, 0x70, 0x0E, 0x70, 0x0E, 0x3F, 0xFC, 0x07, 0xE0 };
-    const unsigned char nine[20] = { 0x0F, 0xF0, 0x3C, 0x3C, 0x70, 0x0E, 0x70, 0x0E, 0x3C, 0x1E,
-                                     0x1F, 0xFC, 0x00, 0x38, 0x00, 0x70, 0x00, 0xE0, 0x01, 0xC0 };
+char *create_pin_display(char *pin_str, int margin, int gap) {
+    char *ptr;
+    char num[2] = { 0 };
+    int w = 10;
+    int h = 8;
+    char digits[10][8][11] = { "0821111380", "2114005113", "1110000111", "1110000111", "1110000111", "1110000111", "5113002114", "0751111470",
+                               "0002111000", "0021111000", "0000111000", "0000111000", "0000111000", "0000111000", "0000111000", "0011111110", 
+                               "0811112800", "2114005113", "0000000111", "0000082114", "0862111470", "2114700000", "1117000000", "1111111111", 
+                               "0821111380", "2114005113", "0000082114", "0000111170", "0000075130", "1110000111", "5113002114", "0751111470", 
+                               "0000211110", "0001401110", "0021401110", "0214001110", "2110001110", "1111111111", "0000001110", "0000001110", 
+                               "1111111110", "1110000000", "1110000000", "1112111380", "0000075113", "0000000111", "5113002114", "0711114700",  
+                               "0821111380", "2114005113", "1110000000", "1112111380", "1114075113", "1110000111", "5113002114", "0751111470", 
+                               "1111111111", "0000002114", "0000021140", "0000211400", "0002114000", "0021140000", "0211400000", "2114000000", 
+                               "0831111280", "2114002114", "5113802114", "0751111170", "8214775138", "1110000111", "5113002114", "0751111470", 
+                               "0821111380", "2114005113", "1110000111", "5113802111", "0751114111", "0000000111", "5113002114", "0751111470"  
+                             };
 
-    char * image;
-    const unsigned char* digit; 
-    unsigned char mask;
-    switch (n) {
-    case 0:
-        digit = zero;
-        break;
-    case 1:
-        digit = one;
-        break;
-    case 2:
-        digit = two;
-        break;
-    case 3:
-        digit = three;
-        break;
-    case 4:
-        digit = four;
-        break;
-    case 5:
-        digit = five;
-        break;
-    case 6:
-        digit = six;
-        break;
-    case 7:
-        digit = seven;
-        break;
-    case 8:
-        digit = eight;
-        break;
-    case 9:
-        digit = nine;
-        break;
-    default:
+    char pixels[9] = { ' ', '8', 'd', 'b', 'P', 'Y', 'o', '"', '.' };
+    /* Ascii art used here is derived from the FIGlet font "collosal" */
+
+    int pin_val = (int) strtoul(pin_str, &ptr, 10);
+    if (*ptr) {
         return NULL;
     }
-    *width = w;
-    *height = h;
-    image = (char *) malloc(w*h);
-    if (!image) return NULL;
-    memset (image, '0', w*h);
-
-    mask = 0x0;
-    int pos = 0;
-    int entry;
-    for (int i = 0; i < h; i++) {
-      for (int j = 0; j < w; j++) {
-            if (! mask) mask = 0x80;    
-            entry = pos / 8;
-            if (mask & digit[entry]) image[pos] = '1';
-            mask = mask >> 1;
-            pos++;
-        }
-    }
-    return image;
-}
-
-int get_pin_image(char *pin_str, char *buf, size_t buflen, unsigned int margin) {
-    /*  creates an ascii-art character image of a 4-digit numerical pin in buf
-     *  
-     *  If buf == NULL, or buflen is too small, the minimum required buflen 
-     *  is returned, and nothing is written to *buf.
-     *  otherwise, the image is written and return value is 0
-     *
-     *  The pin is provided as a character string of 4 decimal digits.
-     *  if the pin is invalid nothing is printed and return value is -1.  
-     *  return value -2 is  used for memory allocation errors
-     *
-     *  if margin > 0, a a blank left margin of margin characters is added.
-     */
-
-    int digits[4];
-    char *image = NULL;
-    char *full_image = NULL;
-    int width;
-    int height;
-    char background = '.';
-    char foreground = '@';
-
-    char *end;
-    long pin = strtol(pin_str, &end, 10);
-    if (strlen(pin_str) !=  4 || pin < 0 || *end) {
-        return -1;
+    int len = strlen(pin_str);
+    int *pin = (int *) calloc( len, sizeof(int));
+    if(!pin) {
+        return NULL;
     }
 
-    for (int i = 0; i < 4; i++) {
-        digits[3-i] = pin %10 ;
-        pin = pin/10;
+    for (int i = 0; i < len; i++) {
+        pin[len - 1 - i] = pin_val % 10;
+        pin_val = pin_val / 10;
     }
   
-    for (int i = 0; i < 4; i++) {
-        image = ascii_art_digits(digits[i], &width, &height);
-        if (!image) {
-            return -2;
-        }
-        if (i == 0) {
-            int fullwidth =  4*width + 1 + margin;
-            int imagelen = (height + 2) * fullwidth;
-            if (!buf || !(buflen > imagelen)) {
-                free(image);
-                return imagelen + 1;
-            } else {
-                full_image = buf;
-                memset(full_image, background, imagelen);
-                for (int j = 0;  j < height + 2; j++) {
-                    int pos = j * fullwidth;
-                    memset(full_image + pos, ' ', margin);
-                    full_image[pos + fullwidth -1] = '\n';
-                }
-            }
-        }
-        int pos1 = 0;
-        int pos2 = margin + 4*width + 1;
-        for (int k = 0; k < height; k++) {
-            for (int j = 0; j < width; j++) {
-                if (j == 0) pos2 += margin + i * width;
-                if (image[pos1] == '1') {
-                    full_image[pos2] = foreground;
-                }
-                pos1++;
-                pos2++;
-                if (j == width - 1) {
-                    pos2 += (3-i) * width + 1;
-                }
-            }
-        }
-        if (image) free (image);
-	image = NULL;
+    int size = 4 + h*(margin + len*(w + gap + 1));
+    char *pin_image = (char *) calloc(size, sizeof(char));
+    if (!pin_image) {
+        return NULL;
     }
-    return 0;
+    char *pos = pin_image;
+    sprintf(pos, "\n"); 
+    pos++;
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < margin; j++) {
+            sprintf(pos,  " ");
+        pos++;
+        }
+
+        for (int j = 0; j < len; j++) {
+            int l = pin[j];
+            char *p = digits[l][i];
+            for (int k = 0; k < w; k++) {
+                char *ptr;
+                strncpy(num, p++, 1);
+                int r = (int) strtoul(num, &ptr, 10);
+                sprintf(pos, "%c", pixels[r]);
+                pos++;
+            }
+            for (int n=0; n < gap ; n++) {
+                sprintf(pos, " ");
+                pos++;
+            }
+        }
+        sprintf(pos, "\n");
+        pos++;
+    }
+    sprintf(pos, "\n");
+    return pin_image;
 }
 
 static void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
@@ -1346,23 +1248,14 @@ static bool check_blocked_client(char *deviceid) {
 // Server callbacks
 
 extern "C" void display_pin(void *cls, char *pin) {
-    int buflen = get_pin_image(pin , NULL, 0, 10);
-    char *image = (char *) calloc(buflen, sizeof(char));
+    int margin = 10;
+    int spacing = 3;
+    char *image = create_pin_display(pin, margin, spacing);
     if (!image) {
-        LOGE("Could not allocate memory for pin image");
+        LOGE("create_pin_display could not create pin image, pin = %s", pin);
     } else {
-        int ret;
-        if ((ret = get_pin_image(pin, image, buflen, 10))) {
-            if (ret == -1) {
-                LOGE("format of pin \"%s\" provided by server is invalid", pin);
-                return;
-            } else  {
-                LOGE("Could not create pin image, return  value=%d", ret);
-            }
-        } else {
-            LOGI("%s\n",image);     
-            free (image);
-        }
+        LOGI("%s\n",image);     
+        free (image);
     }
 }
 
