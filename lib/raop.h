@@ -62,6 +62,7 @@ struct raop_callbacks_s {
     void  (*display_pin) (void *cls, char * pin);
     void  (*register_client) (void *cls, const char *device_id, const char *pk_str);
     bool  (*check_register) (void *cls, const char *pk_str);
+    void  (*export_dacp) (void *cls, const char *active_remote, const char *dacp_id);
 };
 typedef struct raop_callbacks_s raop_callbacks_t;
 raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const char *remote, int remote_addr_len,

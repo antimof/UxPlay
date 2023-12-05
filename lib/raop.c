@@ -88,6 +88,7 @@ struct raop_conn_s {
     unsigned char *remote;
     int remotelen;
 
+    bool have_active_remote;
 };
 typedef struct raop_conn_s raop_conn_t;
 
@@ -152,7 +153,8 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
 
     conn->locallen = locallen;
     conn->remotelen = remotelen;
-
+    conn->have_active_remote = false;
+    
     if (raop->callbacks.conn_init) {
         raop->callbacks.conn_init(raop->callbacks.cls);
     }
@@ -174,6 +176,17 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     method = http_request_get_method(request);
     url = http_request_get_url(request);
     cseq = http_request_get_header(request, "CSeq");
+    if (!conn->have_active_remote) {
+        const char *active_remote = http_request_get_header(request, "Active-Remote");
+        if (active_remote) {
+            conn->have_active_remote = true;
+            if (conn->raop->callbacks.export_dacp) {
+                const char *dacp_id = http_request_get_header(request, "DACP-ID");
+                conn->raop->callbacks.export_dacp(conn->raop->callbacks.cls, active_remote, dacp_id);
+            }
+        }
+    }
+
     if (!method || !cseq) {
         return;
     }

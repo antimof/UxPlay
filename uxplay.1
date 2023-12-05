@@ -110,6 +110,11 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-key\fI fn \fR  Store private key in file fn (Default: $HOME/.uxplay.pem)
 .TP
+\fB\-dacp\fI [fn]\fRExport client DACP information to file $HOME/.uxplay.dacp
+.IP
+   (option to use file "fn" instead); used for client remote.
+.PP
+.TP
 \fB\-vdmp\fR [n] Dump h264 video output to "fn.h264"; fn="videodump", change
 .IP
    with "-vdmp [n] filename". If [n] is given, file fn.x.h264
@@ -137,6 +142,8 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 FILES
 Private key stored (for persistence) in $HOME/.uxplay.pem (can be changed)
 .TP
+(transient) storage of client DACP info: $HOME/uxplay.dacp (can be changed)
+.TP
 Options in one of $UXPLAYRC, or ~/.uxplayrc, or  ~/.config/uxplayrc
 .TP
 are applied first (command-line options may modify them). uxplayrc format:
@@ -149,9 +156,9 @@ Various, see website or distribution.
 .SH
 COPYRIGHT
 .TP
-Various, see website or distribution.  License: GPL v3+: GNU GPL version 3 or later.
+Various, see website or distribution.  License: GPL v3+: 
 .TP
-(some parts LGPL v.2.1+ or MIT).
+GNU GPL version 3 or later. (some parts LGPL v.2.1+ or MIT).
 .SH
 SEE ALSO
 .TP

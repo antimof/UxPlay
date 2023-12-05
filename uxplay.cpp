@@ -131,6 +131,7 @@ static bool require_password = false;
 static unsigned short pin = 0;
 static std::string keyfile = "";
 static std::string mac_address = "";
+static std::string dacpfile = "";
 /* logging */
 
 void log(int level, const char* format, ...) {
@@ -585,6 +586,8 @@ static void print_info (char *name) {
     printf("-m [mac]  Set MAC address (also Device ID);use for concurrent UxPlays\n");
     printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random mac is used\n");
     printf("-key <fn> Store private key in file <fn> (default:$HOME/.uxplay.pem)\n");
+    printf("-dacp [fn]Export client DACP information to file $HOME/.uxplay.dacp\n");
+    printf("          (option to use file \"fn\" instead); used for client remote\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
     printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
     printf("          x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n\n");
@@ -1011,6 +1014,14 @@ static void parse_arguments (int argc, char *argv[]) {
                 fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
                 exit(1);
             }
+       } else if (arg == "-dacp") {
+            dacpfile.erase();
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                dacpfile.append(argv[++i]);
+            } else {
+                dacpfile.append(get_homedir());
+                dacpfile.append("/.uxplay.dacp");
+            }
         } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
@@ -1259,6 +1270,18 @@ extern "C" void display_pin(void *cls, char *pin) {
     }
 }
 
+extern "C" void export_dacp(void *cls, const char *active_remote, const char *dacp_id) {
+      if (dacpfile.length()) {
+        FILE *fp = fopen(dacpfile.c_str(), "w");
+        if (fp) {
+            fprintf(fp,"%s\n%s\n", dacp_id, active_remote);
+            fclose(fp);
+        } else {
+            LOGE("failed to open DACP export file \"%s\"", dacpfile.c_str());
+        }
+    }
+}
+
 extern "C" void conn_init (void *cls) {
     open_connections++;
     LOGD("Open connections: %i", open_connections);
@@ -1274,6 +1297,9 @@ extern "C" void conn_destroy (void *cls) {
         if (use_audio) {
             audio_renderer_stop();
         }
+        if (dacpfile.length()) {
+            remove (dacpfile.c_str());
+        }    
     }
 }
 
@@ -1523,6 +1549,7 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.display_pin = display_pin;
     raop_cbs.register_client = register_client;
     raop_cbs.check_register = check_register;
+    raop_cbs.export_dacp = export_dacp;
 
     /* set max number of connections = 2 to protect against capture by new client */
     raop = raop_init(max_connections, &raop_cbs, keyfile.c_str());
