@@ -1189,9 +1189,27 @@ href="https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd
 A few additional error codes are defined in a later version from <a
 href="https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html">Apple</a>.</p>
 <p>If UxPlay stalls <em>without an error message</em> and <em>without
-the server name showing on the client</em>, this is either
-pre-UxPlay-1.60 behavior when no DNS-SD server was found, or a network
-problem.</p>
+the server name showing on the client</em>, <strong>this is a network
+problem</strong> (if your UxPlay version is older than 1.60, it is also
+the behavior when no DNS-SD server is found.)</p>
+<p>A useful tool for examining such network problems from the client end
+is the (free) Discovery DNS-SD browser <a
+href="https://apps.apple.com/us/developer/lily-ballard/id305441020">available
+in the Apple App Store</a> for both iOS (works on iPadOS too) and
+macOS.</p>
+<ul>
+<li>Some users using dual-band (2.4GHz/5GHz) routers have reported that
+clients using the 5GHz band (sometimes) “fail to see UxPlay” (i.e., do
+not get a response to their mDNS queries), but the 2.4GHz band works.
+Other projects using Bonjour/mDNS have had similar reports; the issue
+seems to be router-specific, perhaps related to “auto” rather than fixed
+channel selection (5GHz has many more channels to switch between), or
+channel width selections; one speculation is that since mDNS uses UDP
+protocol (where “lost” messages are not resent), a mDNS query might get
+lost if channel switching occurs during the query.</li>
+</ul>
+<p>If your router has this problem, a reported “fix” is to (at least on
+5GHz) use fixed channel and/or fixed (not dynamic) channel width.</p>
 <ul>
 <li><strong>Avahi works at first, but new clients do not see UxPlay, or
 clients that initially saw it stop doing so after they
@@ -1259,8 +1277,10 @@ doesn’t work on your system</strong> (by default, GStreamer uses the
 occurred when a user with a firewall only opened two udp network ports:
 <strong>three</strong> are required (the third one receives the audio
 data).</p>
-<p><strong>Raspberry Pi</strong> devices work best with hardware GPU
-h264 video decoding if the Video4Linux2 plugin in GStreamer v1.20.x or
+<p><strong>Raspberry Pi</strong> devices (<em>Pi 4B+ and earlier: this
+does not apply to the Pi 5, which does not provide hardware h264
+decoding, and does not need it</em>) work best with hardware GPU h264
+video decoding if the Video4Linux2 plugin in GStreamer v1.20.x or
 earlier has been patched (see the UxPlay <a
 href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">Wiki</a>
 for patches). This is fixed in GStreamer-1.22, and by backport patches

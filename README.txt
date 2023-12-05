@@ -1212,8 +1212,28 @@ A few additional error codes are defined in a later version from
 [Apple](https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html).
 
 If UxPlay stalls *without an error message* and *without the server name
-showing on the client*, this is either pre-UxPlay-1.60 behavior when no
-DNS-SD server was found, or a network problem.
+showing on the client*, **this is a network problem** (if your UxPlay
+version is older than 1.60, it is also the behavior when no DNS-SD
+server is found.)
+
+A useful tool for examining such network problems from the client end is
+the (free) Discovery DNS-SD browser [available in the Apple App
+Store](https://apps.apple.com/us/developer/lily-ballard/id305441020) for
+both iOS (works on iPadOS too) and macOS.
+
+-   Some users using dual-band (2.4GHz/5GHz) routers have reported that
+    clients using the 5GHz band (sometimes) "fail to see UxPlay" (i.e.,
+    do not get a response to their mDNS queries), but the 2.4GHz band
+    works. Other projects using Bonjour/mDNS have had similar reports;
+    the issue seems to be router-specific, perhaps related to "auto"
+    rather than fixed channel selection (5GHz has many more channels to
+    switch between), or channel width selections; one speculation is
+    that since mDNS uses UDP protocol (where "lost" messages are not
+    resent), a mDNS query might get lost if channel switching occurs
+    during the query.
+
+If your router has this problem, a reported "fix" is to (at least on
+5GHz) use fixed channel and/or fixed (not dynamic) channel width.
 
 -   **Avahi works at first, but new clients do not see UxPlay, or
     clients that initially saw it stop doing so after they disconnect**.
@@ -1282,9 +1302,11 @@ on your system). A different reason for no audio occurred when a user
 with a firewall only opened two udp network ports: **three** are
 required (the third one receives the audio data).
 
-**Raspberry Pi** devices work best with hardware GPU h264 video decoding
-if the Video4Linux2 plugin in GStreamer v1.20.x or earlier has been
-patched (see the UxPlay
+**Raspberry Pi** devices (*Pi 4B+ and earlier: this does not apply to
+the Pi 5, which does not provide hardware h264 decoding, and does not
+need it*) work best with hardware GPU h264 video decoding if the
+Video4Linux2 plugin in GStreamer v1.20.x or earlier has been patched
+(see the UxPlay
 [Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
 for patches). This is fixed in GStreamer-1.22, and by backport patches
 from this in distributions such as Raspberry Pi OS (Bullseye): **use
