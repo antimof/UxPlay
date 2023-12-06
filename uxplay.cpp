@@ -218,13 +218,13 @@ char *create_pin_display(char *pin_str, int margin, int gap) {
         return NULL;
     }
     char *pos = pin_image;
-    sprintf(pos, "\n"); 
+    snprintf(pos, 2, "\n"); 
     pos++;
 
     for (int i = 0; i < h; i++) {
         for (int j = 0; j < margin; j++) {
-            sprintf(pos,  " ");
-        pos++;
+            snprintf(pos, 2,  " ");
+            pos++;
         }
 
         for (int j = 0; j < len; j++) {
@@ -234,18 +234,18 @@ char *create_pin_display(char *pin_str, int margin, int gap) {
                 char *ptr;
                 strncpy(num, p++, 1);
                 int r = (int) strtoul(num, &ptr, 10);
-                sprintf(pos, "%c", pixels[r]);
+                snprintf(pos, 2, "%c", pixels[r]);
                 pos++;
             }
             for (int n=0; n < gap ; n++) {
-                sprintf(pos, " ");
+                snprintf(pos, 2, " ");
                 pos++;
             }
         }
-        sprintf(pos, "\n");
+        snprintf(pos, 2, "\n");
         pos++;
     }
-    sprintf(pos, "\n");
+    snprintf(pos, 2, "\n");
     return pin_image;
 }
 
