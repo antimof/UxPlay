@@ -64,7 +64,8 @@ struct NGHex
 
 /* All constants here were pulled from Appendix A of RFC 5054 */
 static struct NGHex global_Ng_constants[] = {
- { /* 1024 */
+#if 0 /* begin removed section 1 */
+  { /* 1024 */
    "EEAF0AB9ADB38DD69C33F80AFA8FC5E86072618775FF3C0B9EA2314C9C256576D674DF7496"
    "EA81D3383B4813D692C6E0E0D5D8E250B98BE48E495C1D6089DAD15DC7D7B46154D6B6CE8E"
    "F4AD69B15D4982559B297BCF1885C529F566660E57EC68EDBC3C05726CC02FD4CBF4976EAA"
@@ -81,6 +82,7 @@ static struct NGHex global_Ng_constants[] = {
    "8CE7A28C2442C6F315180F93499A234DCF76E3FED135F9BB",
    "2"
  },
+#endif /* end removed section 1 */
  { /* 2048 */
    "AC6BDB41324A9A9BF166DE5E1389582FAF72B6651987EE07FC3192943DB56050A37329CBB4"
    "A099ED8193E0757767A13DD52312AB4B03310DCD7F48A9DA04FD50E8083969EDB767B0CF60"
@@ -91,6 +93,7 @@ static struct NGHex global_Ng_constants[] = {
    "FBB694B5C803D89F7AE435DE236D525F54759B65E372FCD68EF20FA7111F9E4AFF73",
    "2"
  },
+#if 0 /* begin removed section 2 */
  { /* 3072 */
    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B"
    "139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485"
@@ -198,6 +201,7 @@ static struct NGHex global_Ng_constants[] = {
    "60C980DD98EDD3DFFFFFFFFFFFFFFFFF",
    "13"
  },
+ #endif /* end removed section 2 */
  {0,0} /* null sentinel */
 };
 
@@ -259,6 +263,7 @@ struct SRPVerifier
 #endif
 };
 
+#if 0   /*begin removed section 3*/
 struct SRPUser
 {
     SRP_HashAlgorithm  hash_alg;
@@ -285,7 +290,7 @@ struct SRPUser
 #endif
   
 };
-
+#endif   /*end removed section 3*/
 static void handle_error(const char* location) {
     long error = ERR_get_error();
     const char* error_str = ERR_error_string(error, NULL);
@@ -944,7 +949,7 @@ void srp_verifier_verify_session( struct SRPVerifier * ver, const unsigned char 
 }
 
 /*******************************************************************************/
-
+#if 0    /*begin removed section 4 */
 struct SRPUser * srp_user_new( SRP_HashAlgorithm alg, SRP_NGType ng_type, const char * username,
                                const unsigned char * bytes_password, int len_password,
                                const char * n_hex, const char * g_hex,
@@ -1170,3 +1175,4 @@ void srp_user_verify_session( struct SRPUser * usr, const unsigned char * bytes_
     if ( memcmp( usr->H_AMK, bytes_HAMK, hash_length(usr->hash_alg) ) == 0 )
         usr->authenticated = 1;
 }
+#endif  /*end removed section 4 */

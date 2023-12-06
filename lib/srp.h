@@ -62,17 +62,22 @@
 #define APPLE_VARIANT
 
 struct SRPVerifier;
+#if 0  /*begin removed section 1*/
 struct SRPUser;
-
+#endif  /*end removed section 1*/
 typedef enum
 {
+#if 0 /* begin removed section 2*/
     SRP_NG_1024,
     SRP_NG_1536,
+#endif /* end removed section 2*/
     SRP_NG_2048,
+#if 0 /* begin removed section 3*/
     SRP_NG_3072,
     SRP_NG_4096,
     SRP_NG_6144,
     SRP_NG_8192,
+#endif /* end removed section 3*/
     SRP_NG_CUSTOM
 } SRP_NGType;
 
@@ -193,6 +198,7 @@ void                  srp_verifier_verify_session( struct SRPVerifier * ver,
  * breaks compatibility with previous versions of the csrp library but is recommended
  * for new code. 
  */
+#if 0   /*begin removed section 4 */
 struct SRPUser *      srp_user_new( SRP_HashAlgorithm alg, SRP_NGType ng_type, const char * username,
                                     const unsigned char * bytes_password, int len_password,
                                     const char * n_hex, const char * g_hex,
@@ -226,4 +232,5 @@ void                  srp_user_process_challenge( struct SRPUser * usr,
 /* (in APPLE_VARIANT case, session_key_length is DOUBLE the length of bytes_HAMK) */
 void                  srp_user_verify_session( struct SRPUser * usr, const unsigned char * bytes_HAMK );
 
+#endif  /*end removed section 4*/
 #endif /* Include Guard */
