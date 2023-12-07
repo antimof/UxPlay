@@ -161,6 +161,29 @@ void log(int level, const char* format, ...) {
 #define LOGW(...) log(LOGGER_WARNING, __VA_ARGS__)
 #define LOGE(...) log(LOGGER_ERR, __VA_ARGS__)
 
+bool file_has_write_access (const char * filename) {
+    bool exists = false;
+    bool write = false;
+#ifdef _WIN32
+    if ((exists = _access(filename, 0) != -1)) {
+        write = (_access(filename, 2) != -1);
+    }
+#else
+    if ((exists = access(filename, F_OK) != -1)) {
+        write = (access(filename, W_OK) != -1);
+    }
+#endif
+    if (!exists) {
+        FILE *fp = fopen(filename, "w");
+        if (fp) {
+            write = true;
+	    fclose(fp);
+	    remove(filename);
+        }
+    }
+    return write;
+}
+
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
@@ -950,6 +973,11 @@ static void parse_arguments (int argc, char *argv[]) {
                     video_dumpfile_name.erase();
                     video_dumpfile_name.append(argv[i]);
                 }
+                const char *fn = video_dumpfile_name.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-vdmp <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   		
             }
         } else if (arg == "-admp") {
             dump_audio = true;
@@ -969,11 +997,21 @@ static void parse_arguments (int argc, char *argv[]) {
                     audio_dumpfile_name.erase();
                     audio_dumpfile_name.append(argv[i]);
                 }
+                const char *fn = audio_dumpfile_name.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-admp <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   		
             }
         } else if (arg  == "-ca" ) {
             if (option_has_value(i, argc, arg, argv[i+1])) {
                 coverart_filename.erase();
                 coverart_filename.append(argv[++i]);
+                const char *fn = coverart_filename.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-ca <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
             } else {
                 fprintf(stderr,"option -ca must be followed by a filename for cover-art output\n");
                 exit(1);
@@ -1010,6 +1048,11 @@ static void parse_arguments (int argc, char *argv[]) {
             keyfile.erase();
             if (i < argc - 1 && *argv[i+1] != '-') {
                 keyfile.append(argv[++i]);
+                const char * fn = keyfile.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-key <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
             } else {
                 fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
                 exit(1);
@@ -1018,7 +1061,12 @@ static void parse_arguments (int argc, char *argv[]) {
             dacpfile.erase();
             if (i < argc - 1 && *argv[i+1] != '-') {
                 dacpfile.append(argv[++i]);
-            } else {
+                const char *fn = dacpfile.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-dacp <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
+	    } else {
                 dacpfile.append(get_homedir());
                 dacpfile.append("/.uxplay.dacp");
             }
