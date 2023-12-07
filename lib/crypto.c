@@ -352,7 +352,7 @@ struct ed25519_key_s {
     EVP_PKEY *pkey;
 };
 
-ed25519_key_t *ed25519_key_generate(const char *keyfile) {
+ed25519_key_t *ed25519_key_generate(const char *keyfile, int *result) {
     ed25519_key_t *key;
     EVP_PKEY_CTX *pctx;
     BIO *bp;
@@ -360,9 +360,11 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile) {
     bool new_pk = false;
     bool use_keyfile = strlen(keyfile);
 
+    *result = 0;
+
     key = calloc(1, sizeof(ed25519_key_t));
     assert(key);
-    
+   
     if (use_keyfile) {
         file = fopen(keyfile, "r");
         if (file) {
@@ -399,6 +401,7 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile) {
                 PEM_write_bio_PrivateKey(bp, key->pkey, NULL, NULL, 0, NULL, NULL);
                 BIO_free(bp);
                 fclose(file);
+                *result = 1;
             }
         }
     }

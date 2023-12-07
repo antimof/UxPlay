@@ -442,12 +442,12 @@ raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
     raop->logger = logger_init();
 
     /* create a new public key for pairing */
-    pairing = pairing_init_generate(keyfile);
+    int new_key;
+    pairing = pairing_init_generate(keyfile, &new_key);
     if (!pairing) {
         free(raop);
         return NULL;
     }
-
     /* store PK as a string in raop->pk_str */
     memset(raop->pk_str, 0, sizeof(raop->pk_str));
 #ifdef PK
@@ -459,7 +459,10 @@ raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
     strncpy(raop->pk_str, (const char *) pk_str, 2*ED25519_KEY_SIZE);
     free(pk_str);
 #endif
-
+    if (new_key) {
+        printf("*** A new Public Key has been created and stored in %s\n", keyfile);
+    }
+    
     /* Set HTTP callbacks to our handlers */
     memset(&httpd_cbs, 0, sizeof(httpd_cbs));
     httpd_cbs.opaque = raop;
@@ -626,7 +629,6 @@ int
 raop_start(raop_t *raop, unsigned short *port) {
     assert(raop);
     assert(port);
-    logger_log(raop->logger, LOGGER_DEBUG, "using Public Key:\n%s", raop->pk_str);
     return httpd_start(raop->httpd, port);
 }
 

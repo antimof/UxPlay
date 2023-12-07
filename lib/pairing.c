@@ -84,16 +84,16 @@ derive_key_internal(pairing_session_t *session, const unsigned char *salt, unsig
 }
 
 pairing_t *
-pairing_init_generate(const char * keyfile)
+pairing_init_generate(const char * keyfile, int *result)
 {
     pairing_t *pairing;
-
+    *result = 0;
     pairing = calloc(1, sizeof(pairing_t));
     if (!pairing) {
         return NULL;
     }
 
-    pairing->ed = ed25519_key_generate(keyfile);
+    pairing->ed = ed25519_key_generate(keyfile, result);
 
     return pairing;
 }
