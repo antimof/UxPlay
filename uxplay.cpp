@@ -134,7 +134,7 @@ static std::string mac_address = "";
 static std::string dacpfile = "";
 /* logging */
 
-void log(int level, const char* format, ...) {
+static void log(int level, const char* format, ...) {
     va_list vargs;
     if (level > log_level) return;
     switch (level) {
@@ -161,7 +161,7 @@ void log(int level, const char* format, ...) {
 #define LOGW(...) log(LOGGER_WARNING, __VA_ARGS__)
 #define LOGE(...) log(LOGGER_ERR, __VA_ARGS__)
 
-bool file_has_write_access (const char * filename) {
+static bool file_has_write_access (const char * filename) {
     bool exists = false;
     bool write = false;
 #ifdef _WIN32
@@ -193,14 +193,14 @@ static const unsigned char empty_image[] = {
     0x0a, 0x49, 0x44, 0x41, 0x54, 0x08, 0xd7, 0x63,  0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0xe2,
     0x21, 0xbc, 0x33, 0x00, 0x00, 0x00, 0x00, 0x49,  0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82 };
 
-size_t write_coverart(const char *filename, const void *image, size_t len) {
+static size_t write_coverart(const char *filename, const void *image, size_t len) {
     FILE *fp = fopen(filename, "wb");
     size_t count = fwrite(image, 1, len, fp);
     fclose(fp);
     return count;
 }
 
-char *create_pin_display(char *pin_str, int margin, int gap) {
+static char *create_pin_display(char *pin_str, int margin, int gap) {
     char *ptr;
     char num[2] = { 0 };
     int w = 10;
@@ -367,13 +367,13 @@ struct signal_handler {
 
 static std::unordered_map<gint, signal_handler> u = {};
 
-void SignalHandler(int signum) {
+static void SignalHandler(int signum) {
     if (signum == SIGTERM || signum == SIGINT) {
         u[signum].handler(u[signum].user_data);
     }
 }
 
-guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
+static guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
     u[signum] = signal_handler{handler, user_data};
     (void) signal(signum, SignalHandler);
     return 0;
@@ -407,7 +407,7 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     return 0;
 }
 
-const char *get_homedir() {
+static const char *get_homedir() {
     const char *homedir = getenv("XDG_CONFIG_HOMEDIR");
     if (homedir == NULL) {
         homedir = getenv("HOME");
@@ -627,7 +627,7 @@ static void print_info (char *name) {
     printf("option per line, no initial \"-\"; lines starting with \"#\" are ignored.\n");
 }
 
-bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
+static bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
     if (i >= argc - 1 || next_arg[0] == '-') {
         LOGE("invalid: \"%s\" had no argument", option.c_str());
         return false;
@@ -1575,7 +1575,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
     }
 }
 
-int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
+static int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
