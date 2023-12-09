@@ -131,6 +131,20 @@ http_response_finish(http_response_t *response, const char *data, int datalen)
         /* Add data to the end of response */
         http_response_add_data(response, data, datalen);
     } else {
+        /* check for "Content-Type" header, with datalen = 0 */
+        const char *item = "Content-Type";
+        int item_len = strlen(item);
+        const char *part = response->data;
+        int end = response->data_length - item_len;
+        for (int i = 0; i < end; i++) {
+            if (memcmp (part, item, item_len) ==  0) {
+                const char *hdrname = "Content-Length: 0";
+                http_response_add_data(response, hdrname, strlen(hdrname));
+                http_response_add_data(response, "\r\n", 2);
+                break;
+            }
+            part++;
+        }
         /* Add extra end of line after headers */
         http_response_add_data(response, "\r\n", 2);
     }
