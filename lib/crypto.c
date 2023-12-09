@@ -546,3 +546,27 @@ void sha_destroy(sha_ctx_t *ctx) {
 int get_random_bytes(unsigned char *buf, int num) {
     return RAND_bytes(buf, num);
 }
+#include <stdio.h>
+void pk_to_base64(const unsigned char *pk, int pk_len, char *pk_base64, int len) {
+    memset(pk_base64, 0, len);
+    int len64 = (4 * (pk_len /3)) + (pk_len % 3 ? 4 : 0);
+    
+    assert (len > len64);
+    
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO *bio = BIO_new(BIO_s_mem());
+    BUF_MEM *bufferPtr;
+
+
+    bio = BIO_push(b64, bio);
+  
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+    BIO_write(bio, pk, pk_len);
+    BIO_flush(bio);
+
+    BIO_get_mem_ptr(bio, &bufferPtr);
+    BIO_set_close(bio, BIO_NOCLOSE);
+    BIO_free_all(bio);
+    memcpy(pk_base64,(*bufferPtr).data, len64);
+}
+  

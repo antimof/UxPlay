@@ -447,8 +447,16 @@ srp_confirm_pair_setup(pairing_session_t *session, pairing_t *pairing,
     return epk_len;    
 }
 
-void access_client_session_data(pairing_session_t *session, char **username, unsigned char **client_pk, bool *setup) {
+void access_client_session_data(pairing_session_t *session, char **username, char **client_pk64, bool *setup) {
+    int len64 = 4 * (1 + (ED25519_KEY_SIZE / 3)) + 1;
+    *client_pk64 = (char *) malloc(len64);
     *username = session->username;
-    *client_pk = session->client_pk;
+    pk_to_base64(session->client_pk, ED25519_KEY_SIZE, *client_pk64, len64);
     setup = &(session->pair_setup);
+}
+
+void ed25519_pk_to_base64(const unsigned char *pk, char  **pk64) {
+    int len64 = 4 * (1 + (ED25519_KEY_SIZE / 3)) + 1;
+    *pk64 = (char *) malloc(len64);
+    pk_to_base64(pk, ED25519_KEY_SIZE, *pk64, len64);
 }
