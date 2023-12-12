@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -132,6 +133,10 @@ static unsigned short pin = 0;
 static std::string keyfile = "";
 static std::string mac_address = "";
 static std::string dacpfile = "";
+static bool registration_list = true;
+static std::string pairing_register = "";
+static std::vector <std::string> registered_keys;
+
 /* logging */
 
 static void log(int level, const char* format, ...) {
@@ -1541,15 +1546,38 @@ extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     }
 }
 
-extern "C" void register_client(void *cls, const char *device_id, const char *client_pk_str) {
-    /* pair-setup-pin client registration by the server is not implemented here, do nothing*/
-    LOGD("registered new client: DeviceID = %s\nPK = \"%s\"", device_id, client_pk_str);
+extern "C" void register_client(void *cls, const char *device_id, const char *client_pk) {
+    if (!registration_list) {
+      /* we are not maintaining a list of registered clients */
+        return;
+    }
+    LOGI("registered new client: DeviceID = %s PK = \n%s", device_id, client_pk);
+    registered_keys.push_back(client_pk);
+    if (strlen(pairing_register.c_str())) {
+        FILE *fp = fopen(pairing_register.c_str(), "a");
+        if (fp) {
+	  fprintf(fp, "%s,%s\n", client_pk, device_id);
+            fclose(fp);
+        }
+    }
 }
 
-extern "C" bool check_register(void *cls, const char *client_pk_str) {
-    /* pair-setup-pin client registration by the server is not implemented here, return "true"*/  
-    LOGD("register check returning client:\nPK = \"%s\"", client_pk_str);
-    return true;
+extern "C" bool check_register(void *cls, const char *client_pk) {
+    if (!registration_list) {
+        /* we are not maintaining a list of registered clients */
+        return true;
+    }
+    LOGD("check returning client registration:\n   PK:%s", client_pk);
+    if (std::find(registered_keys.rbegin(), registered_keys.rend(), client_pk) != registered_keys.rend()) {
+        LOGD("client registration found");
+        return true;
+    } else {
+        LOGE("returning client's pairing registration not found,\n   PK: %s", client_pk);
+	for (int i = 0; i < registered_keys.size(); i++) {
+	  printf("%s\n", (registered_keys[i]).c_str());
+	}
+        return false;
+    }
 }
 
 extern "C" void log_callback (void *cls, int level, const char *msg) {
@@ -1823,6 +1851,33 @@ int main (int argc, char *argv[]) {
     if (bt709_fix && use_video) {
         video_parser.append(" ! ");
         video_parser.append(BT709_FIX);
+    }
+
+    if (require_password && registration_list) {
+        if (pairing_register == "") {
+            const char * homedir = get_homedir();
+            if (homedir) {
+	        pairing_register = homedir;
+	        pairing_register.append("/.uxplay.pair_register");
+             }
+        }
+    }
+
+    /* read in public keys that were previously registered with pair-setup-pin */
+    if (require_password && registration_list && strlen(pairing_register.c_str())) {
+        char * line = NULL;
+        size_t len = 0;
+        std::string  key;
+        FILE *fp  = fopen(pairing_register.c_str(), "r");
+        if (fp) {
+                while ((getline(&line, &len, fp)) != -1) {
+                /*32 bytes pk -> base64 -> strlen(pk64) = 44 chars = line[0:43]; remove \n at line[44] */ 
+                line[44] = '\0';
+                registered_keys.push_back(key.assign(line));
+            }
+            fclose(fp);
+            free (line);
+        }
     }
 
     if (require_password && keyfile == "") {
