@@ -60,7 +60,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.66"
+#define VERSION "1.67"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -126,10 +126,15 @@ static uint64_t remote_clock_offset = 0;
 static std::vector<std::string> allowed_clients;
 static std::vector<std::string> blocked_clients;
 static bool restrict_clients;
-
+static bool setup_legacy_pairing = false;
+static bool require_password = false;
+static unsigned short pin = 0;
+static std::string keyfile = "";
+static std::string mac_address = "";
+static std::string dacpfile = "";
 /* logging */
 
-void log(int level, const char* format, ...) {
+static void log(int level, const char* format, ...) {
     va_list vargs;
     if (level > log_level) return;
     switch (level) {
@@ -156,6 +161,29 @@ void log(int level, const char* format, ...) {
 #define LOGW(...) log(LOGGER_WARNING, __VA_ARGS__)
 #define LOGE(...) log(LOGGER_ERR, __VA_ARGS__)
 
+static bool file_has_write_access (const char * filename) {
+    bool exists = false;
+    bool write = false;
+#ifdef _WIN32
+    if ((exists = _access(filename, 0) != -1)) {
+        write = (_access(filename, 2) != -1);
+    }
+#else
+    if ((exists = access(filename, F_OK) != -1)) {
+        write = (access(filename, W_OK) != -1);
+    }
+#endif
+    if (!exists) {
+        FILE *fp = fopen(filename, "w");
+        if (fp) {
+            write = true;
+	    fclose(fp);
+	    remove(filename);
+        }
+    }
+    return write;
+}
+
 /* 95 byte png file with a 1x1 white square (single pixel): placeholder for coverart*/
 static const unsigned char empty_image[] = {
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
@@ -165,13 +193,85 @@ static const unsigned char empty_image[] = {
     0x0a, 0x49, 0x44, 0x41, 0x54, 0x08, 0xd7, 0x63,  0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0xe2,
     0x21, 0xbc, 0x33, 0x00, 0x00, 0x00, 0x00, 0x49,  0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82 };
 
-size_t write_coverart(const char *filename, const void *image, size_t len) {
+static size_t write_coverart(const char *filename, const void *image, size_t len) {
     FILE *fp = fopen(filename, "wb");
     size_t count = fwrite(image, 1, len, fp);
     fclose(fp);
     return count;
 }
+
+static char *create_pin_display(char *pin_str, int margin, int gap) {
+    char *ptr;
+    char num[2] = { 0 };
+    int w = 10;
+    int h = 8;
+    char digits[10][8][11] = { "0821111380", "2114005113", "1110000111", "1110000111", "1110000111", "1110000111", "5113002114", "0751111470",
+                               "0002111000", "0021111000", "0000111000", "0000111000", "0000111000", "0000111000", "0000111000", "0011111110", 
+                               "0811112800", "2114005113", "0000000111", "0000082114", "0862111470", "2114700000", "1117000000", "1111111111", 
+                               "0821111380", "2114005113", "0000082114", "0000111170", "0000075130", "1110000111", "5113002114", "0751111470", 
+                               "0000211110", "0001401110", "0021401110", "0214001110", "2110001110", "1111111111", "0000001110", "0000001110", 
+                               "1111111110", "1110000000", "1110000000", "1112111380", "0000075113", "0000000111", "5113002114", "0711114700",  
+                               "0821111380", "2114005113", "1110000000", "1112111380", "1114075113", "1110000111", "5113002114", "0751111470", 
+                               "1111111111", "0000002114", "0000021140", "0000211400", "0002114000", "0021140000", "0211400000", "2114000000", 
+                               "0831111280", "2114002114", "5113802114", "0751111170", "8214775138", "1110000111", "5113002114", "0751111470", 
+                               "0821111380", "2114005113", "1110000111", "5113802111", "0751114111", "0000000111", "5113002114", "0751111470"  
+                             };
+
+    char pixels[9] = { ' ', '8', 'd', 'b', 'P', 'Y', 'o', '"', '.' };
+    /* Ascii art used here is derived from the FIGlet font "collosal" */
+
+    int pin_val = (int) strtoul(pin_str, &ptr, 10);
+    if (*ptr) {
+        return NULL;
+    }
+    int len = strlen(pin_str);
+    int *pin = (int *) calloc( len, sizeof(int));
+    if(!pin) {
+        return NULL;
+    }
+
+    for (int i = 0; i < len; i++) {
+        pin[len - 1 - i] = pin_val % 10;
+        pin_val = pin_val / 10;
+    }
   
+    int size = 4 + h*(margin + len*(w + gap + 1));
+    char *pin_image = (char *) calloc(size, sizeof(char));
+    if (!pin_image) {
+        return NULL;
+    }
+    char *pos = pin_image;
+    snprintf(pos, 2, "\n"); 
+    pos++;
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < margin; j++) {
+            snprintf(pos, 2,  " ");
+            pos++;
+        }
+
+        for (int j = 0; j < len; j++) {
+            int l = pin[j];
+            char *p = digits[l][i];
+            for (int k = 0; k < w; k++) {
+                char *ptr;
+                strncpy(num, p++, 1);
+                int r = (int) strtoul(num, &ptr, 10);
+                snprintf(pos, 2, "%c", pixels[r]);
+                pos++;
+            }
+            for (int n=0; n < gap ; n++) {
+                snprintf(pos, 2, " ");
+                pos++;
+            }
+        }
+        snprintf(pos, 2, "\n");
+        pos++;
+    }
+    snprintf(pos, 2, "\n");
+    return pin_image;
+}
+
 static void dump_audio_to_file(unsigned char *data, int datalen, unsigned char type) {
     if (!audio_dumpfile && audio_type != previous_audio_type) {
         char suffix[20];
@@ -267,13 +367,13 @@ struct signal_handler {
 
 static std::unordered_map<gint, signal_handler> u = {};
 
-void SignalHandler(int signum) {
+static void SignalHandler(int signum) {
     if (signum == SIGTERM || signum == SIGINT) {
         u[signum].handler(u[signum].user_data);
     }
 }
 
-guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
+static guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_data) {
     u[signum] = signal_handler{handler, user_data};
     (void) signal(signum, SignalHandler);
     return 0;
@@ -307,6 +407,19 @@ static int parse_hw_addr (std::string str, std::vector<char> &hw_addr) {
     return 0;
 }
 
+static const char *get_homedir() {
+    const char *homedir = getenv("XDG_CONFIG_HOMEDIR");
+    if (homedir == NULL) {
+        homedir = getenv("HOME");
+    }
+#ifndef _WIN32
+    if (homedir == NULL){
+        homedir = getpwuid(getuid())->pw_dir;
+    }
+#endif
+    return homedir;
+}
+
 static std::string find_uxplay_config_file() {
     std::string no_config_file = "";
     const char *homedir = NULL;
@@ -318,15 +431,7 @@ static std::string find_uxplay_config_file() {
         config0 = uxplayrc;
         if (stat(config0.c_str(), &sb) == 0) return config0;
     }
-    homedir = getenv("XDG_CONFIG_HOMEDIR");
-    if (homedir == NULL) {
-        homedir = getenv("HOME");
-    }
-#ifndef _WIN32
-    if (homedir == NULL){
-        homedir = getpwuid(getuid())->pw_dir;
-    }
-#endif
+    homedir = get_homedir();
     if (homedir) {
       config1 = homedir;
       config1.append("/.uxplayrc");
@@ -414,6 +519,24 @@ static std::string find_mac () {
 #define MULTICAST 0
 #define LOCAL 1
 #define OCTETS 6
+
+static bool validate_mac(char * mac_address) {
+    char c;
+    if (strlen(mac_address) != 17)  return false;
+    for (int i = 0; i < 17; i++) {
+        c = *(mac_address + i);
+        if (i % 3 == 2) {
+            if (c != ':')  return false;
+        } else {
+            if (c < '0') return false;
+            if (c > '9' && c < 'A') return false;
+            if (c > 'F' && c < 'a') return false;
+            if (c > 'f') return false;
+        }
+    }
+    return true;
+}
+
 static std::string random_mac () {
     char str[3];
     int octet = rand() % 64;
@@ -437,6 +560,8 @@ static void print_info (char *name) {
     printf("Options:\n");
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
+    printf("-pin[xxxx]Use a 4-digit pin code to control client access (default: no)\n");
+    printf("          without option, pin is random: optionally use fixed pin xxxx\n");
     printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
     printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
     printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
@@ -462,11 +587,7 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osxvideosink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    A workaround (bt709 color) sometimes needed on RPi\n"); 
-    printf("-rpi      Same as \"-v4l2\" (for RPi=Raspberry Pi).\n");
-    printf("-rpigl    Same as \"-rpi -vs glimagesink\" for RPi.\n");
-    printf("-rpifb    Same as \"-rpi -vs kmssink\" for RPi using framebuffer.\n");
-    printf("-rpiwl    Same as \"-rpi -vs waylandsink\" for RPi using Wayland.\n");
+    printf("-bt709    Sometimes needed for Raspberry Pi with GStreamer < 1.22 \n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");
@@ -485,7 +606,11 @@ static void print_info (char *name) {
     printf("-fps n    Set maximum allowed streaming framerate, default 30\n");
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
-    printf("-m        Use random MAC address (use for concurrent UxPlay's)\n");
+    printf("-m [mac]  Set MAC address (also Device ID);use for concurrent UxPlays\n");
+    printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random mac is used\n");
+    printf("-key <fn> Store private key in file <fn> (default:$HOME/.uxplay.pem)\n");
+    printf("-dacp [fn]Export client DACP information to file $HOME/.uxplay.dacp\n");
+    printf("          (option to use file \"fn\" instead); used for client remote\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
     printf("          with \"-vdmp [n] filename\". If [n] is given, file fn.x.h264\n");
     printf("          x=1,2,.. opens whenever a new SPS/PPS NAL arrives, and <=n\n");
@@ -502,7 +627,7 @@ static void print_info (char *name) {
     printf("option per line, no initial \"-\"; lines starting with \"#\" are ignored.\n");
 }
 
-bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
+static bool option_has_value(const int i, const int argc, std::string option, const char *next_arg) {
     if (i >= argc - 1 || next_arg[0] == '-') {
         LOGE("invalid: \"%s\" had no argument", option.c_str());
         return false;
@@ -750,7 +875,19 @@ static void parse_arguments (int argc, char *argv[]) {
                 }
             }
         } else if (arg == "-m") {
-            use_random_hw_addr  = true;
+	    if (i < argc - 1 && *argv[i+1] != '-') {
+                if (validate_mac(argv[++i])) {
+                    mac_address.erase();
+                    mac_address = argv[i];
+                    use_random_hw_addr = false;
+                } else {
+                    fprintf(stderr,"invalid mac address \"%s\": address must have form"
+                            " \"xx:xx:xx:xx:xx:xx\", x = 0-9, A-F or a-f\n", argv[i]);
+                    exit(1);
+                }
+            } else {
+                use_random_hw_addr  = true;
+            }
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
@@ -794,38 +931,20 @@ static void parse_arguments (int argc, char *argv[]) {
             video_decoder = "avdec_h264";
             video_converter.erase();
             video_converter = "videoconvert";
-        } else if (arg == "-v4l2" || arg == "-rpi") {
-            if (arg == "-rpi") {
-                LOGI("*** -rpi no longer includes -bt709: add it if needed");
-            }
+        } else if (arg == "-v4l2") {
             video_decoder.erase();
             video_decoder = "v4l2h264dec";
             video_converter.erase();
             video_converter = "v4l2convert";
-        } else if (arg == "-rpifb") {
-            LOGI("*** -rpifb no longer includes -bt709: add it if needed");
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "kmssink";
-        } else if (arg == "-rpigl") {
-            LOGI("*** -rpigl does not include -bt709: add it if needed");
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "glimagesink";
-        } else if (arg == "-rpiwl" ) {
-            LOGI("*** -rpiwl no longer includes -bt709: add it if needed");
-            video_decoder.erase();
-            video_decoder = "v4l2h264dec";
-            video_converter.erase();
-            video_converter = "v4l2convert";
-            videosink.erase();
-            videosink = "waylandsink";
+        } else if (arg == "-rpi" || arg == "-rpifb" || arg == "-rpigl" || arg == "-rpiwl") {
+            fprintf(stderr,"*** -rpi* options do not apply to Raspberry Pi model 5, and have been removed\n");
+            fprintf(stderr,"     For models 3 and 4, use their equivalents, if needed:\n");
+            fprintf(stderr,"     -rpi   was equivalent to \"-v4l2\"\n");
+            fprintf(stderr,"     -rpifb was equivalent to \"-v4l2 -vs kmssink\"\n");
+            fprintf(stderr,"     -rpigl was equivalent to \"-v4l2 -vs glimagesink\"\n");
+            fprintf(stderr,"     -rpiwl was equivalent to \"-v4l2 -vs waylandsink\"\n");
+            fprintf(stderr,"     for GStreamer < 1.22, \"-bt709\" may also be needed\n");
+            exit(1);
         } else if (arg == "-fs" ) {
             fullscreen = true;
 	} else if (arg == "-FPSdata") {
@@ -854,6 +973,11 @@ static void parse_arguments (int argc, char *argv[]) {
                     video_dumpfile_name.erase();
                     video_dumpfile_name.append(argv[i]);
                 }
+                const char *fn = video_dumpfile_name.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-vdmp <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   		
             }
         } else if (arg == "-admp") {
             dump_audio = true;
@@ -873,11 +997,21 @@ static void parse_arguments (int argc, char *argv[]) {
                     audio_dumpfile_name.erase();
                     audio_dumpfile_name.append(argv[i]);
                 }
+                const char *fn = audio_dumpfile_name.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-admp <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   		
             }
         } else if (arg  == "-ca" ) {
             if (option_has_value(i, argc, arg, argv[i+1])) {
                 coverart_filename.erase();
                 coverart_filename.append(argv[++i]);
+                const char *fn = coverart_filename.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-ca <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
             } else {
                 fprintf(stderr,"option -ca must be followed by a filename for cover-art output\n");
                 exit(1);
@@ -899,7 +1033,44 @@ static void parse_arguments (int argc, char *argv[]) {
             fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
-	} else {
+        } else if (arg == "-pin") {
+            setup_legacy_pairing = true;
+            require_password = true;
+	    if (i < argc - 1 && *argv[i+1] != '-') {
+                unsigned int n = 9999;
+                if (!get_value(argv[++i], &n)) {
+                    fprintf(stderr, "invalid \"-pin %s\"; -pin nnnn : max nnnn=9999, (4 digits)\n", argv[i]);
+                    exit(1);
+                }
+                pin = n + 10000;
+            }
+        } else if (arg == "-key") {
+            keyfile.erase();
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                keyfile.append(argv[++i]);
+                const char * fn = keyfile.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-key <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
+            } else {
+                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
+                exit(1);
+            }
+       } else if (arg == "-dacp") {
+            dacpfile.erase();
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                dacpfile.append(argv[++i]);
+                const char *fn = dacpfile.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-dacp <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
+	    } else {
+                dacpfile.append(get_homedir());
+                dacpfile.append("/.uxplay.dacp");
+            }
+        } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
         }
@@ -1045,10 +1216,17 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
 }
 
 static int register_dnssd() {
-    int dnssd_error;    
+    int dnssd_error;
+    uint64_t features;
+    
     if ((dnssd_error = dnssd_register_raop(dnssd, raop_port))) {
         if (dnssd_error == -65537) {
              LOGE("No DNS-SD Server found (DNSServiceRegister call returned kDNSServiceErr_Unknown)");
+        } else if (dnssd_error == -65548) {
+            LOGE("DNSServiceRegister call returned kDNSServiceErr_NameConflict");
+            LOGI("Is another instance of %s running with the same DeviceID (MAC address) or using same network ports?",
+                 DEFAULT_NAME);
+            LOGI("Use options -m ... and -p ... to allow multiple instances of %s to run concurrently", DEFAULT_NAME); 
         } else {
              LOGE("dnssd_register_raop failed with error code %d\n"
                   "mDNS Error codes are in range FFFE FF00 (-65792) to FFFE FFFF (-65537) "
@@ -1062,6 +1240,9 @@ static int register_dnssd() {
              "(see Apple's dns_sd.h)", dnssd_error);
         return -4;
     }
+
+    LOGD("register_dnssd: advertised AirPlay service with \"Features\" code = 0x%X",
+         dnssd_get_airplay_features(dnssd));
     return 0;
 }
 
@@ -1084,15 +1265,18 @@ static void stop_dnssd() {
 
 static int start_dnssd(std::vector<char> hw_addr, std::string name) {
     int dnssd_error;
+    int require_pw = (require_password ? 1 : 0);
     if (dnssd) {
         LOGE("start_dnssd error: dnssd != NULL");
         return 2;
     }
-    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error);
+    dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error, require_pw);
     if (dnssd_error) {
-        LOGE("Could not initialize dnssd library!");
+        LOGE("Could not initialize dnssd library!: error %d", dnssd_error);
         return 1;
     }
+    /* bit 27 of Features determines whether the AirPlay2 client-pairing protocol will be used (1) or not (0) */
+    dnssd_set_airplay_features(dnssd, 27, (int) setup_legacy_pairing);
     return 0;
 }
 
@@ -1121,6 +1305,31 @@ static bool check_blocked_client(char *deviceid) {
 }
 
 // Server callbacks
+
+extern "C" void display_pin(void *cls, char *pin) {
+    int margin = 10;
+    int spacing = 3;
+    char *image = create_pin_display(pin, margin, spacing);
+    if (!image) {
+        LOGE("create_pin_display could not create pin image, pin = %s", pin);
+    } else {
+        LOGI("%s\n",image);     
+        free (image);
+    }
+}
+
+extern "C" void export_dacp(void *cls, const char *active_remote, const char *dacp_id) {
+      if (dacpfile.length()) {
+        FILE *fp = fopen(dacpfile.c_str(), "w");
+        if (fp) {
+            fprintf(fp,"%s\n%s\n", dacp_id, active_remote);
+            fclose(fp);
+        } else {
+            LOGE("failed to open DACP export file \"%s\"", dacpfile.c_str());
+        }
+    }
+}
+
 extern "C" void conn_init (void *cls) {
     open_connections++;
     LOGD("Open connections: %i", open_connections);
@@ -1136,6 +1345,9 @@ extern "C" void conn_destroy (void *cls) {
         if (use_audio) {
             audio_renderer_stop();
         }
+        if (dacpfile.length()) {
+            remove (dacpfile.c_str());
+        }    
     }
 }
 
@@ -1329,6 +1541,17 @@ extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     }
 }
 
+extern "C" void register_client(void *cls, const char *device_id, const char *client_pk_str) {
+    /* pair-setup-pin client registration by the server is not implemented here, do nothing*/
+    LOGD("registered new client: DeviceID = %s\nPK = \"%s\"", device_id, client_pk_str);
+}
+
+extern "C" bool check_register(void *cls, const char *client_pk_str) {
+    /* pair-setup-pin client registration by the server is not implemented here, return "true"*/  
+    LOGD("register check returning client:\nPK = \"%s\"", client_pk_str);
+    return true;
+}
+
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
         case LOGGER_DEBUG: {
@@ -1352,7 +1575,7 @@ extern "C" void log_callback (void *cls, int level, const char *msg) {
     }
 }
 
-int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
+static int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigned short udp[3], bool debug_log) {
     raop_callbacks_t raop_cbs;
     memset(&raop_cbs, 0, sizeof(raop_cbs));
     raop_cbs.conn_init = conn_init;
@@ -1371,9 +1594,13 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
     raop_cbs.report_client_request = report_client_request;
+    raop_cbs.display_pin = display_pin;
+    raop_cbs.register_client = register_client;
+    raop_cbs.check_register = check_register;
+    raop_cbs.export_dacp = export_dacp;
 
     /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs);
+    raop = raop_init(max_connections, &raop_cbs, keyfile.c_str());
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;
@@ -1387,10 +1614,11 @@ int start_raop_server (unsigned short display[5], unsigned short tcp[3], unsigne
     if (display[2]) raop_set_plist(raop, "refreshRate", (int) display[2]);
     if (display[3]) raop_set_plist(raop, "maxFPS", (int) display[3]);
     if (display[4]) raop_set_plist(raop, "overscanned", (int) display[4]);
- 
+
     if (show_client_FPS_data) raop_set_plist(raop, "clientFPSdata", 1);
     raop_set_plist(raop, "max_ntp_timeouts", max_ntp_timeouts);
     if (audiodelay >= 0) raop_set_plist(raop, "audio_delay_micros", audiodelay);
+    if (require_password) raop_set_plist(raop, "pin", (int) pin);
 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
@@ -1521,7 +1749,6 @@ void real_main (int argc, char *argv[]) {
 int main (int argc, char *argv[]) {
 #endif
     std::vector<char> server_hw_addr;
-    std::string mac_address;
     std::string config_file = "";
 
 #ifdef SUPPRESS_AVAHI_COMPAT_WARNING
@@ -1589,8 +1816,8 @@ int main (int argc, char *argv[]) {
 
     if (videosink == "d3d11videosink"  && use_video) {
         videosink.append(" fullscreen-toggle-mode=alt-enter");  
-        printf("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
-               "Use Alt-Enter key combination to toggle into/out of full-screen mode\n");
+        LOGI("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
+               "Use Alt-Enter key combination to toggle into/out of full-screen mode");
     }
 
     if (bt709_fix && use_video) {
@@ -1598,6 +1825,21 @@ int main (int argc, char *argv[]) {
         video_parser.append(BT709_FIX);
     }
 
+    if (require_password && keyfile == "") {
+        const char * homedir = get_homedir();
+        if (homedir) {
+            keyfile.erase();
+            keyfile = homedir;
+            keyfile.append("/.uxplay.pem");
+        } else {
+	    LOGE("could not determine $HOME: public key wiil no be saved, and so will not be persistent");
+        }
+    }
+
+    if (keyfile != "") {
+        LOGI("public key storage (for persistence) is in %s", keyfile.c_str());
+    }
+    
     if (do_append_hostname) {
         append_hostname(server_name);
     }
@@ -1628,14 +1870,17 @@ int main (int argc, char *argv[]) {
     }
 
     if (!use_random_hw_addr) {
-        mac_address = find_mac();
+        if (strlen(mac_address.c_str()) == 0) {
+            mac_address = find_mac();
+            LOGI("using system MAC address %s",mac_address.c_str());	    
+        } else {
+            LOGI("using user-set MAC address %s",mac_address.c_str());
+        }
     }
     if (mac_address.empty()) {
         srand(time(NULL) * getpid());
         mac_address = random_mac();
         LOGI("using randomly-generated MAC address %s",mac_address.c_str());
-    } else {
-        LOGI("using system MAC address %s",mac_address.c_str());
     }
     parse_hw_addr(mac_address, server_hw_addr);
     mac_address.clear();

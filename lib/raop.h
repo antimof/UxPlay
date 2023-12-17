@@ -59,12 +59,16 @@ struct raop_callbacks_s {
     void  (*audio_get_format)(void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat);
     void  (*video_report_size)(void *cls, float *width_source, float *height_source, float *width, float *height);
     void  (*report_client_request) (void *cls, char *deviceid, char *model, char *name, bool *admit);
+    void  (*display_pin) (void *cls, char * pin);
+    void  (*register_client) (void *cls, const char *device_id, const char *pk_str);
+    bool  (*check_register) (void *cls, const char *pk_str);
+    void  (*export_dacp) (void *cls, const char *active_remote, const char *dacp_id);
 };
 typedef struct raop_callbacks_s raop_callbacks_t;
 raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const char *remote, int remote_addr_len,
                           unsigned short timing_rport, timing_protocol_t *time_protocol);
 
-RAOP_API raop_t *raop_init(int max_clients, raop_callbacks_t *callbacks);
+  RAOP_API raop_t *raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile);
 RAOP_API void raop_set_log_level(raop_t *raop, int level);
 RAOP_API void raop_set_log_callback(raop_t *raop, raop_log_callback_t callback, void *cls);
 RAOP_API int raop_set_plist(raop_t *raop, const char *plist_item, const int value);

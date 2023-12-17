@@ -65,6 +65,13 @@ struct raop_s {
 
     int audio_delay_micros;
     int max_ntp_timeouts;
+
+     /* for temporary storage of pin during pair-pin start */
+     unsigned short pin;
+     bool use_pin;
+  
+     /* public key as string */
+     char pk_str[2*ED25519_KEY_SIZE + 1];
 };
 
 struct raop_conn_s {
@@ -73,7 +80,7 @@ struct raop_conn_s {
     raop_rtp_t *raop_rtp;
     raop_rtp_mirror_t *raop_rtp_mirror;
     fairplay_t *fairplay;
-    pairing_session_t *pairing;
+    pairing_session_t *session;
 
     unsigned char *local;
     int locallen;
@@ -81,6 +88,7 @@ struct raop_conn_s {
     unsigned char *remote;
     int remotelen;
 
+    bool have_active_remote;
 };
 typedef struct raop_conn_s raop_conn_t;
 
@@ -107,8 +115,8 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
         free(conn);
         return NULL;
     }
-    conn->pairing = pairing_session_init(raop->pairing);
-    if (!conn->pairing) {
+    conn->session = pairing_session_init(raop->pairing);
+    if (!conn->session) {
         fairplay_destroy(conn->fairplay);
         free(conn);
         return NULL;
@@ -145,7 +153,8 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
 
     conn->locallen = locallen;
     conn->remotelen = remotelen;
-
+    conn->have_active_remote = false;
+    
     if (raop->callbacks.conn_init) {
         raop->callbacks.conn_init(raop->callbacks.cls);
     }
@@ -167,6 +176,17 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     method = http_request_get_method(request);
     url = http_request_get_url(request);
     cseq = http_request_get_header(request, "CSeq");
+    if (!conn->have_active_remote) {
+        const char *active_remote = http_request_get_header(request, "Active-Remote");
+        if (active_remote) {
+            conn->have_active_remote = true;
+            if (conn->raop->callbacks.export_dacp) {
+                const char *dacp_id = http_request_get_header(request, "DACP-ID");
+                conn->raop->callbacks.export_dacp(conn->raop->callbacks.cls, active_remote, dacp_id);
+            }
+        }
+    }
+
     if (!method || !cseq) {
         return;
     }
@@ -215,11 +235,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     if (!strcmp(method, "GET") && !strcmp(url, "/info")) {
         handler = &raop_handler_info;
     } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-pin-start")) {
-       logger_log(conn->raop->logger, LOGGER_ERR,  "*** ERROR: Unsupported client request %s with URL %s", method, url);
-       logger_log(conn->raop->logger, LOGGER_INFO, "*** AirPlay client has requested PIN as implemented on AppleTV,");
-       logger_log(conn->raop->logger, LOGGER_INFO, "*** but this implementation does not require a PIN and cannot supply one.");
-       logger_log(conn->raop->logger, LOGGER_INFO, "*** This client behavior may have been required by mobile device management (MDM)");
-       logger_log(conn->raop->logger, LOGGER_INFO, "*** (such as Apple Configurator or a third-party MDM tool).");
+        handler = &raop_handler_pairpinstart;
+    } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-setup-pin")) {
+        handler = &raop_handler_pairsetup_pin;
     } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-setup")) {
         handler = &raop_handler_pairsetup;
     } else if (!strcmp(method, "POST") && !strcmp(url, "/pair-verify")) {
@@ -387,13 +405,13 @@ conn_destroy(void *ptr) {
 
     free(conn->local);
     free(conn->remote);
-    pairing_session_destroy(conn->pairing);
+    pairing_session_destroy(conn->session);
     fairplay_destroy(conn->fairplay);
     free(conn);
 }
 
 raop_t *
-raop_init(int max_clients, raop_callbacks_t *callbacks) {
+raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
     raop_t *raop;
     pairing_t *pairing;
     httpd_t *httpd;
@@ -422,12 +440,29 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
 
     /* Initialize the logger */
     raop->logger = logger_init();
-    pairing = pairing_init_generate();
+
+    /* create a new public key for pairing */
+    int new_key;
+    pairing = pairing_init_generate(keyfile, &new_key);
     if (!pairing) {
         free(raop);
         return NULL;
     }
-
+    /* store PK as a string in raop->pk_str */
+    memset(raop->pk_str, 0, sizeof(raop->pk_str));
+#ifdef PK
+    strncpy(raop->pk_str, PK, 2*ED25519_KEY_SIZE);
+#else
+    unsigned char public_key[ED25519_KEY_SIZE];
+    pairing_get_public_key(pairing, public_key);
+    char *pk_str = utils_pk_to_string(public_key, ED25519_KEY_SIZE);
+    strncpy(raop->pk_str, (const char *) pk_str, 2*ED25519_KEY_SIZE);
+    free(pk_str);
+#endif
+    if (new_key) {
+        printf("*** A new Public Key has been created and stored in %s\n", keyfile);
+    }
+    
     /* Set HTTP callbacks to our handlers */
     memset(&httpd_cbs, 0, sizeof(httpd_cbs));
     httpd_cbs.opaque = raop;
@@ -460,6 +495,10 @@ raop_init(int max_clients, raop_callbacks_t *callbacks) {
     raop->refreshRate = 60;
     raop->maxFPS = 30;
     raop->overscanned = 0;
+
+    /* initialise stored pin */
+    raop->pin = 0;
+    raop->use_pin = false;
 
     /* initialize switch for display of client's streaming data records */    
     raop->clientFPSdata = 0;
@@ -529,7 +568,10 @@ int raop_set_plist(raop_t *raop, const char *plist_item, const int value) {
             raop->audio_delay_micros = value;
         }
         if (raop->audio_delay_micros != value) retval = 1;
-    }  else {
+    } else if (strcmp(plist_item, "pin") == 0) {
+        raop->pin = value;
+        raop->use_pin = true;
+    } else {
         retval = -1;
     }	  
     return retval;
@@ -578,6 +620,7 @@ raop_set_log_callback(raop_t *raop, raop_log_callback_t callback, void *cls) {
 void
 raop_set_dnssd(raop_t *raop, dnssd_t *dnssd) {
     assert(dnssd);
+    dnssd_set_pk(dnssd, raop->pk_str);
     raop->dnssd = dnssd;
 }
 

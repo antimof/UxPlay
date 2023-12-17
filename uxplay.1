@@ -1,17 +1,21 @@
-.TH UXPLAY "1" "September 2023" "1.66" "User Commands"
+.TH UXPLAY "1" "November 2023" "1.67" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.66: An open\-source AirPlay mirroring (+ audio streaming) server:
+UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .SH OPTIONS
 .TP
 .B
 \fB\-n\fR name   Specify the network name of the AirPlay server
 .TP
 \fB\-nh\fR       Do \fBNOT\fR append "@\fIhostname\fR" at end of AirPlay server name
+.TP
+\fB\-pin\fI[xxxx]\fRUse a 4-digit pin code to control client access (default: no)
+.IP
+   without option, pin is random: optionally use fixed pin xxxx.
 .TP
 \fB\-vsync\fI[x]\fR Mirror mode: sync audio to video using timestamps (default)
 .IP
@@ -63,15 +67,7 @@ UxPlay 1.66: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-v4l2\fR     Use Video4Linux2 for GPU hardware h264 video decoding.
 .TP
-\fB\-bt709\fR    A workaround (bt709 color) that may be needed with -rpi.
-.TP
-\fB\-rpi\fR      Same as "-v4l2" (for RPi=Rasberry Pi).
-.TP
-\fB\-rpigl\fR    Same as "-rpi -vs glimagesink" for RPi.
-.TP
-\fB\-rpifb\fR    Same as "-rpi -vs kmssink" for RPi using framebuffer.
-.TP
-\fB\-rpiwl\fR    Same as "-rpi -vs waylandsink" for RPi using Wayland.
+\fB\-bt709\fR    Sometimes needed for Raspberry Pi with GStreamer < 1.22
 .TP
 \fB\-as\fI sink\fR  Choose the GStreamer audiosink; default "autoaudiosink"
 .IP
@@ -112,6 +108,13 @@ UxPlay 1.66: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
 .TP
+\fB\-key\fI fn \fR  Store private key in file fn (Default: $HOME/.uxplay.pem)
+.TP
+\fB\-dacp\fI [fn]\fRExport client DACP information to file $HOME/.uxplay.dacp
+.IP
+   (option to use file "fn" instead); used for client remote.
+.PP
+.TP
 \fB\-vdmp\fR [n] Dump h264 video output to "fn.h264"; fn="videodump", change
 .IP
    with "-vdmp [n] filename". If [n] is given, file fn.x.h264
@@ -137,6 +140,9 @@ UxPlay 1.66: An open\-source AirPlay mirroring (+ audio streaming) server:
 \fB\-h\fR        Displays help information
 .SH
 FILES
+Private key stored (for persistence) in $HOME/.uxplay.pem (can be changed)
+.TP
+(transient) storage of client DACP info: $HOME/uxplay.dacp (can be changed)
 .TP
 Options in one of $UXPLAYRC, or ~/.uxplayrc, or  ~/.config/uxplayrc
 .TP
@@ -150,9 +156,9 @@ Various, see website or distribution.
 .SH
 COPYRIGHT
 .TP
-Various, see website or distribution.  License: GPL v3+: GNU GPL version 3 or later.
+Various, see website or distribution.  License: GPL v3+: 
 .TP
-(some parts LGPL v.2.1+ or MIT).
+GNU GPL version 3 or later. (some parts LGPL v.2.1+ or MIT).
 .SH
 SEE ALSO
 .TP

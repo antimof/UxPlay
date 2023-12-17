@@ -25,11 +25,15 @@
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/pem.h>
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+#include "utils.h"
 
 struct aes_ctx_s {
     EVP_CIPHER_CTX *cipher_ctx;
@@ -261,31 +265,146 @@ void x25519_derive_secret(unsigned char secret[X25519_KEY_SIZE], const x25519_ke
     EVP_PKEY_CTX_free(pctx);
 }
 
+// GCM AES 128
+
+int gcm_encrypt(const unsigned char *plaintext, int plaintext_len, unsigned char *ciphertext,
+                unsigned char *key, unsigned char *iv, unsigned char *tag)
+{
+    EVP_CIPHER_CTX *ctx;
+
+    int len;
+    
+    int ciphertext_len;
+
+    if(!(ctx = EVP_CIPHER_CTX_new()))
+      handle_error(__func__);
+
+    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_gcm(), NULL, NULL, NULL))
+        handle_error(__func__);
+
+    if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL))
+        handle_error(__func__);
+
+    if(1 != EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+        handle_error(__func__);
+
+    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+        handle_error(__func__);
+    ciphertext_len = len;
+
+    if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+        handle_error(__func__);
+    ciphertext_len += len;
+
+    if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag))
+        handle_error(__func__);
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    return ciphertext_len;
+}
+
+int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *plaintext,
+                unsigned char *key, unsigned char *iv, unsigned char *tag)
+{
+    EVP_CIPHER_CTX *ctx;
+    int len;
+    int plaintext_len;
+    int ret;
+    
+    if(!(ctx = EVP_CIPHER_CTX_new()))
+        handle_error(__func__);
+
+    if(!EVP_DecryptInit_ex(ctx, EVP_aes_128_gcm(), NULL, NULL, NULL))
+        handle_error(__func__);
+
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL))
+        handle_error(__func__);
+
+    if(!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
+        handle_error(__func__);
+
+    if(!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+        handle_error(__func__);
+    plaintext_len = len;
+
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag))
+        handle_error(__func__);
+
+    ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+
+    EVP_CIPHER_CTX_free(ctx);
+    
+    if(ret > 0) {
+        /* Success */
+        plaintext_len += len;
+        return plaintext_len;
+    } else {
+        /* Verify failed */
+	printf("failed\n");
+        return -1;
+    }
+}
+
 // ED25519
 
 struct ed25519_key_s {
     EVP_PKEY *pkey;
 };
 
-ed25519_key_t *ed25519_key_generate(void) {
+ed25519_key_t *ed25519_key_generate(const char *keyfile, int *result) {
     ed25519_key_t *key;
     EVP_PKEY_CTX *pctx;
+    BIO *bp;
+    FILE *file;
+    bool new_pk = false;
+    bool use_keyfile = strlen(keyfile);
+
+    *result = 0;
 
     key = calloc(1, sizeof(ed25519_key_t));
     assert(key);
+   
+    if (use_keyfile) {
+        file = fopen(keyfile, "r");
+        if (file) {
+            bp = BIO_new_fp(file, BIO_NOCLOSE);
+            key->pkey = PEM_read_PrivateKey(file, NULL, NULL, NULL);
+            BIO_free(bp);
+            fclose(file);
+            if (!key->pkey) {
+                new_pk = true;
+            }
+        } else {
+            new_pk = true;
+        }
+    } else {
+        new_pk = true;
+    }
 
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
-    if (!pctx) {
-        handle_error(__func__);
+    if (new_pk) {
+        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
+        if (!pctx) {
+            handle_error(__func__);
+        }
+        if (!EVP_PKEY_keygen_init(pctx)) {
+            handle_error(__func__);
+        }
+        if (!EVP_PKEY_keygen(pctx, &key->pkey)) {
+            handle_error(__func__);
+        }
+        EVP_PKEY_CTX_free(pctx);
+        if (use_keyfile) {
+            file = fopen(keyfile, "w");
+            if (file) {
+                bp = BIO_new_fp(file, BIO_NOCLOSE);
+                PEM_write_bio_PrivateKey(bp, key->pkey, NULL, NULL, 0, NULL, NULL);
+                BIO_free(bp);
+                fclose(file);
+                *result = 1;
+            }
+        }
     }
-    if (!EVP_PKEY_keygen_init(pctx)) {
-        handle_error(__func__);
-    }
-    if (!EVP_PKEY_keygen(pctx, &key->pkey)) {
-        handle_error(__func__);
-    }
-    EVP_PKEY_CTX_free(pctx);
-
     return key;
 }
 
@@ -422,4 +541,8 @@ void sha_destroy(sha_ctx_t *ctx) {
         EVP_MD_CTX_free(ctx->digest_ctx);
         free(ctx);
     }
+}
+
+int get_random_bytes(unsigned char *buf, int num) {
+    return RAND_bytes(buf, num);
 }

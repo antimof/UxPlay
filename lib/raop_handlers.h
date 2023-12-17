@@ -50,16 +50,14 @@ raop_handler_info(raop_conn_t *conn,
     utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
 
     int pk_len = 0;
-    char *pk = utils_parse_hex(AIRPLAY_PK, strlen(AIRPLAY_PK), &pk_len);
-
-    uint64_t features = ((uint64_t) strtoul(AIRPLAY_FEATURES_2, NULL, 16)) << 32;
-    features += (uint64_t) strtoul(AIRPLAY_FEATURES_1, NULL, 16);
+    char *pk = utils_parse_hex(conn->raop->pk_str, strlen(conn->raop->pk_str), &pk_len);
 
     plist_t r_node = plist_new_dict();
 
     plist_t txt_airplay_node = plist_new_data(airplay_txt, airplay_txt_len);
     plist_dict_set_item(r_node, "txtAirPlay", txt_airplay_node);
 
+    uint64_t features = dnssd_get_airplay_features(conn->raop->dnssd);
     plist_t features_node = plist_new_uint(features);
     plist_dict_set_item(r_node, "features", features_node);
 
@@ -94,43 +92,43 @@ raop_handler_info(raop_conn_t *conn,
     plist_t status_flags_node = plist_new_uint(68);
     plist_dict_set_item(r_node, "statusFlags", status_flags_node);
 
+    plist_t keep_alive_low_power_node = plist_new_uint(1);
+    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
+
     plist_t source_version_node = plist_new_string(GLOBAL_VERSION);
     plist_dict_set_item(r_node, "sourceVersion", source_version_node);
 
     plist_t pk_node = plist_new_data(pk, pk_len);
     plist_dict_set_item(r_node, "pk", pk_node);
 
+    plist_t keep_alive_send_stats_as_body_node = plist_new_uint(1);
+    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
+
     plist_t device_id_node = plist_new_string(hw_addr);
     plist_dict_set_item(r_node, "deviceID", device_id_node);
 
     plist_t audio_latencies_node = plist_new_array();
     plist_t audio_latencies_0_node = plist_new_dict();
-    plist_t audio_latencies_0_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_0_input_latency_micros_node = plist_new_uint(0);
-    plist_t audio_latencies_0_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_0_output_latency_micros_node = plist_new_bool(0);
     plist_t audio_latencies_0_type_node = plist_new_uint(100);
-    plist_dict_set_item(audio_latencies_0_node, "audioType", audio_latencies_0_audio_type_node);
-    plist_dict_set_item(audio_latencies_0_node, "inputLatencyMicros", audio_latencies_0_input_latency_micros_node);
+    plist_t audio_latencies_0_audio_type_node = plist_new_string("default");
+    plist_t audio_latencies_0_input_latency_micros_node = plist_new_bool(0);
     plist_dict_set_item(audio_latencies_0_node, "outputLatencyMicros", audio_latencies_0_output_latency_micros_node);
     plist_dict_set_item(audio_latencies_0_node, "type", audio_latencies_0_type_node);
+    plist_dict_set_item(audio_latencies_0_node, "audioType", audio_latencies_0_audio_type_node);
+    plist_dict_set_item(audio_latencies_0_node, "inputLatencyMicros", audio_latencies_0_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_0_node);
     plist_t audio_latencies_1_node = plist_new_dict();
-    plist_t audio_latencies_1_audio_type_node = plist_new_string("default");
-    plist_t audio_latencies_1_input_latency_micros_node = plist_new_uint(0);
-    plist_t audio_latencies_1_output_latency_micros_node = plist_new_uint(0);
+    plist_t audio_latencies_1_output_latency_micros_node = plist_new_bool(0);
     plist_t audio_latencies_1_type_node = plist_new_uint(101);
-    plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node); 
-    plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
+    plist_t audio_latencies_1_audio_type_node = plist_new_string("default");
+    plist_t audio_latencies_1_input_latency_micros_node = plist_new_bool(0);
     plist_dict_set_item(audio_latencies_1_node, "outputLatencyMicros", audio_latencies_1_output_latency_micros_node);
     plist_dict_set_item(audio_latencies_1_node, "type", audio_latencies_1_type_node);
+    plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node);
+    plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_1_node);
     plist_dict_set_item(r_node, "audioLatencies", audio_latencies_node);
-
-    plist_t keep_alive_low_power_node = plist_new_bool(1);
-    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
-
-    plist_t keep_alive_send_stats_as_body_node = plist_new_bool(1);
-    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
 
     plist_t model_node = plist_new_string(GLOBAL_MODEL);
     plist_dict_set_item(r_node, "model", model_node);
@@ -152,6 +150,7 @@ raop_handler_info(raop_conn_t *conn,
     plist_t displays_0_max_fps_node = plist_new_uint(conn->raop->maxFPS);
     plist_t displays_0_overscanned_node = plist_new_bool(conn->raop->overscanned);
     plist_t displays_0_features = plist_new_uint(14);
+
     plist_dict_set_item(displays_0_node, "uuid", displays_0_uuid_node);
     plist_dict_set_item(displays_0_node, "widthPhysical", displays_0_width_physical_node);
     plist_dict_set_item(displays_0_node, "heightPhysical", displays_0_height_physical_node);
@@ -175,6 +174,207 @@ raop_handler_info(raop_conn_t *conn,
 }
 
 static void
+raop_handler_pairpinstart(raop_conn_t *conn,
+                          http_request_t *request, http_response_t *response,
+                          char **response_data, int *response_datalen) {
+    logger_log(conn->raop->logger, LOGGER_INFO, "client sent PAIR-PIN-START request");
+    int pin_4;
+    if (conn->raop->pin > 9999) {
+        pin_4 = conn->raop->pin % 10000;
+    } else {
+        pin_4 = random_pin();
+        if (pin_4 < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Failed to generate random pin");
+        } else {
+            conn->raop->pin = (unsigned short) pin_4 % 10000;
+        }
+    }
+    char pin[6];
+    snprintf(pin, 5, "%04u", pin_4);
+    if (conn->raop->callbacks.display_pin) {
+         conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
+    }
+    logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", pin);
+    *response_data = NULL;
+    response_datalen = 0;
+    return;
+}
+
+static void
+raop_handler_pairsetup_pin(raop_conn_t *conn,
+                           http_request_t *request, http_response_t *response,
+                           char **response_data, int *response_datalen) {
+
+    const char *request_data;
+    int request_datalen;
+    bool data_is_plist = false;
+    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
+    request_data = http_request_get_data(request, &request_datalen);
+    logger_log(conn->raop->logger, LOGGER_INFO, "client requested pair-setup-pin, datalen = %d", request_datalen);
+    if (request_datalen > 0) {
+        char *header_str= NULL; 
+        http_request_get_header_string(request, &header_str);
+        logger_log(conn->raop->logger, LOGGER_INFO, "request header: %s", header_str);
+        data_is_plist = (strstr(header_str,"apple-binary-plist") != NULL);
+        free(header_str);
+    }
+    if (!data_is_plist) {
+        logger_log(conn->raop->logger, LOGGER_INFO, "did not receive expected plist from client, request_datalen = %d");
+        goto authentication_failed;
+    }
+
+    /* process the pair-setup-pin request */
+    plist_t req_root_node = NULL;
+    plist_from_bin(request_data, request_datalen, &req_root_node);
+    plist_t req_method_node = plist_dict_get_item(req_root_node, "method");
+    plist_t req_user_node = plist_dict_get_item(req_root_node, "user");
+    plist_t req_pk_node = plist_dict_get_item(req_root_node, "pk");
+    plist_t req_proof_node = plist_dict_get_item(req_root_node, "proof");
+    plist_t req_epk_node = plist_dict_get_item(req_root_node, "epk");
+    plist_t req_authtag_node = plist_dict_get_item(req_root_node, "authTag");
+  
+    if (PLIST_IS_STRING(req_method_node) && PLIST_IS_STRING(req_user_node)) {
+        /* this is the initial pair-setup-pin request */
+        const char *salt;
+	char pin[6];
+	const char *pk;
+	int len_pk, len_salt;
+        char *method = NULL;
+        char *user = NULL;
+        plist_get_string_val(req_method_node, &method);
+        if (strncmp(method, "pin", strlen (method))) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "error, required method is \"pin\", client requested \"%s\"", method);
+            *response_data = NULL;
+            response_datalen = 0;
+	    free (method);
+	    plist_free (req_root_node);
+            return;
+        }
+        free (method);
+	plist_get_string_val(req_user_node, &user);
+        logger_log(conn->raop->logger, LOGGER_INFO, "pair-setup-pin:  device_id = %s", user);
+        snprintf(pin, 6, "%04u", conn->raop->pin % 10000);
+        if (conn->raop->pin < 10000) {
+            conn->raop->pin = 0;
+        }
+	int ret = srp_new_user(conn->session, conn->raop->pairing, (const char *) user,
+                               (const char *) pin, &salt, &len_salt, &pk, &len_pk);
+        free(user);	
+        plist_free(req_root_node);
+        if (ret < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "failed to create user, err = %d", ret);
+            goto authentication_failed;
+        }
+        plist_t res_root_node = plist_new_dict();
+        plist_t res_salt_node = plist_new_data(salt, len_salt);
+        plist_t res_pk_node = plist_new_data(pk, len_pk);
+        plist_dict_set_item(res_root_node, "pk", res_pk_node);	
+        plist_dict_set_item(res_root_node, "salt", res_salt_node);
+        plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+        plist_free(res_root_node);
+        http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+	return;
+    } else if (PLIST_IS_DATA(req_pk_node) && PLIST_IS_DATA(req_proof_node)) {
+        /* this is the second part of pair-setup-pin request */
+        char *client_pk = NULL;
+        char *client_proof = NULL;
+	unsigned char proof[64];
+	memset(proof, 0, sizeof(proof));
+        uint64_t client_pk_len;
+        uint64_t client_proof_len;
+        plist_get_data_val(req_pk_node, &client_pk, &client_pk_len); 
+        plist_get_data_val(req_proof_node, &client_proof, &client_proof_len);
+        if (logger_debug) {
+	  char *str = utils_data_to_string((const unsigned char *) client_proof, client_proof_len, 20);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "client SRP6a proof <M> :\n%s", str);	    
+            free (str);
+        }
+        memcpy(proof, client_proof, (int) client_proof_len);
+        free (client_proof);
+        int ret = srp_validate_proof(conn->session, conn->raop->pairing, (const unsigned char *) client_pk,
+                                     (int) client_pk_len, proof, (int) client_proof_len, (int) sizeof(proof));
+        free (client_pk);
+        plist_free(req_root_node);
+        if (ret < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Client Authentication Failure (client proof not validated)");
+            goto authentication_failed;
+        }
+        if (logger_debug) {
+	    char *str = utils_data_to_string((const unsigned char *) proof, sizeof(proof), 20);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "server SRP6a proof <M1> :\n%s", str);
+            free (str);
+        }
+        plist_t res_root_node = plist_new_dict();
+        plist_t res_proof_node = plist_new_data((const char *) proof, 20);
+        plist_dict_set_item(res_root_node, "proof", res_proof_node);	
+        plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+        plist_free(res_root_node);
+        http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+	return;
+    } else if (PLIST_IS_DATA(req_epk_node) && PLIST_IS_DATA(req_authtag_node)) {
+        /* this is the third part of pair-setup-pin request */
+        char *client_epk = NULL;
+        char *client_authtag = NULL;
+        uint64_t client_epk_len;
+        uint64_t client_authtag_len;
+        unsigned char epk[ED25519_KEY_SIZE];
+	unsigned char authtag[GCM_AUTHTAG_SIZE];
+	int ret;
+        plist_get_data_val(req_epk_node, &client_epk, &client_epk_len); 
+        plist_get_data_val(req_authtag_node, &client_authtag, &client_authtag_len);
+
+	if (logger_debug) {
+            char *str = utils_data_to_string((const unsigned char *) client_epk, client_epk_len, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "client_epk %d:\n%s\n", (int) client_epk_len, str);
+            str = utils_data_to_string((const unsigned char *) client_authtag, client_authtag_len, 16);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "client_authtag  %d:\n%s\n", (int) client_authtag_len, str);
+            free (str);
+	}
+
+	memcpy(epk, client_epk, ED25519_KEY_SIZE);
+	memcpy(authtag, client_authtag, GCM_AUTHTAG_SIZE);
+        free (client_authtag);
+        free (client_epk);
+        plist_free(req_root_node);
+	ret = srp_confirm_pair_setup(conn->session, conn->raop->pairing, epk, authtag);
+        if (ret < 0) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
+            goto authentication_failed;
+        } else {
+            bool client_pair_setup;
+            char *client_device_id;
+            unsigned char *client_pk;
+            access_client_session_data(conn->session, &client_device_id, &client_pk, &client_pair_setup);
+            char * client_pk_str = utils_pk_to_string(client_pk, ED25519_KEY_SIZE);
+            if (conn->raop->callbacks.register_client) {
+	        conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk_str);
+            }
+            free (client_pk_str);
+            logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-pin-setup success\n");
+        }
+        pairing_session_set_setup_status(conn->session);
+        plist_t res_root_node = plist_new_dict();
+        plist_t res_epk_node = plist_new_data((const char *) epk, 32);
+	plist_t res_authtag_node = plist_new_data((const char *) authtag, 16);
+        plist_dict_set_item(res_root_node, "epk", res_epk_node);
+        plist_dict_set_item(res_root_node, "authTag", res_authtag_node);	
+        plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
+        plist_free(res_root_node);
+        http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
+	return;
+    }
+ authentication_failed:;
+    http_response_destroy(response);
+    response = http_response_init("RTSP/1.0", 470, "Client Authentication Failure");
+    const char *cseq = http_request_get_header(request, "CSeq");
+    http_response_add_header(response, "CSeq", cseq);
+    http_response_add_header(response, "Server", "AirTunes/"GLOBAL_VERSION);
+    *response_data = NULL;
+    response_datalen = 0;
+    return;
+}
+
+static void
 raop_handler_pairsetup(raop_conn_t *conn,
                        http_request_t *request, http_response_t *response,
                        char **response_data, int *response_datalen)
@@ -191,7 +391,7 @@ raop_handler_pairsetup(raop_conn_t *conn,
     }
 
     pairing_get_public_key(conn->raop->pairing, public_key);
-    pairing_session_set_setup_status(conn->pairing);
+    pairing_session_set_setup_status(conn->session);
 
     *response_data = malloc(sizeof(public_key));
     if (*response_data) {
@@ -206,8 +406,14 @@ raop_handler_pairverify(raop_conn_t *conn,
                         http_request_t *request, http_response_t *response,
                         char **response_data, int *response_datalen)
 {
-    if (pairing_session_check_handshake_status(conn->pairing)) {
-        return;
+    bool register_check = false;  
+    if (pairing_session_check_handshake_status(conn->session)) {
+        if (conn->raop->use_pin) {
+            pairing_session_set_setup_status(conn->session);
+            register_check = true;
+        } else {
+            return;
+        }
     }
     unsigned char public_key[X25519_KEY_SIZE];
     unsigned char signature[PAIRING_SIG_SIZE];
@@ -221,19 +427,30 @@ raop_handler_pairverify(raop_conn_t *conn,
     }
     switch (data[0]) {
         case 1:
-            if (datalen != 4 + X25519_KEY_SIZE + X25519_KEY_SIZE) {
+            if (datalen != 4 + X25519_KEY_SIZE + ED25519_KEY_SIZE) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
                 return;
             }
             /* We can fall through these errors, the result will just be garbage... */
-            if (pairing_session_handshake(conn->pairing, data + 4, data + 4 + X25519_KEY_SIZE)) {
+            if (pairing_session_handshake(conn->session, data + 4, data + 4 + X25519_KEY_SIZE)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error initializing pair-verify handshake");
             }
-            if (pairing_session_get_public_key(conn->pairing, public_key)) {
+            if (pairing_session_get_public_key(conn->session, public_key)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ECDH public key");
             }
-            if (pairing_session_get_signature(conn->pairing, signature)) {
+            if (pairing_session_get_signature(conn->session, signature)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ED25519 signature");
+            }
+            if (register_check) {
+                char *pk_str = utils_pk_to_string((const unsigned char *)(data + 4 + X25519_KEY_SIZE), ED25519_KEY_SIZE);
+                bool registered_client = true;
+                if (conn->raop->callbacks.check_register) {
+                    registered_client = conn->raop->callbacks.check_register(conn->raop->callbacks.cls, pk_str);
+                }
+                free (pk_str);
+                if (!registered_client) {
+                    return;
+                }
             }
             *response_data = malloc(sizeof(public_key) + sizeof(signature));
             if (*response_data) {
@@ -250,7 +467,7 @@ raop_handler_pairverify(raop_conn_t *conn,
                 return;
             }
 
-            if (pairing_session_finish(conn->pairing, data + 4)) {
+            if (pairing_session_finish(conn->session, data + 4)) {
                 logger_log(conn->raop->logger, LOGGER_ERR, "Incorrect pair-verify signature");
                 http_response_set_disconnect(response, 1);
                 return;
@@ -421,7 +638,7 @@ raop_handler_setup(raop_conn_t *conn,
             logger_log(conn->raop->logger, LOGGER_INFO, "Client identifed as using old protocol (unhashed) AES audio key)");
         } else {
             unsigned char ecdh_secret[X25519_KEY_SIZE];
-            if (pairing_get_ecdh_secret_key(conn->pairing, ecdh_secret)) {
+            if (pairing_get_ecdh_secret_key(conn->session, ecdh_secret)) {
                 /* In this case  (legacy) pairing with client was successfully set up and created the shared ecdh_secret:
                  * aeskey must now be hashed with it
                  *

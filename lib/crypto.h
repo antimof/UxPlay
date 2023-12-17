@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ *
+ *  modified by fduncanh 2023
  */
 
 /*
@@ -64,16 +66,23 @@ x25519_key_t *x25519_key_generate(void);
 x25519_key_t *x25519_key_from_raw(const unsigned char data[X25519_KEY_SIZE]);
 void x25519_key_get_raw(unsigned char data[X25519_KEY_SIZE], const x25519_key_t *key);
 void x25519_key_destroy(x25519_key_t *key);
-
+int get_random_bytes(unsigned char *buf, int num);
+  
 void x25519_derive_secret(unsigned char secret[X25519_KEY_SIZE], const x25519_key_t *ours, const x25519_key_t *theirs);
 
+// GCM AES 128
+
+int gcm_encrypt(const unsigned char *plaintext, int plaintext_len, unsigned char *ciphertext,
+                unsigned char *key, unsigned char *iv, unsigned char *tag);
+int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *plaintext,
+                unsigned char *key, unsigned char *iv, unsigned char *tag);
 // ED25519
 
 #define ED25519_KEY_SIZE 32
 
 typedef struct ed25519_key_s ed25519_key_t;
 
-ed25519_key_t *ed25519_key_generate(void);
+ed25519_key_t *ed25519_key_generate(const char * keyfile, int * result);
 ed25519_key_t *ed25519_key_from_raw(const unsigned char data[ED25519_KEY_SIZE]);
 void ed25519_key_get_raw(unsigned char data[ED25519_KEY_SIZE], const ed25519_key_t *key);
 /*
