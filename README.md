@@ -379,7 +379,7 @@ help with this or other problems.
 the first time they connect to it, by entering
 a 4-digit pin code that is displayed on the UxPlay terminal.   (This is optional, but sometimes required if the client is a
 corporately-owned and -managed device with MDM Mobile Device Management.)   Pairing occurs just once, is currently only
-recorded in the client, and persists unless the
+recorded by the client unless the -reg option is used, and persists until the
 UxPlay public key is changed.  By default (since v1.68) the public key is now generated using  the  "Device ID", which is either the server's 
 hardware MAC address, or 
 can be set with the -m option (most conveniently using the startup option file).   (Storage of a more securely-generated
