@@ -35,6 +35,8 @@
 
 #include "utils.h"
 
+#define SALT_PK "UxPlay-Persistent-Not-Secure-Public-Key"
+
 struct aes_ctx_s {
     EVP_CIPHER_CTX *cipher_ctx;
     uint8_t key[AES_128_BLOCK_SIZE];
@@ -352,7 +354,7 @@ struct ed25519_key_s {
     EVP_PKEY *pkey;
 };
 
-ed25519_key_t *ed25519_key_generate(const char *keyfile, int *result) {
+ed25519_key_t *ed25519_key_generate(const char *device_id, const char *keyfile, int *result) {
     ed25519_key_t *key;
     EVP_PKEY_CTX *pctx;
     BIO *bp;
@@ -379,7 +381,15 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile, int *result) {
             new_pk = true;
         }
     } else {
-        new_pk = true;
+        /* generate (insecure) persistent keypair using device_id */
+        unsigned char hash[SHA512_DIGEST_LENGTH];
+        char salt[] = SALT_PK;
+        sha_ctx_t *ctx = sha_init();
+        sha_update(ctx, (const unsigned char *) salt, (unsigned int) strlen(salt));
+        sha_update(ctx, (const unsigned char *) device_id, (unsigned int) strlen(device_id));
+        sha_final(ctx, hash, NULL);
+        sha_destroy(ctx);
+        key->pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, NULL, (const unsigned char *) hash, ED25519_KEY_SIZE);
     }
 
     if (new_pk) {

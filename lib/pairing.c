@@ -84,7 +84,7 @@ derive_key_internal(pairing_session_t *session, const unsigned char *salt, unsig
 }
 
 pairing_t *
-pairing_init_generate(const char * keyfile, int *result)
+pairing_init_generate(const char *device_id, const char *keyfile, int *result)
 {
     pairing_t *pairing;
     *result = 0;
@@ -93,7 +93,7 @@ pairing_init_generate(const char * keyfile, int *result)
         return NULL;
     }
 
-    pairing->ed = ed25519_key_generate(keyfile, result);
+    pairing->ed = ed25519_key_generate(device_id, keyfile, result);
 
     return pairing;
 }
@@ -136,7 +136,7 @@ pairing_session_init(pairing_t *pairing)
 
     session->status = STATUS_INITIAL;
     session->srp = NULL;
-
+    session->pair_setup = false;
     return session;
 }
 
@@ -449,10 +449,14 @@ srp_confirm_pair_setup(pairing_session_t *session, pairing_t *pairing,
 
 void access_client_session_data(pairing_session_t *session, char **username, char **client_pk64, bool *setup) {
     int len64 = 4 * (1 + (ED25519_KEY_SIZE / 3)) + 1;
-    *client_pk64 = (char *) malloc(len64);
-    *username = session->username;
-    pk_to_base64(session->client_pk, ED25519_KEY_SIZE, *client_pk64, len64);
     setup = &(session->pair_setup);
+    *username = session->username;
+    if (setup) {
+        *client_pk64 = (char *) malloc(len64);
+        pk_to_base64(session->client_pk, ED25519_KEY_SIZE, *client_pk64, len64);
+    } else {
+        *client_pk64 = NULL;
+    }
 }
 
 void ed25519_pk_to_base64(const unsigned char *pk, char  **pk64) {

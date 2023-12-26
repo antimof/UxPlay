@@ -1,9 +1,12 @@
-# UxPlay 1.67:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.68:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where ALL user issues should be posted, and latest versions can be found).
 
-   * _**NEW in v1.67**: support for one-time Apple-style "pin" code client authentication ("client-server 
-     pairing") when the option "-pin" is used._
+   * _**NEW in v1.68**: improved support for one-time Apple-style "pin" codes introduced in 1.67: a register of pin-registered clients is
+    now optionally maintained to check returning clients; a simpler  method for generating a persistent public key (based on
+    the MAC address, which now can be set in the UxPlay startup file) is now the default. (The pem-file method introduced in 1.67 is
+    still available with the '-key" option.)_
+    
    
 ## Highlights:
 
@@ -375,10 +378,14 @@ help with this or other problems.
 * Since v 1.67, the UxPlay option "`-pin`" allows clients to "pair" with the UxPlay server
 the first time they connect to it, by entering
 a 4-digit pin code that is displayed on the UxPlay terminal.   (This is optional, but sometimes required if the client is a
-corporately-owned and -managed device with MDM Mobile Device Management.)   Pairing occurs just once, is curently only
+corporately-owned and -managed device with MDM Mobile Device Management.)   Pairing occurs just once, is currently only
 recorded in the client, and persists unless the
-UxPlay public key (stored in $HOME/.uxplay.pem, or elsewhere if option `-key <filename>` is used) is moved or deleted, after
-which a new key is generated.  (Non-Apple clients might not implement the persistence feature.)
+UxPlay public key is changed.  By default (since v1.68) the public key is now generated using  the  "Device ID", which is either the server's 
+hardware MAC address, or 
+can be set with the -m option (most conveniently using the startup option file).   (Storage of a more securely-generated
+persistent key as an OpenSSL "pem" file is still available with the -key option).  For use of uxplay in a more public environment, a 
+list of previously-registered clients can (since v1.68) be optionally-maintained using the -reg option: without this 
+option, returning clients claiming to be registered are just trusted and not checked.
 
 * By default, UxPlay is locked to
 its current client until that client drops the connection; since UxPlay-1.58, the option `-nohold` modifies this
@@ -708,6 +715,12 @@ with "`#`" are treated as comments, and ignored.  Command line options supersede
    client will not have to re-authenticate  after an initial authentication.   _(Add a "pin" entry in the UxPlay startup file if you wish the
    UxPlay server to use this protocol)._
 
+**-reg [_filename_]**: (since v1.68). This option maintains a list of previously-pin-registered clients in $HOME/.uxplay.register (or optionally, in _filename_).
+   Without this option, returning clients claiming to be already pin-registered are trusted and not checked.   (This option may be useful if UxPlay is used 
+   in a more public environment, to record client details; the register is text, one line per client, with client's  public 
+   key (base-64 format), Device ID, and Device name.)
+
+
 **-vsync [x]**  (In Mirror mode:) this option (**now the default**) uses timestamps to synchronize audio with video on the server,
    with an optional audio delay in (decimal) milliseconds   (_x_ = "20.5"   means 0.0205 seconds delay: positive or
    negative delays less than a second are allowed.)   It is needed on low-power systems such as Raspberry Pi without hardware
@@ -891,7 +904,16 @@ which will not work if a firewall is running.
    a random MAC address will be used even if option **-m** was not specified.
    (Note that a random MAC address will be different each time UxPlay is started).
 
-**-key  [_filename_]**:  By default, the storage of the Server private key is in the file $HOME/.uxplay.pem. Use
+**-key  [_filename_]**:  This (more secure) option for generating and storing a persistant public key (needed for
+   the -pin option) has been replaced by default with a (less secure) method which generates a key from the server's "device ID"
+   (MAC address, which can be changed with the -m option, conveniently as a startup file option).
+   When the -key option is used, a securely generated keypair is generated and stored in `$HOME/.uxplay.pem`, if that file does not exist,
+   or read from it, if it exists.  (Optionally, the key can be stored in _filename_.)  This method is more secure than the new default method,
+   (because the Device ID is broadcast in the DNS_SD announcement) but still leaves the private key exposed to anyone who can access the pem file.
+   Because the default (but "less-secure") "Device ID" method is simpler, and security of client access to uxplay is  unlikely to be an important issue,
+   the -key option is no longer recommended.
+
+By default, the storage of the Server private key is in the file $HOME/.uxplay.pem. Use
    the "-key _filename_" option to change this location.   This option should be set in the UxPlay startup file
    as a line "`key filename`" (no initial "-"),  where ``filename`` is a full path.   The filename may be enclosed
    in quotes (`"...."`), (and must be, if the filename has any blank spaces).
@@ -1156,6 +1178,11 @@ tvOS 12.2.1), so it does not seem to matter what version UxPlay claims to be.
 
 
 # Changelog
+1.68 2023-12-25   Introduced a simpler (default) method for generating a persistent public key from the server MAC 
+                  address (which can now be set with the -m option).
+                  (The previous pem-file method is still available with -key option).
+                  New option -reg to maintain a register of pin-authenticated clients.
+
 1.67 2023-11-30   Add support for Apple-style one-time pin authentication of clients with option "-pin":
                   (uses SRP6a authentication protocol and public key persistence).   Detection with error message
 		  of (currently) unsupported H265 video when requesting high resolution over wired ethernet.

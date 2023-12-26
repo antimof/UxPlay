@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "November 2023" "1.67" "User Commands"
+.TH UXPLAY "1" "December 2023" "1.68" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
+UxPlay 1.68: An open\-source AirPlay mirroring (+ audio streaming) server:
 .SH OPTIONS
 .TP
 .B
@@ -16,6 +16,10 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 \fB\-pin\fI[xxxx]\fRUse a 4-digit pin code to control client access (default: no)
 .IP
    without option, pin is random: optionally use fixed pin xxxx.
+.TP
+\fB\-reg\fI [fn]\fR Keep a register in $HOME/.uxplay.register to verify returning
+.IP
+   client pin-registration; (option: use file "fn" for this)
 .TP
 \fB\-vsync\fI[x]\fR Mirror mode: sync audio to video using timestamps (default)
 .IP
@@ -106,9 +110,13 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-r\fR {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)
 .TP
-\fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
+\fB\-m\fI [mac]\fR  Set MAC address (also Device ID); use for concurrent UxPlays
+.IP
+   if mac xx:xx:xx:xx:xx:xx is not given, a random MAC is used.
+.PP
 .TP
-\fB\-key\fI fn \fR  Store private key in file fn (Default: $HOME/.uxplay.pem)
+\fB\-key\fI [fn]\fR Store private key in $HOME/.uxplay.pem (or in file "fn")
+.PP
 .TP
 \fB\-dacp\fI [fn]\fRExport client DACP information to file $HOME/.uxplay.dacp
 .IP

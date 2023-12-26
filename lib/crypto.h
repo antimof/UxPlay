@@ -83,7 +83,7 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *pl
 
 typedef struct ed25519_key_s ed25519_key_t;
 
-ed25519_key_t *ed25519_key_generate(const char * keyfile, int * result);
+ed25519_key_t *ed25519_key_generate(const char *device_id, const char * keyfile, int * result);
 ed25519_key_t *ed25519_key_from_raw(const unsigned char data[ED25519_KEY_SIZE]);
 void ed25519_key_get_raw(unsigned char data[ED25519_KEY_SIZE], const ed25519_key_t *key);
 /*

@@ -341,14 +341,6 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
             logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
             goto authentication_failed;
         } else {
-            bool client_pair_setup;
-            char *client_device_id;
-            char *client_pk;   /* encoded as null-terminated  base64 string*/
-            access_client_session_data(conn->session, &client_device_id, &client_pk, &client_pair_setup);
-            if (conn->raop->callbacks.register_client) {
-	        conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk);
-            }
-            free (client_pk);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-pin-setup success\n");
         }
         pairing_session_set_setup_status(conn->session);
@@ -586,12 +578,32 @@ raop_handler_setup(raop_conn_t *conn,
 	if (conn->raop->callbacks.report_client_request) {
             conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
         }
-        free (deviceID);
-        deviceID = NULL;
-        free (model);
-        model = NULL;
-        free (name);
-        name = NULL;
+	if (admit_client && deviceID && name && conn->raop->callbacks.register_client) {
+            bool pending_registration;
+            char *client_device_id;
+            char *client_pk;   /* encoded as null-terminated  base64 string*/
+            access_client_session_data(conn->session, &client_device_id, &client_pk, &pending_registration);
+            if (pending_registration) {
+                if (client_pk && !strcmp(deviceID, client_device_id)) { 
+                    conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk, name); 
+		}
+	    }
+            if (client_pk) {
+                free (client_pk);
+            }
+	}
+        if (deviceID) {
+            free (deviceID);
+            deviceID = NULL;
+        }
+        if (model) {
+            free (model);
+            model = NULL;
+        }
+        if (name) {
+            free (name);
+            name = NULL;
+        }
         if (admit_client == false) {
             /* client is not authorized to connect */
             plist_free(res_root_node);

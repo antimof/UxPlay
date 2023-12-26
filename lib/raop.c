@@ -411,7 +411,7 @@ conn_destroy(void *ptr) {
 }
 
 raop_t *
-raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
+raop_init(int max_clients, raop_callbacks_t *callbacks, const char *device_id, const char *keyfile) {
     raop_t *raop;
     pairing_t *pairing;
     httpd_t *httpd;
@@ -443,7 +443,7 @@ raop_init(int max_clients, raop_callbacks_t *callbacks, const char* keyfile) {
 
     /* create a new public key for pairing */
     int new_key;
-    pairing = pairing_init_generate(keyfile, &new_key);
+    pairing = pairing_init_generate(device_id, keyfile, &new_key);
     if (!pairing) {
         free(raop);
         return NULL;
