@@ -341,15 +341,6 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
             logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
             goto authentication_failed;
         } else {
-            bool client_pair_setup;
-            char *client_device_id;
-            unsigned char *client_pk;
-            access_client_session_data(conn->session, &client_device_id, &client_pk, &client_pair_setup);
-            char * client_pk_str = utils_pk_to_string(client_pk, ED25519_KEY_SIZE);
-            if (conn->raop->callbacks.register_client) {
-	        conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk_str);
-            }
-            free (client_pk_str);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-pin-setup success\n");
         }
         pairing_session_set_setup_status(conn->session);
@@ -442,12 +433,15 @@ raop_handler_pairverify(raop_conn_t *conn,
                 logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ED25519 signature");
             }
             if (register_check) {
-                char *pk_str = utils_pk_to_string((const unsigned char *)(data + 4 + X25519_KEY_SIZE), ED25519_KEY_SIZE);
                 bool registered_client = true;
-                if (conn->raop->callbacks.check_register) {
-                    registered_client = conn->raop->callbacks.check_register(conn->raop->callbacks.cls, pk_str);
+		if (conn->raop->callbacks.check_register) {
+		    const unsigned char *pk = data + 4 + X25519_KEY_SIZE;
+		    char *pk64;
+		    ed25519_pk_to_base64(pk, &pk64);
+                    registered_client = conn->raop->callbacks.check_register(conn->raop->callbacks.cls, pk64);
+		    free (pk64);
                 }
-                free (pk_str);
+
                 if (!registered_client) {
                     return;
                 }
@@ -584,12 +578,32 @@ raop_handler_setup(raop_conn_t *conn,
 	if (conn->raop->callbacks.report_client_request) {
             conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
         }
-        free (deviceID);
-        deviceID = NULL;
-        free (model);
-        model = NULL;
-        free (name);
-        name = NULL;
+	if (admit_client && deviceID && name && conn->raop->callbacks.register_client) {
+            bool pending_registration;
+            char *client_device_id;
+            char *client_pk;   /* encoded as null-terminated  base64 string*/
+            access_client_session_data(conn->session, &client_device_id, &client_pk, &pending_registration);
+            if (pending_registration) {
+                if (client_pk && !strcmp(deviceID, client_device_id)) { 
+                    conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk, name); 
+		}
+	    }
+            if (client_pk) {
+                free (client_pk);
+            }
+	}
+        if (deviceID) {
+            free (deviceID);
+            deviceID = NULL;
+        }
+        if (model) {
+            free (model);
+            model = NULL;
+        }
+        if (name) {
+            free (name);
+            name = NULL;
+        }
         if (admit_client == false) {
             /* client is not authorized to connect */
             plist_free(res_root_node);

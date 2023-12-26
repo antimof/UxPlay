@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -60,7 +61,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.67"
+#define VERSION "1.68"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -132,6 +133,10 @@ static unsigned short pin = 0;
 static std::string keyfile = "";
 static std::string mac_address = "";
 static std::string dacpfile = "";
+static bool registration_list = false;
+static std::string pairing_register = "";
+static std::vector <std::string> registered_keys;
+
 /* logging */
 
 static void log(int level, const char* format, ...) {
@@ -561,7 +566,9 @@ static void print_info (char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
     printf("-pin[xxxx]Use a 4-digit pin code to control client access (default: no)\n");
-    printf("          without option, pin is random: optionally use fixed pin xxxx\n");
+    printf("          default pin is random: optionally use fixed pin xxxx\n");
+    printf("-reg [fn] Keep a register in $HOME/.uxplay.register to verify returning\n");
+    printf("          client pin-registration; (option: use file \"fn\" for this)\n");
     printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
     printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
     printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
@@ -607,8 +614,8 @@ static void print_info (char *name) {
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-m [mac]  Set MAC address (also Device ID);use for concurrent UxPlays\n");
-    printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random mac is used\n");
-    printf("-key <fn> Store private key in file <fn> (default:$HOME/.uxplay.pem)\n");
+    printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random MAC is used\n");
+    printf("-key [fn] Store private key in $HOME/.uxplay.pem (or in file \"fn\")\n");
     printf("-dacp [fn]Export client DACP information to file $HOME/.uxplay.dacp\n");
     printf("          (option to use file \"fn\" instead); used for client remote\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
@@ -1044,6 +1051,17 @@ static void parse_arguments (int argc, char *argv[]) {
                 }
                 pin = n + 10000;
             }
+	} else if (arg == "-reg") {
+            registration_list = true;
+            pairing_register.erase();
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                pairing_register.append(argv[++i]);
+                const char * fn = pairing_register.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-key <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
+            }
         } else if (arg == "-key") {
             keyfile.erase();
             if (i < argc - 1 && *argv[i+1] != '-') {
@@ -1054,8 +1072,10 @@ static void parse_arguments (int argc, char *argv[]) {
                     exit(1);
                 }   
             } else {
-                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
-                exit(1);
+	      //                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
+	      // exit(1);
+	      keyfile.erase();
+	      keyfile.append("0");
             }
        } else if (arg == "-dacp") {
             dacpfile.erase();
@@ -1541,15 +1561,38 @@ extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     }
 }
 
-extern "C" void register_client(void *cls, const char *device_id, const char *client_pk_str) {
-    /* pair-setup-pin client registration by the server is not implemented here, do nothing*/
-    LOGD("registered new client: DeviceID = %s\nPK = \"%s\"", device_id, client_pk_str);
+extern "C" void register_client(void *cls, const char *device_id, const char *client_pk, const char *client_name) {
+    if (!registration_list) {
+      /* we are not maintaining a list of registered clients */
+        return;
+    }
+    LOGI("registered new client: %s DeviceID = %s PK = \n%s", client_name, device_id, client_pk);
+    registered_keys.push_back(client_pk);
+    if (strlen(pairing_register.c_str())) {
+        FILE *fp = fopen(pairing_register.c_str(), "a");
+        if (fp) {
+            fprintf(fp, "%s,%s,%s\n", client_pk, device_id, client_name);
+            fclose(fp);
+        }
+    }
 }
 
-extern "C" bool check_register(void *cls, const char *client_pk_str) {
-    /* pair-setup-pin client registration by the server is not implemented here, return "true"*/  
-    LOGD("register check returning client:\nPK = \"%s\"", client_pk_str);
-    return true;
+extern "C" bool check_register(void *cls, const char *client_pk) {
+    if (!registration_list) {
+        /* we are not maintaining a list of registered clients */
+        return true;
+    }
+    LOGD("check returning client registration:\n   PK:%s", client_pk);
+    if (std::find(registered_keys.rbegin(), registered_keys.rend(), client_pk) != registered_keys.rend()) {
+        LOGD("client registration found");
+        return true;
+    } else {
+        LOGE("returning client's pairing registration not found,\n   PK: %s", client_pk);
+	for (int i = 0; i < registered_keys.size(); i++) {
+	  printf("%s\n", (registered_keys[i]).c_str());
+	}
+        return false;
+    }
 }
 
 extern "C" void log_callback (void *cls, int level, const char *msg) {
@@ -1600,7 +1643,7 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.export_dacp = export_dacp;
 
     /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs, keyfile.c_str());
+    raop = raop_init(max_connections, &raop_cbs, mac_address.c_str(), keyfile.c_str());
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;
@@ -1825,14 +1868,46 @@ int main (int argc, char *argv[]) {
         video_parser.append(BT709_FIX);
     }
 
-    if (require_password && keyfile == "") {
+    if (require_password && registration_list) {
+        if (pairing_register == "") {
+            const char * homedir = get_homedir();
+            if (homedir) {
+	        pairing_register = homedir;
+	        pairing_register.append("/.uxplay.register");
+             }
+        }
+    }
+
+    /* read in public keys that were previously registered with pair-setup-pin */
+    if (require_password && registration_list && strlen(pairing_register.c_str())) {
+        char * line = NULL;
+        size_t len = 0;
+        std::string  key;
+        FILE *fp  = fopen(pairing_register.c_str(), "r");
+        int clients = 0;
+        if (fp) {
+            while ((getline(&line, &len, fp)) != -1) {
+                /*32 bytes pk -> base64 -> strlen(pk64) = 44 chars = line[0:43]; remove \n at line[44] */ 
+                line[44] = '\0';
+                registered_keys.push_back(key.assign(line));
+                clients ++;
+            }
+            if (clients) {
+                LOGI("Register %s lists %d pin-registered clients", pairing_register.c_str(), clients);
+            }
+            fclose(fp);
+            free (line);
+        }
+    }
+
+    if (require_password && keyfile == "0") {
         const char * homedir = get_homedir();
         if (homedir) {
             keyfile.erase();
             keyfile = homedir;
             keyfile.append("/.uxplay.pem");
         } else {
-	    LOGE("could not determine $HOME: public key wiil no be saved, and so will not be persistent");
+	    LOGE("could not determine $HOME: public key wiil not be saved, and so will not be persistent");
         }
     }
 
@@ -1883,7 +1958,6 @@ int main (int argc, char *argv[]) {
         LOGI("using randomly-generated MAC address %s",mac_address.c_str());
     }
     parse_hw_addr(mac_address, server_hw_addr);
-    mac_address.clear();
 
     if (coverart_filename.length()) {
         LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());
