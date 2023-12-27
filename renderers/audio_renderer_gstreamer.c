@@ -40,6 +40,7 @@ static gboolean render_audio = FALSE;
 static gboolean async = FALSE;
 static gboolean vsync = FALSE;
 static gboolean sync = FALSE;
+static float vol_low, vol_high;
 
 typedef struct audio_renderer_s {
     GstElement *appsrc; 
@@ -125,14 +126,17 @@ bool gstreamer_init(){
     return (bool) check_plugins ();
 }
 
-void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync, const bool* video_sync) {
+void audio_renderer_init(logger_t *render_logger, const char* audiosink, const bool* audio_sync,
+                         const bool* video_sync, const float db_low, const float db_high) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
     g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
 
     logger = render_logger;
-
+    vol_low = db_low;
+    vol_high = db_high;
+    
     aac = check_plugin_feature (avdec_aac);
     alac = check_plugin_feature (avdec_alac);
 
@@ -356,11 +360,15 @@ void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned s
 }
 
 void audio_renderer_set_volume(float volume) {
-    float avol;
-        if (fabs(volume) < 28) {
-	    avol=floorf(((28-fabs(volume))/28)*10)/10;
-    	    g_object_set(renderer->volume, "volume", avol, NULL);
-        }
+  /* scale volume from range -30dB:0dB to vol_low: vol_high */
+    double vol = (double) vol_low;
+    if ((volume <= 0) && (volume > -30)) {
+        vol = (double) (vol_low + ((vol_high - vol_low) * (30.0 + volume) / 30));
+    }
+    gdouble avol = (gdouble) pow(10, vol/20);
+    if (avol > 10) avol = 10;
+    if (volume <= -30) avol = 0;
+    g_object_set(renderer->volume, "volume", avol, NULL);
 }
 
 void audio_renderer_flush() {

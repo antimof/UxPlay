@@ -33,7 +33,8 @@ extern "C" {
 #include "../lib/logger.h"
 
 bool gstreamer_init();
-void audio_renderer_init(logger_t *logger, const char* audiosink, const bool *audio_sync, const bool *video_sync);
+void audio_renderer_init(logger_t *logger, const char* audiosink, const bool *audio_sync, const bool *video_sync,
+                         float db_low, float db_high);
 void audio_renderer_start(unsigned char* compression_type);
 void audio_renderer_stop();
 void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned short *seqnum, uint64_t *ntp_time);

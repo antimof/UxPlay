@@ -2,13 +2,14 @@
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).
 
--   ***NEW in v1.68**: improved support for one-time Apple-style "pin"
-    codes introduced in 1.67: a register of pin-registered clients is
-    now optionally maintained to check returning clients; a simpler
-    method for generating a persistent public key (based on the MAC
-    address, which now can be set in the UxPlay startup file) is now the
-    default. (The pem-file method introduced in 1.67 is still available
-    with the '-key" option.)*
+-   ***NEW in v1.68**: Volume-control improvements, plus improved
+    support for Apple-style one-time "pin" codes introduced in 1.67: a
+    register of pin-registered clients can now optionally be maintained
+    to check returning clients; a simpler method for generating a
+    persistent public key (based on the MAC address, which can be set in
+    the UxPlay startup file) is now the default. (The OpenSSL "pem-file"
+    method introduced in 1.67 is still available with the '-key"
+    option.)*
 
 ## Highlights:
 
@@ -509,6 +510,11 @@ helped to prevent this previously when timestamps were not being used.)
     slight delay before a pause or track-change initiated on the client
     takes effect on the audio played by the server.
 
+AirPlay volume-control attenuates volume (gain) by up to -30dB: the
+range -30dB:0dB can be rescaled from *Low*:0 (*Low* \< 0), or
+*Low*:*High*, using the option "`-db _Low_`" or "`-db _Low_:_High_`"
+(Rescaling is linear in decibels).
+
 The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in *milliseconds* for fine-tuning :
 `-vsync 20.5` delays audio relative to video by 0.0205 secs; a negative
@@ -943,6 +949,16 @@ changing this does not seem to have any effect*.
 **-async no**. This is the still the default behavior in Audio-only
 mode, but this option may be useful as a command-line option to switch
 off a `-async` option set in a "uxplayrc" configuration file.
+
+**-db *low*\[:*high*\]** Rescales the AirPlay volume-control attenuation
+(gain) from -30dB:0dB to *low*:0dB or *low*:*high*. The lower limit
+*low* must be negative (attenuation); the upper limit *high* can be
+either sign. (GStreamer restricts volume-augmentation by *high* so that
+it cannot exceed +20dB). The rescaling is "flat", so that for -db
+-50:10, a change in Airplay attenuation by -7dB is translated to a -7 x
+(60/30) = -14dB attenuation, and the maximum volume (AirPlay 0dB) is a
+10dB augmentation, and Airplay -30dB would become -50dB. Note that the
+minimum AirPlay value (-30dB exactly) is translated to "mute".
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display
 resolution (width and height, in pixels). (This may be a request made to
@@ -1531,11 +1547,13 @@ what version UxPlay claims to be.
 
 # Changelog
 
-1.68 2023-12-25 Introduced a simpler (default) method for generating a
+1.68 2023-12-26 Introduced a simpler (default) method for generating a
 persistent public key from the server MAC address (which can now be set
 with the -m option). (The previous pem-file method is still available
 with -key option). New option -reg to maintain a register of
-pin-authenticated clients.
+pin-authenticated clients. Corrected volume-control: now inteprets
+AirPlay volume range -30dB:0dB as (gain/amplitude) decibel attenuation,
+with new option -db low\[:high\] for "flat" rescaling of the dB range.
 
 1.67 2023-11-30 Add support for Apple-style one-time pin authentication
 of clients with option "-pin": (uses SRP6a authentication protocol and

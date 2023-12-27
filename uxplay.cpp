@@ -136,6 +136,8 @@ static std::string dacpfile = "";
 static bool registration_list = false;
 static std::string pairing_register = "";
 static std::vector <std::string> registered_keys;
+static float db_low = -30;
+static float db_high = 0;
 
 /* logging */
 
@@ -574,6 +576,8 @@ static void print_info (char *name) {
     printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
     printf("-async [x]Audio-Only mode: sync audio to client video (default: no)\n");
     printf("-async no Switch off audio/(client)video timestamp synchronization\n");
+    printf("-db l[:h] Set minimum volume attenuation to l dB (decibels, negative);\n");
+    printf("          optional: set maximum to h dB (+ or -); default -30.0:0.0 dB\n");
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -1090,6 +1094,32 @@ static void parse_arguments (int argc, char *argv[]) {
                 dacpfile.append(get_homedir());
                 dacpfile.append("/.uxplay.dacp");
             }
+        } else if (arg == "-db") {
+            bool db_bad = true;
+ 	    float db1, db2;
+	    char *start = NULL;
+            if ( i < argc -1) {
+                char *end1, *end2;
+                start = argv[i+1];
+                db1 = strtof(start, &end1);
+                if (end1 > start && *end1 == ':') {
+                    db2 = strtof(++end1, &end2);
+                    if ( *end2 == '\0' && end2 > end1  && db1 < 0 && db1 < db2) {
+                        db_bad = false;
+                    }
+                } else  if (*end1 =='\0' && end1 > start && db1 < 0 ) {
+                    db_bad = false;
+                    db2 = 0;
+                }
+            }
+            if (db_bad) {
+	      fprintf(stderr, "%s %s requires argument \"low\" or \"low:high\" where low < 0 and high > low are decibel gain values\n", argv[i], start); 
+                exit(1);
+            }
+	    i++;
+            db_low = db1;
+            db_high = db2;
+	    printf("db range %f:%f\n", db_low, db_high);
         } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
@@ -1929,7 +1959,7 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, log_level);
 
     if (use_audio) {
-      audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync);
+      audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync, db_low, db_high);
     } else {
         LOGI("audio_disabled");
     }
