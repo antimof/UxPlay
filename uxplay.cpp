@@ -1656,15 +1656,13 @@ extern "C" bool check_register(void *cls, const char *client_pk) {
         /* we are not maintaining a list of registered clients */
         return true;
     }
-    LOGD("check returning client registration:\n   PK:%s", client_pk);
-    if (std::find(registered_keys.rbegin(), registered_keys.rend(), client_pk) != registered_keys.rend()) {
-        LOGD("client registration found");
+    LOGD("check returning client's pairing registration");
+    std::string pk = client_pk;
+    if (std::find(registered_keys.rbegin(), registered_keys.rend(), pk) != registered_keys.rend()) {
+        LOGD("registration found: PK=%s", client_pk);
         return true;
     } else {
-        LOGE("returning client's pairing registration not found,\n   PK: %s", client_pk);
-	for (int i = 0; i < registered_keys.size(); i++) {
-	  printf("%s\n", (registered_keys[i]).c_str());
-	}
+        LOGE("returning client's pairing registration not found: PK=%s", client_pk);
         return false;
     }
 }
@@ -1954,23 +1952,23 @@ int main (int argc, char *argv[]) {
 
     /* read in public keys that were previously registered with pair-setup-pin */
     if (require_password && registration_list && strlen(pairing_register.c_str())) {
-        char * line = NULL;
         size_t len = 0;
         std::string  key;
-        FILE *fp  = fopen(pairing_register.c_str(), "r");
         int clients = 0;
-        if (fp) {
-            while ((getline(&line, &len, fp)) != -1) {
-                /*32 bytes pk -> base64 -> strlen(pk64) = 44 chars = line[0:43]; remove \n at line[44] */ 
+	std::ifstream file(pairing_register);
+        if (file.is_open()) {
+            std::string line;
+            while (std::getline(file, line)) {
+                /*32 bytes pk -> base64 -> strlen(pk64) = 44 chars = line[0:43]; add '\0' at line[44] */ 
                 line[44] = '\0';
-                registered_keys.push_back(key.assign(line));
+		std::string pk = line.c_str();
+                registered_keys.push_back(key.assign(pk));
                 clients ++;
             }
             if (clients) {
                 LOGI("Register %s lists %d pin-registered clients", pairing_register.c_str(), clients);
             }
-            fclose(fp);
-            free (line);
+            file.close();
         }
     }
 
