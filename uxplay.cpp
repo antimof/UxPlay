@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <cstdio>
 #include <stdarg.h>
+#include <math.h>
 
 #ifdef _WIN32  /*modifications for Windows compilation */
 #include <glib.h>
@@ -136,8 +137,9 @@ static std::string dacpfile = "";
 static bool registration_list = false;
 static std::string pairing_register = "";
 static std::vector <std::string> registered_keys;
-static float db_low = -30;
-static float db_high = 0;
+static double db_low = -30.0;
+static double db_high = 0.0;
+static bool taper_volume = true;
 
 /* logging */
 
@@ -577,7 +579,8 @@ static void print_info (char *name) {
     printf("-async [x]Audio-Only mode: sync audio to client video (default: no)\n");
     printf("-async no Switch off audio/(client)video timestamp synchronization\n");
     printf("-db l[:h] Set minimum volume attenuation to l dB (decibels, negative);\n");
-    printf("          optional: set maximum to h dB (+ or -); default -30.0:0.0 dB\n");
+    printf("          optional: set maximum to h dB (+ or -) default: -30.0:0.0 dB\n");
+    printf("-taper    Use a \"tapered\" AirPlay volume-qcontrol profile\n"); 
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -1094,22 +1097,24 @@ static void parse_arguments (int argc, char *argv[]) {
                 dacpfile.append(get_homedir());
                 dacpfile.append("/.uxplay.dacp");
             }
+	} else if (arg == "-taper") {
+            taper_volume = true;
         } else if (arg == "-db") {
             bool db_bad = true;
- 	    float db1, db2;
+ 	    double db1, db2;
 	    char *start = NULL;
             if ( i < argc -1) {
                 char *end1, *end2;
                 start = argv[i+1];
-                db1 = strtof(start, &end1);
+                db1 = strtod(start, &end1);
                 if (end1 > start && *end1 == ':') {
-                    db2 = strtof(++end1, &end2);
+                    db2 = strtod(++end1, &end2);
                     if ( *end2 == '\0' && end2 > end1  && db1 < 0 && db1 < db2) {
                         db_bad = false;
                     }
                 } else  if (*end1 =='\0' && end1 > start && db1 < 0 ) {
                     db_bad = false;
-                    db2 = 0;
+                    db2 = 0.0;
                 }
             }
             if (db_bad) {
@@ -1504,9 +1509,48 @@ extern "C" void video_flush (void *cls) {
 }
 
 extern "C" void audio_set_volume (void *cls, float volume) {
-    if (use_audio) {
-        audio_renderer_set_volume(volume);
+    double db, db_flat, frac, gst_volume;
+    if (!use_audio) {
+      return;
     }
+    /* convert from AirPlay dB  volume in range {-30dB : 0dB}, to GStreamer volume */
+    if (volume == -144.0f) {   /* AirPlay "mute" signal */
+        frac = 0.0;
+    } else if (volume < -30.0f) {
+        LOGE(" invalid AirPlay volume %f", volume);
+        frac = 0.0;
+    } else if (volume > 0.0f) {
+        LOGE(" invalid AirPlay volume %f", volume);
+        frac = 1.0;
+    } else if (volume == -30.0f) {
+        frac = 0.0;
+    } else if (volume == 0.0f) {
+        frac = 1.0;
+    } else {
+        frac = (double) ( (30.0f + volume) / 30.0f);
+        frac = (frac > 1.0) ? 1.0 : frac;
+    }
+
+    /* frac is length of volume slider as fraction of max length */
+    /* also (steps/16) where steps is number of discrete steps above mute (16 = full volume) */
+    if (frac == 0.0) {
+        gst_volume = 0.0;
+    } else {
+      /* flat rescaling of decibel range from {-30dB : 0dB} to {db_low : db_high} */  
+        db_flat = db_low + (db_high-db_low) * frac;
+        if (taper_volume) {
+          /* taper the volume reduction by the (rescaled) Airplay {-30:0} range so each reduction of
+	   * the remaining slider length by 50% reduces the perceived volume by 50% (-10dB gain)
+           * (This is the "dasl-tapering" scheme offered by shairport-sync) */
+            db = db_high + 10.0 * (log10(frac) / log10(2.0));
+            db = (db  > db_flat) ? db : db_flat;
+         } else {
+            db = db_flat;
+        }
+	/* conversion from (gain) decibels to GStreamer's linear volume scale */
+        gst_volume = pow(10.0, 0.05*db);
+    }
+    audio_renderer_set_volume(gst_volume);
 }
 
 extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat) {
@@ -1959,7 +2003,7 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, log_level);
 
     if (use_audio) {
-      audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync, db_low, db_high);
+      audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync);
     } else {
         LOGI("audio_disabled");
     }
