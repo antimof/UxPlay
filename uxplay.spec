@@ -1,5 +1,5 @@
 Name:           uxplay
-Version:        1.67
+Version:        1.68
 Release:        1%{?dist}
 
 %global gittag  v%{version}
@@ -11,7 +11,7 @@ Source0:        https://github.com/FDH2/UxPlay/archive/%{gittag}/%{name}-%{versi
 
 Packager:       UxPlay maintainer
  
-BuildRequires:  cmake >= 3.4.1
+BuildRequires:  cmake >= 3.5
 BuildRequires:  make
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
@@ -135,7 +135,7 @@ cd build
 %{_docdir}/%{name}/llhttp/LICENSE-MIT
 
 %changelog
-* Wed Nov 29 2023 UxPlay maintainer <https://github.com/FDH2/UxPlay>
+* Fri Dec 29 2023 UxPlay maintainer <https://github.com/FDH2/UxPlay>
   Initial uxplay.spec: tested on Fedora 38, Rocky Linux 9.2, OpenSUSE
   Leap 15.5, Mageia 9, OpenMandriva ROME, PCLinuxOS
 - 
