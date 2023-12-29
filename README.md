@@ -416,7 +416,8 @@ delays the video on the client to match audio on the server, so leads to
 a slight delay before a pause or track-change initiated on the client takes effect on the audio played by the server. 
 
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the range -30dB:0dB can be rescaled from _Low_:0 (_Low_ < 0), or _Low_:_High_, using the
-option "`-db _Low_`" or "``-db _Low_:_High_``" (Rescaling is linear in decibels). 
+option "`-db _Low_`" or "``-db _Low_:_High_``" (Rescaling is linear in decibels).   The option ```-taper``` provides a "tapered" AirPlay volume-control 
+profile some users may prefer.
 
 The -vsync and -async options
 also allow an optional positive (or negative) audio-delay adjustment in _milliseconds_ for fine-tuning : `-vsync 20.5`
@@ -750,6 +751,11 @@ using UxPlay as a second monitor for a mac computer, or monitoring a webcam; wit
   The rescaling is "flat", so that for -db -50:10, a change in Airplay attenuation by -7dB is translated to a  -7 x (60/30) = -14dB attenuation,
   and the maximum volume (AirPlay 0dB) is a 10dB augmentation, and Airplay -30dB would  become -50dB.   Note that the minimum AirPlay value  (-30dB exactly)
   is translated to "mute".
+
+**-taper**  Provides a "tapered" Airplay volume-control profile (matching the one called "dasl-tapering" 
+   in [shairport-sync](https://github.com/mikebrady/shairport-sync)): each time the length of the 
+   volume slider (or the number of steps above mute, where 16 steps = full volume) is reduced by 50%, the perceived volume is halved (a 10dB attenuation).
+   (This is modified at low volumes, to use  the "untapered" volume if it is louder.)
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
    in pixels).   (This may be a
@@ -1188,11 +1194,12 @@ tvOS 12.2.1), so it does not seem to matter what version UxPlay claims to be.
 
 
 # Changelog
-1.68 2023-12-26   Introduced a simpler (default) method for generating a persistent public key from the server MAC 
+1.68 2023-12-29   Introduced a simpler (default) method for generating a persistent public key from the server MAC 
                   address (which can now be set with the -m option). (The previous pem-file method is still available 
                   with -key option).  New option -reg to maintain a register of pin-authenticated clients.   Corrected 
                   volume-control: now inteprets AirPlay volume range -30dB:0dB as (gain/amplitude) decibel attenuation, 
-                  with new option -db low[:high] for "flat" rescaling of the dB range.
+                  with new option -db low[:high] for "flat" rescaling of the dB range. Add -taper option for a "tapered"
+                  AirPlay volume-control profile.
 
 1.67 2023-11-30   Add support for Apple-style one-time pin authentication of clients with option "-pin":
                   (uses SRP6a authentication protocol and public key persistence).   Detection with error message

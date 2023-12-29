@@ -513,7 +513,8 @@ helped to prevent this previously when timestamps were not being used.)
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the
 range -30dB:0dB can be rescaled from *Low*:0 (*Low* \< 0), or
 *Low*:*High*, using the option "`-db _Low_`" or "`-db _Low_:_High_`"
-(Rescaling is linear in decibels).
+(Rescaling is linear in decibels). The option `-taper` provides a
+"tapered" AirPlay volume-control profile some users may prefer.
 
 The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in *milliseconds* for fine-tuning :
@@ -959,6 +960,14 @@ it cannot exceed +20dB). The rescaling is "flat", so that for -db
 (60/30) = -14dB attenuation, and the maximum volume (AirPlay 0dB) is a
 10dB augmentation, and Airplay -30dB would become -50dB. Note that the
 minimum AirPlay value (-30dB exactly) is translated to "mute".
+
+**-taper** Provides a "tapered" Airplay volume-control profile (matching
+the one called "dasl-tapering" in
+[shairport-sync](https://github.com/mikebrady/shairport-sync)): each
+time the length of the volume slider (or the number of steps above mute,
+where 16 steps = full volume) is reduced by 50%, the perceived volume is
+halved (a 10dB attenuation). (This is modified at low volumes, to use
+the "untapered" volume if it is louder.)
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display
 resolution (width and height, in pixels). (This may be a request made to
@@ -1547,13 +1556,14 @@ what version UxPlay claims to be.
 
 # Changelog
 
-1.68 2023-12-26 Introduced a simpler (default) method for generating a
+1.68 2023-12-29 Introduced a simpler (default) method for generating a
 persistent public key from the server MAC address (which can now be set
 with the -m option). (The previous pem-file method is still available
 with -key option). New option -reg to maintain a register of
 pin-authenticated clients. Corrected volume-control: now inteprets
 AirPlay volume range -30dB:0dB as (gain/amplitude) decibel attenuation,
 with new option -db low\[:high\] for "flat" rescaling of the dB range.
+Add -taper option for a "tapered" AirPlay volume-control profile.
 
 1.67 2023-11-30 Add support for Apple-style one-time pin authentication
 of clients with option "-pin": (uses SRP6a authentication protocol and
