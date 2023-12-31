@@ -580,7 +580,7 @@ static void print_info (char *name) {
     printf("-async no Switch off audio/(client)video timestamp synchronization\n");
     printf("-db l[:h] Set minimum volume attenuation to l dB (decibels, negative);\n");
     printf("          optional: set maximum to h dB (+ or -) default: -30.0:0.0 dB\n");
-    printf("-taper    Use a \"tapered\" AirPlay volume-qcontrol profile\n"); 
+    printf("-taper    Use a \"tapered\" AirPlay volume-control profile\n"); 
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");

@@ -1,5 +1,5 @@
 Name:           uxplay
-Version:        1.68
+Version:        1.68.1
 Release:        1%{?dist}
 
 %global gittag  v%{version}
