@@ -1044,7 +1044,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     continue;
                 }
             }
-            fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
+            fprintf(stderr, "invalid -al %s: value must be a decimal time offset in seconds, range [0,10]\n"
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
         } else if (arg == "-pin") {
@@ -1118,7 +1118,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 }
             }
             if (db_bad) {
-	      fprintf(stderr, "%s %s requires argument \"low\" or \"low:high\" where low < 0 and high > low are decibel gain values\n", argv[i], start); 
+	      fprintf(stderr, "invalid %s %s: db value must be \"low\" or \"low:high\", low < 0 and high > low are decibel gains\n", argv[i], start); 
                 exit(1);
             }
 	    i++;

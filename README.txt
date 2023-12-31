@@ -511,10 +511,10 @@ helped to prevent this previously when timestamps were not being used.)
     takes effect on the audio played by the server.
 
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the
-range -30dB:0dB can be rescaled from *Low*:0 (*Low* \< 0), or
-*Low*:*High*, using the option "`-db _Low_`" or "`-db _Low_:_High_`"
-(Rescaling is linear in decibels). The option `-taper` provides a
-"tapered" AirPlay volume-control profile some users may prefer.
+range -30dB:0dB can be rescaled from *Low*:0, or *Low*:*High*, using the
+option `-db` ("-db *Low*" or "-db *Low*:*High*"), *Low* must be
+negative. Rescaling is linear in decibels. The option `-taper` provides
+a "tapered" AirPlay volume-control profile some users may prefer.
 
 The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in *milliseconds* for fine-tuning :
@@ -1556,14 +1556,14 @@ what version UxPlay claims to be.
 
 # Changelog
 
-1.68 2023-12-29 Introduced a simpler (default) method for generating a
-persistent public key from the server MAC address (which can now be set
-with the -m option). (The previous pem-file method is still available
-with -key option). New option -reg to maintain a register of
-pin-authenticated clients. Corrected volume-control: now inteprets
-AirPlay volume range -30dB:0dB as (gain/amplitude) decibel attenuation,
-with new option -db low\[:high\] for "flat" rescaling of the dB range.
-Add -taper option for a "tapered" AirPlay volume-control profile.
+1.68 2023-12-31 New simpler (default) method for generating a persistent
+public key from the server MAC address (which can now be set with the -m
+option). (The previous method is still available with -key option). New
+option -reg to maintain a register of pin-authenticated clients.
+Corrected volume-control: now interprets AirPlay volume range -30dB:0dB
+as decibel gain attenuation, with new option -db low\[:high\] for "flat"
+rescaling of the dB range. Add -taper option for a "tapered" AirPlay
+volume-control profile.
 
 1.67 2023-11-30 Add support for Apple-style one-time pin authentication
 of clients with option "-pin": (uses SRP6a authentication protocol and
