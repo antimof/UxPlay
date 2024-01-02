@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -33,6 +34,7 @@
 #include <sys/stat.h>
 #include <cstdio>
 #include <stdarg.h>
+#include <math.h>
 
 #ifdef _WIN32  /*modifications for Windows compilation */
 #include <glib.h>
@@ -60,7 +62,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.67"
+#define VERSION "1.68"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -132,6 +134,13 @@ static unsigned short pin = 0;
 static std::string keyfile = "";
 static std::string mac_address = "";
 static std::string dacpfile = "";
+static bool registration_list = false;
+static std::string pairing_register = "";
+static std::vector <std::string> registered_keys;
+static double db_low = -30.0;
+static double db_high = 0.0;
+static bool taper_volume = true;
+
 /* logging */
 
 static void log(int level, const char* format, ...) {
@@ -561,12 +570,17 @@ static void print_info (char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
     printf("-pin[xxxx]Use a 4-digit pin code to control client access (default: no)\n");
-    printf("          without option, pin is random: optionally use fixed pin xxxx\n");
+    printf("          default pin is random: optionally use fixed pin xxxx\n");
+    printf("-reg [fn] Keep a register in $HOME/.uxplay.register to verify returning\n");
+    printf("          client pin-registration; (option: use file \"fn\" for this)\n");
     printf("-vsync [x]Mirror mode: sync audio to video using timestamps (default)\n");
     printf("          x is optional audio delay: millisecs, decimal, can be neg.\n");
     printf("-vsync no Switch off audio/(server)video timestamp synchronization \n");
     printf("-async [x]Audio-Only mode: sync audio to client video (default: no)\n");
     printf("-async no Switch off audio/(client)video timestamp synchronization\n");
+    printf("-db l[:h] Set minimum volume attenuation to l dB (decibels, negative);\n");
+    printf("          optional: set maximum to h dB (+ or -) default: -30.0:0.0 dB\n");
+    printf("-taper    Use a \"tapered\" AirPlay volume-control profile\n"); 
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
@@ -607,8 +621,8 @@ static void print_info (char *name) {
     printf("-f {H|V|I}Horizontal|Vertical flip, or both=Inversion=rotate 180 deg\n");
     printf("-r {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)\n");
     printf("-m [mac]  Set MAC address (also Device ID);use for concurrent UxPlays\n");
-    printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random mac is used\n");
-    printf("-key <fn> Store private key in file <fn> (default:$HOME/.uxplay.pem)\n");
+    printf("          if mac xx:xx:xx:xx:xx:xx is not given, a random MAC is used\n");
+    printf("-key [fn] Store private key in $HOME/.uxplay.pem (or in file \"fn\")\n");
     printf("-dacp [fn]Export client DACP information to file $HOME/.uxplay.dacp\n");
     printf("          (option to use file \"fn\" instead); used for client remote\n");
     printf("-vdmp [n] Dump h264 video output to \"fn.h264\"; fn=\"videodump\",change\n");
@@ -1030,7 +1044,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     continue;
                 }
             }
-            fprintf(stderr, "invalid argument -al %s: must be a decimal time offset in seconds, range [0,10]\n"
+            fprintf(stderr, "invalid -al %s: value must be a decimal time offset in seconds, range [0,10]\n"
                     "(like 5 or 4.8, which will be converted to a whole number of microseconds)\n", argv[i]);
             exit(1);
         } else if (arg == "-pin") {
@@ -1044,6 +1058,17 @@ static void parse_arguments (int argc, char *argv[]) {
                 }
                 pin = n + 10000;
             }
+	} else if (arg == "-reg") {
+            registration_list = true;
+            pairing_register.erase();
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                pairing_register.append(argv[++i]);
+                const char * fn = pairing_register.c_str();
+                if (!file_has_write_access(fn)) {
+                    fprintf(stderr, "%s cannot be written to:\noption \"-key <fn>\" must be to a file with write access\n", fn);
+                    exit(1);
+                }   
+            }
         } else if (arg == "-key") {
             keyfile.erase();
             if (i < argc - 1 && *argv[i+1] != '-') {
@@ -1054,8 +1079,10 @@ static void parse_arguments (int argc, char *argv[]) {
                     exit(1);
                 }   
             } else {
-                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
-                exit(1);
+	      //                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
+	      // exit(1);
+	      keyfile.erase();
+	      keyfile.append("0");
             }
        } else if (arg == "-dacp") {
             dacpfile.erase();
@@ -1070,6 +1097,34 @@ static void parse_arguments (int argc, char *argv[]) {
                 dacpfile.append(get_homedir());
                 dacpfile.append("/.uxplay.dacp");
             }
+	} else if (arg == "-taper") {
+            taper_volume = true;
+        } else if (arg == "-db") {
+            bool db_bad = true;
+ 	    double db1, db2;
+	    char *start = NULL;
+            if ( i < argc -1) {
+                char *end1, *end2;
+                start = argv[i+1];
+                db1 = strtod(start, &end1);
+                if (end1 > start && *end1 == ':') {
+                    db2 = strtod(++end1, &end2);
+                    if ( *end2 == '\0' && end2 > end1  && db1 < 0 && db1 < db2) {
+                        db_bad = false;
+                    }
+                } else  if (*end1 =='\0' && end1 > start && db1 < 0 ) {
+                    db_bad = false;
+                    db2 = 0.0;
+                }
+            }
+            if (db_bad) {
+	      fprintf(stderr, "invalid %s %s: db value must be \"low\" or \"low:high\", low < 0 and high > low are decibel gains\n", argv[i], start); 
+                exit(1);
+            }
+	    i++;
+            db_low = db1;
+            db_high = db2;
+	    printf("db range %f:%f\n", db_low, db_high);
         } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
@@ -1454,9 +1509,48 @@ extern "C" void video_flush (void *cls) {
 }
 
 extern "C" void audio_set_volume (void *cls, float volume) {
-    if (use_audio) {
-        audio_renderer_set_volume(volume);
+    double db, db_flat, frac, gst_volume;
+    if (!use_audio) {
+      return;
     }
+    /* convert from AirPlay dB  volume in range {-30dB : 0dB}, to GStreamer volume */
+    if (volume == -144.0f) {   /* AirPlay "mute" signal */
+        frac = 0.0;
+    } else if (volume < -30.0f) {
+        LOGE(" invalid AirPlay volume %f", volume);
+        frac = 0.0;
+    } else if (volume > 0.0f) {
+        LOGE(" invalid AirPlay volume %f", volume);
+        frac = 1.0;
+    } else if (volume == -30.0f) {
+        frac = 0.0;
+    } else if (volume == 0.0f) {
+        frac = 1.0;
+    } else {
+        frac = (double) ( (30.0f + volume) / 30.0f);
+        frac = (frac > 1.0) ? 1.0 : frac;
+    }
+
+    /* frac is length of volume slider as fraction of max length */
+    /* also (steps/16) where steps is number of discrete steps above mute (16 = full volume) */
+    if (frac == 0.0) {
+        gst_volume = 0.0;
+    } else {
+      /* flat rescaling of decibel range from {-30dB : 0dB} to {db_low : db_high} */  
+        db_flat = db_low + (db_high-db_low) * frac;
+        if (taper_volume) {
+          /* taper the volume reduction by the (rescaled) Airplay {-30:0} range so each reduction of
+	   * the remaining slider length by 50% reduces the perceived volume by 50% (-10dB gain)
+           * (This is the "dasl-tapering" scheme offered by shairport-sync) */
+            db = db_high + 10.0 * (log10(frac) / log10(2.0));
+            db = (db  > db_flat) ? db : db_flat;
+         } else {
+            db = db_flat;
+        }
+	/* conversion from (gain) decibels to GStreamer's linear volume scale */
+        gst_volume = pow(10.0, 0.05*db);
+    }
+    audio_renderer_set_volume(gst_volume);
 }
 
 extern "C" void audio_get_format (void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat) {
@@ -1541,15 +1635,36 @@ extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     }
 }
 
-extern "C" void register_client(void *cls, const char *device_id, const char *client_pk_str) {
-    /* pair-setup-pin client registration by the server is not implemented here, do nothing*/
-    LOGD("registered new client: DeviceID = %s\nPK = \"%s\"", device_id, client_pk_str);
+extern "C" void register_client(void *cls, const char *device_id, const char *client_pk, const char *client_name) {
+    if (!registration_list) {
+      /* we are not maintaining a list of registered clients */
+        return;
+    }
+    LOGI("registered new client: %s DeviceID = %s PK = \n%s", client_name, device_id, client_pk);
+    registered_keys.push_back(client_pk);
+    if (strlen(pairing_register.c_str())) {
+        FILE *fp = fopen(pairing_register.c_str(), "a");
+        if (fp) {
+            fprintf(fp, "%s,%s,%s\n", client_pk, device_id, client_name);
+            fclose(fp);
+        }
+    }
 }
 
-extern "C" bool check_register(void *cls, const char *client_pk_str) {
-    /* pair-setup-pin client registration by the server is not implemented here, return "true"*/  
-    LOGD("register check returning client:\nPK = \"%s\"", client_pk_str);
-    return true;
+extern "C" bool check_register(void *cls, const char *client_pk) {
+    if (!registration_list) {
+        /* we are not maintaining a list of registered clients */
+        return true;
+    }
+    LOGD("check returning client's pairing registration");
+    std::string pk = client_pk;
+    if (std::find(registered_keys.rbegin(), registered_keys.rend(), pk) != registered_keys.rend()) {
+        LOGD("registration found: PK=%s", client_pk);
+        return true;
+    } else {
+        LOGE("returning client's pairing registration not found: PK=%s", client_pk);
+        return false;
+    }
 }
 
 extern "C" void log_callback (void *cls, int level, const char *msg) {
@@ -1600,7 +1715,7 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.export_dacp = export_dacp;
 
     /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs, keyfile.c_str());
+    raop = raop_init(max_connections, &raop_cbs, mac_address.c_str(), keyfile.c_str());
     if (raop == NULL) {
         LOGE("Error initializing raop!");
         return -1;
@@ -1825,14 +1940,46 @@ int main (int argc, char *argv[]) {
         video_parser.append(BT709_FIX);
     }
 
-    if (require_password && keyfile == "") {
+    if (require_password && registration_list) {
+        if (pairing_register == "") {
+            const char * homedir = get_homedir();
+            if (homedir) {
+	        pairing_register = homedir;
+	        pairing_register.append("/.uxplay.register");
+             }
+        }
+    }
+
+    /* read in public keys that were previously registered with pair-setup-pin */
+    if (require_password && registration_list && strlen(pairing_register.c_str())) {
+        size_t len = 0;
+        std::string  key;
+        int clients = 0;
+	std::ifstream file(pairing_register);
+        if (file.is_open()) {
+            std::string line;
+            while (std::getline(file, line)) {
+                /*32 bytes pk -> base64 -> strlen(pk64) = 44 chars = line[0:43]; add '\0' at line[44] */ 
+                line[44] = '\0';
+		std::string pk = line.c_str();
+                registered_keys.push_back(key.assign(pk));
+                clients ++;
+            }
+            if (clients) {
+                LOGI("Register %s lists %d pin-registered clients", pairing_register.c_str(), clients);
+            }
+            file.close();
+        }
+    }
+
+    if (require_password && keyfile == "0") {
         const char * homedir = get_homedir();
         if (homedir) {
             keyfile.erase();
             keyfile = homedir;
             keyfile.append("/.uxplay.pem");
         } else {
-	    LOGE("could not determine $HOME: public key wiil no be saved, and so will not be persistent");
+	    LOGE("could not determine $HOME: public key wiil not be saved, and so will not be persistent");
         }
     }
 
@@ -1883,7 +2030,6 @@ int main (int argc, char *argv[]) {
         LOGI("using randomly-generated MAC address %s",mac_address.c_str());
     }
     parse_hw_addr(mac_address, server_hw_addr);
-    mac_address.clear();
 
     if (coverart_filename.length()) {
         LOGI("any AirPlay audio cover-art will be written to file  %s",coverart_filename.c_str());

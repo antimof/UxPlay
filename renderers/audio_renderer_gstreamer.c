@@ -132,7 +132,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
     g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
 
     logger = render_logger;
-
+    
     aac = check_plugin_feature (avdec_aac);
     alac = check_plugin_feature (avdec_alac);
 
@@ -355,12 +355,10 @@ void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned s
     }
 }
 
-void audio_renderer_set_volume(float volume) {
-    float avol;
-        if (fabs(volume) < 28) {
-	    avol=floorf(((28-fabs(volume))/28)*10)/10;
-    	    g_object_set(renderer->volume, "volume", avol, NULL);
-        }
+void audio_renderer_set_volume(double volume) {
+    volume = (volume > 10.0) ? 10.0 : volume;
+    volume = (volume < 0.0) ? 0.0 : volume;
+    g_object_set(renderer->volume, "volume", volume, NULL);
 }
 
 void audio_renderer_flush() {

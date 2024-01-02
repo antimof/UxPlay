@@ -67,6 +67,7 @@ x25519_key_t *x25519_key_from_raw(const unsigned char data[X25519_KEY_SIZE]);
 void x25519_key_get_raw(unsigned char data[X25519_KEY_SIZE], const x25519_key_t *key);
 void x25519_key_destroy(x25519_key_t *key);
 int get_random_bytes(unsigned char *buf, int num);
+void pk_to_base64(const unsigned char *pk, int pk_len, char *pk_base64, int len);
   
 void x25519_derive_secret(unsigned char secret[X25519_KEY_SIZE], const x25519_key_t *ours, const x25519_key_t *theirs);
 
@@ -82,7 +83,7 @@ int gcm_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *pl
 
 typedef struct ed25519_key_s ed25519_key_t;
 
-ed25519_key_t *ed25519_key_generate(const char * keyfile, int * result);
+ed25519_key_t *ed25519_key_generate(const char *device_id, const char * keyfile, int * result);
 ed25519_key_t *ed25519_key_from_raw(const unsigned char data[ED25519_KEY_SIZE]);
 void ed25519_key_get_raw(unsigned char data[ED25519_KEY_SIZE], const ed25519_key_t *key);
 /*

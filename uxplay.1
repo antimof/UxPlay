@@ -1,11 +1,11 @@
-.TH UXPLAY "1" "November 2023" "1.67" "User Commands"
+.TH UXPLAY "1" "December 2023" "1.68" "User Commands"
 .SH NAME
 uxplay \- start AirPlay server
 .SH SYNOPSIS
 .B uxplay
 [\fI\,-n name\/\fR] [\fI\,-s wxh\/\fR] [\fI\,-p \/\fR[\fI\,n\/\fR]] [more \fI OPTIONS \/\fR ...]
 .SH DESCRIPTION
-UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
+UxPlay 1.68: An open\-source AirPlay mirroring (+ audio streaming) server:
 .SH OPTIONS
 .TP
 .B
@@ -17,6 +17,10 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .IP
    without option, pin is random: optionally use fixed pin xxxx.
 .TP
+\fB\-reg\fI [fn]\fR Keep a register in $HOME/.uxplay.register to verify returning
+.IP
+   client pin-registration; (option: use file "fn" for this)
+.TP
 \fB\-vsync\fI[x]\fR Mirror mode: sync audio to video using timestamps (default)
 .IP
    \fIx\fR is optional audio delay: millisecs, decimal, can be neg.
@@ -26,6 +30,13 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 \fB\-async\fR[\fIx\fR] Audio-Only mode: sync audio to client video (default: no).
 .TP
 \fB\-async\fR no Switch off audio/(client)video timestamp synchronization.
+.TP
+\fB\-db\fI l[:h]\fR Set minumum volume attenuation to l dB (decibels, negative);
+.IP
+   optional: set maximum to h dB (+ or -); default -30.0:0.0
+.PP
+.TP
+\fB\-taper\fR    Use a "tapered" AirPlay volume-control profile.
 .TP
 \fB\-s\fR wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]
 .TP
@@ -106,9 +117,13 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-r\fR {R|L}  Rotate 90 degrees Right (cw) or Left (ccw)
 .TP
-\fB\-m\fR        Use random MAC address (use for concurrent UxPlay's)
+\fB\-m\fI [mac]\fR  Set MAC address (also Device ID); use for concurrent UxPlays
+.IP
+   if mac xx:xx:xx:xx:xx:xx is not given, a random MAC is used.
+.PP
 .TP
-\fB\-key\fI fn \fR  Store private key in file fn (Default: $HOME/.uxplay.pem)
+\fB\-key\fI [fn]\fR Store private key in $HOME/.uxplay.pem (or in file "fn")
+.PP
 .TP
 \fB\-dacp\fI [fn]\fRExport client DACP information to file $HOME/.uxplay.dacp
 .IP
@@ -140,13 +155,9 @@ UxPlay 1.67: An open\-source AirPlay mirroring (+ audio streaming) server:
 \fB\-h\fR        Displays help information
 .SH
 FILES
-Private key stored (for persistence) in $HOME/.uxplay.pem (can be changed)
-.TP
-(transient) storage of client DACP info: $HOME/uxplay.dacp (can be changed)
-.TP
 Options in one of $UXPLAYRC, or ~/.uxplayrc, or  ~/.config/uxplayrc
 .TP
-are applied first (command-line options may modify them). uxplayrc format:
+are applied first (command-line options may modify them).  Format:
 .TP
 one option per line,\fI no\fR initial "-"; lines beginning with "#" ignored.
 .SH

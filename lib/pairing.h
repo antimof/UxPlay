@@ -36,7 +36,7 @@
 typedef struct pairing_s pairing_t;
 typedef struct pairing_session_s pairing_session_t;
 
-pairing_t *pairing_init_generate(const char * keyfile, int *result);
+pairing_t *pairing_init_generate(const char *device_id, const char *keyfile, int *result);
 void pairing_get_public_key(pairing_t *pairing, unsigned char public_key[ED25519_KEY_SIZE]);
 
 pairing_session_t *pairing_session_init(pairing_t *pairing);
@@ -60,5 +60,6 @@ int srp_validate_proof(pairing_session_t *session, pairing_t *pairing, const uns
 		       int len_A, unsigned char *proof, int client_proof_len, int proof_len);
 int srp_confirm_pair_setup(pairing_session_t *session, pairing_t *pairing, unsigned char *epk,
                            unsigned char *auth_tag);
-void access_client_session_data(pairing_session_t *session, char **username, unsigned char **client_pk, bool *setup);
+void access_client_session_data(pairing_session_t *session, char **username, char **client_pk, bool *setup);
+void ed25519_pk_to_base64(const unsigned char *pk, char **pk64);
 #endif

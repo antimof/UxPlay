@@ -35,6 +35,8 @@
 
 #include "utils.h"
 
+#define SALT_PK "UxPlay-Persistent-Not-Secure-Public-Key"
+
 struct aes_ctx_s {
     EVP_CIPHER_CTX *cipher_ctx;
     uint8_t key[AES_128_BLOCK_SIZE];
@@ -352,7 +354,7 @@ struct ed25519_key_s {
     EVP_PKEY *pkey;
 };
 
-ed25519_key_t *ed25519_key_generate(const char *keyfile, int *result) {
+ed25519_key_t *ed25519_key_generate(const char *device_id, const char *keyfile, int *result) {
     ed25519_key_t *key;
     EVP_PKEY_CTX *pctx;
     BIO *bp;
@@ -379,7 +381,15 @@ ed25519_key_t *ed25519_key_generate(const char *keyfile, int *result) {
             new_pk = true;
         }
     } else {
-        new_pk = true;
+        /* generate (insecure) persistent keypair using device_id */
+        unsigned char hash[SHA512_DIGEST_LENGTH];
+        char salt[] = SALT_PK;
+        sha_ctx_t *ctx = sha_init();
+        sha_update(ctx, (const unsigned char *) salt, (unsigned int) strlen(salt));
+        sha_update(ctx, (const unsigned char *) device_id, (unsigned int) strlen(device_id));
+        sha_final(ctx, hash, NULL);
+        sha_destroy(ctx);
+        key->pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, NULL, (const unsigned char *) hash, ED25519_KEY_SIZE);
     }
 
     if (new_pk) {
@@ -546,3 +556,27 @@ void sha_destroy(sha_ctx_t *ctx) {
 int get_random_bytes(unsigned char *buf, int num) {
     return RAND_bytes(buf, num);
 }
+#include <stdio.h>
+void pk_to_base64(const unsigned char *pk, int pk_len, char *pk_base64, int len) {
+    memset(pk_base64, 0, len);
+    int len64 = (4 * (pk_len /3)) + (pk_len % 3 ? 4 : 0);
+    
+    assert (len > len64);
+    
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO *bio = BIO_new(BIO_s_mem());
+    BUF_MEM *bufferPtr;
+
+
+    bio = BIO_push(b64, bio);
+  
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+    BIO_write(bio, pk, pk_len);
+    BIO_flush(bio);
+
+    BIO_get_mem_ptr(bio, &bufferPtr);
+    BIO_set_close(bio, BIO_NOCLOSE);
+    BIO_free_all(bio);
+    memcpy(pk_base64,(*bufferPtr).data, len64);
+}
+  

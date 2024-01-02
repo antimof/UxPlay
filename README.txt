@@ -1,10 +1,15 @@
-# UxPlay 1.67: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.68: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).
 
--   ***NEW in v1.67**: support for one-time Apple-style "pin" code
-    client authentication ("client-server pairing") when the option
-    "-pin" is used.*
+-   ***NEW in v1.68**: Volume-control improvements, plus improved
+    support for Apple-style one-time "pin" codes introduced in 1.67: a
+    register of pin-registered clients can now optionally be maintained
+    to check returning clients; a simpler method for generating a
+    persistent public key (based on the MAC address, which can be set in
+    the UxPlay startup file) is now the default. (The OpenSSL "pem-file"
+    method introduced in 1.67 is still available with the '-key"
+    option.)*
 
 ## Highlights:
 
@@ -451,11 +456,18 @@ below for help with this or other problems.
     entering a 4-digit pin code that is displayed on the UxPlay
     terminal. (This is optional, but sometimes required if the client is
     a corporately-owned and -managed device with MDM Mobile Device
-    Management.) Pairing occurs just once, is curently only recorded in
-    the client, and persists unless the UxPlay public key (stored in
-    \$HOME/.uxplay.pem, or elsewhere if option `-key <filename>` is
-    used) is moved or deleted, after which a new key is generated.
-    (Non-Apple clients might not implement the persistence feature.)
+    Management.) Pairing occurs just once, is currently only recorded by
+    the client unless the -reg option is used, and persists until the
+    UxPlay public key is changed. By default (since v1.68) the public
+    key is now generated using the "Device ID", which is either the
+    server's hardware MAC address, or can be set with the -m option
+    (most conveniently using the startup option file). (Storage of a
+    more securely-generated persistent key as an OpenSSL "pem" file is
+    still available with the -key option). For use of uxplay in a more
+    public environment, a list of previously-registered clients can
+    (since v1.68) be optionally-maintained using the -reg option:
+    without this option, returning clients claiming to be registered are
+    just trusted and not checked.
 
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; since UxPlay-1.58, the option `-nohold`
@@ -497,6 +509,12 @@ helped to prevent this previously when timestamps were not being used.)
     video on the client to match audio on the server, so leads to a
     slight delay before a pause or track-change initiated on the client
     takes effect on the audio played by the server.
+
+AirPlay volume-control attenuates volume (gain) by up to -30dB: the
+range -30dB:0dB can be rescaled from *Low*:0, or *Low*:*High*, using the
+option `-db` ("-db *Low*" or "-db *Low*:*High*"), *Low* must be
+negative. Rescaling is linear in decibels. The option `-taper` provides
+a "tapered" AirPlay volume-control profile some users may prefer.
 
 The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in *milliseconds* for fine-tuning :
@@ -895,6 +913,14 @@ re-authenticate after an initial authentication. *(Add a "pin" entry in
 the UxPlay startup file if you wish the UxPlay server to use this
 protocol).*
 
+**-reg \[*filename*\]**: (since v1.68). This option maintains a list of
+previously-pin-registered clients in \$HOME/.uxplay.register (or
+optionally, in *filename*). Without this option, returning clients
+claiming to be already pin-registered are trusted and not checked. (This
+option may be useful if UxPlay is used in a more public environment, to
+record client details; the register is text, one line per client, with
+client's public key (base-64 format), Device ID, and Device name.)
+
 **-vsync \[x\]** (In Mirror mode:) this option (**now the default**)
 uses timestamps to synchronize audio with video on the server, with an
 optional audio delay in (decimal) milliseconds (*x* = "20.5" means
@@ -924,6 +950,24 @@ changing this does not seem to have any effect*.
 **-async no**. This is the still the default behavior in Audio-only
 mode, but this option may be useful as a command-line option to switch
 off a `-async` option set in a "uxplayrc" configuration file.
+
+**-db *low*\[:*high*\]** Rescales the AirPlay volume-control attenuation
+(gain) from -30dB:0dB to *low*:0dB or *low*:*high*. The lower limit
+*low* must be negative (attenuation); the upper limit *high* can be
+either sign. (GStreamer restricts volume-augmentation by *high* so that
+it cannot exceed +20dB). The rescaling is "flat", so that for -db
+-50:10, a change in Airplay attenuation by -7dB is translated to a -7 x
+(60/30) = -14dB attenuation, and the maximum volume (AirPlay 0dB) is a
+10dB augmentation, and Airplay -30dB would become -50dB. Note that the
+minimum AirPlay value (-30dB exactly) is translated to "mute".
+
+**-taper** Provides a "tapered" Airplay volume-control profile (matching
+the one called "dasl-tapering" in
+[shairport-sync](https://github.com/mikebrady/shairport-sync)): each
+time the length of the volume slider (or the number of steps above mute,
+where 16 steps = full volume) is reduced by 50%, the perceived volume is
+halved (a 10dB attenuation). (This is modified at low volumes, to use
+the "untapered" volume if it is louder.)
 
 **-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display
 resolution (width and height, in pixels). (This may be a request made to
@@ -1125,12 +1169,27 @@ network interface detected) a random MAC address will be used even if
 option **-m** was not specified. (Note that a random MAC address will be
 different each time UxPlay is started).
 
-**-key \[*filename*\]**: By default, the storage of the Server private
-key is in the file \$HOME/.uxplay.pem. Use the "-key *filename*" option
-to change this location. This option should be set in the UxPlay startup
-file as a line "`key filename`" (no initial "-"), where `filename` is a
-full path. The filename may be enclosed in quotes (`"...."`), (and must
-be, if the filename has any blank spaces).
+**-key \[*filename*\]**: This (more secure) option for generating and
+storing a persistant public key (needed for the -pin option) has been
+replaced by default with a (less secure) method which generates a key
+from the server's "device ID" (MAC address, which can be changed with
+the -m option, conveniently as a startup file option). When the -key
+option is used, a securely generated keypair is generated and stored in
+`$HOME/.uxplay.pem`, if that file does not exist, or read from it, if it
+exists. (Optionally, the key can be stored in *filename*.) This method
+is more secure than the new default method, (because the Device ID is
+broadcast in the DNS_SD announcement) but still leaves the private key
+exposed to anyone who can access the pem file. Because the default (but
+"less-secure") "Device ID" method is simpler, and security of client
+access to uxplay is unlikely to be an important issue, the -key option
+is no longer recommended.
+
+By default, the storage of the Server private key is in the file
+\$HOME/.uxplay.pem. Use the "-key *filename*" option to change this
+location. This option should be set in the UxPlay startup file as a line
+"`key filename`" (no initial "-"), where `filename` is a full path. The
+filename may be enclosed in quotes (`"...."`), (and must be, if the
+filename has any blank spaces).
 
 **-dacp \[*filename*\]**: Export current client DACP-ID and
 Active-Remote key to file: default is \$HOME/.uxplay.dacp. (optionally
@@ -1496,6 +1555,15 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.
 
 # Changelog
+
+1.68 2023-12-31 New simpler (default) method for generating a persistent
+public key from the server MAC address (which can now be set with the -m
+option). (The previous method is still available with -key option). New
+option -reg to maintain a register of pin-authenticated clients.
+Corrected volume-control: now interprets AirPlay volume range -30dB:0dB
+as decibel gain attenuation, with new option -db low\[:high\] for "flat"
+rescaling of the dB range. Add -taper option for a "tapered" AirPlay
+volume-control profile.
 
 1.67 2023-11-30 Add support for Apple-style one-time pin authentication
 of clients with option "-pin": (uses SRP6a authentication protocol and
