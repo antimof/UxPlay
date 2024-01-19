@@ -139,7 +139,7 @@ static std::string pairing_register = "";
 static std::vector <std::string> registered_keys;
 static double db_low = -30.0;
 static double db_high = 0.0;
-static bool taper_volume = true;
+static bool taper_volume = false;
 
 /* logging */
 
