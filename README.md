@@ -5,7 +5,7 @@
    * _**NEW in v1.68**: Volume-control improvements, plus improved support for Apple-style one-time "pin" codes introduced in 1.67: a
     register of pin-registered clients can  now optionally be  maintained to check returning clients; a simpler  method for generating
     a persistent public key (based on the MAC address, which can be set in the UxPlay startup file) is now the default. (The OpenSSL
-    "pem-file"  method introduced in 1.67 is still available with the '-key" option.)_
+    "pem-file"  method introduced in 1.67 is still available with the "-key" option.)_
     
    
 ## Highlights:
@@ -13,7 +13,7 @@
    * GPLv3, open source.
    * Originally supported only AirPlay Mirror protocol, now has added support
      for AirPlay Audio-only (Apple Lossless ALAC) streaming 
-     from current iOS/iPadOS clients.  **There is no support for Airplay2 video-streaming protocol, and none is planned.**
+     from current iOS/iPadOS clients. **There is no support for Airplay2 video-streaming protocol, and none is planned.**
    * macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
      systems) can act either as AirPlay clients, or
      as the server running UxPlay. Using AirPlay, UxPlay can
@@ -29,6 +29,8 @@
      Broadcom GPU.  _Tested on Raspberry Pi Models 3B+, 4B, and 5._
    * Support for running on Microsoft Windows (builds with the MinGW-64 compiler in the
      unix-like MSYS2 environment).
+
+Note: AirPlay2 multi-room audio streaming is not supported: use [shairport-sync](https://github.com/mikebrady/shairport-sync) for that.
 
 ## Packaging status (Linux and \*BSD distributions)
 
@@ -713,11 +715,10 @@ with "`#`" are treated as comments, and ignored.  Command line options supersede
 **-pin [nnnn]**: (since v1.67) use Apple-style (one-time) "pin" authentication when a new client connects for the first time: a four-digit pin code is
    displayed on the terminal, and the client screen shows a login prompt for this to be entered.    When "-pin" is used by itself, a new random
    pin code is chosen for each authentication; if "-pin nnnn" (e.g., "-pin 3939") is used, this will set an unchanging  fixed code.
-   To retain client authentication after UxPlay restarts, at the first use of "-pin", the server public key is written to file (default: $HOME/.uxplay.pem; can
-   be changed with option `-key <filename>`),
-   and read back in at subsequent UxPlay startups.  As long as this file is not deleted or moved, a
-   client will not have to re-authenticate  after an initial authentication.   _(Add a "pin" entry in the UxPlay startup file if you wish the
-   UxPlay server to use this protocol)._
+   Clients will not need to reauthenticate so long as the client and server public keys remain unchanged.   (By default since v1.68, the server public key is
+   generated from the MAC address, which can be changed with the -m option; see the -key option for an alternative method of key 
+   generation).  _(Add a line "pin" in the UxPlay startup file if you wish the
+   UxPlay server to use the pin authentication protocol)._
 
 **-reg [_filename_]**: (since v1.68). This option maintains a list of previously-pin-registered clients in $HOME/.uxplay.register (or optionally, in _filename_).
    Without this option, returning clients claiming to be already pin-registered are trusted and not checked.   (This option may be useful if UxPlay is used 
@@ -926,13 +927,11 @@ which will not work if a firewall is running.
    When the -key option is used, a securely generated keypair is generated and stored in `$HOME/.uxplay.pem`, if that file does not exist,
    or read from it, if it exists.  (Optionally, the key can be stored in _filename_.)  This method is more secure than the new default method,
    (because the Device ID is broadcast in the DNS_SD announcement) but still leaves the private key exposed to anyone who can access the pem file.
-   Because the default (but "less-secure") "Device ID" method is simpler, and security of client access to uxplay is  unlikely to be an important issue,
-   the -key option is no longer recommended.
-
-By default, the storage of the Server private key is in the file $HOME/.uxplay.pem. Use
-   the "-key _filename_" option to change this location.   This option should be set in the UxPlay startup file
-   as a line "`key filename`" (no initial "-"),  where ``filename`` is a full path.   The filename may be enclosed
-   in quotes (`"...."`), (and must be, if the filename has any blank spaces).
+   This option should be set in the UxPlay startup file
+   as a line "key" or "key _filename_" (no initial "-"),  where _filename_ is a full path which should be enclosed
+   in quotes (`"...."`) if it contains  any blank spaces.
+   **Because the default method is simpler, and security of client access to uxplay is  unlikely to be an important issue,
+   the -key option is no longer recommended**.
 
 **-dacp [_filename_]**: Export current client DACP-ID and Active-Remote key to file: default is $HOME/.uxplay.dacp.
    (optionally can be changed to _filename_). Can be used by remote control applications. File is transient: only exists
