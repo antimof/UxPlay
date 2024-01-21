@@ -26,7 +26,7 @@
      "audiosinks", and a fully-user-configurable video streaming pipeline).
    * Support for server behind a firewall.
    * Raspberry Pi support  **both with and without hardware  video decoding** by the
-     Broadcom GPU.  _Tested on Raspberry Pi Models 3B+, 4B, and 5._
+     Broadcom GPU.  _Tested on Raspberry Pi Zero 2 W, 3 Model B+, 4 Model B, and 5._
    * Support for running on Microsoft Windows (builds with the MinGW-64 compiler in the
      unix-like MSYS2 environment).
 
@@ -85,7 +85,7 @@ Also tested on macOS Catalina and Ventura (Intel) and Sonoma (M2), FreeBSD 14.0,
 
 On Raspberry Pi 4 model B, it is tested on Raspberry Pi OS (Bullseye and Bookworm) (32- and 64-bit),
 Ubuntu 22.04 LTS and 23.04, Manjaro RPi4 23.02, and (without hardware video decoding) on openSUSE 15.5.
-Also tested on Raspberry Pi 3 model B+ and the new model 5.
+Also tested on Raspberry Pi Zero 2 W,  3 model B+, and now  5.
 
 Its main use is to act like an AppleTV for screen-mirroring (with audio) of iOS/iPadOS/macOS clients
 (iPhone, iPod Touch, iPad, Mac computers) on the server display
@@ -203,7 +203,7 @@ installed.  Debian-based systems provide a package "build-essential" for use
 in compiling software.   You also need pkg-config: if it is not found
 by "`which pkg-config`",  install pkg-config or its  work-alike replacement
 pkgconf.   Also make sure that cmake>=3.5 is installed:
-"`sudo apt-get install cmake`" (add ``build-essential`` and `pkg-config`
+"`sudo apt install cmake`" (add ``build-essential`` and `pkg-config`
 (or ``pkgconf``)  to this if needed).
 
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and
@@ -233,17 +233,17 @@ If you use X11 Windows on Linux or *BSD, and wish to toggle in/out of fullscreen
 (F11 or Alt_L+Enter)
 UxPlay needs to be built with a dependence on X11.  Starting with UxPlay-1.59, this will be done by
 default **IF** the X11 development libraries are installed and detected.   Install these with
-"`sudo apt-get install libx11-dev`".    If GStreamer < 1.20 is detected, a fix needed by 
+"`sudo apt install libx11-dev`".    If GStreamer < 1.20 is detected, a fix needed by 
 screen-sharing apps (_e.g._, Zoom) will also be made.
 
 * If X11 development libraries are present, but you
 wish to build UxPlay *without* any X11 dependence, use
 the cmake option `-DNO_X11_DEPS=ON`.
 
-1. `sudo apt-get install libssl-dev libplist-dev`".
+1. `sudo apt install libssl-dev libplist-dev`".
     (_unless you need to build OpenSSL and libplist from source_).
-2.  `sudo apt-get install libavahi-compat-libdnssd-dev`
-3.  `sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. (\*_Skip if you built Gstreamer from source_)
+2.  `sudo apt install libavahi-compat-libdnssd-dev`
+3.  `sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. (\*_Skip if you built Gstreamer from source_)
 4.  `cmake .` (_For a cleaner build, which is useful if you modify the source, replace this 
     by_ "``mkdir build; cd build; cmake ..``": _you can then delete the contents of the
     `build` directory if needed, without affecting the source._)   Also add any cmake "`-D`" options
@@ -303,7 +303,7 @@ it can be easily modified to include dependency lists for other RPM-based distri
 
 ### Installing plugins (Debian-based Linux systems) (_skip if you built a complete GStreamer from source_)
 
-Next install the GStreamer plugins that are needed with `sudo apt-get install gstreamer1.0-<plugin>`.
+Next install the GStreamer plugins that are needed with `sudo apt install gstreamer1.0-<plugin>`.
 Values of `<plugin>` required are: 
 
 1. "**plugins-base**" 
@@ -447,6 +447,8 @@ graphics hardware:  use "`gst-inspect-1.0 | grep sink | grep -e video -e Video -
 * **vaapisink** (for Intel/AMD hardware-accelerated graphics); for NVIDIA hardware graphics (with CUDA) use **glimagesink** combined
   with "`-vd nvh264dec`" (or  "nvh264sldec", a new variant  which will become "nvh264dec" in GStreamer-1.24). 
 
+* If the server is "headless" (no attached monitor, renders audio only) use `-vs 0`.
+
 GStreamer also searches for the best "audiosink"; override its choice  with `-as <audiosink>`. Choices on Linux include
 pulsesink, alsasink, pipewiresink, oss4sink; see what is available with `gst-inspect-1.0 | grep sink | grep -e audio -e Audio`.
 
@@ -459,53 +461,49 @@ then try to fix accelerated hardware video decoding if you need it, or just unin
 See [Usage](#usage) for more run-time options.
 
 
-### **Special instructions for Raspberry Pi (tested on R Pi 4 model B 8GB and  R Pi 3 model B+)**:
+### **Special instructions for Raspberry Pi (tested on Raspberry Pi  Zero 2 W, 3 Model B+, 4 Model B, and  5 only)**:
 
-* If you use the software-only (h264) video-decoding UxPlay option `-avdec`, it now works
-better than earlier, with the new default timestamp-based synchronization to keep audio and video synchronized.
+* For Framebuffer video (for Raspberry Pi OS "Lite" and other non-X11 distributions) use the KMS
+  videosink "-vs kmssink" (the DirectFB framebuffer videosink "dfbvideosink" is broken on the Pi, and segfaults). 
+  _In this case you should explicitly use the "-vs kmssink" option, as without it, autovideosink does not find the correct videosink._
 
-* For best performance, a Raspberry Pi **older than model 5** needs the GStreamer Video4linux2 plugin  to use
-its Broadcom GPU hardware for decoding h264 video.   This needs the bcm2835_codec kernel module
-which is maintained outside the mainline Linux kernel by Raspberry Pi in the 
-the [Raspberry Pi kernel tree](https://github.com/raspberrypi/linux), and the
-only distributions for R Pi that are known to supply it include Raspberry Pi OS, Ubuntu, and Manjaro (all available
-from Raspberry Pi with their Raspberry Pi Imager).  Other distributions generally do not
-provide it: **without this kernel module, UxPlay cannot use the decoding firmware in the GPU.**
+* Raspberry Pi 5 does not provide hardware H264 decoding (and does not need it).
 
-* On a  Raspberry Pi model 4B running the unsupported "Legacy" R Pi OS (Buster), note that 
-this comes with a very old GStreamer-1.14.4 **that cannot be patched to access the  Broadcom GPU**.  If you need to stay on the unsupported
-"Legacy" OS ("Lite" version), but want to use UxPlay with hardware video decoding,  you need
-to first build a complete newer GStreamer from source
-using [these instructions](https://github.com/FDH2/UxPlay/wiki/Building-latest-GStreamer-from-source-on-distributions-with-older-GStreamer-(e.g.-Raspberry-Pi-OS-).)
-before building UxPlay. Note that a model 3B+ Pi running the Legacy OS can access the GPU with GStreamer-1.14's omx plugin (use option "`-vd omxh264dec`"), but
-this plugin is broken on model 4B's firmware, and omx support was removed in  R Pi OS (Bullseye).
+* Pi  Zero 2 W, 3 Model B+ and 4 Model B should use hardware H264 decoding by the Broadcom GPU,
+  but it requires an out-of-mainstream kernel module bcm2835_codec maintained in
+  the [Raspberry Pi kernel tree](https://github.com/raspberrypi/linux);
+  distributions  that are known to supply it include Raspberry Pi OS, Ubuntu, and Manjaro-RPi4.  Use
+  software decoding (option -avdec) if this module is not available.
+  
+* Uxplay uses the Video4Linux2 (v4l2) plugin from GStreamer-1.22 and later to access the GPU in models 3 and 4. This
+  should happen automatically.   The  option -v4l2 can be used, but it is usually best to just let GStreamer find the
+  best video pipeline by itself.
 
+* On older distributions (GStreamer < 1.22), the v4l2 plugin needs a patch: see
+  the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).  Legacy
+  Raspberry Pi OS (Bullseye) has a partially-patched GStreamer-1.18.4 which needs the uxplay option -bt709 (and don't use -v4l2); it
+  is still better to apply the full patch from the UzxPlay Wiki in this case.
 
-For use of the GPU, use raspi-config "Performance Options" (on Raspberry Pi OS, use a similar tool on other
-distributions) to allocate sufficient memory for the GPU (on  R. Pi 3 model B+, the maximum (256MB) is suggested).
-Even with GPU video decoding, some frames may be dropped by the lower-power 3 B+  to keep audio and video synchronized
-using timestamps.
+* For "double-legacy" Raspberry Pi OS (Buster), there is no patch for GStreamer-1.14.
+  Instead, first build a complete newer GStreamer-1.18.6 from source 
+  using [these instructions](https://github.com/FDH2/UxPlay/wiki/Building-latest-GStreamer-from-source-on-distributions-with-older-GStreamer-(e.g.-Raspberry-Pi-OS-).)  before
+  building UxPlay.
 
-* The plugin in the latest GStreamer-1.22 release works well, but older releases of GStreamer will not
-work unless patched with backports from GStreamer-1.22.  Raspberry Pi OS (Bullseye) now has a
-working backport. For a fuller backport, or for other distributions, patches for the GStreamer Video4Linux2 plugin
-are [available with instructions in the UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
+* Raspberry Pi 3 Model B+ running a 32 bit OS can also access the GPU with the GStreamer OMX plugin
+  (use option "`-vd omxh264dec`"), but this is broken by Pi 4 Model B firmware.  OMX support was removed from
+  Raspberry Pi OS (Bullseye),  but is present in Buster.
+
+Even with GPU video decoding, some frames may be dropped by the lower-power models  to keep audio and video synchronized
+using timestamps.   In Legacy Raspberry Pi OS (Bullseye), raspi-config "Performance Options" allows specifying how much memory
+to allocate to the GPU, but this setting appears to be gone in Bookworm (it can also be set to e.g. 128GB with a line like "gpu_mem=128" in /boot/config.txt).
+A Pi Zero 2 W (which has 512GB memory)  worked well when tested in 32 bit Bullseye or Bookworm Lite 
+with 128GB allocated to the GPU (default seems to be 64GB).
 
 The basic uxplay options for R Pi are ```uxplay [-vs <videosink>]```. The
 choice `<videosink>` = ``glimagesink`` is sometimes useful. 
-On a system without X11 (like R Pi OS Lite) with framebuffer video, use `<videosink>` = ``kmssink``.
-With the  Wayland video compositor,  use `<videosink>` = ``waylandsink``.  When using the Video4Linux2
-plugin to access hardware video decoding, an option `-v4l2` may be useful.
-**You may find that just "`uxplay`", (_without_  the ``-v4l2`` option, which lets GStreamer
-try to find the best video solution by itself)
-provides the best results** (the former`-rpi*` options were equivalent to `-v4l2` or ``-v4l2`` plus one of
-the '-vs' options, and were removed in UxPlay v1.67 as they do not apply to R Pi model 5.)
+With the  Wayland video compositor,  use `<videosink>` = ``waylandsink``.
+With framebuffer video, use `<videosink>` = ``kmssink``.
 
-* If you are using Raspberry Pi OS (Bullseye) with Video4Linux2 from unpatched GStreamer-1.18.4, you
-need the `-bt709` option with UxPlay-1.56 or later.
-Also don't use option `-v4l2` with it, as this
-causes a crash if the client screen is rotated.  (These issues  do not occur when the latest GStreamer-1.18.4
-patch from the UxPlay Wiki has been applied.)
 
 * Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using ssh:
 
@@ -723,7 +721,8 @@ with "`#`" are treated as comments, and ignored.  Command line options supersede
 **-reg [_filename_]**: (since v1.68). This option maintains a list of previously-pin-registered clients in $HOME/.uxplay.register (or optionally, in _filename_).
    Without this option, returning clients claiming to be already pin-registered are trusted and not checked.   (This option may be useful if UxPlay is used 
    in a more public environment, to record client details; the register is text, one line per client, with client's  public 
-   key (base-64 format), Device ID, and Device name.)
+   key (base-64 format), Device ID, and Device name; commenting out (with "#") or deleting  a line deregisters the
+   corresponding client.)   _(Add a line "reg" in the startup file if you wish to use this feature.)_
 
 
 **-vsync [x]**  (In Mirror mode:) this option (**now the default**) uses timestamps to synchronize audio with video on the server,
@@ -818,10 +817,11 @@ which will not work if a firewall is running.
    The syntax of such options is specific to a given plugin, and some choices of videosink
    might not work on your system.
 
-**-vs 0** suppresses display of streamed video, but plays  streamed audio.   (The client's screen
-   is still mirrored at a reduced rate of 1 frame per second,  but is not rendered or displayed.)  This
-   feature (which streams audio in AAC audio format) is now probably unneeded, as UxPlay can now 
-   stream superior-quality Apple Lossless audio without video in Airplay non-mirror mode.
+**-vs 0** suppresses display of streamed video.   In mirror mode, the client's screen
+   is still mirrored at a reduced rate of 1 frame per second, but is not rendered or displayed. This
+   option should always be used if the server is  "headless" (with no attached screen to display video),
+   and only used to render audio, which will be AAC lossily-compressed audio in mirror mode with unrendered video, and
+   superior-quality ALAC Apple Lossless audio in Airplay  audio-only mode.
 
 **-v4l2** Video settings for hardware h264 video decoding in the GPU by Video4Linux2.  Equivalent to
    `-vd v4l2h264dec -vc v4l2convert`.
