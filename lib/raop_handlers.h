@@ -1008,3 +1008,89 @@ raop_handler_record(raop_conn_t *conn,
     http_response_add_header(response, "Audio-Latency", audio_latency);
     http_response_add_header(response, "Audio-Jack-Status", "connected; type=analog");
 }
+
+static void
+raop_handler_flush(raop_conn_t *conn,
+                      http_request_t *request, http_response_t *response,
+                      char **response_data, int *response_datalen)
+{
+    const char *rtpinfo;
+    int next_seq = -1;
+
+    rtpinfo = http_request_get_header(request, "RTP-Info");
+    if (rtpinfo) {
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "Flush with RTP-Info: %s", rtpinfo);
+        if (!strncmp(rtpinfo, "seq=", 4)) {
+            next_seq = strtol(rtpinfo + 4, NULL, 10);
+        }
+    }
+    if (conn->raop_rtp) {
+        raop_rtp_flush(conn->raop_rtp, next_seq);
+    } else {
+        logger_log(conn->raop->logger, LOGGER_WARNING, "RAOP not initialized at FLUSH");
+    }
+}
+
+static void
+raop_handler_teardown(raop_conn_t *conn,
+                      http_request_t *request, http_response_t *response,
+                      char **response_data, int *response_datalen)
+{
+    /* get the teardown request type(s):  (type 96, 110, or none) */
+    const char *data;
+    int data_len;
+    bool teardown_96 = false, teardown_110 = false;
+    data = http_request_get_data(request, &data_len);
+    plist_t req_root_node = NULL;
+    plist_from_bin(data, data_len, &req_root_node);
+    char * plist_xml;
+    uint32_t plist_len;
+    plist_to_xml(req_root_node, &plist_xml, &plist_len);
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+    free(plist_xml);
+    plist_t req_streams_node = plist_dict_get_item(req_root_node, "streams");
+    /* Process stream teardown requests */
+    if (PLIST_IS_ARRAY(req_streams_node)) {
+        uint64_t val;
+        int count = plist_array_get_size(req_streams_node);
+        for (int i = 0; i < count; i++) {
+            plist_t req_stream_node = plist_array_get_item(req_streams_node,0);
+            plist_t req_stream_type_node = plist_dict_get_item(req_stream_node, "type");
+            plist_get_uint_val(req_stream_type_node, &val);
+            if (val == 96) {
+                teardown_96 = true;
+            } else if (val == 110) { 
+	        teardown_110 = true;
+            }
+        }
+    }
+    plist_free(req_root_node);
+    if (conn->raop->callbacks.conn_teardown) {
+        conn->raop->callbacks.conn_teardown(conn->raop->callbacks.cls, &teardown_96, &teardown_110);
+    }
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "TEARDOWN request,  96=%d, 110=%d", teardown_96, teardown_110);
+  
+    http_response_add_header(response, "Connection", "close");
+  
+    if (teardown_96) {
+        if (conn->raop_rtp) {
+            /* Stop our audio RTP session */
+            raop_rtp_stop(conn->raop_rtp);
+        }
+    } else if (teardown_110) {
+        if (conn->raop_rtp_mirror) {
+        /* Stop our video RTP session */
+            raop_rtp_mirror_stop(conn->raop_rtp_mirror);
+        }
+    } else {
+        /* Destroy our sessions */
+        if (conn->raop_rtp) {
+            raop_rtp_destroy(conn->raop_rtp);
+            conn->raop_rtp = NULL;
+        }
+        if (conn->raop_rtp_mirror) {
+            raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
+            conn->raop_rtp_mirror = NULL;
+        }
+    }	
+}
