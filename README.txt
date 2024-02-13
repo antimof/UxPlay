@@ -454,23 +454,15 @@ opened: **if a firewall is active, also open UDP port 5353 (for mDNS
 queries) needed by Avahi**. See [Troubleshooting](#troubleshooting)
 below for help with this or other problems.
 
--   Since v 1.67, the UxPlay option "`-pin`" allows clients to "pair"
-    with the UxPlay server the first time they connect to it, by
-    entering a 4-digit pin code that is displayed on the UxPlay
-    terminal. (This is optional, but sometimes required if the client is
-    a corporately-owned and -managed device with MDM Mobile Device
-    Management.) Pairing occurs just once, is currently only recorded by
-    the client unless the -reg option is used, and persists until the
-    UxPlay public key is changed. By default (since v1.68) the public
-    key is now generated using the "Device ID", which is either the
-    server's hardware MAC address, or can be set with the -m option
-    (most conveniently using the startup option file). (Storage of a
-    more securely-generated persistent key as an OpenSSL "pem" file is
-    still available with the -key option). For use of uxplay in a more
-    public environment, a list of previously-registered clients can
-    (since v1.68) be optionally-maintained using the -reg option:
-    without this option, returning clients claiming to be registered are
-    just trusted and not checked.
+-   Unlike an Apple TV, the UxPlay server does not by default require
+    clients to initially "pair" with it using a pin code displayed by
+    the server (after which the client "trusts" the server, and does not
+    need to repeat this). Since v1.67, Uxplay offers such
+    "pin-authentication" as an option: see "`-pin`" and "`-reg`" in
+    [Usage](#usage) for details, if you wish to use it. *Some clients
+    with MDM (Mobile Device Management, often present on employer-owned
+    devices) are required to use pin-authentication: UxPlay will provide
+    this even when running without the pin option.*
 
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; since UxPlay-1.58, the option `-nohold`
@@ -594,16 +586,17 @@ See [Usage](#usage) for more run-time options.
     is not available.
 
 -   Uxplay uses the Video4Linux2 (v4l2) plugin from GStreamer-1.22 and
-    later to access the GPU in models 3 and 4. This should happen
-    automatically. The option -v4l2 can be used, but it is usually best
-    to just let GStreamer find the best video pipeline by itself.
+    later to access the GPU, if hardware H264 decoding is used. This
+    should happen automatically. The option -v4l2 can be used, but it is
+    usually best to just let GStreamer find the best video pipeline by
+    itself.
 
 -   On older distributions (GStreamer \< 1.22), the v4l2 plugin needs a
     patch: see the [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches).
     Legacy Raspberry Pi OS (Bullseye) has a partially-patched
     GStreamer-1.18.4 which needs the uxplay option -bt709 (and don't use
-    -v4l2); it is still better to apply the full patch from the UzxPlay
+    -v4l2); it is still better to apply the full patch from the UxPlay
     Wiki in this case.
 
 -   For "double-legacy" Raspberry Pi OS (Buster), there is no patch for
@@ -621,11 +614,11 @@ Even with GPU video decoding, some frames may be dropped by the
 lower-power models to keep audio and video synchronized using
 timestamps. In Legacy Raspberry Pi OS (Bullseye), raspi-config
 "Performance Options" allows specifying how much memory to allocate to
-the GPU, but this setting appears to be gone in Bookworm (it can also be
-set to e.g. 128GB with a line like "gpu_mem=128" in /boot/config.txt). A
-Pi Zero 2 W (which has 512GB memory) worked well when tested in 32 bit
-Bullseye or Bookworm Lite with 128GB allocated to the GPU (default seems
-to be 64GB).
+the GPU, but this setting appears to be absent in Bookworm (but it can
+still be set to e.g. 128GB by adding a line "gpu_mem=128" in
+/boot/config.txt). A Pi Zero 2 W (which has 512GB memory) worked well
+when tested in 32 bit Bullseye or Bookworm Lite with 128GB allocated to
+the GPU (default seems to be 64GB).
 
 The basic uxplay options for R Pi are `uxplay [-vs <videosink>]`. The
 choice `<videosink>` = `glimagesink` is sometimes useful. With the
@@ -904,23 +897,26 @@ four-digit pin code is displayed on the terminal, and the client screen
 shows a login prompt for this to be entered. When "-pin" is used by
 itself, a new random pin code is chosen for each authentication; if
 "-pin nnnn" (e.g., "-pin 3939") is used, this will set an unchanging
-fixed code. Clients will not need to reauthenticate so long as the
-client and server public keys remain unchanged. (By default since v1.68,
-the server public key is generated from the MAC address, which can be
-changed with the -m option; see the -key option for an alternative
-method of key generation). *(Add a line "pin" in the UxPlay startup file
-if you wish the UxPlay server to use the pin authentication protocol).*
+fixed code. Authentication adds the server to the client's list of
+"trusted servers" and the client will not need to reauthenticate
+provided that the client and server public keys remain unchanged. (By
+default since v1.68, the server public key is generated from the MAC
+address, which can be changed with the -m option; see the -key option
+for an alternative method of key generation). *(Add a line "pin" in the
+UxPlay startup file if you wish the UxPlay server to use the pin
+authentication protocol).*
 
-**-reg \[*filename*\]**: (since v1.68). This option maintains a list of
-previously-pin-registered clients in \$HOME/.uxplay.register (or
-optionally, in *filename*). Without this option, returning clients
-claiming to be already pin-registered are trusted and not checked. (This
-option may be useful if UxPlay is used in a more public environment, to
-record client details; the register is text, one line per client, with
-client's public key (base-64 format), Device ID, and Device name;
-commenting out (with "\#") or deleting a line deregisters the
-corresponding client.) *(Add a line "reg" in the startup file if you
-wish to use this feature.)*
+**-reg \[*filename*\]**: (since v1.68). If "-pin" is used, this option
+maintains a register of pin-authenticated "trusted clients" in
+\$HOME/.uxplay.register (or optionally, in *filename*). Without this
+option, returning clients that skip pin-authentication are trusted and
+not checked. This option may be useful if UxPlay is used in a more
+public environment, to record client details; the register is text, one
+line per client, with client's public key (base-64 format), Device ID,
+and Device name; commenting out (with "\#") or deleting a line
+deregisters the corresponding client (see options -restrict, -block,
+-allow for more ways to control client access). *(Add a line "reg" in
+the startup file if you wish to use this feature.)*
 
 **-vsync \[x\]** (In Mirror mode:) this option (**now the default**)
 uses timestamps to synchronize audio with video on the server, with an
@@ -1034,8 +1030,9 @@ gtksink, glimagesink, waylandsink, osxvideosink (for macOS), kmssink
 some parameters to be included with the videosink name. For example,
 **fullscreen** mode is supported by the vaapisink plugin, and is
 obtained using `-vs "vaapisink fullscreen=true"`; this also works with
-`waylandsink`. The syntax of such options is specific to a given plugin,
-and some choices of videosink might not work on your system.
+`waylandsink`. The syntax of such options is specific to a given plugin
+(see GStreamer documentation), and some choices of videosink might not
+work on your system.
 
 **-vs 0** suppresses display of streamed video. In mirror mode, the
 client's screen is still mirrored at a reduced rate of 1 frame per
@@ -1068,8 +1065,11 @@ removed in UxPlay 1.67)
 autoaudiosink pick it for you. Some audiosink choices are: pulsesink,
 alsasink, pipewiresink, osssink, oss4sink, jackaudiosink, osxaudiosink
 (for macOS), wasapisink, directsoundsink (for Windows). Using quotes
-"..." might allow some parameters to be included with the audiosink
-name. (Some choices of audiosink might not work on your system.)
+"..." might allow some optional parameters
+(e.g. `-as "alsasink device=..."` to specify a non-default output
+device). The syntax of such options is specific to a given plugin (see
+GStreamer documentation), and some choices of audiosink might not work
+on your system.
 
 **-as 0** (or just **-a**) suppresses playing of streamed audio, but
 displays streamed video.
