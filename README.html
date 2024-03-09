@@ -487,9 +487,10 @@ GStreamer internal clock used to try to keep them synchronized.
 <strong>Starting with UxPlay-1.64, the other method (GStreamer’s
 “<em>sync=true</em>” mode), which uses timestamps in the audio and video
 streams sent by the client, is the new default</strong>. On
-low-decoding-power UxPlay hosts (such as Raspberry Pi 3 models) this
-will drop video frames that cannot be decoded in time to play with the
-audio, making the video jerky, but still synchronized.</p></li>
+low-decoding-power UxPlay hosts (such as Raspberry Pi Zero W or 3 B+
+models) this will drop video frames that cannot be decoded in time to
+play with the audio, making the video jerky, but still
+synchronized.</p></li>
 </ul>
 <p>The older method which does not drop late video frames worked well on
 more powerful systems, and is still available with the UxPlay option
@@ -513,12 +514,13 @@ before a pause or track-change initiated on the client takes effect on
 the audio played by the server.</li>
 </ul>
 <p>AirPlay volume-control attenuates volume (gain) by up to -30dB: the
-range -30dB:0dB can be rescaled from <em>Low</em>:0, or
+decibel range -30:0 can be rescaled from <em>Low</em>:0, or
 <em>Low</em>:<em>High</em>, using the option <code>-db</code> (“-db
 <em>Low</em>” or “-db <em>Low</em>:<em>High</em>”), <em>Low</em> must be
-negative. Rescaling is linear in decibels. The option
-<code>-taper</code> provides a “tapered” AirPlay volume-control profile
-some users may prefer.</p>
+negative. Rescaling is linear in decibels. Note that GStreamer’s audio
+format will “clip” any audio gain above +20db, so keep <em>High</em>
+below that level. The option <code>-taper</code> provides a “tapered”
+AirPlay volume-control profile some users may prefer.</p>
 <p>The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in <em>milliseconds</em> for
 fine-tuning : <code>-vsync 20.5</code> delays audio relative to video by
@@ -747,9 +749,10 @@ not affect the (small) initial OpenGL mirror window size, but the window
 can be expanded using the mouse or trackpad. In contrast, a window
 created with “-vs osxvideosink” is initially big, but has the wrong
 aspect ratio (stretched image); in this case the aspect ratio changes
-when the window width is changed by dragging its side; the option “-vs
-osxvideosink force-aspect-ratio=true” can be used to make the window
-have the correct aspect ratio when it first opens.</p></li>
+when the window width is changed by dragging its side; the option
+<code>-vs "osxvideosink force-aspect-ratio=true"</code> can be used to
+make the window have the correct aspect ratio when it first
+opens.</p></li>
 </ul>
 <h2
 id="building-uxplay-on-microsoft-windows-using-msys2-with-the-mingw-64-compiler.">Building

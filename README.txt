@@ -481,9 +481,9 @@ below for help with this or other problems.
     with UxPlay-1.64, the other method (GStreamer's "*sync=true*" mode),
     which uses timestamps in the audio and video streams sent by the
     client, is the new default**. On low-decoding-power UxPlay hosts
-    (such as Raspberry Pi 3 models) this will drop video frames that
-    cannot be decoded in time to play with the audio, making the video
-    jerky, but still synchronized.
+    (such as Raspberry Pi Zero W or 3 B+ models) this will drop video
+    frames that cannot be decoded in time to play with the audio, making
+    the video jerky, but still synchronized.
 
 The older method which does not drop late video frames worked well on
 more powerful systems, and is still available with the UxPlay option
@@ -506,10 +506,12 @@ helped to prevent this previously when timestamps were not being used.)
     takes effect on the audio played by the server.
 
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the
-range -30dB:0dB can be rescaled from *Low*:0, or *Low*:*High*, using the
-option `-db` ("-db *Low*" or "-db *Low*:*High*"), *Low* must be
-negative. Rescaling is linear in decibels. The option `-taper` provides
-a "tapered" AirPlay volume-control profile some users may prefer.
+decibel range -30:0 can be rescaled from *Low*:0, or *Low*:*High*, using
+the option `-db` ("-db *Low*" or "-db *Low*:*High*"), *Low* must be
+negative. Rescaling is linear in decibels. Note that GStreamer's audio
+format will "clip" any audio gain above +20db, so keep *High* below that
+level. The option `-taper` provides a "tapered" AirPlay volume-control
+profile some users may prefer.
 
 The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in *milliseconds* for fine-tuning :
@@ -751,7 +753,7 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     created with "-vs osxvideosink" is initially big, but has the wrong
     aspect ratio (stretched image); in this case the aspect ratio
     changes when the window width is changed by dragging its side; the
-    option "-vs osxvideosink force-aspect-ratio=true" can be used to
+    option `-vs "osxvideosink force-aspect-ratio=true"` can be used to
     make the window have the correct aspect ratio when it first opens.
 
 ## Building UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64 compiler.

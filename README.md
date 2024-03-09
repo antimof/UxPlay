@@ -415,9 +415,9 @@ delays the video on the client to match audio on the server, so leads to
 a slight delay before a pause or track-change initiated on the client takes effect on the audio played by the server. 
 
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the decibel range -30:0 can be rescaled from _Low_:0, or _Low_:_High_, using the
-option  `-db` ("-db _Low_ " or "-db _Low_:_High_ "), _Low_ must be negative.  Rescaling is linear in decibels. The
-option ```-taper``` provides a "tapered" AirPlay volume-control 
-profile some users may prefer.
+option  `-db` ("-db _Low_ " or "-db _Low_:_High_ "), _Low_ must be negative.  Rescaling is linear in decibels.
+Note that GStreamer's audio format will "clip" any audio gain above +20db, so keep *High* below that level. The
+option ```-taper``` provides a "tapered" AirPlay volume-control profile some users may prefer.
 
 The -vsync and -async options
 also allow an optional positive (or negative) audio-delay adjustment in _milliseconds_ for fine-tuning : `-vsync 20.5`
