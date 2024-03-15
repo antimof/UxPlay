@@ -1595,6 +1595,14 @@ extern "C" void audio_set_coverart(void *cls, const void *buffer, int buflen) {
     }
 }
 
+extern "C" void audio_set_progress(void *cls, unsigned int start, unsigned int curr, unsigned int end) {
+    int duration = (int)  (end  - start)/44100;
+    int position = (int)  (curr - start)/44100;
+    int remain = duration - position;
+    printf("audio progress (min:sec): %d:%2.2d; remaining: %d:%2.2d; track length %d:%2.2d\n",
+	   position/60, position%60, remain/60, remain%60, duration/60, duration%60);
+}
+
 extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     char dmap_tag[5] = {0x0};
     const unsigned char *metadata = (const  unsigned char *) buffer;
@@ -1708,6 +1716,7 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.video_report_size = video_report_size;
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
+    raop_cbs.audio_set_progress = audio_set_progress;
     raop_cbs.report_client_request = report_client_request;
     raop_cbs.display_pin = display_pin;
     raop_cbs.register_client = register_client;
