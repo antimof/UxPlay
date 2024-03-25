@@ -382,8 +382,10 @@ decoding)</li>
 <li>“<strong>plugins-bad</strong>” (for h264 decoding).</li>
 </ol>
 <p>Plugins that may also be needed include “<strong>gl</strong>” for
-OpenGL support (which may be useful, and should be used with h264
-decoding by the NVIDIA GPU), and “<strong>x</strong>” for X11 support,
+OpenGL support (this provides the “-vs glimagesink” videosink, which can
+be very useful in many systems, and should always be used when using
+h264 decoding by a NVIDIA GPU), “<strong>gtk3</strong>” (which provides
+the “-vs gtksink” videosink), and “<strong>x</strong>” for X11 support,
 although these may already be installed; “<strong>vaapi</strong>” is
 needed for hardware-accelerated h264 video decoding by Intel or AMD
 graphics (but not for use with NVIDIA using proprietary drivers). If

@@ -311,8 +311,9 @@ Values of `<plugin>` required are:
 3. "**plugins-good**" (for v4l2 hardware h264 decoding)
 4. "**plugins-bad**" (for h264 decoding).   
 
-Plugins that may also be needed include "**gl**" for OpenGL support (which may be useful, and should
-be used with h264 decoding by the NVIDIA GPU), and "**x**" for
+Plugins that may also be needed include "**gl**" for OpenGL support (this provides the "-vs glimagesink" videosink, which
+can be very useful in many systems, and should always be used when using h264 decoding by a NVIDIA GPU),  "**gtk3**" (which
+provides the "-vs gtksink" videosink), and "**x**" for
 X11 support, although these may  already be installed; "**vaapi**"
 is needed for hardware-accelerated h264 video decoding by Intel
 or AMD  graphics (but not for use with NVIDIA using proprietary drivers). If sound is 
