@@ -1723,10 +1723,17 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.check_register = check_register;
     raop_cbs.export_dacp = export_dacp;
 
-    /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs, mac_address.c_str(), keyfile.c_str());
+    raop = raop_init(&raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
+        return -1;
+    }
+    raop_set_log_callback(raop, log_callback, NULL);
+    raop_set_log_level(raop, log_level);
+    /* set max number of connections = 2 to protect against capture by new client */
+    if (raop_init2(raop, max_connections, mac_address.c_str(), keyfile.c_str())){
+        LOGE("Error initializing raop (2)!");
+        free (raop);
         return -1;
     }
 
@@ -1747,9 +1754,6 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
     raop_set_udp_ports(raop, udp);
-    
-    raop_set_log_callback(raop, log_callback, NULL);
-    raop_set_log_level(raop, log_level);
 
     raop_port = raop_get_port(raop);
     raop_start(raop, &raop_port);

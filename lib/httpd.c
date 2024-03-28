@@ -410,10 +410,10 @@ httpd_start(httpd_t *httpd, unsigned short *port)
         return -1;
     }
     httpd->server_fd6 = netutils_init_socket(port, 1, 0);
-	if (httpd->server_fd6 == -1) {
-		logger_log(httpd->logger, LOGGER_WARNING, "Error initialising IPv6 socket %d", SOCKET_GET_ERROR());
-		logger_log(httpd->logger, LOGGER_WARNING, "Continuing without IPv6 support");
-	}
+        if (httpd->server_fd6 == -1) {
+            logger_log(httpd->logger, LOGGER_WARNING, "Error initialising IPv6 socket %d", SOCKET_GET_ERROR());
+            logger_log(httpd->logger, LOGGER_WARNING, "Continuing without IPv6 support");
+        }
 
     if (httpd->server_fd4 != -1 && listen(httpd->server_fd4, backlog) == -1) {
         logger_log(httpd->logger, LOGGER_ERR, "Error listening to IPv4 socket");
