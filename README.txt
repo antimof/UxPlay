@@ -378,13 +378,15 @@ are:
 4.  "**plugins-bad**" (for h264 decoding).
 
 Plugins that may also be needed include "**gl**" for OpenGL support
-(which may be useful, and should be used with h264 decoding by the
-NVIDIA GPU), and "**x**" for X11 support, although these may already be
-installed; "**vaapi**" is needed for hardware-accelerated h264 video
-decoding by Intel or AMD graphics (but not for use with NVIDIA using
-proprietary drivers). If sound is not working,
-"**alsa**"","**pulseaudio**", or "**pipewire**" plugins may need to be
-installed, depending on how your audio is set up.
+(this provides the "-vs glimagesink" videosink, which can be very useful
+in many systems, and should always be used when using h264 decoding by a
+NVIDIA GPU), "**gtk3**" (which provides the "-vs gtksink" videosink),
+and "**x**" for X11 support, although these may already be installed;
+"**vaapi**" is needed for hardware-accelerated h264 video decoding by
+Intel or AMD graphics (but not for use with NVIDIA using proprietary
+drivers). If sound is not working, "**alsa**"","**pulseaudio**", or
+"**pipewire**" plugins may need to be installed, depending on how your
+audio is set up.
 
 -   Also install "**gstreamer1.0-tools**" to get the utility
     gst-inspect-1.0 for examining the GStreamer installation.
@@ -481,9 +483,9 @@ below for help with this or other problems.
     with UxPlay-1.64, the other method (GStreamer's "*sync=true*" mode),
     which uses timestamps in the audio and video streams sent by the
     client, is the new default**. On low-decoding-power UxPlay hosts
-    (such as Raspberry Pi 3 models) this will drop video frames that
-    cannot be decoded in time to play with the audio, making the video
-    jerky, but still synchronized.
+    (such as Raspberry Pi Zero W or 3 B+ models) this will drop video
+    frames that cannot be decoded in time to play with the audio, making
+    the video jerky, but still synchronized.
 
 The older method which does not drop late video frames worked well on
 more powerful systems, and is still available with the UxPlay option
@@ -506,10 +508,12 @@ helped to prevent this previously when timestamps were not being used.)
     takes effect on the audio played by the server.
 
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the
-range -30dB:0dB can be rescaled from *Low*:0, or *Low*:*High*, using the
-option `-db` ("-db *Low*" or "-db *Low*:*High*"), *Low* must be
-negative. Rescaling is linear in decibels. The option `-taper` provides
-a "tapered" AirPlay volume-control profile some users may prefer.
+decibel range -30:0 can be rescaled from *Low*:0, or *Low*:*High*, using
+the option `-db` ("-db *Low*" or "-db *Low*:*High*"), *Low* must be
+negative. Rescaling is linear in decibels. Note that GStreamer's audio
+format will "clip" any audio gain above +20db, so keep *High* below that
+level. The option `-taper` provides a "tapered" AirPlay volume-control
+profile some users may prefer.
 
 The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in *milliseconds* for fine-tuning :
@@ -751,7 +755,7 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     created with "-vs osxvideosink" is initially big, but has the wrong
     aspect ratio (stretched image); in this case the aspect ratio
     changes when the window width is changed by dragging its side; the
-    option "-vs osxvideosink force-aspect-ratio=true" can be used to
+    option `-vs "osxvideosink force-aspect-ratio=true"` can be used to
     make the window have the correct aspect ratio when it first opens.
 
 ## Building UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64 compiler.

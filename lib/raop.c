@@ -342,15 +342,10 @@ conn_destroy(void *ptr) {
 }
 
 raop_t *
-raop_init(int max_clients, raop_callbacks_t *callbacks, const char *device_id, const char *keyfile) {
+raop_init(raop_callbacks_t *callbacks) {
     raop_t *raop;
-    pairing_t *pairing;
-    httpd_t *httpd;
-    httpd_callbacks_t httpd_cbs;
 
     assert(callbacks);
-    assert(max_clients > 0);
-    assert(max_clients < 100);
 
     /* Initialize the network */
     if (netutils_init() < 0) {
@@ -372,46 +367,8 @@ raop_init(int max_clients, raop_callbacks_t *callbacks, const char *device_id, c
     /* Initialize the logger */
     raop->logger = logger_init();
 
-    /* create a new public key for pairing */
-    int new_key;
-    pairing = pairing_init_generate(device_id, keyfile, &new_key);
-    if (!pairing) {
-        free(raop);
-        return NULL;
-    }
-    /* store PK as a string in raop->pk_str */
-    memset(raop->pk_str, 0, sizeof(raop->pk_str));
-#ifdef PK
-    strncpy(raop->pk_str, PK, 2*ED25519_KEY_SIZE);
-#else
-    unsigned char public_key[ED25519_KEY_SIZE];
-    pairing_get_public_key(pairing, public_key);
-    char *pk_str = utils_pk_to_string(public_key, ED25519_KEY_SIZE);
-    strncpy(raop->pk_str, (const char *) pk_str, 2*ED25519_KEY_SIZE);
-    free(pk_str);
-#endif
-    if (new_key) {
-        printf("*** A new Public Key has been created and stored in %s\n", keyfile);
-    }
-    
-    /* Set HTTP callbacks to our handlers */
-    memset(&httpd_cbs, 0, sizeof(httpd_cbs));
-    httpd_cbs.opaque = raop;
-    httpd_cbs.conn_init = &conn_init;
-    httpd_cbs.conn_request = &conn_request;
-    httpd_cbs.conn_destroy = &conn_destroy;
-
-    /* Initialize the http daemon */
-    httpd = httpd_init(raop->logger, &httpd_cbs, max_clients);
-    if (!httpd) {
-        pairing_destroy(pairing);
-        free(raop);
-        return NULL;
-    }
     /* Copy callbacks structure */
     memcpy(&raop->callbacks, callbacks, sizeof(raop_callbacks_t));
-    raop->pairing = pairing;
-    raop->httpd = httpd;
 
     /* initialize network port list */ 
     raop->port = 0;    
@@ -438,6 +395,57 @@ raop_init(int max_clients, raop_callbacks_t *callbacks, const char *device_id, c
     raop->audio_delay_micros = 250000;
 
     return raop;
+}
+
+int
+raop_init2(raop_t *raop, int max_clients, const char *device_id, const char *keyfile) {
+    pairing_t *pairing;
+    httpd_t *httpd;
+    httpd_callbacks_t httpd_cbs;
+
+    assert(max_clients > 0);
+    assert(max_clients < 100);
+
+    /* create a new public key for pairing */
+    int new_key;
+    pairing = pairing_init_generate(device_id, keyfile, &new_key);
+    if (!pairing) {
+        logger_log(raop->logger, LOGGER_ERR, "failed to create new public key for pairing");
+        return -1;
+    }
+    /* store PK as a string in raop->pk_str */
+    memset(raop->pk_str, 0, sizeof(raop->pk_str));
+#ifdef PK
+    strncpy(raop->pk_str, PK, 2*ED25519_KEY_SIZE);
+#else
+    unsigned char public_key[ED25519_KEY_SIZE];
+    pairing_get_public_key(pairing, public_key);
+    char *pk_str = utils_pk_to_string(public_key, ED25519_KEY_SIZE);
+    strncpy(raop->pk_str, (const char *) pk_str, 2*ED25519_KEY_SIZE);
+    free(pk_str);
+#endif
+    if (new_key) {
+        logger_log(raop->logger, LOGGER_INFO,"*** A new Public Key has been created and stored in %s", keyfile);
+    }
+
+    /* Set HTTP callbacks to our handlers */
+    memset(&httpd_cbs, 0, sizeof(httpd_cbs));
+    httpd_cbs.opaque = raop;
+    httpd_cbs.conn_init = &conn_init;
+    httpd_cbs.conn_request = &conn_request;
+    httpd_cbs.conn_destroy = &conn_destroy;
+
+    /* Initialize the http daemon */
+    httpd = httpd_init(raop->logger, &httpd_cbs, max_clients);
+    if (!httpd) {
+        logger_log(raop->logger, LOGGER_ERR, "failed to initialize http daemon");
+        pairing_destroy(pairing);
+        return -1;
+    }
+
+    raop->pairing = pairing;
+    raop->httpd = httpd;
+    return 0;
 }
 
 void

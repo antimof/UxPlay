@@ -56,49 +56,49 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
     case INVERT:
         switch (*rot)  {
         case LEFT:
-	    g_string_append(launch, "videoflip method=clockwise ! ");
+	    g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90R ! ");
 	    break;
         case RIGHT:
-            g_string_append(launch, "videoflip method=counterclockwise ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90L ! ");
             break;
         default:
-	    g_string_append(launch, "videoflip method=rotate-180 ! ");
+	    g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_180 ! ");
 	    break;
         }
         break;
     case HFLIP:
         switch (*rot) {
         case LEFT:
-            g_string_append(launch, "videoflip method=upper-left-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UL_LR ! ");
             break;
         case RIGHT: 
-            g_string_append(launch, "videoflip method=upper-right-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UR_LL ! ");
             break;
         default:
-            g_string_append(launch, "videoflip method=horizontal-flip ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_HORIZ ! ");
             break;
         }
         break;
     case VFLIP:
         switch (*rot) {
         case LEFT:
-            g_string_append(launch, "videoflip method=upper-right-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UR_LL ! ");
             break;
         case RIGHT: 
-            g_string_append(launch, "videoflip method=upper-left-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UL_LR ! ");
             break;
         default:
-            g_string_append(launch, "videoflip method=vertical-flip ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_VERT ! ");
 	  break;
 	}
         break;
     default:
         switch (*rot) {
         case LEFT:
-            g_string_append(launch, "videoflip method=counterclockwise ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90L ! ");
             break;
         case RIGHT: 
-            g_string_append(launch, "videoflip method=clockwise ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90R ! ");
             break;
         default:
             break;

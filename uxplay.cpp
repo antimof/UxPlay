@@ -1595,6 +1595,14 @@ extern "C" void audio_set_coverart(void *cls, const void *buffer, int buflen) {
     }
 }
 
+extern "C" void audio_set_progress(void *cls, unsigned int start, unsigned int curr, unsigned int end) {
+    int duration = (int)  (end  - start)/44100;
+    int position = (int)  (curr - start)/44100;
+    int remain = duration - position;
+    printf("audio progress (min:sec): %d:%2.2d; remaining: %d:%2.2d; track length %d:%2.2d\n",
+	   position/60, position%60, remain/60, remain%60, duration/60, duration%60);
+}
+
 extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
     char dmap_tag[5] = {0x0};
     const unsigned char *metadata = (const  unsigned char *) buffer;
@@ -1708,16 +1716,24 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.video_report_size = video_report_size;
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
+    raop_cbs.audio_set_progress = audio_set_progress;
     raop_cbs.report_client_request = report_client_request;
     raop_cbs.display_pin = display_pin;
     raop_cbs.register_client = register_client;
     raop_cbs.check_register = check_register;
     raop_cbs.export_dacp = export_dacp;
 
-    /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs, mac_address.c_str(), keyfile.c_str());
+    raop = raop_init(&raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
+        return -1;
+    }
+    raop_set_log_callback(raop, log_callback, NULL);
+    raop_set_log_level(raop, log_level);
+    /* set max number of connections = 2 to protect against capture by new client */
+    if (raop_init2(raop, max_connections, mac_address.c_str(), keyfile.c_str())){
+        LOGE("Error initializing raop (2)!");
+        free (raop);
         return -1;
     }
 
@@ -1738,9 +1754,6 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
     raop_set_udp_ports(raop, udp);
-    
-    raop_set_log_callback(raop, log_callback, NULL);
-    raop_set_log_level(raop, log_level);
 
     raop_port = raop_get_port(raop);
     raop_start(raop, &raop_port);
