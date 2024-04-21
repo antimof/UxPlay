@@ -257,10 +257,17 @@ libplist 2.0 or later. (This means Debian 10 "Buster" based systems
 (e.g, Ubuntu 18.04) or newer; on Debian 10 systems "libplist" is an
 older version, you need "libplist3".) If it does not, you may need to
 build and install these from source (see instructions at the end of this
-README). If you have a non-standard OpenSSL installation, you may need
-to set the environment variable OPENSSL_ROOT_DIR (*e.g.* ,
+README).
+
+If you have a non-standard OpenSSL installation, you may need to set the
+environment variable OPENSSL_ROOT_DIR (*e.g.* ,
 "`export OPENSSL_ROOT_DIR=/usr/local/lib64`" if that is where it is
-installed).
+installed). Similarly, for non-standard (or multiple) GStreamer
+installations, set the environment variable GSTREAMER_ROOT_DIR to the
+directory that contains the ".../gstreamer-1.0/" directory of the
+gstreamer installation that UxPlay should use (if this is *e.g.*
+"\~/my_gstreamer/lib/gstreamer-1.0/", set this location with
+"`export GSTREAMER_ROOT_DIR=$HOME/my_gstreamer/lib`").
 
 -   Most users will use the GStreamer supplied by their distribution,
     but a few (in particular users of Raspberry Pi OS Lite Legacy

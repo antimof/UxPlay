@@ -9,6 +9,12 @@ if (APPLE )
   find_program( PKG_CONFIG_EXECUTABLE  pkg-config  PATHS /Library/FrameWorks/GStreamer.framework/Commands )
   set(PKG_CONFIG_EXECUTABLE ${PKG_CONFIG_EXECUTABLE} --define-prefix )
 else()
+  if ( DEFINED ENV{GSTREAMER_ROOT_DIR} )
+     if ( EXISTS "$ENV{GSTREAMER_ROOT_DIR}/pkgconfig" )
+       message ( STATUS "*** Using GSTREAMER_ROOT_DIR = " $ENV{GSTREAMER_ROOT_DIR} )
+       set( ENV{PKG_CONFIG_PATH} "$ENV{GSTREAMER_ROOT_DIR}/pkgconfig:$ENV{PKG_CONFIG_PATH}" )
+     endif()
+  endif()
   set( ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig" ) # standard location for self-installed gstreamer
 endif()
 
