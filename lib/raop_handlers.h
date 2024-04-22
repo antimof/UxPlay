@@ -745,7 +745,6 @@ raop_handler_setup(raop_conn_t *conn,
                          conn->remote[2], conn->remote[3]);
             } else {
                 /*IPV6*/
-                logger_log(conn->raop->logger, LOGGER_INFO, "client is using IPV6 (untested!)");
                 snprintf(remote, sizeof(remote), "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
                          conn->remote[0], conn->remote[1], conn->remote[2], conn->remote[3],
                          conn->remote[4], conn->remote[5], conn->remote[6], conn->remote[7],
