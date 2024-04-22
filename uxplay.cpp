@@ -1484,12 +1484,18 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
 }
 
 extern "C" void video_pause (void *cls) {
+#ifdef GST_124
+    return;  //pause/resume changes in GStreamer-1.24 break this code
+#endif
     if (use_video) {
         video_renderer_pause();
     }
 }
 
 extern "C" void video_resume (void *cls) {
+#ifdef GST_124
+    return;  //pause/resume changes in GStreamer-1.24 break this code
+#endif
     if (use_video) {
         video_renderer_resume();
     }
