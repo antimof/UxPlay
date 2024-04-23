@@ -609,6 +609,11 @@ raop_rtp_mirror_thread(void *arg)
                 memcpy(sps_pps + sps_size + 8, payload + sps_size + 11, pps_size);
                 prepend_sps_pps = true;
 
+                uint64_t ntp_offset = 0;
+                ntp_offset  = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_offset);
+                if (!ntp_offset) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_WARNING, "ntp synchronization has not yet started: synchronized video may fail");
+                }
                 // h264codec_t h264;
                 // h264.version = payload[0];
                 // h264.profile_high = payload[1];
