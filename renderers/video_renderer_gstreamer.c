@@ -153,9 +153,10 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " ! ");
     g_string_append(launch, decoder);
     g_string_append(launch, " ! ");
-    g_string_append(launch, converter);
-    g_string_append(launch, " ! ");    
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
+    g_string_append(launch, converter);
+    g_string_append(launch, " ! ");
+    g_string_append(launch, "videoscale ! ");
     g_string_append(launch, videosink);
     g_string_append(launch, " name=video_sink");
     if (*video_sync) {
