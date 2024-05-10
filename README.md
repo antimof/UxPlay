@@ -369,7 +369,8 @@ Since UxPlay-1.64, UxPlay can be started with options read from a configuration 
 directory ("~"), (3) ``~/.config/uxplayrc``.  The format is one option per line, omitting the initial ``"-"`` of
 the command-line option.   Lines in the configuration file beginning with `"#"` are treated as comments and ignored.
 
-**Run uxplay in a terminal window**. On some systems, you can toggle into and out of fullscreen mode
+**Run uxplay in a terminal window**. On some systems, you can specify fullscreen mode with the `-fs` option, or
+toggle into and out of fullscreen mode
 with F11 or (held-down left Alt)+Enter keys.  Use Ctrl-C (or close the window)
 to terminate it when done. If the UxPlay server is not seen by the
 iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
@@ -695,9 +696,15 @@ default audio device is used.
 
 If you wish to specify the videosink using the `-vs <videosink>` option, some choices for `<videosink>` are
 `d3d11videosink`, ``d3dvideosink``, ```glimagesink```,
-`gtksink`.   With Direct3D 11.0 or greater, you can get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
-option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.  For convenience, this option will be added if just ``-vs d3d11videosink`` (by itself) is used.
-(You may wish to add "``vs d3d11videosink``" (no initial "`-`") to the UxPlay startup options file; see "man uxplay" or "uxplay -h".)
+`gtksink`.
+
+* With Direct3D 11.0 or greater, you can either always be in fullscreen mode using
+option  `-vs "d3d11videosink fullscreen-toggle-mode=property fullscreen=true"`, or
+get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
+option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.
+For convenience, these options will be added if just ``-vs d3d11videosink`` with or without the fullscreen
+option "-fs" is used. _(Windows users may wish to add "``vs d3d11videosink``" (no initial "`-`") to the
+UxPlay startup options file; see "man uxplay" or "uxplay -h".)_
 
 The executable uxplay.exe can also be run without the MSYS2 environment, in
 the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
@@ -783,7 +790,7 @@ using UxPlay as a second monitor for a mac computer, or monitoring a webcam; wit
    Recommendation: **don't use this option** unless there is some special
    reason to use it.
 
-**-fs** uses fullscreen mode, but only works with X11, Wayland or VAAPI.
+**-fs** uses fullscreen mode, but only works with X11, Wayland, VAAPI, and D3D11 (Windows).
 
 **-p**  allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets

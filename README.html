@@ -451,11 +451,12 @@ omitting the initial <code>"-"</code> of the command-line option. Lines
 in the configuration file beginning with <code>"#"</code> are treated as
 comments and ignored.</p>
 <p><strong>Run uxplay in a terminal window</strong>. On some systems,
-you can toggle into and out of fullscreen mode with F11 or (held-down
-left Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it
-when done. If the UxPlay server is not seen by the iOS client’s
-drop-down “Screen Mirroring” panel, check that your DNS-SD server
-(usually avahi-daemon) is running: do this in a terminal window with
+you can specify fullscreen mode with the <code>-fs</code> option, or
+toggle into and out of fullscreen mode with F11 or (held-down left
+Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it when
+done. If the UxPlay server is not seen by the iOS client’s drop-down
+“Screen Mirroring” panel, check that your DNS-SD server (usually
+avahi-daemon) is running: do this in a terminal window with
 <code>systemctl status avahi-daemon</code>. If this shows the
 avahi-daemon is not running, control it with
 <code>sudo systemctl [start,stop,enable,disable] avahi-daemon</code> (on
@@ -867,14 +868,20 @@ used.</p>
 <code>-vs &lt;videosink&gt;</code> option, some choices for
 <code>&lt;videosink&gt;</code> are <code>d3d11videosink</code>,
 <code>d3dvideosink</code>, <code>glimagesink</code>,
-<code>gtksink</code>. With Direct3D 11.0 or greater, you can get the
-ability to toggle into and out of fullscreen mode using the Alt-Enter
-key combination with option
+<code>gtksink</code>.</p>
+<ul>
+<li>With Direct3D 11.0 or greater, you can either always be in
+fullscreen mode using option
+<code>-vs "d3d11videosink fullscreen-toggle-mode=property fullscreen=true"</code>,
+or get the ability to toggle into and out of fullscreen mode using the
+Alt-Enter key combination with option
 <code>-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"</code>. For
-convenience, this option will be added if just
-<code>-vs d3d11videosink</code> (by itself) is used. (You may wish to
-add “<code>vs d3d11videosink</code>” (no initial “<code>-</code>”) to
-the UxPlay startup options file; see “man uxplay” or “uxplay -h”.)</p>
+convenience, these options will be added if just
+<code>-vs d3d11videosink</code> with or without the fullscreen option
+“-fs” is used. <em>(Windows users may wish to add
+“<code>vs d3d11videosink</code>” (no initial “<code>-</code>”) to the
+UxPlay startup options file; see “man uxplay” or “uxplay -h”.)</em></li>
+</ul>
 <p>The executable uxplay.exe can also be run without the MSYS2
 environment, in the Windows Terminal, with
 <code>C:\msys64\mingw64\bin\uxplay</code>.</p>
@@ -988,7 +995,7 @@ full-screen display that overscans, and is not displayed by gstreamer).
 Recommendation: <strong>don’t use this option</strong> unless there is
 some special reason to use it.</p>
 <p><strong>-fs</strong> uses fullscreen mode, but only works with X11,
-Wayland or VAAPI.</p>
+Wayland, VAAPI, and D3D11 (Windows).</p>
 <p><strong>-p</strong> allows you to select the network ports used by
 UxPlay (these need to be opened if the server is behind a firewall). By
 itself, -p sets “legacy” ports TCP 7100, 7000, 7001, UDP 6000, 6001,
