@@ -583,7 +583,7 @@ static void print_info (char *name) {
     printf("-taper    Use a \"tapered\" AirPlay volume-control profile\n"); 
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
-    printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
+    printf("-fs       Full-screen (only works with X11, Wayland, VAAPI, D3D11)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
@@ -1949,7 +1949,11 @@ int main (int argc, char *argv[]) {
     }
 
     if (videosink == "d3d11videosink"  && use_video) {
-        videosink.append(" fullscreen-toggle-mode=alt-enter");  
+        if (fullscreen) {
+            videosink.append(" fullscreen-toggle-mode=property fullscreen=true");
+        } else {
+            videosink.append(" fullscreen-toggle-mode=alt-enter");
+        }
         LOGI("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
                "Use Alt-Enter key combination to toggle into/out of full-screen mode");
     }
