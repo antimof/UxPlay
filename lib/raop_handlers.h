@@ -737,28 +737,23 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_ntp = NULL;
         conn->raop_rtp = NULL;
         conn->raop_rtp_mirror = NULL;
-        if (conn->remotelen == 4 || conn->remotelen == 16) {
-            char remote[40];
-            if (conn->remotelen == 4) {
-                /* IPV4 */
-                snprintf(remote, sizeof(remote), "%d.%d.%d.%d", conn->remote[0], conn->remote[1],
-                         conn->remote[2], conn->remote[3]);
-            } else {
-                /*IPV6*/
-                snprintf(remote, sizeof(remote), "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-                         conn->remote[0], conn->remote[1], conn->remote[2], conn->remote[3],
-                         conn->remote[4], conn->remote[5], conn->remote[6], conn->remote[7],
-                         conn->remote[8], conn->remote[9], conn->remote[10], conn->remote[11],
-                         conn->remote[12], conn->remote[13], conn->remote[14], conn->remote[15]);
-            }
-            conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, remote,
-                                           conn->remotelen, (unsigned short) timing_rport, &time_protocol);
-            raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
-            conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
-                                           remote, conn->remotelen, aeskey, aesiv);
-            conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
-                                                         conn->raop_ntp, remote, conn->remotelen, aeskey);
+        char remote[40];
+        int len = utils_ipaddress_to_string(conn->remotelen, conn->remote, conn->zone_id, remote, (int) sizeof(remote));
+        if (!len || len > sizeof(remote)) {
+            char *str = utils_data_to_string(conn->remote, conn->remotelen, 16);
+            logger_log(conn->raop->logger, LOGGER_ERR, "failed to extract valid client ip address:\n"
+                       "*** UxPlay will be unable to send communications to client.\n"
+                       "*** address length %d, zone_id %u address data:\n%sparser returned \"%s\"\n",
+                       conn->remotelen, conn->zone_id, str, remote);
+            free(str);
         }
+        conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, remote,
+                                       conn->remotelen, (unsigned short) timing_rport, &time_protocol);
+        raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
+        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
+                                       remote, conn->remotelen, aeskey, aesiv);
+        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
+                                                     conn->raop_ntp, remote, conn->remotelen, aeskey);
 
         plist_t res_event_port_node = plist_new_uint(conn->raop->port);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);
