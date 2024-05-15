@@ -626,10 +626,10 @@ lower-power models to keep audio and video synchronized using
 timestamps. In Legacy Raspberry Pi OS (Bullseye), raspi-config
 "Performance Options" allows specifying how much memory to allocate to
 the GPU, but this setting appears to be absent in Bookworm (but it can
-still be set to e.g. 128GB by adding a line "gpu_mem=128" in
-/boot/config.txt). A Pi Zero 2 W (which has 512GB memory) worked well
-when tested in 32 bit Bullseye or Bookworm Lite with 128GB allocated to
-the GPU (default seems to be 64GB).
+still be set to e.g. 128MB by adding a line "gpu_mem=128" in
+/boot/config.txt). A Pi Zero 2 W (which has 512MB memory) worked well
+when tested in 32 bit Bullseye or Bookworm Lite with 128MB allocated to
+the GPU (default seems to be 64MB).
 
 The basic uxplay options for R Pi are `uxplay [-vs <videosink>]`. The
 choice `<videosink>` = `glimagesink` is sometimes useful. With the
