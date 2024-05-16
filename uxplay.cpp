@@ -1330,6 +1330,95 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
         LOGE("Could not initialize dnssd library!: error %d", dnssd_error);
         return 1;
     }
+
+    /* after dnssd starts, reset the default feature set here 
+    /* (overwrites features set in dnssdint.h */
+    /* default: FEATURES_1 = 0x5A7FFEE6, FEATURES_2 = 0 */
+
+    dnssd_set_airplay_features(dnssd,  0, 0); // AirPlay video supported 
+    dnssd_set_airplay_features(dnssd,  1, 1); // photo supported 
+    dnssd_set_airplay_features(dnssd,  2, 1); // video protected with FairPlay DRM 
+    dnssd_set_airplay_features(dnssd,  3, 0); // volume control supported for videos
+
+    dnssd_set_airplay_features(dnssd,  4, 0); // http live streaming (HLS) supported
+    dnssd_set_airplay_features(dnssd,  5, 1); // slideshow supported 
+    dnssd_set_airplay_features(dnssd,  6, 1); // 
+    dnssd_set_airplay_features(dnssd,  7, 1); // mirroring supported
+
+    dnssd_set_airplay_features(dnssd,  8, 0); // screen rotation  supported 
+    dnssd_set_airplay_features(dnssd,  9, 1); // audio supported 
+    dnssd_set_airplay_features(dnssd, 10, 1); //  
+    dnssd_set_airplay_features(dnssd, 11, 1); // audio packet redundancy supported
+
+    dnssd_set_airplay_features(dnssd, 12, 1); // FaiPlay secure auth supported 
+    dnssd_set_airplay_features(dnssd, 13, 1); // photo preloading  supported 
+    dnssd_set_airplay_features(dnssd, 14, 1); // Authentication bit 4:  FairPlay authentication
+    dnssd_set_airplay_features(dnssd, 15, 1); // Metadata bit 1 support:   Artwork 
+
+    dnssd_set_airplay_features(dnssd, 16, 1); // Metadata bit 2 support:  Soundtrack  Progress 
+    dnssd_set_airplay_features(dnssd, 17, 1); // Metadata bit 0 support:  Text (DAACP) "Now Playing" info.
+    dnssd_set_airplay_features(dnssd, 18, 1); // Audio format 1 support:   
+    dnssd_set_airplay_features(dnssd, 19, 1); // Audio format 2 support: must be set for AirPlay 2 multiroom audio 
+
+    dnssd_set_airplay_features(dnssd, 20, 1); // Audio format 3 support: must be set for AirPlay 2 multiroom audio 
+    dnssd_set_airplay_features(dnssd, 21, 1); // Audio format 4 support:
+    dnssd_set_airplay_features(dnssd, 22, 1); // Authentication type 4: FairPlay authentication
+    dnssd_set_airplay_features(dnssd, 23, 0); // Authentication type 1: RSA Authentication
+
+    dnssd_set_airplay_features(dnssd, 24, 0); // 
+    dnssd_set_airplay_features(dnssd, 25, 1); // 
+    dnssd_set_airplay_features(dnssd, 26, 0); // Has Unified Advertiser info
+    dnssd_set_airplay_features(dnssd, 27, 1); // Supports Legacy Pairing
+
+    dnssd_set_airplay_features(dnssd, 28, 1); //  
+    dnssd_set_airplay_features(dnssd, 29, 0); // 
+    dnssd_set_airplay_features(dnssd, 30, 1); // RAOP support: with this bit set, the AirTunes service is not required. 
+    dnssd_set_airplay_features(dnssd, 31, 0); // 
+
+    for (int i = 32; i < 64; i++) {
+        dnssd_set_airplay_features(dnssd, i, 0);
+    }
+
+    /*  bits 32-63 are  not used here: see  https://emanualcozzi.net/docs/airplay2/features 
+    dnssd_set_airplay_features(dnssd, 32, 0); // isCarPlay when ON,; Supports InitialVolume when OFF
+    dnssd_set_airplay_features(dnssd, 33, 0); // Supports Air Play Video Play Queue
+    dnssd_set_airplay_features(dnssd, 34, 0); // Supports Air Play from cloud (requires that bit 6 is ON)
+    dnssd_set_airplay_features(dnssd, 35, 0); // Supports TLS_PSK
+
+    dnssd_set_airplay_features(dnssd, 36, 0); //
+    dnssd_set_airplay_features(dnssd, 37, 0); //
+    dnssd_set_airplay_features(dnssd, 38, 0); //  Supports Unified Media Control (CoreUtils Pairing and Encryption)
+    dnssd_set_airplay_features(dnssd, 39, 0); //
+
+    dnssd_set_airplay_features(dnssd, 40, 0); // Supports Buffered Audio
+    dnssd_set_airplay_features(dnssd, 41, 0); // Supports PTP
+    dnssd_set_airplay_features(dnssd, 42, 0); // Supports Screen Multi Codec
+    dnssd_set_airplay_features(dnssd, 43, 0); // Supports System Pairing
+
+    dnssd_set_airplay_features(dnssd, 44, 0); // is AP Valeria Screen Sender
+    dnssd_set_airplay_features(dnssd, 45, 0); //
+    dnssd_set_airplay_features(dnssd, 46, 0); // Supports HomeKit Pairing and Access Control
+    dnssd_set_airplay_features(dnssd, 47, 0); //
+
+    dnssd_set_airplay_features(dnssd, 48, 0); // Supports CoreUtils Pairing and Encryption
+    dnssd_set_airplay_features(dnssd, 49, 0); //
+    dnssd_set_airplay_features(dnssd, 50, 0); // Metadata bit 3: "Now Playing" info sent by bplist not DAACP test
+    dnssd_set_airplay_features(dnssd, 51, 0); // Supports Unified Pair Setup and MFi Authentication
+
+    dnssd_set_airplay_features(dnssd, 52, 0); // Supports Set Peers Extended Message
+    dnssd_set_airplay_features(dnssd, 53, 0); //
+    dnssd_set_airplay_features(dnssd, 54, 0); // Supports AP Sync
+    dnssd_set_airplay_features(dnssd, 55, 0); // Supports WoL
+
+    dnssd_set_airplay_features(dnssd, 56, 0); // Supports Wol
+    dnssd_set_airplay_features(dnssd, 57, 0); //
+    dnssd_set_airplay_features(dnssd, 58, 0); // Supports Hangdog Remote Control
+    dnssd_set_airplay_features(dnssd, 59, 0); // Supports AudioStreamConnection setup
+
+    dnssd_set_airplay_features(dnssd, 60, 0); // Supports Audo Media Data Control         
+    dnssd_set_airplay_features(dnssd, 61, 0); // Supports RFC2198 redundancy
+    */
+
     /* bit 27 of Features determines whether the AirPlay2 client-pairing protocol will be used (1) or not (0) */
     dnssd_set_airplay_features(dnssd, 27, (int) setup_legacy_pairing);
     return 0;
@@ -1765,13 +1854,9 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_start(raop, &raop_port);
     raop_set_port(raop, raop_port);
 
-    if (tcp[2]) {
-        airplay_port = tcp[2];
-    } else {
-        /* is there a problem if this coincides with a randomly-selected tcp raop_mirror_data port? 
-         * probably not, as the airplay port is only used for initial client contact */
-        airplay_port = (raop_port != HIGHEST_PORT ? raop_port + 1 : raop_port - 1);
-    }
+    /* use raop_port for airplay_port (instead of tcp[2]) */
+    airplay_port = raop_port;
+
     if (dnssd) {
         raop_set_dnssd(raop, dnssd);
     } else {
