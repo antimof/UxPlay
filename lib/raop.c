@@ -155,18 +155,18 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
 
 static void
 conn_request(void *ptr, http_request_t *request, http_response_t **response) {
-    raop_conn_t *conn = ptr;
-    const char *method;
-    const char *url;
-    const char *cseq;
     char *response_data = NULL;
     int response_datalen = 0;
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "conn_request");
-    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
+    raop_conn_t *conn = ptr;
 
-    method = http_request_get_method(request);
-    url = http_request_get_url(request);
-    cseq = http_request_get_header(request, "CSeq");
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "conn_request");
+
+    const char *method = http_request_get_method(request);
+    const char *url = http_request_get_url(request);
+    const char *protocol = http_request_get_protocol(request);
+    const char *cseq = http_request_get_header(request, "CSeq");
+
+    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
     if (!conn->have_active_remote) {
         const char *active_remote = http_request_get_header(request, "Active-Remote");
         if (active_remote) {
@@ -178,10 +178,16 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         }
     }
 
-    if (!method || !cseq) {
+    if (!method) {
         return;
     }
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "\n%s %s RTSP/1.0", method, url);
+
+    /* this rejects unsupported messages from _airplay._tcp for video streaming protocol*/
+    if (!cseq) {
+        return;
+    }
+    
+    logger_log(conn->raop->logger, LOGGER_DEBUG, "\n%s %s %s", method, url, protocol);
     char *header_str= NULL; 
     http_request_get_header_string(request, &header_str);
     if (header_str) {
@@ -215,7 +221,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         }
     }
 
-    *response = http_response_init("RTSP/1.0", 200, "OK");
+    *response = http_response_init(protocol, 200, "OK");
 
     http_response_add_header(*response, "CSeq", cseq);
     //http_response_add_header(*response, "Apple-Jack-Status", "connected; type=analog");
