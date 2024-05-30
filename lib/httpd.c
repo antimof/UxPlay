@@ -31,6 +31,7 @@ struct http_connection_s {
 
     int socket_fd;
     void *user_data;
+    connection_type_t type;
     http_request_t *request;
 };
 typedef struct http_connection_s http_connection_t;
@@ -42,6 +43,7 @@ struct httpd_s {
     int max_connections;
     int open_connections;
     http_connection_t *connections;
+    char nohold;
 
     /* These variables only edited mutex locked */
     int running;
@@ -54,14 +56,43 @@ struct httpd_s {
     int server_fd6;
 };
 
+int
+httpd_set_connection_type (httpd_t *httpd, void *user_data, connection_type_t type) {
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+	if (!connection->connected) {
+            continue;
+        }
+        if (connection->user_data == user_data) {
+            connection->type = type;
+            return i;
+        }
+    }
+    return -1;
+}
+  
+int
+httpd_count_connection_type (httpd_t *httpd, connection_type_t type) {
+    int count = 0;
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+        if (!connection->connected) {
+            continue;
+        }
+        if (connection->type == type) {
+            count++;
+        }
+    }
+    return count;
+}
+
+#define MAX_CONNECTIONS 12  /* value used in AppleTV 3*/
 httpd_t *
-httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int max_connections)
+httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int nohold)
 {
     httpd_t *httpd;
-
     assert(logger);
     assert(callbacks);
-    assert(max_connections > 0);
 
     /* Allocate the httpd_t structure */
     httpd = calloc(1, sizeof(httpd_t));
@@ -69,8 +100,10 @@ httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int max_connections)
         return NULL;
     }
 
-    httpd->max_connections = max_connections;
-    httpd->connections = calloc(max_connections, sizeof(http_connection_t));
+    
+    httpd->nohold = (nohold ? 1 : 0);
+    httpd->max_connections = MAX_CONNECTIONS;  
+    httpd->connections = calloc(httpd->max_connections, sizeof(http_connection_t));
     if (!httpd->connections) {
         free(httpd);
         return NULL;
@@ -111,6 +144,8 @@ httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
     shutdown(connection->socket_fd, SHUT_WR);
     closesocket(connection->socket_fd);
     connection->connected = 0;
+    connection->user_data = NULL;
+    connection->type = CONNECTION_TYPE_UNKNOWN;
     httpd->open_connections--;
 }
 
@@ -131,7 +166,6 @@ httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len
         logger_log(httpd->logger, LOGGER_INFO, "Max connections reached");
         return -1;
     }
-
     user_data = httpd->callbacks.conn_init(httpd->callbacks.opaque, local, local_len, remote, remote_len, zone_id);
     if (!user_data) {
         logger_log(httpd->logger, LOGGER_ERR, "Error initializing HTTP request handler");
@@ -142,6 +176,7 @@ httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len
     httpd->connections[i].socket_fd = fd;
     httpd->connections[i].connected = 1;
     httpd->connections[i].user_data = user_data;
+    httpd->connections[i].type = CONNECTION_TYPE_UNKNOWN;   //should not be necessary ...
     return 0;
 }
 
@@ -178,20 +213,20 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
     remote = netutils_get_address(&remote_saddr, &remote_len, &remote_zone_id);
     assert (local_zone_id == remote_zone_id);
     
-#ifdef NOHOLD
-    /* remove existing connections to make way for new connections:
-     * this will only occur if max_connections > 2 */
-    if (httpd->open_connections >= 2)  {
-        logger_log(httpd->logger, LOGGER_INFO, "Destroying current connections to allow connection by new client");
-        for (int i = 0; i<httpd->max_connections; i++) {
-            http_connection_t *connection = &httpd->connections[i];
-            if (!connection->connected) {
-                continue;
+    /* remove existing connections to make way for new connections, if http->nohold is set:
+     * this will only occur if open_connections >= 2  and a connection with CONNECTION_TYPE_RAOP already exists */
+    if (httpd->nohold && httpd->open_connections >= 2)  {
+      if (httpd_count_connection_type(httpd, CONNECTION_TYPE_RAOP)) {
+            logger_log(httpd->logger, LOGGER_INFO, "Destroying current connections to allow connection by new client");
+            for (int i = 0; i<httpd->max_connections; i++) {
+                http_connection_t *connection = &httpd->connections[i];
+                if (!connection->connected) {
+                    continue;
+                }
+	        httpd_remove_connection(httpd, connection);
             }
-	    httpd_remove_connection(httpd, connection);
         }
     }
-#endif
     
     ret = httpd_add_connection(httpd, fd, local, local_len, remote, remote_len, local_zone_id);
     if (ret == -1) {
@@ -476,4 +511,3 @@ httpd_stop(httpd_t *httpd)
     httpd->joined = 1;
     MUTEX_UNLOCK(httpd->run_mutex);
 }
-

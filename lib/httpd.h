@@ -21,17 +21,24 @@
 
 typedef struct httpd_s httpd_t;
 
+typedef enum connectype_type_e {
+    CONNECTION_TYPE_UNKNOWN,
+    CONNECTION_TYPE_RAOP
+} connection_type_t;
+
 struct httpd_callbacks_s {
-	void* opaque;
-        void* (*conn_init)(void *opaque, unsigned char *local, int locallen, unsigned char *remote,
-                           int remotelen, unsigned int zone_id);
-	void  (*conn_request)(void *ptr, http_request_t *request, http_response_t **response);
-	void  (*conn_destroy)(void *ptr);
+    void* opaque;
+    void* (*conn_init)(void *opaque, unsigned char *local, int locallen, unsigned char *remote,
+                       int remotelen, unsigned int zone_id);
+    void  (*conn_request)(void *ptr, http_request_t *request, http_response_t **response);
+    void  (*conn_destroy)(void *ptr);
 };
 typedef struct httpd_callbacks_s httpd_callbacks_t;
 
+int httpd_set_connection_type (httpd_t *http, void *user_data, connection_type_t type);
+int httpd_count_connection_type (httpd_t *http, connection_type_t type);
 
-httpd_t *httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int max_connections);
+httpd_t *httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int  nohold);
 
 int httpd_is_running(httpd_t *httpd);
 

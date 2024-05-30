@@ -90,6 +90,8 @@ struct raop_conn_s {
 
     unsigned int zone_id;
 
+    connection_type_t connection_type; 
+
     bool have_active_remote;
 };
 typedef struct raop_conn_s raop_conn_t;
@@ -140,9 +142,11 @@ conn_init(void *opaque, unsigned char *local, int locallen, unsigned char *remot
     memcpy(conn->remote, remote, remotelen);
 
     conn->zone_id = zone_id;
-    
+
     conn->locallen = locallen;
     conn->remotelen = remotelen;
+
+    conn->connection_type = CONNECTION_TYPE_UNKNOWN;
 
     conn->have_active_remote = false;
     
@@ -160,13 +164,27 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     raop_conn_t *conn = ptr;
 
     logger_log(conn->raop->logger, LOGGER_DEBUG, "conn_request");
+    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
 
     const char *method = http_request_get_method(request);
     const char *url = http_request_get_url(request);
     const char *protocol = http_request_get_protocol(request);
     const char *cseq = http_request_get_header(request, "CSeq");
 
-    bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
+    if (conn->connection_type == CONNECTION_TYPE_UNKNOWN) {
+        if (httpd_count_connection_type(conn->raop->httpd, CONNECTION_TYPE_RAOP)) {
+            char ipaddr[40];
+            utils_ipaddress_to_string(conn->remotelen, conn->remote, conn->zone_id, ipaddr, (int) (sizeof(ipaddr)));
+            logger_log(conn->raop->logger, LOGGER_WARNING, "rejecting new connection request from %s", ipaddr);	  
+            *response = http_response_init("RTSP/1.0", 409, "Conflict: Server is connected to another client");
+            http_response_add_header(*response, "CSeq", cseq);
+            http_response_add_header(*response, "Server", "AirTunes/"GLOBAL_VERSION);
+            goto finish;
+        }      
+        httpd_set_connection_type(conn->raop->httpd, ptr, CONNECTION_TYPE_RAOP);
+        conn->connection_type = CONNECTION_TYPE_RAOP;
+    }
+
     if (!conn->have_active_remote) {
         const char *active_remote = http_request_get_header(request, "Active-Remote");
         if (active_remote) {
@@ -264,6 +282,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     if (handler != NULL) {
         handler(conn, request, *response, &response_data, &response_datalen);
     }
+    finish:;
     http_response_finish(*response, response_data, response_datalen);
 
     int len;
@@ -395,13 +414,10 @@ raop_init(raop_callbacks_t *callbacks) {
 }
 
 int
-raop_init2(raop_t *raop, int max_clients, const char *device_id, const char *keyfile) {
+raop_init2(raop_t *raop, int nohold, const char *device_id, const char *keyfile) {
     pairing_t *pairing;
     httpd_t *httpd;
     httpd_callbacks_t httpd_cbs;
-
-    assert(max_clients > 0);
-    assert(max_clients < 100);
 
     /* create a new public key for pairing */
     int new_key;
@@ -433,7 +449,7 @@ raop_init2(raop_t *raop, int max_clients, const char *device_id, const char *key
     httpd_cbs.conn_destroy = &conn_destroy;
 
     /* Initialize the http daemon */
-    httpd = httpd_init(raop->logger, &httpd_cbs, max_clients);
+    httpd = httpd_init(raop->logger, &httpd_cbs, nohold);
     if (!httpd) {
         logger_log(raop->logger, LOGGER_ERR, "failed to initialize http daemon");
         pairing_destroy(pairing);
