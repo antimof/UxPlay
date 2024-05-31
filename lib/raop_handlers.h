@@ -787,8 +787,8 @@ raop_handler_setup(raop_conn_t *conn,
                                " key and iv): %llu", stream_connection_id);
 
                     if (conn->raop_rtp_mirror) {
-                        raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, &stream_connection_id);
-                        raop_rtp_start_mirror(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
+                        raop_rtp_mirror_init_aes(conn->raop_rtp_mirror, &stream_connection_id);
+                        raop_rtp_mirror_start(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "Mirroring not initialized at SETUP, playing will fail!");
