@@ -36,33 +36,37 @@ raop_handler_info(raop_conn_t *conn,
 {
     assert(conn->raop->dnssd);
 
-    int airplay_txt_len = 0;
-    const char *airplay_txt = dnssd_get_airplay_txt(conn->raop->dnssd, &airplay_txt_len);
+    plist_t res_node = plist_new_dict();
 
-    int name_len = 0;
-    const char *name = dnssd_get_name(conn->raop->dnssd, &name_len);
-
+    /* deviceID is the physical hardware address, and will not change */
     int hw_addr_raw_len = 0;
     const char *hw_addr_raw = dnssd_get_hw_addr(conn->raop->dnssd, &hw_addr_raw_len);
-
     char *hw_addr = calloc(1, 3 * hw_addr_raw_len);
     //int hw_addr_len =
     utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
+    plist_t device_id_node = plist_new_string(hw_addr);
+    plist_dict_set_item(res_node, "deviceID", device_id_node);
 
+    /* Persistent Public Key */
     int pk_len = 0;
     char *pk = utils_parse_hex(conn->raop->pk_str, strlen(conn->raop->pk_str), &pk_len);
+    plist_t pk_node = plist_new_data(pk, pk_len);
+    plist_dict_set_item(res_node, "pk", pk_node);
 
-    plist_t r_node = plist_new_dict();
-
+    /* airplay_txt is from the _airplay._tcp  dnssd announuncement, may not be necessary */
+    int airplay_txt_len = 0;
+    const char *airplay_txt = dnssd_get_airplay_txt(conn->raop->dnssd, &airplay_txt_len);
     plist_t txt_airplay_node = plist_new_data(airplay_txt, airplay_txt_len);
-    plist_dict_set_item(r_node, "txtAirPlay", txt_airplay_node);
+    plist_dict_set_item(res_node, "txtAirPlay", txt_airplay_node);
 
     uint64_t features = dnssd_get_airplay_features(conn->raop->dnssd);
     plist_t features_node = plist_new_uint(features);
-    plist_dict_set_item(r_node, "features", features_node);
+    plist_dict_set_item(res_node, "features", features_node);
 
+    int name_len = 0;
+    const char *name = dnssd_get_name(conn->raop->dnssd, &name_len);
     plist_t name_node = plist_new_string(name);
-    plist_dict_set_item(r_node, "name", name_node);
+    plist_dict_set_item(res_node, "name", name_node);
 
     plist_t audio_formats_node = plist_new_array();
     plist_t audio_format_0_node = plist_new_dict();
@@ -81,31 +85,25 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(audio_format_1_node, "audioInputFormats", audio_format_1_audio_input_formats_node);
     plist_dict_set_item(audio_format_1_node, "audioOutputFormats", audio_format_1_audio_output_formats_node);
     plist_array_append_item(audio_formats_node, audio_format_1_node);
-    plist_dict_set_item(r_node, "audioFormats", audio_formats_node);
+    plist_dict_set_item(res_node, "audioFormats", audio_formats_node);
 
     plist_t pi_node = plist_new_string(AIRPLAY_PI);
-    plist_dict_set_item(r_node, "pi", pi_node);
+    plist_dict_set_item(res_node, "pi", pi_node);
 
     plist_t vv_node = plist_new_uint(strtol(AIRPLAY_VV, NULL, 10));
-    plist_dict_set_item(r_node, "vv", vv_node);
+    plist_dict_set_item(res_node, "vv", vv_node);
 
     plist_t status_flags_node = plist_new_uint(68);
-    plist_dict_set_item(r_node, "statusFlags", status_flags_node);
+    plist_dict_set_item(res_node, "statusFlags", status_flags_node);
 
     plist_t keep_alive_low_power_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
+    plist_dict_set_item(res_node, "keepAliveLowPower", keep_alive_low_power_node);
 
     plist_t source_version_node = plist_new_string(GLOBAL_VERSION);
-    plist_dict_set_item(r_node, "sourceVersion", source_version_node);
-
-    plist_t pk_node = plist_new_data(pk, pk_len);
-    plist_dict_set_item(r_node, "pk", pk_node);
+    plist_dict_set_item(res_node, "sourceVersion", source_version_node);
 
     plist_t keep_alive_send_stats_as_body_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
-
-    plist_t device_id_node = plist_new_string(hw_addr);
-    plist_dict_set_item(r_node, "deviceID", device_id_node);
+    plist_dict_set_item(res_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
 
     plist_t audio_latencies_node = plist_new_array();
     plist_t audio_latencies_0_node = plist_new_dict();
@@ -128,13 +126,13 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node);
     plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_1_node);
-    plist_dict_set_item(r_node, "audioLatencies", audio_latencies_node);
+    plist_dict_set_item(res_node, "audioLatencies", audio_latencies_node);
 
     plist_t model_node = plist_new_string(GLOBAL_MODEL);
-    plist_dict_set_item(r_node, "model", model_node);
+    plist_dict_set_item(res_node, "model", model_node);
 
     plist_t mac_address_node = plist_new_string(hw_addr);
-    plist_dict_set_item(r_node, "macAddress", mac_address_node);
+    plist_dict_set_item(res_node, "macAddress", mac_address_node);
 
     plist_t displays_node = plist_new_array();
     plist_t displays_0_node = plist_new_dict();
@@ -164,10 +162,10 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(displays_0_node, "overscanned", displays_0_overscanned_node);
     plist_dict_set_item(displays_0_node, "features", displays_0_features);
     plist_array_append_item(displays_node, displays_0_node);
-    plist_dict_set_item(r_node, "displays", displays_node);
+    plist_dict_set_item(res_node, "displays", displays_node);
 
-    plist_to_bin(r_node, response_data, (uint32_t *) response_datalen);
-    plist_free(r_node);
+    plist_to_bin(res_node, response_data, (uint32_t *) response_datalen);
+    plist_free(res_node);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
     free(pk);
     free(hw_addr);
