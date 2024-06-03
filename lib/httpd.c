@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "httpd.h"
 #include "netutils.h"
@@ -243,7 +244,8 @@ httpd_thread(void *arg)
     httpd_t *httpd = arg;
     char buffer[1024];
     int i;
-
+    bool logger_debug = (logger_get_level(httpd->logger) >= LOGGER_DEBUG);
+    
     assert(httpd);
 
     while (1) {
@@ -336,7 +338,7 @@ httpd_thread(void *arg)
                 assert(connection->request);
             }
 
-            logger_log(httpd->logger, LOGGER_DEBUG, "httpd receiving on socket %d", connection->socket_fd);
+            logger_log(httpd->logger, LOGGER_DEBUG, "httpd receiving on socket %d, connection %d", connection->socket_fd, i);
             ret = recv(connection->socket_fd, buffer, sizeof(buffer), 0);
             if (ret == 0) {
                 logger_log(httpd->logger, LOGGER_INFO, "Connection closed for socket %d", connection->socket_fd);
@@ -356,6 +358,13 @@ httpd_thread(void *arg)
             if (http_request_is_complete(connection->request)) {
                 http_response_t *response = NULL;
                 // Callback the received data to raop
+		if (logger_debug) {
+                    const char *method = http_request_get_method(connection->request);
+                    const char *url = http_request_get_url(connection->request);
+                    const char *protocol = http_request_get_protocol(connection->request);
+                    logger_log(httpd->logger, LOGGER_INFO, "httpd request received on socket %d, connection %d, "
+			       "method = %s, url = %s, protocol = %s", connection->socket_fd, i, method, url, protocol);
+                }
                 httpd->callbacks.conn_request(connection->user_data, connection->request, &response);
                 http_request_destroy(connection->request);
                 connection->request = NULL;

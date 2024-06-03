@@ -163,7 +163,6 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     int response_datalen = 0;
     raop_conn_t *conn = ptr;
 
-    logger_log(conn->raop->logger, LOGGER_DEBUG, "conn_request");
     bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
 
     const char *method = http_request_get_method(request);
