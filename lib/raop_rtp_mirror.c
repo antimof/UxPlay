@@ -291,7 +291,7 @@ raop_rtp_mirror_thread(void *arg)
 
             if (payload == NULL && ret == 0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
-                           "raop_rtp_mirror tcp socket is closed, got %d bytes of 128 byte header",readstart);
+                           "raop_rtp_mirror tcp socket was closed by client (recv returned 0); got %d bytes of 128 byte header",readstart);
                 FD_CLR(stream_fd, &rfds);
                 stream_fd = -1;
                 continue;
@@ -354,7 +354,7 @@ raop_rtp_mirror_thread(void *arg)
             }
 
             if (ret == 0) {
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket is closed");
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket was closed by client (recv returned 0)");
                 break;
             } else if (ret == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
@@ -699,7 +699,7 @@ raop_rtp_mirror_thread(void *arg)
 }
 
 static int
-raop_rtp_init_mirror_sockets(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
+raop_rtp_mirror_init_socket(raop_rtp_mirror_t *raop_rtp_mirror, int use_ipv6)
 {
     assert(raop_rtp_mirror);
 
@@ -751,8 +751,8 @@ raop_rtp_mirror_start(raop_rtp_mirror_t *raop_rtp_mirror, unsigned short *mirror
     //use_ipv6 = 0;
      
     raop_rtp_mirror->mirror_data_lport = *mirror_data_lport;
-    if (raop_rtp_init_mirror_sockets(raop_rtp_mirror, use_ipv6) < 0) {
-        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror initializing sockets failed");
+    if (raop_rtp_mirror_init_socket(raop_rtp_mirror, use_ipv6) < 0) {
+        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror initializing socket failed");
         MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
         return;
     }
