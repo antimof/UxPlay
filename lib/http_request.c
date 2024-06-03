@@ -187,8 +187,11 @@ http_request_add_data(http_request_t *request, const char *data, int datalen)
 
     assert(request);
 
-    ret = llhttp_execute(&request->parser,
-                              data, datalen);
+    ret = llhttp_execute(&request->parser, data, datalen);
+
+    /* support for "Upgrade" to reverse http ("PTTH/1.0") protocol */
+    llhttp_resume_after_upgrade(&request->parser);
+
     return ret;
 }
 
