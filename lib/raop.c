@@ -175,9 +175,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
             char ipaddr[40];
             utils_ipaddress_to_string(conn->remotelen, conn->remote, conn->zone_id, ipaddr, (int) (sizeof(ipaddr)));
             logger_log(conn->raop->logger, LOGGER_WARNING, "rejecting new connection request from %s", ipaddr);	  
-            *response = http_response_init("RTSP/1.0", 409, "Conflict: Server is connected to another client");
-            http_response_add_header(*response, "CSeq", cseq);
-            http_response_add_header(*response, "Server", "AirTunes/"GLOBAL_VERSION);
+            *response = http_response_init(protocol, 409, "Conflict: Server is connected to another client");
             goto finish;
         }      
         httpd_set_connection_type(conn->raop->httpd, ptr, CONNECTION_TYPE_RAOP);
@@ -210,7 +208,7 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
     if (header_str) {
         logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", header_str);
         bool data_is_plist = (strstr(header_str,"apple-binary-plist") != NULL);
-        bool data_is_text = (strstr(header_str,"text/parameters") != NULL);
+        bool data_is_text = (strstr(header_str,"text/") != NULL);
         free(header_str);
         int request_datalen;
         const char *request_data = http_request_get_data(request, &request_datalen);
@@ -240,9 +238,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
 
     *response = http_response_init(protocol, 200, "OK");
 
-    http_response_add_header(*response, "CSeq", cseq);
+
     //http_response_add_header(*response, "Apple-Jack-Status", "connected; type=analog");
-    http_response_add_header(*response, "Server", "AirTunes/"GLOBAL_VERSION);
+
 
     logger_log(conn->raop->logger, LOGGER_DEBUG, "Handling request %s with URL %s", method, url);
     raop_handler_t handler = NULL;
@@ -282,6 +280,8 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         handler(conn, request, *response, &response_data, &response_datalen);
     }
     finish:;
+    http_response_add_header(*response, "Server", "AirTunes/"GLOBAL_VERSION);
+    http_response_add_header(*response, "CSeq", cseq);    
     http_response_finish(*response, response_data, response_datalen);
 
     int len;
