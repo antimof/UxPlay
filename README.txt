@@ -805,11 +805,10 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
 
     `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base`
 
-    Note that libplist will be linked statically to the uxplay
-    executable. If you are trying a different Windows build system, MSVC
-    versions of GStreamer for Windows are available from the [official
-    GStreamer site](https://gstreamer.freedesktop.org/download/), but
-    only the MinGW 64-bit build on MSYS2 has been tested.
+    If you are trying a different Windows build system, MSVC versions of
+    GStreamer for Windows are available from the [official GStreamer
+    site](https://gstreamer.freedesktop.org/download/), but only the
+    MinGW 64-bit build on MSYS2 has been tested.
 
 5.  cd to the UxPlay source directory, then "`mkdir build`" and
     "`cd build`". The build process assumes that the Bonjour SDK is

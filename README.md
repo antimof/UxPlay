@@ -642,7 +642,6 @@ After installing GStreamer, build and install uxplay: open a terminal and change
 
    `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base`
 
-    Note that libplist will be linked statically to the uxplay executable.
     If you are trying a different Windows build system, MSVC versions of GStreamer
     for Windows are available from the [official GStreamer site](https://gstreamer.freedesktop.org/download/),
     but only the MinGW 64-bit build on MSYS2 has been tested.
