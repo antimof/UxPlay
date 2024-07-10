@@ -174,8 +174,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         if (httpd_count_connection_type(conn->raop->httpd, CONNECTION_TYPE_RAOP)) {
             char ipaddr[40];
             utils_ipaddress_to_string(conn->remotelen, conn->remote, conn->zone_id, ipaddr, (int) (sizeof(ipaddr)));
-            logger_log(conn->raop->logger, LOGGER_WARNING, "rejecting new connection request from %s", ipaddr);	  
-            *response = http_response_init(protocol, 409, "Conflict: Server is connected to another client");
+            logger_log(conn->raop->logger, LOGGER_WARNING, "rejecting new connection request from %s", ipaddr);
+	    *response = http_response_create();
+            http_response_init(*response, protocol, 409, "Conflict: Server is connected to another client");
             goto finish;
         }      
         httpd_set_connection_type(conn->raop->httpd, ptr, CONNECTION_TYPE_RAOP);
@@ -236,8 +237,8 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         }
     }
 
-    *response = http_response_init(protocol, 200, "OK");
-
+    *response = http_response_create();
+    http_response_init(*response, protocol, 200, "OK");
 
     //http_response_add_header(*response, "Apple-Jack-Status", "connected; type=analog");
 
