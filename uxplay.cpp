@@ -1450,6 +1450,14 @@ static bool check_blocked_client(char *deviceid) {
 
 // Server callbacks
 
+extern "C" void video_reset(void *cls) {
+    reset_loop = true;
+    remote_clock_offset = 0;
+    relaunch_video = true;
+}
+
+
+
 extern "C" void display_pin(void *cls, char *pin) {
     int margin = 10;
     int spacing = 3;
@@ -1817,6 +1825,7 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.register_client = register_client;
     raop_cbs.check_register = check_register;
     raop_cbs.export_dacp = export_dacp;
+    raop_cbs.video_reset = video_reset;
 
     raop = raop_init(&raop_cbs);
     if (raop == NULL) {
