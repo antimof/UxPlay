@@ -1,23 +1,20 @@
-# UxPlay 1.68: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.69: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
-### Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).
+### **Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).**
 
--   ***NEW in v1.68**: Volume-control improvements, plus improved
-    support for Apple-style one-time "pin" codes introduced in 1.67: a
-    register of pin-registered clients can now optionally be maintained
-    to check returning clients; a simpler method for generating a
-    persistent public key (based on the MAC address, which can be set in
-    the UxPlay startup file) is now the default. (The OpenSSL "pem-file"
-    method introduced in 1.67 is still available with the "-key"
-    option.)*
+-   ***NEW in v1.69**: minor changes for users: -nofreeze option to NOT
+    leave frozen video in place when a network failure occurs; internal
+    changes/improvements needed for planned future HLS video streaming
+    support.*
 
 ## Highlights:
 
 -   GPLv3, open source.
 -   Originally supported only AirPlay Mirror protocol, now has added
     support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
-    current iOS/iPadOS clients. **There is no support for Airplay2
-    video-streaming protocol, and none is planned.**
+    current iOS/iPadOS clients. **There is no current support for
+    Airplay HLS video-streaming (e.g., YouTube video) but this is in
+    development.**
 -   macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
     systems) can act either as AirPlay clients, or as the server running
     UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
@@ -158,12 +155,13 @@ stops/restarts as you leave/re-enter* **Audio** *mode.*
     and audio content from DRM-free apps like "YouTube app" will be
     streamed by UxPlay in Mirror mode.**
 
--   **As UxPlay does not support non-Mirror AirPlay2 video streaming
-    (where the client controls a web server on the AirPlay server that
-    directly receives content to avoid it being decoded and re-encoded
-    by the client), using the icon for AirPlay video in apps such as the
-    YouTube app will only send audio (in lossless ALAC format) without
-    the accompanying video.**
+-   **As UxPlay does not currently support non-Mirror AirPlay video
+    streaming (where the client controls a web server on the AirPlay
+    server that directly receives HLS content to avoid it being decoded
+    and re-encoded by the client), using the icon for AirPlay video in
+    apps such as the YouTube app will only send audio (in lossless ALAC
+    format) without the accompanying video (there are plans to support
+    HLS video in future releases of UxPlay)**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
@@ -1117,6 +1115,10 @@ it). After *n* failures, the client will be presumed to be offline, and
 the connection will be reset to allow a new connection. The default
 value of *n* is 5; the value *n* = 0 means "no limit" on timeouts.
 
+**-nofreeze** closes the video window after a reset due to ntp timeout
+(default is to leave window open to allow a smoother reconection to the
+same client). This option may be useful in fullscreen mode.
+
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
 close** the video window when the the client sends the "Stop Mirroring"
 signal. *This option is currently used by default in macOS, as the
@@ -1569,6 +1571,12 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.
 
 # Changelog
+
+1.69 2024-08-09 Internal improvements (e.g. in -nohold option,
+identifying GStreamer videosink selected by autovideosink, finding X11
+display) in anticipation of future HLS video support. New -nofreeze
+option to not leave frozen video in place when a network connection is
+reset. Fixes for GStreamer-1.24.x changes.
 
 1.68 2023-12-31 New simpler (default) method for generating a persistent
 public key from the server MAC address (which can now be set with the -m

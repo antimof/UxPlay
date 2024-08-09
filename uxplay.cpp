@@ -62,7 +62,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.68"
+#define VERSION "1.69"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -122,6 +122,7 @@ static bool debug_log = DEFAULT_DEBUG_LOG;
 static int log_level = LOGGER_INFO;
 static bool bt709_fix = false;
 static int nohold = 0;
+static bool nofreeze = false;
 static unsigned short raop_port;
 static unsigned short airplay_port;
 static uint64_t remote_clock_offset = 0;
@@ -609,7 +610,8 @@ static void print_info (char *name) {
     printf("-al x     Audio latency in seconds (default 0.25) reported to client.\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
-    printf("-nc       do Not Close video window when client stops mirroring\n");
+    printf("-nofreeze Do NOT leave frozen screen in place after reset\n");
+    printf("-nc       Do NOT Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
     printf("-restrict Restrict clients to those specified by \"-allow <deviceID>\"\n");
     printf("          UxPlay displays deviceID when a client attempts to connect\n");
@@ -1125,6 +1127,8 @@ static void parse_arguments (int argc, char *argv[]) {
             db_low = db1;
             db_high = db2;
 	    printf("db range %f:%f\n", db_low, db_high);
+        } else if (arg == "-nofreeze") {
+            nofreeze = true;
         } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
@@ -1510,8 +1514,9 @@ extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
         LOGI("   Sometimes the network connection may recover after a longer delay:\n"
              "   the default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
     }
-    printf("reset_video %d\n",(int) reset_video);
-    close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
+    if (!nofreeze) {
+        close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
+    }
     raop_stop(raop);
     reset_loop = true;
 }

@@ -1,29 +1,27 @@
 <h1
-id="uxplay-1.68-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.68: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.69-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.69: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
-id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted-and-latest-versions-can-be-found.">Now
+id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted-and-latest-versions-can-be-found."><strong>Now
 developed at the GitHub site <a
 href="https://github.com/FDH2/UxPlay">https://github.com/FDH2/UxPlay</a>
 (where ALL user issues should be posted, and latest versions can be
-found).</h3>
+found).</strong></h3>
 <ul>
-<li><em><strong>NEW in v1.68</strong>: Volume-control improvements, plus
-improved support for Apple-style one-time “pin” codes introduced in
-1.67: a register of pin-registered clients can now optionally be
-maintained to check returning clients; a simpler method for generating a
-persistent public key (based on the MAC address, which can be set in the
-UxPlay startup file) is now the default. (The OpenSSL “pem-file” method
-introduced in 1.67 is still available with the “-key” option.)</em></li>
+<li><em><strong>NEW in v1.69</strong>: minor changes for users:
+-nofreeze option to NOT leave frozen video in place when a network
+failure occurs; internal changes/improvements needed for planned future
+HLS video streaming support.</em></li>
 </ul>
 <h2 id="highlights">Highlights:</h2>
 <ul>
 <li>GPLv3, open source.</li>
 <li>Originally supported only AirPlay Mirror protocol, now has added
 support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
-current iOS/iPadOS clients. <strong>There is no support for Airplay2
-video-streaming protocol, and none is planned.</strong></li>
+current iOS/iPadOS clients. <strong>There is no current support for
+Airplay HLS video-streaming (e.g., YouTube video) but this is in
+development.</strong></li>
 <li>macOS computers (2011 or later, both Intel and “Apple Silicon” M1/M2
 systems) can act either as AirPlay clients, or as the server running
 UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
@@ -166,12 +164,13 @@ app cannot be watched using UxPlay’s AirPlay Mirror mode (only the
 unprotected audio will be streamed, in AAC format), but both video and
 audio content from DRM-free apps like “YouTube app” will be streamed by
 UxPlay in Mirror mode.</strong></p></li>
-<li><p><strong>As UxPlay does not support non-Mirror AirPlay2 video
-streaming (where the client controls a web server on the AirPlay server
-that directly receives content to avoid it being decoded and re-encoded
-by the client), using the icon for AirPlay video in apps such as the
-YouTube app will only send audio (in lossless ALAC format) without the
-accompanying video.</strong></p></li>
+<li><p><strong>As UxPlay does not currently support non-Mirror AirPlay
+video streaming (where the client controls a web server on the AirPlay
+server that directly receives HLS content to avoid it being decoded and
+re-encoded by the client), using the icon for AirPlay video in apps such
+as the YouTube app will only send audio (in lossless ALAC format)
+without the accompanying video (there are plans to support HLS video in
+future releases of UxPlay)</strong></p></li>
 </ul>
 <h3
 id="possibility-for-using-hardware-accelerated-h264-video-decoding-if-available.">Possibility
@@ -1099,6 +1098,10 @@ present, and synchronize with it). After <em>n</em> failures, the client
 will be presumed to be offline, and the connection will be reset to
 allow a new connection. The default value of <em>n</em> is 5; the value
 <em>n</em> = 0 means “no limit” on timeouts.</p>
+<p><strong>-nofreeze</strong> closes the video window after a reset due
+to ntp timeout (default is to leave window open to allow a smoother
+reconection to the same client). This option may be useful in fullscreen
+mode.</p>
 <p><strong>-nc</strong> maintains previous UxPlay &lt; 1.45 behavior
 that does <strong>not close</strong> the video window when the the
 client sends the “Stop Mirroring” signal. <em>This option is currently
@@ -1529,6 +1532,11 @@ an AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
 introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.69 2024-08-09 Internal improvements (e.g. in -nohold option,
+identifying GStreamer videosink selected by autovideosink, finding X11
+display) in anticipation of future HLS video support. New -nofreeze
+option to not leave frozen video in place when a network connection is
+reset. Fixes for GStreamer-1.24.x changes.</p>
 <p>1.68 2023-12-31 New simpler (default) method for generating a
 persistent public key from the server MAC address (which can now be set
 with the -m option). (The previous method is still available with -key
