@@ -594,9 +594,11 @@ static void init_random()
         fp = fopen("/dev/urandom", "r");
         if (fp)
         {
-            fread(buff, sizeof(buff), 1, fp);
+            size_t count = fread(buff, sizeof(buff), 1, fp);
             fclose(fp);
-            g_initialized = 1;
+            if (count == 1) {
+                g_initialized = 1;
+            }
         }
 #endif
     if (g_initialized)
