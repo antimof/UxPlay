@@ -1336,8 +1336,8 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
     }
 
     /* after dnssd starts, reset the default feature set here 
-    /* (overwrites features set in dnssdint.h */
-    /* default: FEATURES_1 = 0x5A7FFEE6, FEATURES_2 = 0 */
+     * (overwrites features set in dnssdint.h). 
+     * default: FEATURES_1 = 0x5A7FFEE6, FEATURES_2 = 0 */
 
     dnssd_set_airplay_features(dnssd,  0, 0); // AirPlay video supported 
     dnssd_set_airplay_features(dnssd,  1, 1); // photo supported 
