@@ -5,8 +5,10 @@
    * _**NEW in v1.69**: minor changes for users: -nofreeze option to NOT leave frozen
    video in place when a network failure occurs; internal changes/improvements
    needed for planned future HLS video streaming support._
-    
-   
+
+   * **An experimental ("beta") version of UxPlay with support for HLS streaming of YouTube Videos from the YouTube app on an iOS client is now available at** https://github.com/FDH2/UxPlay/tree/video  .
+    _See the [Wiki page](https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies)) for details._
+
 ## Highlights:
 
    * GPLv3, open source.
