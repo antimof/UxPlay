@@ -2049,9 +2049,9 @@ int main (int argc, char *argv[]) {
 
     if (videosink == "d3d11videosink"  && use_video) {
         if (fullscreen) {
-            videosink.append(" fullscreen-toggle-mode=property fullscreen=true");
+	  videosink.append(" fullscreen-toggle-mode=GST_D3D11_WINDOW_FULLSCREEN_TOGGLE_MODE_PROPERTY fullscreen=true ");
         } else {
-            videosink.append(" fullscreen-toggle-mode=alt-enter");
+	  videosink.append(" fullscreen-toggle-mode=GST_D3D11_WINDOW_FULLSCREEN_TOGGLE_MODE_ALT_ENTER ");
         }
         LOGI("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
                "Use Alt-Enter key combination to toggle into/out of full-screen mode");
