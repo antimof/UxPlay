@@ -9,10 +9,16 @@ href="https://github.com/FDH2/UxPlay">https://github.com/FDH2/UxPlay</a>
 (where ALL user issues should be posted, and latest versions can be
 found).</strong></h3>
 <ul>
-<li><em><strong>NEW in v1.69</strong>: minor changes for users:
+<li><p><em><strong>NEW in v1.69</strong>: minor changes for users:
 -nofreeze option to NOT leave frozen video in place when a network
 failure occurs; internal changes/improvements needed for planned future
-HLS video streaming support.</em></li>
+HLS video streaming support.</em></p></li>
+<li><p><strong>An experimental (“beta”) version of UxPlay with support
+for HLS streaming of YouTube Videos from the YouTube app on an iOS
+client is now available at</strong>
+https://github.com/FDH2/UxPlay/tree/video . <em>See the <a
+href="https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies)">Wiki
+page</a> for details.</em></p></li>
 </ul>
 <h2 id="highlights">Highlights:</h2>
 <ul>
@@ -82,8 +88,12 @@ with the option “uxplay -async”, but there is then a 2 second latency
 imposed by iOS.</p></li>
 <li><p>Add any UxPlay options you want to use as defaults to a startup
 file <code>~/.uxplayrc</code> (see “<code>man uxplay</code>” or
-“<code>uxplay -h</code>” for format and other possible
-locations).</p></li>
+“<code>uxplay -h</code>” for format and other possible locations). In
+particular, if your system uses PipeWire audio or Wayland video systems,
+you may wish to add “as pipewiresink” or “vs waylandsink” as defaults to
+the file. <em>(Output from terminal commands “ps waux | grep pulse” or
+“pactl info” will contain “pipewire” if your Linux/BSD system uses
+it).</em></p></li>
 <li><p>On Raspberry Pi: If you use Ubuntu 22.10 or earlier, GStreamer
 must be <a
 href="https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches">patched</a>

@@ -60,7 +60,9 @@ for [running UxPlay](#running-uxplay) to see which of your distribution's **GStr
 a 2 second latency imposed by iOS.
 
 * Add any UxPlay options you want to use as defaults to a startup file `~/.uxplayrc`
-(see "`man uxplay`" or "``uxplay -h``" for format and other possible locations).
+(see "`man uxplay`" or "``uxplay -h``" for format and other possible locations).   In particular, if your system uses  PipeWire audio or
+Wayland video systems, you may wish to add "as pipewiresink" or "vs waylandsink" as defaults to the file. _(Output from terminal commands "ps waux | grep pulse" or "pactl info" will contain "pipewire" if your Linux/BSD system uses it)._
+
 
 * On Raspberry Pi: If you use Ubuntu 22.10 or earlier, GStreamer must
 be [patched](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches) to use hardware video decoding by the Broadcom GPU

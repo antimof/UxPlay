@@ -7,6 +7,13 @@
     changes/improvements needed for planned future HLS video streaming
     support.*
 
+-   **An experimental ("beta") version of UxPlay with support for HLS
+    streaming of YouTube Videos from the YouTube app on an iOS client is
+    now available at** https://github.com/FDH2/UxPlay/tree/video . *See
+    the [Wiki
+    page](https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies))
+    for details.*
+
 ## Highlights:
 
 -   GPLv3, open source.
@@ -74,7 +81,11 @@ After installation:
 
 -   Add any UxPlay options you want to use as defaults to a startup file
     `~/.uxplayrc` (see "`man uxplay`" or "`uxplay -h`" for format and
-    other possible locations).
+    other possible locations). In particular, if your system uses
+    PipeWire audio or Wayland video systems, you may wish to add "as
+    pipewiresink" or "vs waylandsink" as defaults to the file. *(Output
+    from terminal commands "ps waux \| grep pulse" or "pactl info" will
+    contain "pipewire" if your Linux/BSD system uses it).*
 
 -   On Raspberry Pi: If you use Ubuntu 22.10 or earlier, GStreamer must
     be
