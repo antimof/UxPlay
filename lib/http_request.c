@@ -29,6 +29,7 @@ struct http_request_s {
 
     const char *method;
     char *url;
+    char protocol[9];
 
     char **headers;
     int headers_size;
@@ -51,6 +52,9 @@ on_url(llhttp_t *parser, const char *at, size_t length)
 
     request->url[urllen] = '\0';
     strncat(request->url, at, length);
+
+    strncpy(request->protocol, at + length + 1, 8);
+
     return 0;
 }
 
@@ -183,8 +187,11 @@ http_request_add_data(http_request_t *request, const char *data, int datalen)
 
     assert(request);
 
-    ret = llhttp_execute(&request->parser,
-                              data, datalen);
+    ret = llhttp_execute(&request->parser, data, datalen);
+
+    /* support for "Upgrade" to reverse http ("PTTH/1.0") protocol */
+    llhttp_resume_after_upgrade(&request->parser);
+
     return ret;
 }
 
@@ -228,6 +235,13 @@ http_request_get_url(http_request_t *request)
 {
     assert(request);
     return request->url;
+}
+
+const char *
+http_request_get_protocol(http_request_t *request)
+{
+    assert(request);
+    return request->protocol;
 }
 
 const char *

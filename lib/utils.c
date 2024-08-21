@@ -256,3 +256,29 @@ void ntp_timestamp_to_seconds(uint64_t ntp_timestamp, char *timestamp, size_t ma
     strftime(timestamp, 3, "%S", &ts);
     snprintf(timestamp + 2, 11,".%9.9lu", (unsigned long) ntp_timestamp % SECOND_IN_NSECS);
 }
+
+int utils_ipaddress_to_string(int addresslen, const unsigned char *address, unsigned int zone_id, char *string, int sizeof_string) {
+    int ret = 0;
+    unsigned char ipv6_link_local_prefix[] = { 0xfe, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+    assert(sizeof_string > 0);
+    assert(string);
+    if (addresslen != 4 && addresslen != 16) { //invalid address length   (only ipv4 and ipv6 allowed)
+        string[0] = '\0';
+    }
+    if (addresslen == 4) {          /* IPV4 */
+        ret = snprintf(string, sizeof_string, "%d.%d.%d.%d", address[0], address[1], address[2], address[3]);
+    } else if (zone_id) {           /* IPV6 link-local  */
+        if (memcmp(address, ipv6_link_local_prefix, 8)) { 
+            string[0] = '\0';     //only link-local ipv6 addresses can have a zone_id
+        } else {
+	    ret = snprintf(string, sizeof_string, "fe80::%02x%02x:%02x%02x:%02x%02x:%02x%02x%%%u",
+                           address[8], address[9], address[10], address[11],
+                           address[12], address[13], address[14], address[15], zone_id);
+        }
+    } else {          /* IPV6 standard*/
+        ret = snprintf(string, sizeof_string, "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+                       address[0], address[1], address[2], address[3], address[4], address[5], address[6], address[7],
+                       address[8], address[9], address[10], address[11], address[12], address[13], address[14], address[15]);
+    }
+    return ret;
+}

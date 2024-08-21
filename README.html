@@ -1,29 +1,27 @@
 <h1
-id="uxplay-1.68-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.68: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
+id="uxplay-1.69-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.69: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
 (now also runs on Windows).</h1>
 <h3
-id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted-and-latest-versions-can-be-found.">Now
+id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted-and-latest-versions-can-be-found."><strong>Now
 developed at the GitHub site <a
 href="https://github.com/FDH2/UxPlay">https://github.com/FDH2/UxPlay</a>
 (where ALL user issues should be posted, and latest versions can be
-found).</h3>
+found).</strong></h3>
 <ul>
-<li><em><strong>NEW in v1.68</strong>: Volume-control improvements, plus
-improved support for Apple-style one-time “pin” codes introduced in
-1.67: a register of pin-registered clients can now optionally be
-maintained to check returning clients; a simpler method for generating a
-persistent public key (based on the MAC address, which can be set in the
-UxPlay startup file) is now the default. (The OpenSSL “pem-file” method
-introduced in 1.67 is still available with the “-key” option.)</em></li>
+<li><em><strong>NEW in v1.69</strong>: minor changes for users:
+-nofreeze option to NOT leave frozen video in place when a network
+failure occurs; internal changes/improvements needed for planned future
+HLS video streaming support.</em></li>
 </ul>
 <h2 id="highlights">Highlights:</h2>
 <ul>
 <li>GPLv3, open source.</li>
 <li>Originally supported only AirPlay Mirror protocol, now has added
 support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
-current iOS/iPadOS clients. <strong>There is no support for Airplay2
-video-streaming protocol, and none is planned.</strong></li>
+current iOS/iPadOS clients. <strong>There is no current support for
+Airplay HLS video-streaming (e.g., YouTube video) but this is in
+development.</strong></li>
 <li>macOS computers (2011 or later, both Intel and “Apple Silicon” M1/M2
 systems) can act either as AirPlay clients, or as the server running
 UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
@@ -166,12 +164,13 @@ app cannot be watched using UxPlay’s AirPlay Mirror mode (only the
 unprotected audio will be streamed, in AAC format), but both video and
 audio content from DRM-free apps like “YouTube app” will be streamed by
 UxPlay in Mirror mode.</strong></p></li>
-<li><p><strong>As UxPlay does not support non-Mirror AirPlay2 video
-streaming (where the client controls a web server on the AirPlay server
-that directly receives content to avoid it being decoded and re-encoded
-by the client), using the icon for AirPlay video in apps such as the
-YouTube app will only send audio (in lossless ALAC format) without the
-accompanying video.</strong></p></li>
+<li><p><strong>As UxPlay does not currently support non-Mirror AirPlay
+video streaming (where the client controls a web server on the AirPlay
+server that directly receives HLS content to avoid it being decoded and
+re-encoded by the client), using the icon for AirPlay video in apps such
+as the YouTube app will only send audio (in lossless ALAC format)
+without the accompanying video (there are plans to support HLS video in
+future releases of UxPlay)</strong></p></li>
 </ul>
 <h3
 id="possibility-for-using-hardware-accelerated-h264-video-decoding-if-available.">Possibility
@@ -257,10 +256,16 @@ libplist 2.0 or later. (This means Debian 10 “Buster” based systems
 (e.g, Ubuntu 18.04) or newer; on Debian 10 systems “libplist” is an
 older version, you need “libplist3”.) If it does not, you may need to
 build and install these from source (see instructions at the end of this
-README). If you have a non-standard OpenSSL installation, you may need
-to set the environment variable OPENSSL_ROOT_DIR (<em>e.g.</em> ,
+README).</p>
+<p>If you have a non-standard OpenSSL installation, you may need to set
+the environment variable OPENSSL_ROOT_DIR (<em>e.g.</em> ,
 “<code>export OPENSSL_ROOT_DIR=/usr/local/lib64</code>” if that is where
-it is installed).</p>
+it is installed). Similarly, for non-standard (or multiple) GStreamer
+installations, set the environment variable GSTREAMER_ROOT_DIR to the
+directory that contains the “…/gstreamer-1.0/” directory of the
+gstreamer installation that UxPlay should use (if this is <em>e.g.</em>
+“~/my_gstreamer/lib/gstreamer-1.0/”, set this location with
+“<code>export GSTREAMER_ROOT_DIR=$HOME/my_gstreamer/lib</code>”).</p>
 <ul>
 <li>Most users will use the GStreamer supplied by their distribution,
 but a few (in particular users of Raspberry Pi OS Lite Legacy (Buster)
@@ -382,8 +387,10 @@ decoding)</li>
 <li>“<strong>plugins-bad</strong>” (for h264 decoding).</li>
 </ol>
 <p>Plugins that may also be needed include “<strong>gl</strong>” for
-OpenGL support (which may be useful, and should be used with h264
-decoding by the NVIDIA GPU), and “<strong>x</strong>” for X11 support,
+OpenGL support (this provides the “-vs glimagesink” videosink, which can
+be very useful in many systems, and should always be used when using
+h264 decoding by a NVIDIA GPU), “<strong>gtk3</strong>” (which provides
+the “-vs gtksink” videosink), and “<strong>x</strong>” for X11 support,
 although these may already be installed; “<strong>vaapi</strong>” is
 needed for hardware-accelerated h264 video decoding by Intel or AMD
 graphics (but not for use with NVIDIA using proprietary drivers). If
@@ -443,11 +450,12 @@ omitting the initial <code>"-"</code> of the command-line option. Lines
 in the configuration file beginning with <code>"#"</code> are treated as
 comments and ignored.</p>
 <p><strong>Run uxplay in a terminal window</strong>. On some systems,
-you can toggle into and out of fullscreen mode with F11 or (held-down
-left Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it
-when done. If the UxPlay server is not seen by the iOS client’s
-drop-down “Screen Mirroring” panel, check that your DNS-SD server
-(usually avahi-daemon) is running: do this in a terminal window with
+you can specify fullscreen mode with the <code>-fs</code> option, or
+toggle into and out of fullscreen mode with F11 or (held-down left
+Alt)+Enter keys. Use Ctrl-C (or close the window) to terminate it when
+done. If the UxPlay server is not seen by the iOS client’s drop-down
+“Screen Mirroring” panel, check that your DNS-SD server (usually
+avahi-daemon) is running: do this in a terminal window with
 <code>systemctl status avahi-daemon</code>. If this shows the
 avahi-daemon is not running, control it with
 <code>sudo systemctl [start,stop,enable,disable] avahi-daemon</code> (on
@@ -487,9 +495,10 @@ GStreamer internal clock used to try to keep them synchronized.
 <strong>Starting with UxPlay-1.64, the other method (GStreamer’s
 “<em>sync=true</em>” mode), which uses timestamps in the audio and video
 streams sent by the client, is the new default</strong>. On
-low-decoding-power UxPlay hosts (such as Raspberry Pi 3 models) this
-will drop video frames that cannot be decoded in time to play with the
-audio, making the video jerky, but still synchronized.</p></li>
+low-decoding-power UxPlay hosts (such as Raspberry Pi Zero W or 3 B+
+models) this will drop video frames that cannot be decoded in time to
+play with the audio, making the video jerky, but still
+synchronized.</p></li>
 </ul>
 <p>The older method which does not drop late video frames worked well on
 more powerful systems, and is still available with the UxPlay option
@@ -513,12 +522,13 @@ before a pause or track-change initiated on the client takes effect on
 the audio played by the server.</li>
 </ul>
 <p>AirPlay volume-control attenuates volume (gain) by up to -30dB: the
-range -30dB:0dB can be rescaled from <em>Low</em>:0, or
+decibel range -30:0 can be rescaled from <em>Low</em>:0, or
 <em>Low</em>:<em>High</em>, using the option <code>-db</code> (“-db
 <em>Low</em>” or “-db <em>Low</em>:<em>High</em>”), <em>Low</em> must be
-negative. Rescaling is linear in decibels. The option
-<code>-taper</code> provides a “tapered” AirPlay volume-control profile
-some users may prefer.</p>
+negative. Rescaling is linear in decibels. Note that GStreamer’s audio
+format will “clip” any audio gain above +20db, so keep <em>High</em>
+below that level. The option <code>-taper</code> provides a “tapered”
+AirPlay volume-control profile some users may prefer.</p>
 <p>The -vsync and -async options also allow an optional positive (or
 negative) audio-delay adjustment in <em>milliseconds</em> for
 fine-tuning : <code>-vsync 20.5</code> delays audio relative to video by
@@ -617,10 +627,10 @@ lower-power models to keep audio and video synchronized using
 timestamps. In Legacy Raspberry Pi OS (Bullseye), raspi-config
 “Performance Options” allows specifying how much memory to allocate to
 the GPU, but this setting appears to be absent in Bookworm (but it can
-still be set to e.g. 128GB by adding a line “gpu_mem=128” in
-/boot/config.txt). A Pi Zero 2 W (which has 512GB memory) worked well
-when tested in 32 bit Bullseye or Bookworm Lite with 128GB allocated to
-the GPU (default seems to be 64GB).</p>
+still be set to e.g. 128MB by adding a line “gpu_mem=128” in
+/boot/config.txt). A Pi Zero 2 W (which has 512MB memory) worked well
+when tested in 32 bit Bullseye or Bookworm Lite with 128MB allocated to
+the GPU (default seems to be 64MB).</p>
 <p>The basic uxplay options for R Pi are
 <code>uxplay [-vs &lt;videosink&gt;]</code>. The choice
 <code>&lt;videosink&gt;</code> = <code>glimagesink</code> is sometimes
@@ -747,9 +757,10 @@ not affect the (small) initial OpenGL mirror window size, but the window
 can be expanded using the mouse or trackpad. In contrast, a window
 created with “-vs osxvideosink” is initially big, but has the wrong
 aspect ratio (stretched image); in this case the aspect ratio changes
-when the window width is changed by dragging its side; the option “-vs
-osxvideosink force-aspect-ratio=true” can be used to make the window
-have the correct aspect ratio when it first opens.</p></li>
+when the window width is changed by dragging its side; the option
+<code>-vs "osxvideosink force-aspect-ratio=true"</code> can be used to
+make the window have the correct aspect ratio when it first
+opens.</p></li>
 </ul>
 <h2
 id="building-uxplay-on-microsoft-windows-using-msys2-with-the-mingw-64-compiler.">Building
@@ -790,9 +801,8 @@ environment (this uses “<code>ninja</code>” in place of
 install UxPlay dependencies (openssl is already installed with
 MSYS2):</p>
 <p><code>pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base</code></p>
-<p>Note that libplist will be linked statically to the uxplay
-executable. If you are trying a different Windows build system, MSVC
-versions of GStreamer for Windows are available from the <a
+<p>If you are trying a different Windows build system, MSVC versions of
+GStreamer for Windows are available from the <a
 href="https://gstreamer.freedesktop.org/download/">official GStreamer
 site</a>, but only the MinGW 64-bit build on MSYS2 has been
 tested.</p></li>
@@ -856,14 +866,20 @@ used.</p>
 <code>-vs &lt;videosink&gt;</code> option, some choices for
 <code>&lt;videosink&gt;</code> are <code>d3d11videosink</code>,
 <code>d3dvideosink</code>, <code>glimagesink</code>,
-<code>gtksink</code>. With Direct3D 11.0 or greater, you can get the
-ability to toggle into and out of fullscreen mode using the Alt-Enter
-key combination with option
+<code>gtksink</code>.</p>
+<ul>
+<li>With Direct3D 11.0 or greater, you can either always be in
+fullscreen mode using option
+<code>-vs "d3d11videosink fullscreen-toggle-mode=property fullscreen=true"</code>,
+or get the ability to toggle into and out of fullscreen mode using the
+Alt-Enter key combination with option
 <code>-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"</code>. For
-convenience, this option will be added if just
-<code>-vs d3d11videosink</code> (by itself) is used. (You may wish to
-add “<code>vs d3d11videosink</code>” (no initial “<code>-</code>”) to
-the UxPlay startup options file; see “man uxplay” or “uxplay -h”.)</p>
+convenience, these options will be added if just
+<code>-vs d3d11videosink</code> with or without the fullscreen option
+“-fs” is used. <em>(Windows users may wish to add
+“<code>vs d3d11videosink</code>” (no initial “<code>-</code>”) to the
+UxPlay startup options file; see “man uxplay” or “uxplay -h”.)</em></li>
+</ul>
 <p>The executable uxplay.exe can also be run without the MSYS2
 environment, in the Windows Terminal, with
 <code>C:\msys64\mingw64\bin\uxplay</code>.</p>
@@ -977,7 +993,7 @@ full-screen display that overscans, and is not displayed by gstreamer).
 Recommendation: <strong>don’t use this option</strong> unless there is
 some special reason to use it.</p>
 <p><strong>-fs</strong> uses fullscreen mode, but only works with X11,
-Wayland or VAAPI.</p>
+Wayland, VAAPI, and D3D11 (Windows).</p>
 <p><strong>-p</strong> allows you to select the network ports used by
 UxPlay (these need to be opened if the server is behind a firewall). By
 itself, -p sets “legacy” ports TCP 7100, 7000, 7001, UDP 6000, 6001,
@@ -1082,6 +1098,10 @@ present, and synchronize with it). After <em>n</em> failures, the client
 will be presumed to be offline, and the connection will be reset to
 allow a new connection. The default value of <em>n</em> is 5; the value
 <em>n</em> = 0 means “no limit” on timeouts.</p>
+<p><strong>-nofreeze</strong> closes the video window after a reset due
+to ntp timeout (default is to leave window open to allow a smoother
+reconection to the same client). This option may be useful in fullscreen
+mode.</p>
 <p><strong>-nc</strong> maintains previous UxPlay &lt; 1.45 behavior
 that does <strong>not close</strong> the video window when the the
 client sends the “Stop Mirroring” signal. <em>This option is currently
@@ -1512,6 +1532,11 @@ an AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
 introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.69 2024-08-09 Internal improvements (e.g. in -nohold option,
+identifying GStreamer videosink selected by autovideosink, finding X11
+display) in anticipation of future HLS video support. New -nofreeze
+option to not leave frozen video in place when a network connection is
+reset. Fixes for GStreamer-1.24.x changes.</p>
 <p>1.68 2023-12-31 New simpler (default) method for generating a
 persistent public key from the server MAC address (which can now be set
 with the -m option). (The previous method is still available with -key

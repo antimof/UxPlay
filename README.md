@@ -1,19 +1,21 @@
-# UxPlay 1.68:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.69:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
-### Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where ALL user issues should be posted, and latest versions can be found).
+### **Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where ALL user issues should be posted, and latest versions can be found).**
 
-   * _**NEW in v1.68**: Volume-control improvements, plus improved support for Apple-style one-time "pin" codes introduced in 1.67: a
-    register of pin-registered clients can  now optionally be  maintained to check returning clients; a simpler  method for generating
-    a persistent public key (based on the MAC address, which can be set in the UxPlay startup file) is now the default. (The OpenSSL
-    "pem-file"  method introduced in 1.67 is still available with the "-key" option.)_
-    
-   
+   * _**NEW in v1.69**: minor changes for users: -nofreeze option to NOT leave frozen
+   video in place when a network failure occurs; internal changes/improvements
+   needed for planned future HLS video streaming support._
+
+   * **An experimental ("beta") version of UxPlay with support for HLS streaming of YouTube Videos from the YouTube app on an iOS client is now available at** https://github.com/FDH2/UxPlay/tree/video  .
+    _See the [Wiki page](https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies)) for details._
+
 ## Highlights:
 
    * GPLv3, open source.
    * Originally supported only AirPlay Mirror protocol, now has added support
      for AirPlay Audio-only (Apple Lossless ALAC) streaming 
-     from current iOS/iPadOS clients. **There is no support for Airplay2 video-streaming protocol, and none is planned.**
+     from current iOS/iPadOS clients. **There is no current support for Airplay HLS
+     video-streaming (e.g., YouTube video) but this is in development.**
    * macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
      systems) can act either as AirPlay clients, or
      as the server running UxPlay. Using AirPlay, UxPlay can
@@ -125,11 +127,12 @@ switch back by initiating a_ **Mirror** _mode connection; cover-art display stop
 the Apple TV app cannot be watched using UxPlay's AirPlay Mirror mode (only the unprotected audio will be streamed, in AAC format),
 but both video and audio content from  DRM-free apps like "YouTube app" will be streamed  by UxPlay in Mirror mode.**
 
-* **As UxPlay does not support non-Mirror AirPlay2 video streaming (where the
+* **As UxPlay does not currently support non-Mirror AirPlay video streaming (where the
 client controls a web server on the AirPlay server that directly receives
-content to avoid it being decoded and re-encoded by the client),
+HLS content to avoid it being decoded and re-encoded by the client),
 using the icon for AirPlay video in apps such as the YouTube app
-will only send audio (in lossless ALAC format) without the accompanying video.**
+will only send audio (in lossless ALAC format) without the accompanying
+video (there are plans to support HLS video in future releases of UxPlay)**
 
 ### Possibility for using hardware-accelerated h264 video-decoding, if available.
 
@@ -210,9 +213,16 @@ Make sure that your distribution provides OpenSSL 1.1.1 or later, and
 libplist 2.0 or later. (This means  Debian 10 "Buster" based systems (e.g, Ubuntu 18.04) or newer;
 on Debian 10 systems "libplist" is an older version, you need "libplist3".) If it does
 not, you may need to build and install these from
-source (see instructions at the end of this README).  If you have a non-standard OpenSSL
+source (see instructions at the end of this README).
+
+If you have a non-standard OpenSSL
 installation, you may need to set the environment variable OPENSSL_ROOT_DIR
 (_e.g._ , "`export OPENSSL_ROOT_DIR=/usr/local/lib64`" if that is where it is installed).
+Similarly, for non-standard (or multiple) GStreamer installations, set the
+environment variable GSTREAMER_ROOT_DIR to the directory that contains the
+".../gstreamer-1.0/" directory of the gstreamer installation that UxPlay should use
+(if this is  _e.g._ "~/my_gstreamer/lib/gstreamer-1.0/", set this location 
+with  "`export GSTREAMER_ROOT_DIR=$HOME/my_gstreamer/lib`").
 
 * Most users will use the GStreamer supplied by their distribution, but a few (in particular users
 of Raspberry Pi OS Lite Legacy (Buster) on a Raspberry Pi model 4B who wish to stay on that
@@ -311,8 +321,9 @@ Values of `<plugin>` required are:
 3. "**plugins-good**" (for v4l2 hardware h264 decoding)
 4. "**plugins-bad**" (for h264 decoding).   
 
-Plugins that may also be needed include "**gl**" for OpenGL support (which may be useful, and should
-be used with h264 decoding by the NVIDIA GPU), and "**x**" for
+Plugins that may also be needed include "**gl**" for OpenGL support (this provides the "-vs glimagesink" videosink, which
+can be very useful in many systems, and should always be used when using h264 decoding by a NVIDIA GPU),  "**gtk3**" (which
+provides the "-vs gtksink" videosink), and "**x**" for
 X11 support, although these may  already be installed; "**vaapi**"
 is needed for hardware-accelerated h264 video decoding by Intel
 or AMD  graphics (but not for use with NVIDIA using proprietary drivers). If sound is 
@@ -361,7 +372,8 @@ Since UxPlay-1.64, UxPlay can be started with options read from a configuration 
 directory ("~"), (3) ``~/.config/uxplayrc``.  The format is one option per line, omitting the initial ``"-"`` of
 the command-line option.   Lines in the configuration file beginning with `"#"` are treated as comments and ignored.
 
-**Run uxplay in a terminal window**. On some systems, you can toggle into and out of fullscreen mode
+**Run uxplay in a terminal window**. On some systems, you can specify fullscreen mode with the `-fs` option, or
+toggle into and out of fullscreen mode
 with F11 or (held-down left Alt)+Enter keys.  Use Ctrl-C (or close the window)
 to terminate it when done. If the UxPlay server is not seen by the
 iOS client's drop-down "Screen Mirroring" panel, check that your DNS-SD
@@ -415,9 +427,9 @@ delays the video on the client to match audio on the server, so leads to
 a slight delay before a pause or track-change initiated on the client takes effect on the audio played by the server. 
 
 AirPlay volume-control attenuates volume (gain) by up to -30dB: the decibel range -30:0 can be rescaled from _Low_:0, or _Low_:_High_, using the
-option  `-db` ("-db _Low_ " or "-db _Low_:_High_ "), _Low_ must be negative.  Rescaling is linear in decibels. The
-option ```-taper``` provides a "tapered" AirPlay volume-control 
-profile some users may prefer.
+option  `-db` ("-db _Low_ " or "-db _Low_:_High_ "), _Low_ must be negative.  Rescaling is linear in decibels.
+Note that GStreamer's audio format will "clip" any audio gain above +20db, so keep *High* below that level. The
+option ```-taper``` provides a "tapered" AirPlay volume-control profile some users may prefer.
 
 The -vsync and -async options
 also allow an optional positive (or negative) audio-delay adjustment in _milliseconds_ for fine-tuning : `-vsync 20.5`
@@ -493,9 +505,9 @@ See [Usage](#usage) for more run-time options.
 
 Even with GPU video decoding, some frames may be dropped by the lower-power models  to keep audio and video synchronized
 using timestamps.   In Legacy Raspberry Pi OS (Bullseye), raspi-config "Performance Options" allows specifying how much memory
-to allocate to the GPU, but this setting appears to be absent in Bookworm (but it can still be set to e.g. 128GB by adding a line  "gpu_mem=128" in /boot/config.txt).
-A Pi Zero 2 W (which has 512GB memory)  worked well when tested in 32 bit Bullseye or Bookworm Lite 
-with 128GB allocated to the GPU (default seems to be 64GB).
+to allocate to the GPU, but this setting appears to be absent in Bookworm (but it can still be set to e.g. 128MB by adding a line  "gpu_mem=128" in /boot/config.txt).
+A Pi Zero 2 W (which has 512MB memory)  worked well when tested in 32 bit Bullseye or Bookworm Lite 
+with 128MB allocated to the GPU (default seems to be 64MB).
 
 The basic uxplay options for R Pi are ```uxplay [-vs <videosink>]```. The
 choice `<videosink>` = ``glimagesink`` is sometimes useful. 
@@ -633,7 +645,6 @@ After installing GStreamer, build and install uxplay: open a terminal and change
 
    `pacman -S mingw-w64-x86_64-libplist mingw-w64-x86_64-gstreamer mingw-w64-x86_64-gst-plugins-base`
 
-    Note that libplist will be linked statically to the uxplay executable.
     If you are trying a different Windows build system, MSVC versions of GStreamer
     for Windows are available from the [official GStreamer site](https://gstreamer.freedesktop.org/download/),
     but only the MinGW 64-bit build on MSYS2 has been tested.
@@ -687,9 +698,15 @@ default audio device is used.
 
 If you wish to specify the videosink using the `-vs <videosink>` option, some choices for `<videosink>` are
 `d3d11videosink`, ``d3dvideosink``, ```glimagesink```,
-`gtksink`.   With Direct3D 11.0 or greater, you can get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
-option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.  For convenience, this option will be added if just ``-vs d3d11videosink`` (by itself) is used.
-(You may wish to add "``vs d3d11videosink``" (no initial "`-`") to the UxPlay startup options file; see "man uxplay" or "uxplay -h".)
+`gtksink`.
+
+* With Direct3D 11.0 or greater, you can either always be in fullscreen mode using
+option  `-vs "d3d11videosink fullscreen-toggle-mode=property fullscreen=true"`, or
+get the ability to toggle into and out of fullscreen mode using the Alt-Enter key combination with
+option `-vs "d3d11videosink fullscreen-toggle-mode=alt-enter"`.
+For convenience, these options will be added if just ``-vs d3d11videosink`` with or without the fullscreen
+option "-fs" is used. _(Windows users may wish to add "``vs d3d11videosink``" (no initial "`-`") to the
+UxPlay startup options file; see "man uxplay" or "uxplay -h".)_
 
 The executable uxplay.exe can also be run without the MSYS2 environment, in
 the Windows Terminal, with `C:\msys64\mingw64\bin\uxplay`.
@@ -775,7 +792,7 @@ using UxPlay as a second monitor for a mac computer, or monitoring a webcam; wit
    Recommendation: **don't use this option** unless there is some special
    reason to use it.
 
-**-fs** uses fullscreen mode, but only works with X11, Wayland or VAAPI.
+**-fs** uses fullscreen mode, but only works with X11, Wayland, VAAPI, and D3D11 (Windows).
 
 **-p**  allows you to select the network ports used by UxPlay (these need
    to be opened if the server is behind a firewall).   By itself, -p sets
@@ -860,6 +877,9 @@ which will not work if a firewall is running.
    from the server (these are sent every 3 seconds to check if the client is still present, and synchronize with it).   After
    _n_ failures, the client will be presumed to be offline, and the connection will be reset to allow a new
    connection.   The default value of _n_ is 5; the value _n_ = 0 means "no limit" on timeouts.
+
+**-nofreeze** closes the video window after a reset due to ntp timeout (default is to leave window
+   open to allow a smoother reconection to the same client).  This option may be useful in fullscreen mode.
 
 **-nc** maintains previous UxPlay < 1.45 behavior that does **not close** the video window when the the client
    sends the "Stop Mirroring" signal. _This option is currently used by default in macOS,
@@ -1191,6 +1211,11 @@ tvOS 12.2.1), so it does not seem to matter what version UxPlay claims to be.
 
 
 # Changelog
+1.69 2024-08-09   Internal improvements (e.g. in -nohold option, identifying GStreamer videosink
+                  selected by autovideosink, finding X11 display) in anticipation of future HLS video support.
+		  New -nofreeze option to not leave frozen video in place when a network connection is reset.
+		  Fixes for GStreamer-1.24.x changes.
+
 1.68 2023-12-31   New  simpler (default) method for generating a persistent public key from the server MAC 
                   address (which can now be set with the -m option). (The previous method is still available 
                   with -key option).  New option -reg to maintain a register of pin-authenticated clients.   Corrected 

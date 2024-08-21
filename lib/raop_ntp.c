@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <errno.h>
 #ifdef _WIN32
 #define CAST (char *)
 #else
@@ -296,7 +297,9 @@ raop_ntp_thread(void *arg)
             free(str);
         }
         if (send_len < 0) {
-            logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request");
+            int sock_err = SOCKET_GET_ERROR();
+            logger_log(raop_ntp->logger, LOGGER_ERR, "raop_ntp error sending request. Error %d:%s",
+                     sock_err, strerror(sock_err));
         } else {
             // Read response
             response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0, NULL, NULL);

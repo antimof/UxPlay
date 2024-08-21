@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "httpd.h"
 #include "netutils.h"
@@ -31,6 +32,7 @@ struct http_connection_s {
 
     int socket_fd;
     void *user_data;
+    connection_type_t type;
     http_request_t *request;
 };
 typedef struct http_connection_s http_connection_t;
@@ -42,6 +44,7 @@ struct httpd_s {
     int max_connections;
     int open_connections;
     http_connection_t *connections;
+    char nohold;
 
     /* These variables only edited mutex locked */
     int running;
@@ -54,14 +57,43 @@ struct httpd_s {
     int server_fd6;
 };
 
+int
+httpd_set_connection_type (httpd_t *httpd, void *user_data, connection_type_t type) {
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+	if (!connection->connected) {
+            continue;
+        }
+        if (connection->user_data == user_data) {
+            connection->type = type;
+            return i;
+        }
+    }
+    return -1;
+}
+  
+int
+httpd_count_connection_type (httpd_t *httpd, connection_type_t type) {
+    int count = 0;
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+        if (!connection->connected) {
+            continue;
+        }
+        if (connection->type == type) {
+            count++;
+        }
+    }
+    return count;
+}
+
+#define MAX_CONNECTIONS 12  /* value used in AppleTV 3*/
 httpd_t *
-httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int max_connections)
+httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int nohold)
 {
     httpd_t *httpd;
-
     assert(logger);
     assert(callbacks);
-    assert(max_connections > 0);
 
     /* Allocate the httpd_t structure */
     httpd = calloc(1, sizeof(httpd_t));
@@ -69,8 +101,10 @@ httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int max_connections)
         return NULL;
     }
 
-    httpd->max_connections = max_connections;
-    httpd->connections = calloc(max_connections, sizeof(http_connection_t));
+    
+    httpd->nohold = (nohold ? 1 : 0);
+    httpd->max_connections = MAX_CONNECTIONS;  
+    httpd->connections = calloc(httpd->max_connections, sizeof(http_connection_t));
     if (!httpd->connections) {
         free(httpd);
         return NULL;
@@ -111,11 +145,14 @@ httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
     shutdown(connection->socket_fd, SHUT_WR);
     closesocket(connection->socket_fd);
     connection->connected = 0;
+    connection->user_data = NULL;
+    connection->type = CONNECTION_TYPE_UNKNOWN;
     httpd->open_connections--;
 }
 
 static int
-httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len, unsigned char *remote, int remote_len)
+httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len, unsigned char *remote,
+                     int remote_len, unsigned int zone_id)
 {
     void *user_data;
     int i;
@@ -130,8 +167,7 @@ httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len
         logger_log(httpd->logger, LOGGER_INFO, "Max connections reached");
         return -1;
     }
-
-    user_data = httpd->callbacks.conn_init(httpd->callbacks.opaque, local, local_len, remote, remote_len);
+    user_data = httpd->callbacks.conn_init(httpd->callbacks.opaque, local, local_len, remote, remote_len, zone_id);
     if (!user_data) {
         logger_log(httpd->logger, LOGGER_ERR, "Error initializing HTTP request handler");
         return -1;
@@ -141,6 +177,7 @@ httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len
     httpd->connections[i].socket_fd = fd;
     httpd->connections[i].connected = 1;
     httpd->connections[i].user_data = user_data;
+    httpd->connections[i].type = CONNECTION_TYPE_UNKNOWN;   //should not be necessary ...
     return 0;
 }
 
@@ -152,6 +189,7 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
     struct sockaddr_storage local_saddr;
     socklen_t local_saddrlen;
     unsigned char *local, *remote;
+    unsigned int local_zone_id, remote_zone_id;
     int local_len, remote_len;
     int ret, fd;
 
@@ -172,25 +210,11 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
 
     logger_log(httpd->logger, LOGGER_INFO, "Accepted %s client on socket %d",
                (is_ipv6 ? "IPv6"  : "IPv4"), fd);
-    local = netutils_get_address(&local_saddr, &local_len);
-    remote = netutils_get_address(&remote_saddr, &remote_len);
-
-#ifdef NOHOLD
-    /* remove existing connections to make way for new connections:
-     * this will only occur if max_connections > 2 */
-    if (httpd->open_connections >= 2)  {
-        logger_log(httpd->logger, LOGGER_INFO, "Destroying current connections to allow connection by new client");
-        for (int i = 0; i<httpd->max_connections; i++) {
-            http_connection_t *connection = &httpd->connections[i];
-            if (!connection->connected) {
-                continue;
-            }
-	    httpd_remove_connection(httpd, connection);
-        }
-    }
-#endif
+    local = netutils_get_address(&local_saddr, &local_len, &local_zone_id);
+    remote = netutils_get_address(&remote_saddr, &remote_len, &remote_zone_id);
+    assert (local_zone_id == remote_zone_id);
     
-    ret = httpd_add_connection(httpd, fd, local, local_len, remote, remote_len);
+    ret = httpd_add_connection(httpd, fd, local, local_len, remote, remote_len, local_zone_id);
     if (ret == -1) {
         shutdown(fd, SHUT_RDWR);
         closesocket(fd);
@@ -199,13 +223,30 @@ httpd_accept_connection(httpd_t *httpd, int server_fd, int is_ipv6)
     return 1;
 }
 
+bool
+httpd_nohold(httpd_t *httpd) {
+    return (httpd->nohold ? true: false);
+}
+
+void
+httpd_remove_known_connections(httpd_t *httpd) {
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+        if (!connection->connected || connection->type == CONNECTION_TYPE_UNKNOWN) {
+            continue;
+        }
+	httpd_remove_connection(httpd, connection);
+    }
+}
+
 static THREAD_RETVAL
 httpd_thread(void *arg)
 {
     httpd_t *httpd = arg;
     char buffer[1024];
     int i;
-
+    bool logger_debug = (logger_get_level(httpd->logger) >= LOGGER_DEBUG);
+    
     assert(httpd);
 
     while (1) {
@@ -298,7 +339,7 @@ httpd_thread(void *arg)
                 assert(connection->request);
             }
 
-            logger_log(httpd->logger, LOGGER_DEBUG, "httpd receiving on socket %d", connection->socket_fd);
+            logger_log(httpd->logger, LOGGER_DEBUG, "httpd receiving on socket %d, connection %d", connection->socket_fd, i);
             ret = recv(connection->socket_fd, buffer, sizeof(buffer), 0);
             if (ret == 0) {
                 logger_log(httpd->logger, LOGGER_INFO, "Connection closed for socket %d", connection->socket_fd);
@@ -318,6 +359,13 @@ httpd_thread(void *arg)
             if (http_request_is_complete(connection->request)) {
                 http_response_t *response = NULL;
                 // Callback the received data to raop
+		if (logger_debug) {
+                    const char *method = http_request_get_method(connection->request);
+                    const char *url = http_request_get_url(connection->request);
+                    const char *protocol = http_request_get_protocol(connection->request);
+                    logger_log(httpd->logger, LOGGER_INFO, "httpd request received on socket %d, connection %d, "
+			       "method = %s, url = %s, protocol = %s", connection->socket_fd, i, method, url, protocol);
+                }
                 httpd->callbacks.conn_request(connection->user_data, connection->request, &response);
                 http_request_destroy(connection->request);
                 connection->request = NULL;
@@ -409,11 +457,11 @@ httpd_start(httpd_t *httpd, unsigned short *port)
         MUTEX_UNLOCK(httpd->run_mutex);
         return -1;
     }
-    httpd->server_fd6 = -1;/*= netutils_init_socket(port, 1, 0);
-	if (httpd->server_fd6 == -1) {
-		logger_log(httpd->logger, LOGGER_WARNING, "Error initialising IPv6 socket %d", SOCKET_GET_ERROR());
-		logger_log(httpd->logger, LOGGER_WARNING, "Continuing without IPv6 support");
-	}*/
+    httpd->server_fd6 = netutils_init_socket(port, 1, 0);
+        if (httpd->server_fd6 == -1) {
+            logger_log(httpd->logger, LOGGER_WARNING, "Error initialising IPv6 socket %d", SOCKET_GET_ERROR());
+            logger_log(httpd->logger, LOGGER_WARNING, "Continuing without IPv6 support");
+        }
 
     if (httpd->server_fd4 != -1 && listen(httpd->server_fd4, backlog) == -1) {
         logger_log(httpd->logger, LOGGER_ERR, "Error listening to IPv4 socket");
@@ -473,4 +521,3 @@ httpd_stop(httpd_t *httpd)
     httpd->joined = 1;
     MUTEX_UNLOCK(httpd->run_mutex);
 }
-

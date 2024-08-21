@@ -30,7 +30,6 @@
 #include "x_display_fix.h"
 static bool fullscreen = false;
 static bool alt_keypress = false;
-#define MAX_X11_SEARCH_ATTEMPTS 5   /*should be less than 256 */
 static unsigned char X11_search_attempts; 
 #endif
 
@@ -40,12 +39,17 @@ static logger_t *logger = NULL;
 static unsigned short width, height, width_source, height_source;  /* not currently used */
 static bool first_packet = false;
 static bool sync = false;
+static bool auto_videosink;
+#ifdef X_DISPLAY_FIX
+static bool use_x11 = false;
+#endif
+
 
 struct video_renderer_s {
-    GstElement *appsrc, *pipeline, *sink;
+    GstElement *appsrc, *pipeline;
     GstBus *bus;
 #ifdef  X_DISPLAY_FIX
-    const char * server_name;  
+    const char * server_name;
     X11_Window_t * gst_window;
 #endif
 };
@@ -56,56 +60,56 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
     case INVERT:
         switch (*rot)  {
         case LEFT:
-	    g_string_append(launch, "videoflip method=clockwise ! ");
+	    g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90R ! ");
 	    break;
         case RIGHT:
-            g_string_append(launch, "videoflip method=counterclockwise ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90L ! ");
             break;
         default:
-	    g_string_append(launch, "videoflip method=rotate-180 ! ");
+	    g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_180 ! ");
 	    break;
         }
         break;
     case HFLIP:
         switch (*rot) {
         case LEFT:
-            g_string_append(launch, "videoflip method=upper-left-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UL_LR ! ");
             break;
         case RIGHT: 
-            g_string_append(launch, "videoflip method=upper-right-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UR_LL ! ");
             break;
         default:
-            g_string_append(launch, "videoflip method=horizontal-flip ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_HORIZ ! ");
             break;
         }
         break;
     case VFLIP:
         switch (*rot) {
         case LEFT:
-            g_string_append(launch, "videoflip method=upper-right-diagonal ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UR_LL ! ");
             break;
-        case RIGHT: 
-            g_string_append(launch, "videoflip method=upper-left-diagonal ! ");
+        case RIGHT:
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_UL_LR ! ");
             break;
         default:
-            g_string_append(launch, "videoflip method=vertical-flip ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_VERT ! ");
 	  break;
 	}
         break;
     default:
         switch (*rot) {
         case LEFT:
-            g_string_append(launch, "videoflip method=counterclockwise ! ");
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90L ! ");
             break;
-        case RIGHT: 
-            g_string_append(launch, "videoflip method=clockwise ! ");
+        case RIGHT:
+            g_string_append(launch, "videoflip video-direction=GST_VIDEO_ORIENTATION_90R ! ");
             break;
         default:
             break;
         }
         break;
     }
-}	
+}
 
 /* apple uses colorimetry=1:3:5:1                                *
  * (not recognized by v4l2 plugin in Gstreamer  < 1.20.4)        *
@@ -135,6 +139,9 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     GstClock *clock = gst_system_clock_obtain();
     g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
 
+    /* videosink choices that are auto */
+    auto_videosink = (strstr(videosink, "autovideosink") || strstr(videosink, "fpsdisplaysink"));
+      
     logger = render_logger;
 
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
@@ -153,11 +160,11 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " ! ");
     g_string_append(launch, decoder);
     g_string_append(launch, " ! ");
-    g_string_append(launch, converter);
-    g_string_append(launch, " ! ");    
     append_videoflip(launch, &videoflip[0], &videoflip[1]);
+    g_string_append(launch, converter);
+    g_string_append(launch, " ! ");
+    g_string_append(launch, "videoscale ! ");
     g_string_append(launch, videosink);
-    g_string_append(launch, " name=video_sink");
     if (*video_sync) {
         g_string_append(launch, " sync=true");
         sync = true;
@@ -182,23 +189,13 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     gst_caps_unref(caps);
     gst_object_unref(clock);
 
-    renderer->sink = gst_bin_get_by_name (GST_BIN (renderer->pipeline), "video_sink");
-    g_assert(renderer->sink);
-
 #ifdef X_DISPLAY_FIX
+    use_x11 = (strstr(videosink, "xvimagesink") || strstr(videosink, "ximagesink") || auto_videosink);
     fullscreen = *initial_fullscreen;
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
-    bool x_display_fix = false;
-    /* only include X11 videosinks that provide fullscreen mode, or need ZOOMFIX */
-    /* limit searching for X11 Windows in case autovideosink selects an incompatible videosink */
-    if (strncmp(videosink,"autovideosink", strlen("autovideosink")) == 0 ||
-        strncmp(videosink,"ximagesink", strlen("ximagesink")) ==  0 ||
-	strncmp(videosink,"xvimagesink", strlen("xvimagesink")) == 0 ||
-	strncmp(videosink,"fpsdisplaysink", strlen("fpsdisplaysink")) == 0 ) {
-        x_display_fix = true;
-    }
-    if (x_display_fix) {
+    X11_search_attempts = 0; 
+    if (use_x11) {
         renderer->gst_window = calloc(1, sizeof(X11_Window_t));
         g_assert(renderer->gst_window);
         get_X11_Display(renderer->gst_window);
@@ -284,7 +281,7 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
         gst_buffer_fill(buffer, 0, data, *data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
-        if (renderer->gst_window && !(renderer->gst_window->window) && X11_search_attempts < MAX_X11_SEARCH_ATTEMPTS) {
+        if (renderer->gst_window && !(renderer->gst_window->window) && use_x11) {
             X11_search_attempts++;
             logger_log(logger, LOGGER_DEBUG, "Looking for X11 UxPlay Window, attempt %d", (int) X11_search_attempts);
             get_x_window(renderer->gst_window, renderer->server_name);
@@ -293,8 +290,6 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
                 if (fullscreen) {
                     set_fullscreen(renderer->gst_window, &fullscreen);
                 }
-            } else if (X11_search_attempts == MAX_X11_SEARCH_ATTEMPTS) {
-	      logger_log(logger, LOGGER_DEBUG, "X11 UxPlay Window not found in %d search attempts", MAX_X11_SEARCH_ATTEMPTS);
             }
         }
 #endif
@@ -305,10 +300,10 @@ void video_renderer_flush() {
 }
 
 void video_renderer_stop() {
-  if (renderer) {
-            gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
-	    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-  }   
+    if (renderer) {
+        gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+        gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
+    }
 }
 
 void video_renderer_destroy() {
@@ -320,7 +315,6 @@ void video_renderer_destroy() {
 	    gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
         }
         gst_object_unref(renderer->bus);
-        gst_object_unref(renderer->sink);
         gst_object_unref (renderer->appsrc);
         gst_object_unref (renderer->pipeline);
 #ifdef X_DISPLAY_FIX
@@ -328,7 +322,7 @@ void video_renderer_destroy() {
             free(renderer->gst_window);
             renderer->gst_window = NULL;
         }
-#endif    
+#endif
         free (renderer);
         renderer = NULL;
     }
@@ -369,6 +363,19 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
       /* end-of-stream */
          logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream");
 	//   g_main_loop_quit( (GMainLoop *) loop);
+        break;
+    case GST_MESSAGE_STATE_CHANGED:
+        if (auto_videosink) {
+            char *sink = strstr(GST_MESSAGE_SRC_NAME(message), "-actual-sink-");
+            if (sink) {
+                sink += strlen("-actual-sink-");
+                logger_log(logger, LOGGER_DEBUG, "GStreamer: automatically-selected videosink is \"%ssink\"", sink);
+                auto_videosink = false;
+#ifdef X_DISPLAY_FIX
+                use_x11 = (strstr(sink, "ximage") || strstr(sink, "xvimage"));
+#endif
+            }
+        }
         break;
 #ifdef  X_DISPLAY_FIX
     case GST_MESSAGE_ELEMENT:
@@ -417,4 +424,4 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
 unsigned int video_renderer_listen(void *loop) {
     return (unsigned int) gst_bus_add_watch(renderer->bus, (GstBusFunc)
                                             gstreamer_pipeline_bus_callback, (gpointer) loop);    
-}  
+}

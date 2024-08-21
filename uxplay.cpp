@@ -62,7 +62,7 @@
 #include "renderers/video_renderer.h"
 #include "renderers/audio_renderer.h"
 
-#define VERSION "1.68"
+#define VERSION "1.69"
 
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000UL
@@ -121,7 +121,8 @@ static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
 static int log_level = LOGGER_INFO;
 static bool bt709_fix = false;
-static int max_connections = 2;
+static int nohold = 0;
+static bool nofreeze = false;
 static unsigned short raop_port;
 static unsigned short airplay_port;
 static uint64_t remote_clock_offset = 0;
@@ -583,7 +584,7 @@ static void print_info (char *name) {
     printf("-taper    Use a \"tapered\" AirPlay volume-control profile\n"); 
     printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
-    printf("-fs       Full-screen (only works with X11, Wayland and VAAPI)\n");
+    printf("-fs       Full-screen (only works with X11, Wayland, VAAPI, D3D11)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
@@ -609,7 +610,8 @@ static void print_info (char *name) {
     printf("-al x     Audio latency in seconds (default 0.25) reported to client.\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
     printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
-    printf("-nc       do Not Close video window when client stops mirroring\n");
+    printf("-nofreeze Do NOT leave frozen screen in place after reset\n");
+    printf("-nc       Do NOT Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
     printf("-restrict Restrict clients to those specified by \"-allow <deviceID>\"\n");
     printf("          UxPlay displays deviceID when a client attempts to connect\n");
@@ -1033,7 +1035,7 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-bt709") {
             bt709_fix = true;
         } else if (arg == "-nohold") {
-            max_connections = 3;
+            nohold = 1;
         } else if (arg == "-al") {
 	    int n;
             char *end;
@@ -1125,6 +1127,8 @@ static void parse_arguments (int argc, char *argv[]) {
             db_low = db1;
             db_high = db2;
 	    printf("db range %f:%f\n", db_low, db_high);
+        } else if (arg == "-nofreeze") {
+            nofreeze = true;
         } else {
             fprintf(stderr, "unknown option %s, stopping (for help use option \"-h\")\n",argv[i]);
             exit(1);
@@ -1330,6 +1334,95 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
         LOGE("Could not initialize dnssd library!: error %d", dnssd_error);
         return 1;
     }
+
+    /* after dnssd starts, reset the default feature set here 
+     * (overwrites features set in dnssdint.h). 
+     * default: FEATURES_1 = 0x5A7FFEE6, FEATURES_2 = 0 */
+
+    dnssd_set_airplay_features(dnssd,  0, 0); // AirPlay video supported 
+    dnssd_set_airplay_features(dnssd,  1, 1); // photo supported 
+    dnssd_set_airplay_features(dnssd,  2, 1); // video protected with FairPlay DRM 
+    dnssd_set_airplay_features(dnssd,  3, 0); // volume control supported for videos
+
+    dnssd_set_airplay_features(dnssd,  4, 0); // http live streaming (HLS) supported
+    dnssd_set_airplay_features(dnssd,  5, 1); // slideshow supported 
+    dnssd_set_airplay_features(dnssd,  6, 1); // 
+    dnssd_set_airplay_features(dnssd,  7, 1); // mirroring supported
+
+    dnssd_set_airplay_features(dnssd,  8, 0); // screen rotation  supported 
+    dnssd_set_airplay_features(dnssd,  9, 1); // audio supported 
+    dnssd_set_airplay_features(dnssd, 10, 1); //  
+    dnssd_set_airplay_features(dnssd, 11, 1); // audio packet redundancy supported
+
+    dnssd_set_airplay_features(dnssd, 12, 1); // FaiPlay secure auth supported 
+    dnssd_set_airplay_features(dnssd, 13, 1); // photo preloading  supported 
+    dnssd_set_airplay_features(dnssd, 14, 1); // Authentication bit 4:  FairPlay authentication
+    dnssd_set_airplay_features(dnssd, 15, 1); // Metadata bit 1 support:   Artwork 
+
+    dnssd_set_airplay_features(dnssd, 16, 1); // Metadata bit 2 support:  Soundtrack  Progress 
+    dnssd_set_airplay_features(dnssd, 17, 1); // Metadata bit 0 support:  Text (DAACP) "Now Playing" info.
+    dnssd_set_airplay_features(dnssd, 18, 1); // Audio format 1 support:   
+    dnssd_set_airplay_features(dnssd, 19, 1); // Audio format 2 support: must be set for AirPlay 2 multiroom audio 
+
+    dnssd_set_airplay_features(dnssd, 20, 1); // Audio format 3 support: must be set for AirPlay 2 multiroom audio 
+    dnssd_set_airplay_features(dnssd, 21, 1); // Audio format 4 support:
+    dnssd_set_airplay_features(dnssd, 22, 1); // Authentication type 4: FairPlay authentication
+    dnssd_set_airplay_features(dnssd, 23, 0); // Authentication type 1: RSA Authentication
+
+    dnssd_set_airplay_features(dnssd, 24, 0); // 
+    dnssd_set_airplay_features(dnssd, 25, 1); // 
+    dnssd_set_airplay_features(dnssd, 26, 0); // Has Unified Advertiser info
+    dnssd_set_airplay_features(dnssd, 27, 1); // Supports Legacy Pairing
+
+    dnssd_set_airplay_features(dnssd, 28, 1); //  
+    dnssd_set_airplay_features(dnssd, 29, 0); // 
+    dnssd_set_airplay_features(dnssd, 30, 1); // RAOP support: with this bit set, the AirTunes service is not required. 
+    dnssd_set_airplay_features(dnssd, 31, 0); // 
+
+    for (int i = 32; i < 64; i++) {
+        dnssd_set_airplay_features(dnssd, i, 0);
+    }
+
+    /*  bits 32-63 are  not used here: see  https://emanualcozzi.net/docs/airplay2/features 
+    dnssd_set_airplay_features(dnssd, 32, 0); // isCarPlay when ON,; Supports InitialVolume when OFF
+    dnssd_set_airplay_features(dnssd, 33, 0); // Supports Air Play Video Play Queue
+    dnssd_set_airplay_features(dnssd, 34, 0); // Supports Air Play from cloud (requires that bit 6 is ON)
+    dnssd_set_airplay_features(dnssd, 35, 0); // Supports TLS_PSK
+
+    dnssd_set_airplay_features(dnssd, 36, 0); //
+    dnssd_set_airplay_features(dnssd, 37, 0); //
+    dnssd_set_airplay_features(dnssd, 38, 0); //  Supports Unified Media Control (CoreUtils Pairing and Encryption)
+    dnssd_set_airplay_features(dnssd, 39, 0); //
+
+    dnssd_set_airplay_features(dnssd, 40, 0); // Supports Buffered Audio
+    dnssd_set_airplay_features(dnssd, 41, 0); // Supports PTP
+    dnssd_set_airplay_features(dnssd, 42, 0); // Supports Screen Multi Codec
+    dnssd_set_airplay_features(dnssd, 43, 0); // Supports System Pairing
+
+    dnssd_set_airplay_features(dnssd, 44, 0); // is AP Valeria Screen Sender
+    dnssd_set_airplay_features(dnssd, 45, 0); //
+    dnssd_set_airplay_features(dnssd, 46, 0); // Supports HomeKit Pairing and Access Control
+    dnssd_set_airplay_features(dnssd, 47, 0); //
+
+    dnssd_set_airplay_features(dnssd, 48, 0); // Supports CoreUtils Pairing and Encryption
+    dnssd_set_airplay_features(dnssd, 49, 0); //
+    dnssd_set_airplay_features(dnssd, 50, 0); // Metadata bit 3: "Now Playing" info sent by bplist not DAACP test
+    dnssd_set_airplay_features(dnssd, 51, 0); // Supports Unified Pair Setup and MFi Authentication
+
+    dnssd_set_airplay_features(dnssd, 52, 0); // Supports Set Peers Extended Message
+    dnssd_set_airplay_features(dnssd, 53, 0); //
+    dnssd_set_airplay_features(dnssd, 54, 0); // Supports AP Sync
+    dnssd_set_airplay_features(dnssd, 55, 0); // Supports WoL
+
+    dnssd_set_airplay_features(dnssd, 56, 0); // Supports Wol
+    dnssd_set_airplay_features(dnssd, 57, 0); //
+    dnssd_set_airplay_features(dnssd, 58, 0); // Supports Hangdog Remote Control
+    dnssd_set_airplay_features(dnssd, 59, 0); // Supports AudioStreamConnection setup
+
+    dnssd_set_airplay_features(dnssd, 60, 0); // Supports Audo Media Data Control         
+    dnssd_set_airplay_features(dnssd, 61, 0); // Supports RFC2198 redundancy
+    */
+
     /* bit 27 of Features determines whether the AirPlay2 client-pairing protocol will be used (1) or not (0) */
     dnssd_set_airplay_features(dnssd, 27, (int) setup_legacy_pairing);
     return 0;
@@ -1360,6 +1453,14 @@ static bool check_blocked_client(char *deviceid) {
 }
 
 // Server callbacks
+
+extern "C" void video_reset(void *cls) {
+    reset_loop = true;
+    remote_clock_offset = 0;
+    relaunch_video = true;
+}
+
+
 
 extern "C" void display_pin(void *cls, char *pin) {
     int margin = 10;
@@ -1413,8 +1514,9 @@ extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
         LOGI("   Sometimes the network connection may recover after a longer delay:\n"
              "   the default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
     }
-    printf("reset_video %d\n",(int) reset_video);
-    close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
+    if (!nofreeze) {
+        close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
+    }
     raop_stop(raop);
     reset_loop = true;
 }
@@ -1484,12 +1586,18 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, h264_decode_struct *d
 }
 
 extern "C" void video_pause (void *cls) {
+#ifdef GST_124
+    return;  //pause/resume changes in GStreamer-1.24 break this code
+#endif
     if (use_video) {
         video_renderer_pause();
     }
 }
 
 extern "C" void video_resume (void *cls) {
+#ifdef GST_124
+    return;  //pause/resume changes in GStreamer-1.24 break this code
+#endif
     if (use_video) {
         video_renderer_resume();
     }
@@ -1593,6 +1701,14 @@ extern "C" void audio_set_coverart(void *cls, const void *buffer, int buflen) {
         write_coverart(coverart_filename.c_str(), buffer, buflen);
         LOGI("coverart size %d written to %s", buflen,  coverart_filename.c_str());
     }
+}
+
+extern "C" void audio_set_progress(void *cls, unsigned int start, unsigned int curr, unsigned int end) {
+    int duration = (int)  (end  - start)/44100;
+    int position = (int)  (curr - start)/44100;
+    int remain = duration - position;
+    printf("audio progress (min:sec): %d:%2.2d; remaining: %d:%2.2d; track length %d:%2.2d\n",
+	   position/60, position%60, remain/60, remain%60, duration/60, duration%60);
 }
 
 extern "C" void audio_set_metadata(void *cls, const void *buffer, int buflen) {
@@ -1708,16 +1824,25 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.video_report_size = video_report_size;
     raop_cbs.audio_set_metadata = audio_set_metadata;
     raop_cbs.audio_set_coverart = audio_set_coverart;
+    raop_cbs.audio_set_progress = audio_set_progress;
     raop_cbs.report_client_request = report_client_request;
     raop_cbs.display_pin = display_pin;
     raop_cbs.register_client = register_client;
     raop_cbs.check_register = check_register;
     raop_cbs.export_dacp = export_dacp;
+    raop_cbs.video_reset = video_reset;
 
-    /* set max number of connections = 2 to protect against capture by new client */
-    raop = raop_init(max_connections, &raop_cbs, mac_address.c_str(), keyfile.c_str());
+    raop = raop_init(&raop_cbs);
     if (raop == NULL) {
         LOGE("Error initializing raop!");
+        return -1;
+    }
+    raop_set_log_callback(raop, log_callback, NULL);
+    raop_set_log_level(raop, log_level);
+    /* set nohold = 1 to allow  capture by new client */
+    if (raop_init2(raop, nohold, mac_address.c_str(), keyfile.c_str())){
+        LOGE("Error initializing raop (2)!");
+        free (raop);
         return -1;
     }
 
@@ -1738,21 +1863,14 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     /* network port selection (ports listed as "0" will be dynamically assigned) */
     raop_set_tcp_ports(raop, tcp);
     raop_set_udp_ports(raop, udp);
-    
-    raop_set_log_callback(raop, log_callback, NULL);
-    raop_set_log_level(raop, log_level);
 
     raop_port = raop_get_port(raop);
     raop_start(raop, &raop_port);
     raop_set_port(raop, raop_port);
 
-    if (tcp[2]) {
-        airplay_port = tcp[2];
-    } else {
-        /* is there a problem if this coincides with a randomly-selected tcp raop_mirror_data port? 
-         * probably not, as the airplay port is only used for initial client contact */
-        airplay_port = (raop_port != HIGHEST_PORT ? raop_port + 1 : raop_port - 1);
-    }
+    /* use raop_port for airplay_port (instead of tcp[2]) */
+    airplay_port = raop_port;
+
     if (dnssd) {
         raop_set_dnssd(raop, dnssd);
     } else {
@@ -1930,7 +2048,11 @@ int main (int argc, char *argv[]) {
     }
 
     if (videosink == "d3d11videosink"  && use_video) {
-        videosink.append(" fullscreen-toggle-mode=alt-enter");  
+        if (fullscreen) {
+	  videosink.append(" fullscreen-toggle-mode=GST_D3D11_WINDOW_FULLSCREEN_TOGGLE_MODE_PROPERTY fullscreen=true ");
+        } else {
+	  videosink.append(" fullscreen-toggle-mode=GST_D3D11_WINDOW_FULLSCREEN_TOGGLE_MODE_ALT_ENTER ");
+        }
         LOGI("d3d11videosink is being used with option fullscreen-toggle-mode=alt-enter\n"
                "Use Alt-Enter key combination to toggle into/out of full-screen mode");
     }

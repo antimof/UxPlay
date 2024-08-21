@@ -36,33 +36,37 @@ raop_handler_info(raop_conn_t *conn,
 {
     assert(conn->raop->dnssd);
 
-    int airplay_txt_len = 0;
-    const char *airplay_txt = dnssd_get_airplay_txt(conn->raop->dnssd, &airplay_txt_len);
+    plist_t res_node = plist_new_dict();
 
-    int name_len = 0;
-    const char *name = dnssd_get_name(conn->raop->dnssd, &name_len);
-
+    /* deviceID is the physical hardware address, and will not change */
     int hw_addr_raw_len = 0;
     const char *hw_addr_raw = dnssd_get_hw_addr(conn->raop->dnssd, &hw_addr_raw_len);
-
     char *hw_addr = calloc(1, 3 * hw_addr_raw_len);
     //int hw_addr_len =
     utils_hwaddr_airplay(hw_addr, 3 * hw_addr_raw_len, hw_addr_raw, hw_addr_raw_len);
+    plist_t device_id_node = plist_new_string(hw_addr);
+    plist_dict_set_item(res_node, "deviceID", device_id_node);
 
+    /* Persistent Public Key */
     int pk_len = 0;
     char *pk = utils_parse_hex(conn->raop->pk_str, strlen(conn->raop->pk_str), &pk_len);
+    plist_t pk_node = plist_new_data(pk, pk_len);
+    plist_dict_set_item(res_node, "pk", pk_node);
 
-    plist_t r_node = plist_new_dict();
-
+    /* airplay_txt is from the _airplay._tcp  dnssd announuncement, may not be necessary */
+    int airplay_txt_len = 0;
+    const char *airplay_txt = dnssd_get_airplay_txt(conn->raop->dnssd, &airplay_txt_len);
     plist_t txt_airplay_node = plist_new_data(airplay_txt, airplay_txt_len);
-    plist_dict_set_item(r_node, "txtAirPlay", txt_airplay_node);
+    plist_dict_set_item(res_node, "txtAirPlay", txt_airplay_node);
 
     uint64_t features = dnssd_get_airplay_features(conn->raop->dnssd);
     plist_t features_node = plist_new_uint(features);
-    plist_dict_set_item(r_node, "features", features_node);
+    plist_dict_set_item(res_node, "features", features_node);
 
+    int name_len = 0;
+    const char *name = dnssd_get_name(conn->raop->dnssd, &name_len);
     plist_t name_node = plist_new_string(name);
-    plist_dict_set_item(r_node, "name", name_node);
+    plist_dict_set_item(res_node, "name", name_node);
 
     plist_t audio_formats_node = plist_new_array();
     plist_t audio_format_0_node = plist_new_dict();
@@ -81,31 +85,25 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(audio_format_1_node, "audioInputFormats", audio_format_1_audio_input_formats_node);
     plist_dict_set_item(audio_format_1_node, "audioOutputFormats", audio_format_1_audio_output_formats_node);
     plist_array_append_item(audio_formats_node, audio_format_1_node);
-    plist_dict_set_item(r_node, "audioFormats", audio_formats_node);
+    plist_dict_set_item(res_node, "audioFormats", audio_formats_node);
 
     plist_t pi_node = plist_new_string(AIRPLAY_PI);
-    plist_dict_set_item(r_node, "pi", pi_node);
+    plist_dict_set_item(res_node, "pi", pi_node);
 
     plist_t vv_node = plist_new_uint(strtol(AIRPLAY_VV, NULL, 10));
-    plist_dict_set_item(r_node, "vv", vv_node);
+    plist_dict_set_item(res_node, "vv", vv_node);
 
     plist_t status_flags_node = plist_new_uint(68);
-    plist_dict_set_item(r_node, "statusFlags", status_flags_node);
+    plist_dict_set_item(res_node, "statusFlags", status_flags_node);
 
     plist_t keep_alive_low_power_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveLowPower", keep_alive_low_power_node);
+    plist_dict_set_item(res_node, "keepAliveLowPower", keep_alive_low_power_node);
 
     plist_t source_version_node = plist_new_string(GLOBAL_VERSION);
-    plist_dict_set_item(r_node, "sourceVersion", source_version_node);
-
-    plist_t pk_node = plist_new_data(pk, pk_len);
-    plist_dict_set_item(r_node, "pk", pk_node);
+    plist_dict_set_item(res_node, "sourceVersion", source_version_node);
 
     plist_t keep_alive_send_stats_as_body_node = plist_new_uint(1);
-    plist_dict_set_item(r_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
-
-    plist_t device_id_node = plist_new_string(hw_addr);
-    plist_dict_set_item(r_node, "deviceID", device_id_node);
+    plist_dict_set_item(res_node, "keepAliveSendStatsAsBody", keep_alive_send_stats_as_body_node);
 
     plist_t audio_latencies_node = plist_new_array();
     plist_t audio_latencies_0_node = plist_new_dict();
@@ -128,13 +126,13 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(audio_latencies_1_node, "audioType", audio_latencies_1_audio_type_node);
     plist_dict_set_item(audio_latencies_1_node, "inputLatencyMicros", audio_latencies_1_input_latency_micros_node);
     plist_array_append_item(audio_latencies_node, audio_latencies_1_node);
-    plist_dict_set_item(r_node, "audioLatencies", audio_latencies_node);
+    plist_dict_set_item(res_node, "audioLatencies", audio_latencies_node);
 
     plist_t model_node = plist_new_string(GLOBAL_MODEL);
-    plist_dict_set_item(r_node, "model", model_node);
+    plist_dict_set_item(res_node, "model", model_node);
 
     plist_t mac_address_node = plist_new_string(hw_addr);
-    plist_dict_set_item(r_node, "macAddress", mac_address_node);
+    plist_dict_set_item(res_node, "macAddress", mac_address_node);
 
     plist_t displays_node = plist_new_array();
     plist_t displays_0_node = plist_new_dict();
@@ -164,10 +162,10 @@ raop_handler_info(raop_conn_t *conn,
     plist_dict_set_item(displays_0_node, "overscanned", displays_0_overscanned_node);
     plist_dict_set_item(displays_0_node, "features", displays_0_features);
     plist_array_append_item(displays_node, displays_0_node);
-    plist_dict_set_item(r_node, "displays", displays_node);
+    plist_dict_set_item(res_node, "displays", displays_node);
 
-    plist_to_bin(r_node, response_data, (uint32_t *) response_datalen);
-    plist_free(r_node);
+    plist_to_bin(res_node, response_data, (uint32_t *) response_datalen);
+    plist_free(res_node);
     http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
     free(pk);
     free(hw_addr);
@@ -205,8 +203,8 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
                            http_request_t *request, http_response_t *response,
                            char **response_data, int *response_datalen) {
 
-    const char *request_data;
-    int request_datalen;
+    const char *request_data = NULL;;
+    int request_datalen = 0;
     bool data_is_plist = false;
     bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
     request_data = http_request_get_data(request, &request_datalen);
@@ -219,7 +217,8 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         free(header_str);
     }
     if (!data_is_plist) {
-        logger_log(conn->raop->logger, LOGGER_INFO, "did not receive expected plist from client, request_datalen = %d");
+        logger_log(conn->raop->logger, LOGGER_INFO, "did not receive expected plist from client, request_datalen = %d",
+                  request_datalen);
         goto authentication_failed;
     }
 
@@ -355,14 +354,7 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
 	return;
     }
  authentication_failed:;
-    http_response_destroy(response);
-    response = http_response_init("RTSP/1.0", 470, "Client Authentication Failure");
-    const char *cseq = http_request_get_header(request, "CSeq");
-    http_response_add_header(response, "CSeq", cseq);
-    http_response_add_header(response, "Server", "AirTunes/"GLOBAL_VERSION);
-    *response_data = NULL;
-    response_datalen = 0;
-    return;
+    http_response_init(response, "RTSP/1.0", 470, "Client Authentication Failure");
 }
 
 static void
@@ -737,36 +729,31 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_ntp = NULL;
         conn->raop_rtp = NULL;
         conn->raop_rtp_mirror = NULL;
-        if (conn->remotelen == 4 || conn->remotelen == 16) {
-            char remote[40];
-            if (conn->remotelen == 4) {
-                /* IPV4 */
-                snprintf(remote, sizeof(remote), "%d.%d.%d.%d", conn->remote[0], conn->remote[1],
-                         conn->remote[2], conn->remote[3]);
-            } else {
-                /*IPV6*/
-                logger_log(conn->raop->logger, LOGGER_INFO, "client is using IPV6 (untested!)");
-                snprintf(remote, sizeof(remote), "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-                         conn->remote[0], conn->remote[1], conn->remote[2], conn->remote[3],
-                         conn->remote[4], conn->remote[5], conn->remote[6], conn->remote[7],
-                         conn->remote[8], conn->remote[9], conn->remote[10], conn->remote[11],
-                         conn->remote[12], conn->remote[13], conn->remote[14], conn->remote[15]);
-            }
-            conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, remote,
-                                           conn->remotelen, (unsigned short) timing_rport, &time_protocol);
-            raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
-            conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
-                                           remote, conn->remotelen, aeskey, aesiv);
-            conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
-                                                         conn->raop_ntp, remote, conn->remotelen, aeskey);
+        char remote[40];
+        int len = utils_ipaddress_to_string(conn->remotelen, conn->remote, conn->zone_id, remote, (int) sizeof(remote));
+        if (!len || len > sizeof(remote)) {
+            char *str = utils_data_to_string(conn->remote, conn->remotelen, 16);
+            logger_log(conn->raop->logger, LOGGER_ERR, "failed to extract valid client ip address:\n"
+                       "*** UxPlay will be unable to send communications to client.\n"
+                       "*** address length %d, zone_id %u address data:\n%sparser returned \"%s\"\n",
+                       conn->remotelen, conn->zone_id, str, remote);
+            free(str);
         }
+        conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, remote,
+                                       conn->remotelen, (unsigned short) timing_rport, &time_protocol);
+        raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
+        conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
+                                       remote, conn->remotelen, aeskey, aesiv);
+        conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
+                                                     conn->raop_ntp, remote, conn->remotelen, aeskey);
 
-        plist_t res_event_port_node = plist_new_uint(conn->raop->port);
+	// plist_t res_event_port_node = plist_new_uint(conn->raop->port);
+	plist_t res_event_port_node = plist_new_uint(0);
         plist_t res_timing_port_node = plist_new_uint(timing_lport);
         plist_dict_set_item(res_root_node, "timingPort", res_timing_port_node);
         plist_dict_set_item(res_root_node, "eventPort", res_event_port_node);
 
-        logger_log(conn->raop->logger, LOGGER_DEBUG, "eport = %d, tport = %d", conn->raop->port, timing_lport);
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "eport = %d, tport = %d", 0, timing_lport);
     }
 
     // Process stream setup requests
@@ -793,8 +780,8 @@ raop_handler_setup(raop_conn_t *conn,
                                " key and iv): %llu", stream_connection_id);
 
                     if (conn->raop_rtp_mirror) {
-                        raop_rtp_init_mirror_aes(conn->raop_rtp_mirror, &stream_connection_id);
-                        raop_rtp_start_mirror(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
+                        raop_rtp_mirror_init_aes(conn->raop_rtp_mirror, &stream_connection_id);
+                        raop_rtp_mirror_start(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
                         logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
                     } else {
                         logger_log(conn->raop->logger, LOGGER_ERR, "Mirroring not initialized at SETUP, playing will fail!");
