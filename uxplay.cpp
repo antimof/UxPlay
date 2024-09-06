@@ -1300,7 +1300,7 @@ static int register_dnssd() {
         return -4;
     }
 
-    LOGD("register_dnssd: advertised AirPlay service with \"Features\" code = 0x%X",
+    LOGD("register_dnssd: advertised AirPlay service with \"Features\" code = 0x%llX",
          dnssd_get_airplay_features(dnssd));
     return 0;
 }
