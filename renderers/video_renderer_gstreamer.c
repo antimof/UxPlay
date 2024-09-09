@@ -40,10 +40,6 @@ static unsigned short width, height, width_source, height_source;  /* not curren
 static bool first_packet = false;
 static bool sync = false;
 static bool auto_videosink;
-#ifdef X_DISPLAY_FIX
-static bool use_x11 = false;
-#endif
-
 
 struct video_renderer_s {
     GstElement *appsrc, *pipeline;
@@ -51,6 +47,7 @@ struct video_renderer_s {
 #ifdef  X_DISPLAY_FIX
     const char * server_name;
     X11_Window_t * gst_window;
+    bool use_x11;
 #endif
 };
 
@@ -190,12 +187,12 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     gst_object_unref(clock);
 
 #ifdef X_DISPLAY_FIX
-    use_x11 = (strstr(videosink, "xvimagesink") || strstr(videosink, "ximagesink") || auto_videosink);
+    renderer->use_x11 = (strstr(videosink, "xvimagesink") || strstr(videosink, "ximagesink") || auto_videosink);
     fullscreen = *initial_fullscreen;
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
     X11_search_attempts = 0; 
-    if (use_x11) {
+    if (renderer->use_x11) {
         renderer->gst_window = calloc(1, sizeof(X11_Window_t));
         g_assert(renderer->gst_window);
         get_X11_Display(renderer->gst_window);
@@ -281,7 +278,7 @@ void video_renderer_render_buffer(unsigned char* data, int *data_len, int *nal_c
         gst_buffer_fill(buffer, 0, data, *data_len);
         gst_app_src_push_buffer (GST_APP_SRC(renderer->appsrc), buffer);
 #ifdef X_DISPLAY_FIX
-        if (renderer->gst_window && !(renderer->gst_window->window) && use_x11) {
+        if (renderer->gst_window && !(renderer->gst_window->window) && renderer->use_x11) {
             X11_search_attempts++;
             logger_log(logger, LOGGER_DEBUG, "Looking for X11 UxPlay Window, attempt %d", (int) X11_search_attempts);
             get_x_window(renderer->gst_window, renderer->server_name);
@@ -372,7 +369,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpoin
                 logger_log(logger, LOGGER_DEBUG, "GStreamer: automatically-selected videosink is \"%ssink\"", sink);
                 auto_videosink = false;
 #ifdef X_DISPLAY_FIX
-                use_x11 = (strstr(sink, "ximage") || strstr(sink, "xvimage"));
+                renderer->use_x11 = (strstr(sink, "ximage") || strstr(sink, "xvimage"));
 #endif
             }
         }
