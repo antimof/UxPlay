@@ -129,8 +129,8 @@ void video_renderer_size(float *f_width_source, float *f_height_source, float *f
 }
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
-                          const char *decoder, const char *converter, const char *videosink, const bool *initial_fullscreen,
-                          const bool *video_sync) {
+                          const char *decoder, const char *converter, const char *videosink, const bool initial_fullscreen,
+                          const bool video_sync) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     GstClock *clock = gst_system_clock_obtain();
@@ -162,7 +162,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     g_string_append(launch, " ! ");
     g_string_append(launch, "videoscale ! ");
     g_string_append(launch, videosink);
-    if (*video_sync) {
+    if (video_sync) {
         g_string_append(launch, " sync=true");
         sync = true;
     } else {
@@ -188,7 +188,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 
 #ifdef X_DISPLAY_FIX
     renderer->use_x11 = (strstr(videosink, "xvimagesink") || strstr(videosink, "ximagesink") || auto_videosink);
-    fullscreen = *initial_fullscreen;
+    fullscreen = initial_fullscreen;
     renderer->server_name = server_name;
     renderer->gst_window = NULL;
     X11_search_attempts = 0; 

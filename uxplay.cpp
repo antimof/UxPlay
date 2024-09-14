@@ -2130,7 +2130,7 @@ int main (int argc, char *argv[]) {
 
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen, &video_sync);
+                            video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), fullscreen, video_sync);
         video_renderer_start();
     }
 
@@ -2185,8 +2185,8 @@ int main (int argc, char *argv[]) {
         if (use_video && close_window) {
             video_renderer_destroy();
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
-                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), &fullscreen,
-                                &video_sync);
+                                video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), fullscreen,
+                                video_sync);
             video_renderer_start();
         }
         if (relaunch_video) {
