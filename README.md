@@ -1002,8 +1002,10 @@ Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS
 
 If UxPlay stops with the "No DNS-SD Server found" message, this  means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
 Before v1.60, UxPlay used to stall silently if DNS-SD service registration failed, but now stops with an error message returned by the
-DNSServiceRegister function: kDNSServiceErr_Unknown if no DNS-SD server was found:
-other mDNS error codes are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are listed in the
+DNSServiceRegister function: kDNSServiceErr_Unknown if no DNS-SD server was found.
+(A NixOS user found that in NixOS, this error can also occur if avahi-daemon service IS running with publishing enabled,
+but reports "the error disappeared on NixOS by setting services.avahi.openFirewall to true".)
+Other mDNS error codes are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are listed in the
 dnssd.h file.  An older version of this (the one used by avahi) is found [here](https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h).
 A few additional error codes are defined in a later version
 from [Apple](https://opensource.apple.com/source/mDNSResponder/mDNSResponder-544/mDNSShared/dns_sd.h.auto.html).   
