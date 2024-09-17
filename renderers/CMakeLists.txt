@@ -47,8 +47,8 @@ endif()
 
 add_library( renderers
              STATIC
-             audio_renderer_gstreamer.c
-	     video_renderer_gstreamer.c )
+             audio_renderer.c
+	     video_renderer.c )
 
 target_link_libraries ( renderers PUBLIC airplay )
 

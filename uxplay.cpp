@@ -408,9 +408,9 @@ static void main_loop()  {
     guint video_reset_watch_id = g_timeout_add(100, (GSourceFunc) video_reset_callback, (gpointer) loop);
     guint sigterm_watch_id = g_unix_signal_add(SIGTERM, (GSourceFunc) sigterm_callback, (gpointer) loop);
     guint sigint_watch_id = g_unix_signal_add(SIGINT, (GSourceFunc) sigint_callback, (gpointer) loop);
-    printf("********** main_loop_run *******************\n");
+    //printf("********** main_loop_run *******************\n");
     g_main_loop_run(loop);
-    printf("********** main_loop_exit *******************\n");
+    //printf("********** main_loop_exit *******************\n");
     for (int i = 0; i < n_renderers; i++) {
         if (gst_bus_watch_id[i] > 0) g_source_remove(gst_bus_watch_id[i]);
     }
@@ -594,7 +594,8 @@ static void print_info (char *name) {
     printf("-db l[:h] Set minimum volume attenuation to l dB (decibels, negative);\n");
     printf("          optional: set maximum to h dB (+ or -) default: -30.0:0.0 dB\n");
     printf("-taper    Use a \"tapered\" AirPlay volume-control profile\n"); 
-    printf("-s wxh[@r]Set display resolution [refresh_rate] default 1920x1080[@60]\n");
+    printf("-s wxh[@r]Request to client for video display resolution [refresh_rate]\n"); 
+    printf("          default 1920x1080[@60] (or 3840x2160[@60] with -h265 option)\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
     printf("-fs       Full-screen (only works with X11, Wayland, VAAPI, D3D11)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");

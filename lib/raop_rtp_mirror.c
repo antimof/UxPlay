@@ -584,9 +584,9 @@ raop_rtp_mirror_thread(void *arg)
                     printf("h265 detected\n");
                     h265_video = true;
                     raop_rtp_mirror->callbacks.video_set_codec(raop_rtp_mirror->callbacks.cls, codec);
-                    unsigned char vps_code[] = { 0xa0, 0x00, 0x01, 0x00 };
-                    unsigned char sps_code[] = { 0xa1, 0x00, 0x01, 0x00 };
-                    unsigned char pps_code[] = { 0xa2, 0x00, 0x01, 0x00 };
+                    unsigned char vps_start_code[] = { 0xa0, 0x00, 0x01, 0x00 };
+                    unsigned char sps_start_code[] = { 0xa1, 0x00, 0x01, 0x00 };
+                    unsigned char pps_start_code[] = { 0xa2, 0x00, 0x01, 0x00 };
                     unsigned char *vps;
                     short vps_size;
                     unsigned char *sps;
@@ -596,7 +596,7 @@ raop_rtp_mirror_thread(void *arg)
 
                     unsigned char * ptr = payload + 0x75;
  
-                    if (memcmp(ptr, vps_code, 4)) {
+                    if (memcmp(ptr, vps_start_code, 4)) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "non-conforming HEVC VPS/SPS/PPS payload (VPS)");
                         raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
                         break;
@@ -610,7 +610,7 @@ raop_rtp_mirror_thread(void *arg)
                         free(str);
                     }
                     ptr += vps_size;
-                    if (memcmp(ptr, sps_code, 4)) {
+                    if (memcmp(ptr, sps_start_code, 4)) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "non-conforming HEVC VPS/SPS/PPS payload (SPS)");
                         raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
                         break;
@@ -624,7 +624,7 @@ raop_rtp_mirror_thread(void *arg)
                         free(str);
                     }
                     ptr += sps_size;
-                    if (memcmp(ptr, pps_code, 4)) {
+                    if (memcmp(ptr, pps_start_code, 4)) {
                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "non-conforming HEVC VPS/SPS/PPS payload (PPS)");			
                         raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
                         break;

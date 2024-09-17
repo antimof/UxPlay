@@ -1,12 +1,10 @@
-# UxPlay 1.69:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.70:  AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### **Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where ALL user issues should be posted, and latest versions can be found).**
 
-   * _**NEW in v1.69**: minor changes for users: -nofreeze option to NOT leave frozen
-   video in place when a network failure occurs; internal changes/improvements
-   needed for planned future HLS video streaming support._
-
-   * **An experimental ("beta") version of UxPlay with support for HLS streaming of YouTube Videos from the YouTube app on an iOS client is now available at** https://github.com/FDH2/UxPlay/tree/video  .
+   * _**NEW in v1.70**: Support for 4k (h265) video with the new "-h265" option._
+ 
+   * **An experimental ("beta") version of UxPlay with support for HLS streaming of YouTube Videos from the YouTube app on an iOS client is now also available at** https://github.com/FDH2/UxPlay/tree/video2, and this feature will be added in a future release of UxPlay.
     _See the [Wiki page](https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies)) for details._
 
 ## Highlights:
@@ -136,7 +134,7 @@ using the icon for AirPlay video in apps such as the YouTube app
 will only send audio (in lossless ALAC format) without the accompanying
 video (there are plans to support HLS video in future releases of UxPlay)**
 
-### Possibility for using hardware-accelerated h264 video-decoding, if available.
+### Possibility for using hardware-accelerated h264/h265 video-decoding, if available.
 
 UxPlay uses [GStreamer](https://gstreamer.freedesktop.org) "plugins" for rendering
 audio and video.  This means that video and audio are supported "out of the box",
@@ -505,6 +503,11 @@ See [Usage](#usage) for more run-time options.
   (use option "`-vd omxh264dec`"), but this is broken by Pi 4 Model B firmware.  OMX support was removed from
   Raspberry Pi OS (Bullseye),  but is present in Buster.
 
+* **H265 (4K)** video is supported with hardware decoding by the Broadcom GPU on Raspberry Pi 5 models, as well as
+  on Raspberry Pi 4 model B.   **While GStreamer seem to make use of this hardware decoding, satisfactory rendering of
+  4K video by UxPlay on these Raspberry Pi models has not yet been acheived.**  The option -h265 is required, and
+  option "-vsync no" may be preferred.   "_4K video on Raspberry Pi is still a work in progress._"
+
 Even with GPU video decoding, some frames may be dropped by the lower-power models  to keep audio and video synchronized
 using timestamps.   In Legacy Raspberry Pi OS (Bullseye), raspi-config "Performance Options" allows specifying how much memory
 to allocate to the GPU, but this setting appears to be absent in Bookworm (but it can still be set to e.g. 128MB by adding a line  "gpu_mem=128" in /boot/config.txt).
@@ -727,6 +730,11 @@ with "`#`" are treated as comments, and ignored.  Command line options supersede
 
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
 
+**-h265** Activate "ScreenMultiCodec" support (AirPlay "Features" bit 42) for accepting h265 (4K) video in addition to h264
+   video (1080p) in screen-mirror mode.    When this option is used, two "video pipelines" (one for h264, one for h265) are created.
+   If any GStreamer plugins in the pipeline are specific for h264 or h265, the correct version  will be used in each pipeline.
+   A wired Client-Server ethernet connection is preferred over Wifi for 4K video, and might be required by the client.
+
 **-pin [nnnn]**: (since v1.67) use Apple-style (one-time) "pin" authentication when a new client connects for the first time: a four-digit pin code is
    displayed on the terminal, and the client screen shows a login prompt for this to be entered.    When "-pin" is used by itself, a new random
    pin code is chosen for each authentication; if "-pin nnnn" (e.g., "-pin 3939") is used, this will set an unchanging  fixed code. Authentication adds the server to the client's list of
@@ -773,10 +781,10 @@ using UxPlay as a second monitor for a mac computer, or monitoring a webcam; wit
    volume slider (or the number of steps above mute, where 16 steps = full volume) is reduced by 50%, the perceived volume is halved (a 10dB attenuation).
    (This is modified at low volumes, to use  the "untapered" volume if it is louder.)
 
-**-s wxh** (e.g. -s 1920x1080 , which is the default ) sets the display resolution (width and height,
-   in pixels).   (This may be a
+**-s wxh** e.g. -s 1920x1080 (= "1080p"), the default width and height resolutions in pixels for h264 video.  (The default becomes
+   3840x2160 (= "4K") when the -h265 option is used.) This is just a
    request made to the AirPlay client, and perhaps will not
-   be the final resolution you get.)   w and h are whole numbers with four
+   be the final resolution you get.   w and h are whole numbers with four
    digits or less.   Note that the **height** pixel size is the controlling
    one used by the client for determining the streaming format; the width is
    dynamically adjusted to the shape of the image (portrait or landscape
@@ -1002,9 +1010,9 @@ Some  systems  may instead use the mdnsd daemon as an alternative to provide DNS
 
 If UxPlay stops with the "No DNS-SD Server found" message, this  means that your network **does not have a running Bonjour/zeroconf DNS-SD server.**
 Before v1.60, UxPlay used to stall silently if DNS-SD service registration failed, but now stops with an error message returned by the
-DNSServiceRegister function: kDNSServiceErr_Unknown if no DNS-SD server was found.
-(A NixOS user found that in NixOS, this error can also occur if avahi-daemon service IS running with publishing enabled,
-but reports "the error disappeared on NixOS by setting services.avahi.openFirewall to true".)
+DNSServiceRegister function: kDNSServiceErr_Unknown if no DNS-SD server was found:
+_(A NixOS user found that in NixOS, this error can also occur if avahi-daemon service IS running with publishing enabled, but
+reports "the error disappeared on NixOS by setting services.avahi.openFirewall to true".)_ 
 Other mDNS error codes are in the range FFFE FF00 (-65792) to FFFE FFFF (-65537), and are listed in the
 dnssd.h file.  An older version of this (the one used by avahi) is found [here](https://github.com/lathiat/avahi/blob/master/avahi-compat-libdns_sd/dns_sd.h).
 A few additional error codes are defined in a later version
@@ -1215,6 +1223,8 @@ tvOS 12.2.1), so it does not seem to matter what version UxPlay claims to be.
 
 
 # Changelog
+1.70 2024-09-17   Add support for 4K (h265) video (resolution 3840 x 2160).
+
 1.69 2024-08-09   Internal improvements (e.g. in -nohold option, identifying GStreamer videosink
                   selected by autovideosink, finding X11 display) in anticipation of future HLS video support.
 		  New -nofreeze option to not leave frozen video in place when a network connection is reset.
