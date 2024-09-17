@@ -146,7 +146,7 @@ raop_handler_info(raop_conn_t *conn,
     plist_t displays_0_width_pixels_node = plist_new_uint(conn->raop->width);
     plist_t displays_0_height_pixels_node = plist_new_uint(conn->raop->height);
     plist_t displays_0_rotation_node = plist_new_bool(0); /* set to true in AppleTV gen 3 (which has features bit 8  set */
-    plist_t displays_0_refresh_rate_node = plist_new_real((double) 1.0 / conn->raop->refreshRate);  /* set as real 0.166666  = 60hz in AppleTV gen 3 */
+    plist_t displays_0_refresh_rate_node = plist_new_uint(conn->raop->refreshRate);  /* set as real 0.166666  = 60hz in AppleTV gen 3 */
     plist_t displays_0_max_fps_node = plist_new_uint(conn->raop->maxFPS);
     plist_t displays_0_overscanned_node = plist_new_bool(conn->raop->overscanned);
     plist_t displays_0_features = plist_new_uint(14);
