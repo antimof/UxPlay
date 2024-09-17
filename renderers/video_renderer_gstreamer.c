@@ -330,6 +330,9 @@ void video_renderer_update_background(int type) {
 }
 
 gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, gpointer loop) {
+    if (logger_get_level(logger) >= LOGGER_DEBUG) {
+        g_print("GStreamer bus message: %s %s\n", GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message));
+    }
     switch (GST_MESSAGE_TYPE (message)) {
     case GST_MESSAGE_ERROR: {
         GError *err;
