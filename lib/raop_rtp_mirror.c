@@ -199,7 +199,8 @@ raop_rtp_mirror_thread(void *arg)
     video_codec_t codec;
     const char h264[] = "h264";
     const char h265[] = "h265";
-
+    bool unsupported_codec = false;
+    
     while (1) {
         fd_set rfds;
         struct timeval tv;
@@ -526,49 +527,64 @@ raop_rtp_mirror_thread(void *arg)
                     prepend_sps_pps =  false;
                 }
 
-                //char *str3 =  utils_data_to_string(payload_out, video_data.data_len, 16);
-                //printf("%s\n", str3);
-                //free (str3);
-	
                 raop_rtp_mirror->callbacks.video_resume(raop_rtp_mirror->callbacks.cls);
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &video_data);
                 free(payload_out);
                 break;
+                //char *str3 =  utils_data_to_string(payload_out, video_data.data_len, 16);
+                //printf("%s\n", str3);
+                //free (str3);
             case 0x01:
+                /* 128-byte observed packet header structure 
+                   bytes 0-15: length + timestamp
+                   bytes 16-19 float width_source   (value is x.0000, x = unsigned short)
+                   bytes 20-23 float height_source  (value is x.0000, x = unsigned short)
+                   bytes 24-39 all  0x0
+                   bytes 40-43 float width_source   (value is x.0000, x = unsigned short)
+                   bytes 44-47 float height_source  (value is x.0000, x = unsigned short)
+                   bytes 48-51 ??? float "other_w"  (value seems to be x.0000, x = unsigned short)
+                   bytes 48-51 ??? float "other_h"  (value seems to be x.0000, x = unsigned short)
+                   bytes 56-59 width 
+                   bytes 60-63 height 
+                   bytes 64-127 all 0x0 
+		*/
+	      
                 // The information in the payload contains an SPS and a PPS NAL
                 // The sps_pps is not encrypted
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "\nReceived unencrypted codec packet from client:"
                            " payload_size %d header %s ts_client = %8.6f",
 			   payload_size, packet_description, (double) ntp_timestamp_remote / SEC);
 
-                //char *str1 = utils_data_to_string(payload, payload_size, 16);
-                //printf("unencrypted payload, size %d\n", payload_size);
-                //printf("%s\n", str1);
-                //free (str1);
-		codec = VIDEO_CODEC_UNKNOWN;
-		assert (raop_rtp_mirror->callbacks.video_set_codec);
+                codec = VIDEO_CODEC_UNKNOWN;
+                assert (raop_rtp_mirror->callbacks.video_set_codec);
                 ntp_timestamp_nal = ntp_timestamp_raw;
-                float width = byteutils_get_float(packet, 16);
-                float height = byteutils_get_float(packet, 20);
-                float width_source = byteutils_get_float(packet, 40);
-                float height_source = byteutils_get_float(packet, 44);
-                if (width != width_source || height != height_source) {
+
+                /* these "floats" are in fact integers that fit into unsigned shorts */
+                float width_0 = byteutils_get_float(packet, 16);  
+                float height_0 = byteutils_get_float(packet, 20);
+                float width_source = byteutils_get_float(packet, 40);    // duplication of width_0
+                float height_source = byteutils_get_float(packet, 44);   // duplication of height_0
+                float unknown_w = byteutils_get_float(packet, 48);
+                float unknown_h = byteutils_get_float(packet, 52);
+                float width = byteutils_get_float(packet, 56);
+                float height = byteutils_get_float(packet, 60);
+
+                if (width != width_0 || height != height_0) {
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: Unexpected : data  %f,"
-                           " %f != width_source = %f, height_source = %f", width, height, width_source, height_source);
+                           " %f != width_source = %f, height_source = %f", width_0, height_0, width_source, height_source);
                 }
-                width = byteutils_get_float(packet, 48);
-                height = byteutils_get_float(packet, 52);
-                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: unidentified extra header data  %f, %f", width, height);
-                width = byteutils_get_float(packet, 56);
-                height = byteutils_get_float(packet, 60);
+                logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: unidentified extra header data  %f, %f", unknown_w, unknown_h);
                 if (raop_rtp_mirror->callbacks.video_report_size) {
                     raop_rtp_mirror->callbacks.video_report_size(raop_rtp_mirror->callbacks.cls, &width_source, &height_source, &width, &height);
                 }
                 logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror width_source = %f height_source = %f width = %f height = %f",
                            width_source, height_source, width, height);
-                if (payload_size == 0) {
-                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror, received 0x01 packet with no payload (h265 video?)");
-                    raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
+
+		if (payload_size == 0) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror: received type 0x01 packet with no payload:\n"
+                               "this indicates non-h264 video but Airplay features bit 42 (SupportsScreenMultiCodec) is not set\n"
+                               "use startup option \"-h265\" to set this bit and support h265 (4K) video");
+                    unsupported_codec = true;
                     break;
                 }
                 if (sps_pps) {
@@ -762,9 +778,11 @@ raop_rtp_mirror_thread(void *arg)
             payload = NULL;
             memset(packet, 0, 128);
             readstart = 0;
+            if (unsupported_codec) {
+                break;
+            }
         }
     }
-
     /* Close the stream file descriptor */
     if (stream_fd != -1) {
         closesocket(stream_fd);
@@ -780,6 +798,13 @@ raop_rtp_mirror_thread(void *arg)
         const bool video_reset = false;   /* leave "frozen video" showing */
         raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0, video_reset);
     }
+
+    if (unsupported_codec) {
+        closesocket(raop_rtp_mirror->mirror_data_sock);
+        raop_rtp_mirror_stop(raop_rtp_mirror);
+        raop_rtp_mirror->callbacks.video_reset(raop_rtp_mirror->callbacks.cls);
+    }
+
     return 0;
 }
 

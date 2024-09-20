@@ -599,3 +599,8 @@ raop_stop(raop_t *raop) {
     assert(raop);
     httpd_stop(raop->httpd);
 }
+
+void raop_remove_known_connections(raop_t * raop) {
+    httpd_remove_known_connections(raop->httpd);
+}
+

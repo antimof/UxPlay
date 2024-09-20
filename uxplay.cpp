@@ -2229,6 +2229,7 @@ int main (int argc, char *argv[]) {
         if (use_audio) audio_renderer_stop();
         if (use_video && close_window) {
             video_renderer_destroy();
+            raop_remove_known_connections(raop);
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str(), 
                                 videosink_options.c_str(), fullscreen, video_sync, h265_support);
