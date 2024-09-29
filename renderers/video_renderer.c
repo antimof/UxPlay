@@ -508,18 +508,24 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
 
 void video_renderer_h265 (bool video_is_h265) {
     /* set renderer to h264 or h265, depending on pps/sps received by raop_rtp_mirror */
+    video_renderer_t *renderer_new = video_is_h265 ? renderer_type[1] : renderer_type[0];
+    if (renderer == renderer_new) {
+        return;
+    }
     video_renderer_t *renderer_prev = renderer;
+    
     if (renderer) {
         video_renderer_pause();
     }
-    renderer = video_is_h265 ? renderer_type[1] : renderer_type[0];
+    renderer = renderer_new;
     if (renderer_prev && renderer_prev != renderer) {
         gst_app_src_end_of_stream (GST_APP_SRC(renderer_prev->appsrc));
         gst_bus_set_flushing(renderer_prev->bus, TRUE);
         /* set state of previous renderer to GST_STATE_NULL to (hopefully?)  close video window */
         gst_element_set_state (renderer_prev->pipeline, GST_STATE_NULL);	   
         gst_element_set_state (renderer_prev->pipeline, GST_STATE_READY);
-     } 
+    }
+    video_renderer_resume;
 }
 
 unsigned int video_reset_callback(void * loop) {
