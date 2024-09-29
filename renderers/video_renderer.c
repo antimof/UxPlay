@@ -525,7 +525,7 @@ void video_renderer_h265 (bool video_is_h265) {
         gst_element_set_state (renderer_prev->pipeline, GST_STATE_NULL);	   
         gst_element_set_state (renderer_prev->pipeline, GST_STATE_READY);
     }
-    video_renderer_resume;
+    video_renderer_resume();
 }
 
 unsigned int video_reset_callback(void * loop) {
