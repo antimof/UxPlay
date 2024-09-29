@@ -2,9 +2,13 @@
 
 ### **Now developed at the GitHub site [https://github.com/FDH2/UxPlay](https://github.com/FDH2/UxPlay) (where ALL user issues should be posted, and latest versions can be found).**
 
-   * _**NEW in v1.70**: Support for 4k (h265) video with the new "-h265" option._
+   * _**NEW in v1.70**: Support for 4k (h265) video with the new "-h265" option._  (Recent Apple devices will send HEVC (h265) video in AirPlay mirror mode
+   if larger resolutions (_h_ > 1080) are requested with UxPlay's "-s wxh" option;  wired ethernet connection is prefered to
+   wireless in this mode, and may also be required by the client;
+   the "-h265" option changes the  default resolution from 1920x1080 to 3840x2160, and leaves default maximum framerate at 30fps.)
  
-   * **An experimental ("beta") version of UxPlay with support for HLS streaming of YouTube Videos from the YouTube app on an iOS client is now also available at** https://github.com/FDH2/UxPlay/tree/video2, and this feature will be added in a future release of UxPlay.
+   * **An experimental ("beta") version of UxPlay with support for HLS streaming of YouTube Videos from the YouTube
+   app on an iOS client is now also available at** https://github.com/FDH2/UxPlay/tree/video2, and this feature will be added in a future release of UxPlay.
     _See the [Wiki page](https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies)) for details._
 
 ## Highlights:
@@ -159,19 +163,21 @@ if not, software decoding is used.
    or earlier, the plugin is called `nvdec`, and
    must be [built by the user](https://github.com/FDH2/UxPlay/wiki/NVIDIA-nvdec-and-nvenc-plugins).
 
-*  **Video4Linux2 support for the Raspberry Pi Broadcom 2835 GPU (Pi 4B and older)**
+*  **Video4Linux2 support for h264 hardware decoding on Raspberry Pi (Pi 4B and older)**
 
     Raspberry Pi (RPi) computers (tested on Pi 4 Model B) can now run UxPlay using software video decoding,
-    but hardware-accelerated decoding by firmware in the Pi's 
+    but hardware-accelerated h264/h265 decoding by firmware in the Pi's Broadcom 2835
     GPU is prefered.  UxPlay accesses this using the GStreamer-1.22 Video4Linux2 (v4l2) plugin;
-    the plugin from older GStreamer < 1.22 needs a backport patch (already partially applied in
-    Raspberry Pi OS (Bullseye), available for 1.18.4 and later
-    in the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)). Also
-    requires the out-of-mainline Linux kernel module  bcm2835-codec  maintained by Raspberry Pi,
+    Uses the out-of-mainline Linux kernel module  bcm2835-codec  maintained by Raspberry Pi,
     so far only included in Raspberry Pi OS, and two other  distributions (Ubuntu, Manjaro) available
-    with Raspberry Pi Imager.  _Note: The latest  Raspberry Pi model 5 does not provide
-    hardware-accelerated (GPU) H264 decoding as its CPU is powerful enough for satisfactory software decoding._ 
+    with Raspberry Pi Imager. _(For GStreamer < 1.22, see
+    the [UxPlay Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches))_.
 
+*  **(New): Support for h265 (HEVC) hardware decoding on  Raspberry Pi (Pi  4 model B and Pi 5)**
+
+    Support is present, but so far satisfactory results have not been obtained. 
+    Pi model 5 only provides hardware-accelerated (GPU) decoding for h265 video, but not H264,
+    as its CPU is powerful enough for satisfactory software H264 decoding
 
 ### Note to packagers:
 
@@ -311,7 +317,7 @@ it can be easily modified to include dependency lists for other RPM-based distri
 
 ## Running UxPlay
 
-### Installing plugins (Debian-based Linux systems) (_skip if you built a complete GStreamer from source_)
+### Installing plugins (Debian-based Linux distributions, including Ubuntu and Raspberry Pi OS) (_skip if you built a complete GStreamer from source_)
 
 Next install the GStreamer plugins that are needed with `sudo apt install gstreamer1.0-<plugin>`.
 Values of `<plugin>` required are: 
@@ -321,8 +327,9 @@ Values of `<plugin>` required are:
 3. "**plugins-good**" (for v4l2 hardware h264 decoding)
 4. "**plugins-bad**" (for h264 decoding).   
 
-Plugins that may also be needed include "**gl**" for OpenGL support (this provides the "-vs glimagesink" videosink, which
-can be very useful in many systems, and should always be used when using h264 decoding by a NVIDIA GPU),  "**gtk3**" (which
+**Debian-based distributions split some of the plugin packages into smaller pieces:**
+some that may also be needed include "**gl**" for OpenGL support (this provides the "-vs glimagesink" videosink, which
+can be very useful in many systems (including Raspberry Pi),  and should always be used when using h264/h265 decoding by a NVIDIA GPU),  "**gtk3**" (which
 provides the "-vs gtksink" videosink), and "**x**" for
 X11 support, although these may  already be installed; "**vaapi**"
 is needed for hardware-accelerated h264 video decoding by Intel
@@ -477,7 +484,7 @@ See [Usage](#usage) for more run-time options.
   videosink "-vs kmssink" (the DirectFB framebuffer videosink "dfbvideosink" is broken on the Pi, and segfaults). 
   _In this case you should explicitly use the "-vs kmssink" option, as without it, autovideosink does not find the correct videosink._
 
-* Raspberry Pi 5 does not provide hardware H264 decoding (and does not need it).
+* Raspberry Pi 5 does not provide hardware H264 decoding (and does not need it).  
 
 * Pi  Zero 2 W, 3 Model B+ and 4 Model B should use hardware H264 decoding by the Broadcom GPU,
   but it requires an out-of-mainstream kernel module bcm2835_codec maintained in
@@ -505,8 +512,10 @@ See [Usage](#usage) for more run-time options.
 
 * **H265 (4K)** video is supported with hardware decoding by the Broadcom GPU on Raspberry Pi 5 models, as well as
   on Raspberry Pi 4 model B.   **While GStreamer seem to make use of this hardware decoding, satisfactory rendering of
-  4K video by UxPlay on these Raspberry Pi models has not yet been acheived.**  The option -h265 is required, and
-  option "-vsync no" may be preferred.   "_4K video on Raspberry Pi is still a work in progress._"
+  4K video by UxPlay on these Ras"pberry Pi models has not yet been acheived.**  The option "-h265" is required for actvating h265 support,
+  as well as a resolution setting "-s wxh" with h > 1080.
+  A wired ethernet connection is preferred in this mode (and may be required by the client)
+  "_4K video on Raspberry Pi is still a work in progress, and may require some redesign of the video pipeline._"
 
 Even with GPU video decoding, some frames may be dropped by the lower-power models  to keep audio and video synchronized
 using timestamps.   In Legacy Raspberry Pi OS (Bullseye), raspi-config "Performance Options" allows specifying how much memory
@@ -730,10 +739,13 @@ with "`#`" are treated as comments, and ignored.  Command line options supersede
 
 **-nh** Do not append "@_hostname_" at the end of the AirPlay server name.
 
-**-h265** Activate "ScreenMultiCodec" support (AirPlay "Features" bit 42) for accepting h265 (4K) video in addition to h264
+**-h265** Activate "ScreenMultiCodec" support (AirPlay "Features" bit 42) for accepting h265 (4K/HEVC) video in addition to h264
    video (1080p) in screen-mirror mode.    When this option is used, two "video pipelines" (one for h264, one for h265) are created.
    If any GStreamer plugins in the pipeline are specific for h264 or h265, the correct version  will be used in each pipeline.
-   A wired Client-Server ethernet connection is preferred over Wifi for 4K video, and might be required by the client.
+   A wired Client-Server ethernet connection is preferred over Wifi for 4K video, and might be required by the client.  Only recent Apple devices
+   (M1/M2 Macs or iPads, and some iPhones) can send h265 video if a resolut "-s wxh" with h > 1080 is requested.
+   The "-h265" option changes the  default resolution ("-s" option) from 1920x1080 to 3840x2160, and leaves default maximum 
+   framerate  ("-fps" option) at 30fps.
 
 **-pin [nnnn]**: (since v1.67) use Apple-style (one-time) "pin" authentication when a new client connects for the first time: a four-digit pin code is
    displayed on the terminal, and the client screen shows a login prompt for this to be entered.    When "-pin" is used by itself, a new random
