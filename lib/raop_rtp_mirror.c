@@ -324,14 +324,16 @@ raop_rtp_mirror_thread(void *arg)
              * 0x00 0x00: encrypted packet containing a non-IDR  type 1 VCL NAL unit             *
              * 0x00 0x10: encrypted packet containing an IDR type 5 VCL NAL unit                 *
              * 0x01 0x00: unencrypted packet containing a type 7 SPS NAL + a type 8 PPS NAL unit *
-             * 0x02 0x00: unencrypted packet (old protocol) no payload, sent once every second    *
+             * 0x02 0x00: unencrypted packet (old protocol) no payload, sent once every second   *
              * 0x05 0x00  unencrypted packet with a "streaming report", sent once per second.    */
 
 	    /* packet[6] + packet[7] may list a payload "option":    values seen are:            *
              * 0x00 0x00 : encrypted and "streaming report" packets                              *
              * 0x1e 0x00 : old protocol (seen in AirMyPC) no-payload once-per-second packets     *
-             * 0x16 0x01 : seen in most unencrypted SPS+PPS packets                              *
-             * 0x56 0x01 : occasionally seen in unencrypted  SPS+PPS packets (why different?)    */
+             * 0x16 0x01 : seen in most unencrypted h264  SPS+PPS packets                        *
+             * 0x56 0x01 : unencrypted h264 SPS+PPS packets (video stream stops, client sleeps)  *
+             * 0x1e 0x01 : unencrypted h265/HEVC SPS+PPS packets                                 
+             * 0x5e 0x01 : unencrypted h265 SPS+PPS packets (video stream stops, client sleeps)  */
 
             /* unencrypted packets with a SPS and a PPS NAL are sent initially, and also when a  *
              * change in video format (e.g. width, height) subsequently occurs. They seem always *
