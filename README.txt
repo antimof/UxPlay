@@ -8,8 +8,8 @@
     requested with UxPlay's "-s wxh" option; wired ethernet connection
     is prefered to wireless in this mode, and may also be required by
     the client; the "-h265" option changes the default resolution from
-    1920x1080 to 3840x2160, but leaves default maximum framerate ("-fps
-    option") at 30fps.)
+    1920x1080 to 3840x2160, but leaves default maximum framerate ("-fps"
+    option) at 30fps.)
 
 ## Highlights:
 
@@ -637,7 +637,7 @@ See [Usage](#usage) for more run-time options.
     model B. **While GStreamer seem to make use of this hardware
     decoding, satisfactory rendering speed of 4K video by UxPlay on
     these Raspberry Pi models has not yet been acheived.** The option
-    "-h265" is required for actvating h265 support. A wired ethernet
+    "-h265" is required for activating h265 support. A wired ethernet
     connection is preferred in this mode (and may be required by the
     client).
 

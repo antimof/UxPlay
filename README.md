@@ -5,7 +5,7 @@
    * _**NEW in v1.70**: Support for 4k (h265) video with the new "-h265" option._  (Recent Apple devices will send HEVC (h265) video in AirPlay mirror mode
    if larger resolutions (_h_ > 1080) are requested with UxPlay's "-s wxh" option;  wired ethernet connection is prefered to
    wireless in this mode, and may also be required by the client;
-   the "-h265" option changes the  default resolution from 1920x1080 to 3840x2160, but leaves default maximum framerate ("-fps option") at 30fps.)
+   the "-h265" option changes the  default resolution from 1920x1080 to 3840x2160, but leaves default maximum framerate ("-fps" option) at 30fps.)
  
 ## Highlights:
 
@@ -508,7 +508,7 @@ See [Usage](#usage) for more run-time options.
 
 * **H265 (4K)** video is supported with hardware decoding by the Broadcom GPU on Raspberry Pi 5 models, as well as
   on Raspberry Pi 4 model B.   **While GStreamer seem to make use of this hardware decoding, satisfactory rendering speed of
-  4K video by UxPlay on these Raspberry Pi models has not yet been acheived.**  The option "-h265" is required for actvating h265 support.
+  4K video by UxPlay on these Raspberry Pi models has not yet been acheived.**  The option "-h265" is required for activating h265 support.
   A wired ethernet connection is preferred in this mode (and may be required by the client).
 
 Even with GPU video decoding, some frames may be dropped by the lower-power models  to keep audio and video synchronized
