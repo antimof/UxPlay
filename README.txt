@@ -8,16 +8,8 @@
     requested with UxPlay's "-s wxh" option; wired ethernet connection
     is prefered to wireless in this mode, and may also be required by
     the client; the "-h265" option changes the default resolution from
-    1920x1080 to 3840x2160, and leaves default maximum framerate at
-    30fps.)
-
--   **An experimental ("beta") version of UxPlay with support for HLS
-    streaming of YouTube Videos from the YouTube app on an iOS client is
-    now also available at** https://github.com/FDH2/UxPlay/tree/video2,
-    and this feature will be added in a future release of UxPlay. *See
-    the [Wiki
-    page](https://github.com/FDH2/UxPlay/wiki/experimental-version-of-UxPlay-with-support-for-HLS-video-streaming-(you-tube-movies))
-    for details.*
+    1920x1080 to 3840x2160, but leaves default maximum framerate ("-fps
+    option") at 30fps.)
 
 ## Highlights:
 
@@ -643,13 +635,11 @@ See [Usage](#usage) for more run-time options.
 -   **H265 (4K)** video is supported with hardware decoding by the
     Broadcom GPU on Raspberry Pi 5 models, as well as on Raspberry Pi 4
     model B. **While GStreamer seem to make use of this hardware
-    decoding, satisfactory rendering of 4K video by UxPlay on these
-    Ras"pberry Pi models has not yet been acheived.** The option "-h265"
-    is required for actvating h265 support, as well as a resolution
-    setting "-s wxh" with h \> 1080. A wired ethernet connection is
-    preferred in this mode (and may be required by the client) "*4K
-    video on Raspberry Pi is still a work in progress, and may require
-    some redesign of the video pipeline.*"
+    decoding, satisfactory rendering speed of 4K video by UxPlay on
+    these Raspberry Pi models has not yet been acheived.** The option
+    "-h265" is required for actvating h265 support. A wired ethernet
+    connection is preferred in this mode (and may be required by the
+    client).
 
 Even with GPU video decoding, some frames may be dropped by the
 lower-power models to keep audio and video synchronized using
@@ -1621,8 +1611,8 @@ what version UxPlay claims to be.
 
 # Changelog
 
-1.70 2024-09-17 Add support for 4K (h265) video (resolution 3840 x
-2160).
+1.70 2024-10-04 Add support for 4K (h265) video (resolution 3840 x
+2160). Fix issue with GStreamer \>= 1.24 when client sleeps, then wakes.
 
 1.69 2024-08-09 Internal improvements (e.g. in -nohold option,
 identifying GStreamer videosink selected by autovideosink, finding X11
