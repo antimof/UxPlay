@@ -56,6 +56,15 @@ if( GST_INCLUDE_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/include" )
     set( GST_MACOS "1" CACHE STRING "define GST_MACOS in uxplay.cpp" )
   endif()
 endif()
+
+# set GST_MACOS for all Apple when GStreamer >= 1.24
+if ( APPLE AND NOT GST_MACOS )
+  pkg_check_modules ( GST124 gstreamer-1.0>=1.24 )
+  if ( GST124_FOUND )
+     set( GST_MACOS "1" CACHE STRING "define GST_MACOS in uxplay.cpp" )
+   endif()
+endif()
+
 target_include_directories ( renderers PUBLIC ${GST_INCLUDE_DIRS} )
 
 if( GST_LIBRARY_DIRS MATCHES "/Library/FrameWorks/GStreamer.framework/lib" )
