@@ -47,23 +47,27 @@ typedef enum videoflip_e {
 
 typedef struct video_renderer_s video_renderer_t;
 
-void video_renderer_init (logger_t *logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
-                          const char *decoder, const char *converter, const char *videosink, const bool *fullscreen,
-                          const bool *video_sync);
+typedef struct user_data_s {
+    int type;
+    GMainLoop *loop;
+} user_data_t;
+  
+void video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
+                         const char *decoder, const char *converter, const char *videosink, const char *videosin_options,
+                         bool initial_fullscreen, bool video_sync, bool h265_support);
 void video_renderer_start ();
 void video_renderer_stop ();
 void video_renderer_pause ();
 void video_renderer_resume ();
-bool video_renderer_is_paused();
 void video_renderer_render_buffer (unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time);
 void video_renderer_flush ();
-unsigned int video_renderer_listen(void *loop);
 void video_renderer_destroy ();
 void video_renderer_size(float *width_source, float *height_source, float *width, float *height);
-  
-  /* not implemented for gstreamer */
-void video_renderer_update_background (int type); 
+void video_renderer_choose_codec(bool is_h265);
 
+unsigned int video_renderer_listen(void *loop, int id);
+unsigned int video_reset_callback(void *loop);
+  
 #ifdef __cplusplus
 }
 #endif
