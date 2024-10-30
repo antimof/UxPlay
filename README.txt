@@ -726,12 +726,15 @@ be installed by Homebrew as dependencies. The [Homebrew gstreamer
 installation](https://formulae.brew.sh/formula/gstreamer#default) has
 recently been reworked into a single "formula" named `gstreamer`, which
 now works without needing GST_PLUGIN_PATH to be set in the enviroment.
-Homebrew installs gstreamer to `(HOMEBREW)/lib/gstreamer-1.0` where
-`(HOMEBREW)/*` is `/opt/homebrew/*` on Apple Silicon Macs, and
-`/usr/local/*` on Intel Macs; do not put any extra non-Homebrew plugins
-(that you build yourself) there, and instead set GST_PLUGIN_PATH to
-point to their location (Homebrew does not supply a complete GStreamer,
-but seems to have everything needed for UxPlay).
+Homebrew installs gstreamer to `HOMEBREW_PREFIX/lib/gstreamer-1.0` where
+by default `HOMEBREW_PREFIX/*` is `/opt/homebrew/*` on Apple Silicon
+Macs, and `/usr/local/*` on Intel Macs; do not put any extra
+non-Homebrew plugins (that you build yourself) there, and instead set
+GST_PLUGIN_PATH to point to their location (Homebrew does not supply a
+complete GStreamer, but seems to have everything needed for UxPlay).
+**New: the UxPlay build script will now also detect Homebrew
+installations in non-standard locations indicated by the environment
+variable `$HOMEBREW_PREFIX`.**
 
 **Using GStreamer installed from MacPorts**: this is **not**
 recommended, as currently the MacPorts GStreamer is old (v1.16.2),
