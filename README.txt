@@ -212,14 +212,19 @@ used.
     available with Raspberry Pi Imager. *(For GStreamer \< 1.22, see the
     [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches))*.
+    Pi model 5 has no support for hardware H264 decoding, as its CPU is
+    powerful enough for satisfactory software H264 decoding
 
--   **(New): Support for h265 (HEVC) hardware decoding on Raspberry Pi
-    (Pi 4 model B and Pi 5)**
+-   **Support for h265 (HEVC) hardware decoding on Raspberry Pi (Pi 4
+    model B and Pi 5)**
 
-    Support is present, but so far satisfactory results have not been
-    obtained. Pi model 5 only provides hardware-accelerated (GPU)
-    decoding for h265 video, but not H264, as its CPU is powerful enough
-    for satisfactory software H264 decoding
+    These Raspberry Pi models have a dedicated HEVC decoding block (not
+    the GPU), with a driver "rpivid" which is not yet in the mainline
+    Linux kernel (but is planned to be there in future). Unfortunately
+    it produces decoded video in a non-standard pixel format (NC30 or
+    "SAND") which will not be supported by GStreamer until the driver is
+    in the mainline kernel; without this support, UxPlay support for
+    HEVC hardware decoding on Raspberry Pi will not work.
 
 ### Note to packagers:
 
@@ -632,14 +637,17 @@ See [Usage](#usage) for more run-time options.
     this is broken by Pi 4 Model B firmware. OMX support was removed
     from Raspberry Pi OS (Bullseye), but is present in Buster.
 
--   **H265 (4K)** video is supported with hardware decoding by the
-    Broadcom GPU on Raspberry Pi 5 models, as well as on Raspberry Pi 4
-    model B. **While GStreamer seem to make use of this hardware
-    decoding, satisfactory rendering speed of 4K video by UxPlay on
-    these Raspberry Pi models has not yet been acheived.** The option
-    "-h265" is required for activating h265 support. A wired ethernet
-    connection is preferred in this mode (and may be required by the
-    client).
+-   **H265 (4K)** video is potentially supported by hardware decoding on
+    Raspberry Pi 5 models, as well as on Raspberry Pi 4 model B, using a
+    dedicated HEVC decoding block, but the "rpivid" kernel driver for
+    this it not yet supported by GStreamer (this driver decodes video
+    into a non-standard format that cannot be supported by GStreamer
+    until the driver is in the mainline Linux kernel). Raspberry Pi
+    provides a version of ffmpeg that can use that format, but at
+    present UxPlay cannot use this. The best solution would be for the
+    driver to be "upstreamed" to the kernel, allowing GStreamer support.
+    (Software HEVC decoding works, but does not seem to give
+    satisfactory results on the Pi).
 
 Even with GPU video decoding, some frames may be dropped by the
 lower-power models to keep audio and video synchronized using
