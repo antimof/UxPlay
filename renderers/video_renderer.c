@@ -249,7 +249,8 @@ void video_renderer_init(logger_t *render_logger, const char *server_name, video
                 } else {
                     free(renderer_type[0]->gst_window);
                     renderer_type[0]->gst_window = NULL;
-                }	    } else if (renderer_type[0]->use_x11) {
+                }
+            } else if (renderer_type[0]->use_x11) {
                 renderer_type[i]->gst_window = (X11_Window_t *) calloc(1, sizeof(X11_Window_t));
                 g_assert(renderer_type[i]->gst_window);
                 memcpy(renderer_type[i]->gst_window, renderer_type[0]->gst_window, sizeof(X11_Window_t));
