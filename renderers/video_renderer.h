@@ -46,11 +46,6 @@ typedef enum videoflip_e {
 } videoflip_t;
 
 typedef struct video_renderer_s video_renderer_t;
-
-typedef struct user_data_s {
-    int type;
-    GMainLoop *loop;
-} user_data_t;
   
 void video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
                          const char *decoder, const char *converter, const char *videosink, const char *videosin_options,

@@ -42,7 +42,6 @@ static bool sync = false;
 static bool auto_videosink = true;
 static bool logger_debug = false;
 static bool video_terminate = false;
-static user_data_t user_data;
 
 #define NCODECS  2   /* renderers for h264 and h265 */
 
