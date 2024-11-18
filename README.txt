@@ -744,22 +744,28 @@ complete GStreamer, but seems to have everything needed for UxPlay).
 installations in non-standard locations indicated by the environment
 variable `$HOMEBREW_PREFIX`.**
 
-**Using GStreamer installed from MacPorts**: this is **not**
-recommended, as currently the MacPorts GStreamer is old (v1.16.2),
-unmaintained, and built to use X11:
+**Using GStreamer installed from MacPorts** : (MacPorts is now again
+supplying current or recent Gstreamer). Before building UxPlay, install
+the MacPorts GStreamer with
+"`sudo port install gstreamer1 gstreamer1-gst-plugins-base`". Plugins
+are installed by "`sudo port install gstreamer1-gst-plugins-*`" where
+"`*`" is "good", "bad", (and optionally "ugly"). For the libav plugin,
+"`sudo port install ffmpeg6 [+nonfree] gstreamer1-gst-libav`" (where
+"+nonfree" is optional, and makes linked GPL binaries
+non-distributable). Unfortunately, the current MacPorts GStreamer build
+(bug or feature?) does not provide the opengl plugin, so the only
+working videosink it provides is osxvideosink. (Hopefully this will be
+corrected). *It is also possible to install an X11-based GStreamer with
+MacPorts, (add " +x11" after "base", "good" "bad" and "ugly" in the
+plugin names): for X11 support on macOS, compile UxPlay using a special
+cmake option `-DUSE_X11=ON`, and run it from an XQuartz terminal with
+-vs ximagesink; older non-retina macs require a lower resolution when
+using X11: `uxplay -s 800x600`.*
 
 -   Instead [build gstreamer
     yourself](https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts)
     if you use MacPorts and do not want to use the "Official" Gstreamer
-    binaries.
-
-*(If you really wish to use the MacPorts GStreamer-1.16.2, install
-pkgconf ("sudo port install pkgconf"), then "sudo port install
-gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
-gstreamer1-gst-plugins-bad gstreamer1-gst-libav". For X11 support on
-macOS, compile UxPlay using a special cmake option `-DUSE_X11=ON`, and
-run it from an XQuartz terminal with -vs ximagesink; older non-retina
-macs require a lower resolution when using X11: `uxplay -s 800x600`.)*
+    binaries or Macports packages.
 
 After installing GStreamer, build and install uxplay: open a terminal
 and change into the UxPlay source directory ("UxPlay-master" for zipfile
