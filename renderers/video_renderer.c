@@ -206,11 +206,19 @@ void video_renderer_init(logger_t *render_logger, const char *server_name, video
             sync = false;
         }
 
-	if (!strcmp(renderer_type[i]->codec, h265)) {
-            g_string_replace (launch, (const gchar *) h264,  (const gchar *) h265, 0);
-	} else {
-            g_string_replace (launch, (const gchar *) h265,  (const gchar *) h264, 0);
-	}
+        if (!strcmp(renderer_type[i]->codec, h264)) {
+            char *pos = launch->str;
+            while ((pos = strstr(pos,h265))){
+                 pos +=3;
+                 *pos = '4';
+            }
+        } else if (!strcmp(renderer_type[i]->codec, h265)) {
+            char *pos = launch->str;
+            while ((pos = strstr(pos,h264))){
+                 pos +=3;
+                 *pos = '5';
+            }
+        }
 
         logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline %d:\n\"%s\"", i + 1, launch->str);
         renderer_type[i]->pipeline = gst_parse_launch(launch->str, &error);
