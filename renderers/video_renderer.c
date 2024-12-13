@@ -346,7 +346,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 #endif
         gst_element_set_state (renderer_type[i]->pipeline, GST_STATE_READY);
         GstState state;
-        if (gst_element_get_state (renderer_type[i]->pipeline, &state, NULL, 0)) {
+        if (gst_element_get_state (renderer_type[i]->pipeline, &state, NULL, 100 * GST_MSECOND)) {
             if (state == GST_STATE_READY) {
                 logger_log(logger, LOGGER_DEBUG, "Initialized GStreamer video renderer %d", i + 1);
                 if (hls_video && i == 0) {
