@@ -571,7 +571,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
                      "*** GStreamer may be trying to use non-functional hardware h264 video decoding.\n"
                      "*** Try using option -avdec to force software decoding or use -vs <videosink>\n"
                      "*** to select a videosink of your choice (see \"man uxplay\").\n\n"
-                     "*** Raspberry Pi OS with (unpatched) GStreamer-1.18.4 needs \"-bt709\" uxplay option");
+                     "*** Raspberry Pi models 4B and earlier using Video4Linux2 may need \"-bt709\" uxplay option");
         }
 	g_error_free (err);
         g_free (debug);

@@ -640,7 +640,7 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osxvideosink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    Sometimes needed for Raspberry Pi with GStreamer < 1.22 \n"); 
+    printf("-bt709    Sometimes needed for Raspberry Pi models using Video4Linux2 \n"); 
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");

@@ -81,12 +81,15 @@ After installation:
     from terminal commands "ps waux \| grep pulse" or "pactl info" will
     contain "pipewire" if your Linux/BSD system uses it).*
 
--   On Raspberry Pi: If you use Ubuntu 22.10 or earlier, GStreamer must
-    be
+-   On Raspberry Pi: models using hardware h264 video decoding by the
+    Broadcom GPU (models 4B and earlier) may require the uxplay option
+    -bt709. If you use Ubuntu 22.10 or earlier, GStreamer must be
     [patched](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to use hardware video decoding by the Broadcom GPU (also recommended
-    but optional for Raspberry Pi OS (Bullseye): use option
-    "`uxplay -bt709`" if you do not use the patch).
+    but optional for Raspberry Pi OS (Bullseye): the patched GStreamer
+    does not need option " -bt709\`". The need for -bt709 when hardware
+    video decoding is used seems to have reappeared starting with
+    GStreamer-1.22.
 
 To (easily) compile the latest UxPlay from source, see the section
 [Getting UxPlay](#getting-uxplay).
@@ -574,6 +577,13 @@ what is available. Some possibilites on Linux/\*BSD are:
 -   If the server is "headless" (no attached monitor, renders audio
     only) use `-vs 0`.
 
+Note that videosink options can set using quoted arguments to -vs:
+*e.g.*, `-vs "xvimagesink display=:0"`: ximagesink and xvimagesink allow
+an X11 display name to be specified, and waylandsink has a similar
+option. Videosink options ("properties") can be found in their GStreamer
+description pages,such as
+https://gstreamer.freedesktop.org/documentation/xvimagesink .
+
 GStreamer also searches for the best "audiosink"; override its choice
 with `-as <audiosink>`. Choices on Linux include pulsesink, alsasink,
 pipewiresink, oss4sink; see what is available with
@@ -621,6 +631,9 @@ See [Usage](#usage) for more run-time options.
     GStreamer-1.18.4 which needs the uxplay option -bt709 (and don't use
     -v4l2); it is still better to apply the full patch from the UxPlay
     Wiki in this case.
+
+-   **It appears that when hardware h264 video decoding is used, the
+    option -bt709 became needed again in GStreamer-1.22 and later.**
 
 -   For "double-legacy" Raspberry Pi OS (Buster), there is no patch for
     GStreamer-1.14. Instead, first build a complete newer
