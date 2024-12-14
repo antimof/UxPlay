@@ -484,10 +484,10 @@ void video_renderer_stop() {
      }
 }
 
-void video_renderer_destroy() {
+static void video_renderer_destroy_h26x(video_renderer_t *renderer) {
     if (renderer) {
         GstState state;
-        gst_element_get_state(renderer->pipeline, &state, NULL, 0);
+        gst_element_get_state(renderer->pipeline, &state, NULL, 100 * GST_MSECOND);
         if (state != GST_STATE_NULL) {
             if (!hls_video) {
                 gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
@@ -508,6 +508,14 @@ void video_renderer_destroy() {
         free (renderer);
         renderer = NULL;
     }
+}
+
+void video_renderer_destroy() {
+    for (int i = 0; i < n_renderers; i++) {
+        if (renderer_type[i]) {
+            video_renderer_destroy_h26x(renderer_type[i]);
+        }
+    }  
 }
 
 gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void *loop) {
@@ -595,10 +603,9 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
         }
         break;
     case GST_MESSAGE_STATE_CHANGED:
-ESSAGE_STATE_CHANGED:
         if (renderer_type[type]->state_pending && strstr(GST_MESSAGE_SRC_NAME(message), "pipeline")) {
             GstState state;
-            gst_element_get_state(renderer_type[type]->pipeline, &state, NULL,0);
+            gst_element_get_state(renderer_type[type]->pipeline, &state, NULL, 100 * GST_MSECOND);
 	    if (state == GST_STATE_NULL) {
                 gst_element_set_state(renderer_type[type]->pipeline, GST_STATE_PLAYING);
 	    } else if (state == GST_STATE_PLAYING) {
