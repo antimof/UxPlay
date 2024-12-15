@@ -44,6 +44,7 @@ int httpd_set_connection_type (httpd_t *http, void *user_data, connection_type_t
 int httpd_count_connection_type (httpd_t *http, connection_type_t type);
 int httpd_get_connection_socket (httpd_t *httpd, void *user_data);
 int httpd_get_connection_socket_by_type (httpd_t *httpd, connection_type_t type, int instance);
+const char *httpd_get_connection_typename (connection_type_t type);
 void *httpd_get_connection_by_type (httpd_t *httpd, connection_type_t type, int instance);
 httpd_t *httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int  nohold);
 

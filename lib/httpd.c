@@ -29,7 +29,6 @@
 #include "logger.h"
 #include "utils.h"
 
-
 static const char *typename[] = {
     [CONNECTION_TYPE_UNKNOWN] = "Unknown",
     [CONNECTION_TYPE_RAOP]    = "RAOP",
@@ -37,7 +36,6 @@ static const char *typename[] = {
     [CONNECTION_TYPE_PTTH]    = "AirPlay (reversed)",
     [CONNECTION_TYPE_HLS]     = "HLS"
 };
-
 
 struct http_connection_s {
     int connected;
@@ -68,6 +66,11 @@ struct httpd_s {
     int server_fd4;
     int server_fd6;
 };
+
+const char *
+httpd_get_connection_typename (connection_type_t type) {
+  return typename[type];
+}
 
 int
 httpd_get_connection_socket (httpd_t *httpd, void *user_data) {
