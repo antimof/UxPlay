@@ -454,9 +454,7 @@ char *adjust_yt_condensed_playlist(const char *media_playlist) {
     memcpy(new_pos, old_pos, len);
     old_pos += len;
     new_pos += len;
-    int counter = 0;
     while (ptr) {
-        counter++;
         /* for each chunk */
         const char *end = NULL;
         char *start = strstr(ptr, prefix);
