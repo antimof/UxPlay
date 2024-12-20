@@ -128,14 +128,14 @@ static void append_videoflip (GString *launch, const videoflip_t *flip, const vi
     }
 }
 
-/* apple uses colorimetry=1:3:5:1                                *
+/* apple uses colorimetry that is detected as  1:3:7:1           * //previously 1:3:5:1 was seen
  * (not recognized by v4l2 plugin in Gstreamer  < 1.20.4)        *
  * See .../gst-libs/gst/video/video-color.h in gst-plugins-base  *
  * range = 1   -> GST_VIDEO_COLOR_RANGE_0_255      ("full RGB")  * 
  * matrix = 3  -> GST_VIDEO_COLOR_MATRIX_BT709                   *
- * transfer = 5 -> GST_VIDEO_TRANSFER_BT709                      *
+ * transfer = 7 -> GST_VIDEO_TRANSFER_SRGB                       * // previously GST_VIDEO_TRANSFER_BT709
  * primaries = 1 -> GST_VIDEO_COLOR_PRIMARIES_BT709              *
- * closest used by  GStreamer < 1.20.4 is BT709, 2:3:5:1 with    *                            *
+ * closest used by  GStreamer < 1.20.4 is BT709, 2:3:5:1 with    * // now use sRGB = 1:1:7:1    
  * range = 2 -> GST_VIDEO_COLOR_RANGE_16_235 ("limited RGB")     */  
 
 static const char h264_caps[]="video/x-h264,stream-format=(string)byte-stream,alignment=(string)au";

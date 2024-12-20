@@ -87,6 +87,12 @@ UxPlay 1.71: An open\-source AirPlay mirroring (+ audio streaming) server:
 .TP
 \fB\-bt709\fR    Sometimes needed for Raspberry Pi models using Video4Linux2.
 .TP
+\fB\-srgb\fR     Display "Full range" [0-255] color, not "Limited Range"[16-235]
+.IP
+   This is a workaround for a GStreamer problem, until it is fixed.
+.PP
+\fB\-srgb\fR no  Disable srgb option (use when enabled by default: Linux, *BSD)
+.TP
 \fB\-as\fI sink\fR  Choose the GStreamer audiosink; default "autoaudiosink"
 .IP
    choices:pulsesink,alsasink,pipewiresink,osssink,oss4sink,

@@ -72,6 +72,12 @@
 #define HIGHEST_PORT 65535
 #define NTP_TIMEOUT_LIMIT 5
 #define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
+#define SRGB_FIX  " ! video/x-raw,colorimetry=sRGB,format=RGB  ! "
+#ifdef FULL_RANGE_RGB_FIX
+  #define DEFAULT_SRGB_FIX true
+#else
+  #define DEFAULT_SRGB_FIX false
+#endif
 
 static std::string server_name = DEFAULT_NAME;
 static dnssd_t *dnssd = NULL;
@@ -122,6 +128,7 @@ static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
 static int log_level = LOGGER_INFO;
 static bool bt709_fix = false;
+static bool srgb_fix = DEFAULT_SRGB_FIX;
 static int nohold = 0;
 static bool nofreeze = false;
 static unsigned short raop_port;
@@ -640,7 +647,10 @@ static void print_info (char *name) {
     printf("          gtksink,waylandsink,osxvideosink,kmssink,d3d11videosink etc.\n");
     printf("-vs 0     Streamed audio only, with no video display window\n");
     printf("-v4l2     Use Video4Linux2 for GPU hardware h264 decoding\n");
-    printf("-bt709    Sometimes needed for Raspberry Pi models using Video4Linux2 \n"); 
+    printf("-bt709    Sometimes needed for Raspberry Pi models using Video4Linux2 \n");
+    printf("-srgb     Display \"Full range\" [0-255] color, not \"Limited Range\"[16-235]\n");
+    printf("          This is a workaround for a GStreamer problem, until it is fixed\n");
+    printf("-srgb no  Disable srgb option (use when enabled by default: Linux, *BSD)\n");
     printf("-as ...   Choose the GStreamer audiosink; default \"autoaudiosink\"\n");
     printf("          some choices:pulsesink,alsasink,pipewiresink,jackaudiosink,\n");
     printf("          osssink,oss4sink,osxaudiosink,wasapisink,directsoundsink.\n");
@@ -1003,7 +1013,7 @@ static void parse_arguments (int argc, char *argv[]) {
             fprintf(stderr,"     -rpifb was equivalent to \"-v4l2 -vs kmssink\"\n");
             fprintf(stderr,"     -rpigl was equivalent to \"-v4l2 -vs glimagesink\"\n");
             fprintf(stderr,"     -rpiwl was equivalent to \"-v4l2 -vs waylandsink\"\n");
-            fprintf(stderr,"     for GStreamer < 1.22, \"-bt709\" may also be needed\n");
+            fprintf(stderr,"     Option \"-bt709\" may also be needed for R Pi model 4B and earlier\n");
             exit(1);
         } else if (arg == "-fs" ) {
             fullscreen = true;
@@ -1078,6 +1088,15 @@ static void parse_arguments (int argc, char *argv[]) {
             }
         } else if (arg == "-bt709") {
             bt709_fix = true;
+        } else if (arg == "-srgb") {
+            srgb_fix = true;
+	    if (i <  argc - 1) {
+                if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
+                    srgb_fix = false;
+                    i++;
+                    continue;
+                }
+            }
         } else if (arg == "-nohold") {
             nohold = 1;
         } else if (arg == "-al") {
@@ -2170,6 +2189,12 @@ int main (int argc, char *argv[]) {
         video_parser.append(BT709_FIX);
     }
 
+    if (srgb_fix && use_video) {
+        std::string option = video_converter;
+        video_converter.append(SRGB_FIX);
+        video_converter.append(option);
+    }
+    
     if (require_password && registration_list) {
         if (pairing_register == "") {
             const char * homedir = get_homedir();

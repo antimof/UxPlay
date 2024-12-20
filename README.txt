@@ -1122,8 +1122,19 @@ Video4Linux2. Equivalent to `-vd v4l2h264dec -vc v4l2convert`.
 
 **-bt709** A workaround for the failure of the older Video4Linux2 plugin
 to recognize Apple's use of an uncommon (but permitted) "full-range
-color" variant of the bt709 color standard for digital TV. This is no
-longer needed by GStreamer-1.20.4 and backports from it.
+color" variant of the bt709 color standard for digital TV. This was no
+longer needed by GStreamer-1.20.4 and backports from it, but appears to
+again be required in GStreamer-1.22 and later.
+
+**-srgb** A workaround for a failure to display full-range 8-bit color
+\[0-255\], and instead restrict to limited range \[16-235\] "legal
+BT709" HDTV format. The workaround works on x86_64 desktop systems, but
+does not yet work on Raspberry Pi. The issue may be fixed in a future
+GStreamer release: it only occurs in Linux and \*BSD.
+
+**-srbg no**. Disables the -srgb option, which is enabled by default in
+Linux and \*BSD, but may be useless on Raspberry Pi, and may be
+unwanted, as it adds extra processing load.
 
 **-rpi** Equivalent to "-v4l2" (Not valid for Raspberry Pi model 5, and
 removed in UxPlay 1.67)
