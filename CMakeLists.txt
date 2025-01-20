@@ -1,7 +1,7 @@
 if ( APPLE )
   cmake_minimum_required( VERSION 3.13 )
 else ()
-  cmake_minimum_required( VERSION 3.5 )
+  cmake_minimum_required( VERSION 3.10 )
 endif ()
 
 project( uxplay )
@@ -32,7 +32,9 @@ if ( ( UNIX AND NOT APPLE ) OR USE_X11 )
 endif()
 
 if( UNIX AND NOT APPLE )
- add_definitions( -DSUPPRESS_AVAHI_COMPAT_WARNING )
+  add_definitions( -DSUPPRESS_AVAHI_COMPAT_WARNING )
+  # convert AirPlay colormap 1:3:7:1 to sRGB (1:1:7:1), needed on Linux and BSD
+  add_definitions( -DFULL_RANGE_RGB_FIX )
 else()
   set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 endif()

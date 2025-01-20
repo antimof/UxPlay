@@ -81,7 +81,7 @@ struct raop_rtp_mirror_s {
     raop_callbacks_t callbacks;
     raop_ntp_t *ntp;
 
-    /* Buffer to handle all resends */
+    /* mirror buffer for decryption */
     mirror_buffer_t *buffer;
 
     /* Remote address as sockaddr */
@@ -245,8 +245,9 @@ raop_rtp_mirror_thread(void *arg)
             saddrlen = sizeof(saddr);
             stream_fd = accept(raop_rtp_mirror->mirror_data_sock, (struct sockaddr *)&saddr, &saddrlen);
             if (stream_fd == -1) {
+                int sock_err = SOCKET_GET_ERROR();
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
-                           "raop_rtp_mirror error in accept %d %s", errno, strerror(errno));
+                           "raop_rtp_mirror error in accept %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
                 break;
             }
 
@@ -255,31 +256,36 @@ raop_rtp_mirror_thread(void *arg)
             tv.tv_sec = 0;
             tv.tv_usec = 5000;
             if (setsockopt(stream_fd, SOL_SOCKET, SO_RCVTIMEO, CAST &tv, sizeof(tv)) < 0) {
+                int sock_err = SOCKET_GET_ERROR();
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
-                           "raop_rtp_mirror could not set stream socket timeout %d %s", errno, strerror(errno));
+                           "raop_rtp_mirror could not set stream socket timeout %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
                 break;
             }
 
             int option;
             option = 1;
             if (setsockopt(stream_fd, SOL_SOCKET, SO_KEEPALIVE, CAST &option, sizeof(option)) < 0) {
+                int sock_err = SOCKET_GET_ERROR();
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
-                           "raop_rtp_mirror could not set stream socket keepalive %d %s", errno, strerror(errno));
+                           "raop_rtp_mirror could not set stream socket keepalive %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
             option = 60;
             if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPIDLE, CAST &option, sizeof(option)) < 0) {
+                int sock_err = SOCKET_GET_ERROR();
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
-                           "raop_rtp_mirror could not set stream socket keepalive time %d %s", errno, strerror(errno));
+                           "raop_rtp_mirror could not set stream socket keepalive time %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
             option = 10;
             if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPINTVL, CAST &option, sizeof(option)) < 0) {
+                int sock_err = SOCKET_GET_ERROR();
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
-                           "raop_rtp_mirror could not set stream socket keepalive interval %d %s", errno, strerror(errno));
+                           "raop_rtp_mirror could not set stream socket keepalive interval %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
             option = 6;
             if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPCNT, CAST &option, sizeof(option)) < 0) {
+                int sock_err = SOCKET_GET_ERROR();
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
-                           "raop_rtp_mirror could not set stream socket keepalive probes %d %s", errno, strerror(errno));
+                           "raop_rtp_mirror could not set stream socket keepalive probes %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
             readstart = 0;
         }
@@ -301,10 +307,11 @@ raop_rtp_mirror_thread(void *arg)
                 stream_fd = -1;
                 continue;
             } else if (payload == NULL && ret == -1) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
+                int sock_err = SOCKET_GET_ERROR();
+                if (sock_err == SOCKET_ERRORNAME(EAGAIN) || sock_err == SOCKET_ERRORNAME(EWOULDBLOCK)) continue; // Timeouts can happen even if the connection is fine
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
-                           "raop_rtp_mirror error  in header recv: %d %s", errno, strerror(errno));
-                if (errno == ECONNRESET) conn_reset = true;; 
+                           "raop_rtp_mirror error  in header recv: %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
+                if (sock_err == SOCKET_ERRORNAME(ECONNRESET)) conn_reset = true;; 
                 break;
             }
 
@@ -364,9 +371,10 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror tcp socket was closed by client (recv returned 0)");
                 break;
             } else if (ret == -1) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // Timeouts can happen even if the connection is fine
-                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d %s", errno, strerror(errno));
-                if (errno == ECONNRESET) conn_reset = true;
+                int sock_err = SOCKET_GET_ERROR();
+                if (sock_err == SOCKET_ERRORNAME(EAGAIN) || sock_err == SOCKET_ERRORNAME(EWOULDBLOCK)) continue; // Timeouts can happen even if the connection is fine
+                logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in recv: %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
+                if (errno == SOCKET_ERRORNAME(ECONNRESET)) conn_reset = true;
                 break;
             }
 
@@ -533,9 +541,6 @@ raop_rtp_mirror_thread(void *arg)
                 raop_rtp_mirror->callbacks.video_process(raop_rtp_mirror->callbacks.cls, raop_rtp_mirror->ntp, &video_data);
                 free(payload_out);
                 break;
-                //char *str3 =  utils_data_to_string(payload_out, video_data.data_len, 16);
-                //printf("%s\n", str3);
-                //free (str3);
             case 0x01:
                 /* 128-byte observed packet header structure 
                    bytes 0-15: length + timestamp
@@ -601,13 +606,12 @@ raop_rtp_mirror_thread(void *arg)
                     free(sps_pps);
                     sps_pps = NULL;
                 }
-		/* test for a H265 VPS/SPs/PPS */
+		/* test for a H265 VPS/SPS/PPS */
                 unsigned char hvc1[] = { 0x68, 0x76, 0x63, 0x31 };
 
                 if (!memcmp(payload + 4, hvc1, 4)) {
                     /* hvc1 HECV detected */
                     codec = VIDEO_CODEC_H265;
-                    printf("h265 detected\n");
                     h265_video = true;
                     raop_rtp_mirror->callbacks.video_set_codec(raop_rtp_mirror->callbacks.cls, codec);
                     unsigned char vps_start_code[] = { 0xa0, 0x00, 0x01, 0x00 };
@@ -679,10 +683,6 @@ raop_rtp_mirror_thread(void *arg)
                     memcpy(ptr, nal_start_code, 4);
                     ptr += 4;
                     memcpy(ptr, pps, pps_size);
-                    // printf (" HEVC (hvc1) vps + sps + pps NALU\n");
-                    //char *str = utils_data_to_string(sps_pps, sps_pps_len, 16);
-                    //printf("%s\n", str);
-                    //free (str);
                 } else {
                     codec = VIDEO_CODEC_H264;
                     h265_video = false;

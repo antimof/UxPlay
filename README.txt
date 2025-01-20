@@ -1,24 +1,21 @@
-# UxPlay 1.70: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.71: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### **Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).**
 
--   ***NEW in v1.70**: Support for 4k (h265) video with the new "-h265"
-    option.* (Recent Apple devices will send HEVC (h265) video in
-    AirPlay mirror mode if larger resolutions (*h* \> 1080) are
-    requested with UxPlay's "-s wxh" option; wired ethernet connection
-    is prefered to wireless in this mode, and may also be required by
-    the client; the "-h265" option changes the default resolution from
-    1920x1080 to 3840x2160, but leaves default maximum framerate ("-fps"
-    option) at 30fps.)
+-   ***NEW in v1.71**: Support for (YouTube) HLS (HTTP Live Streaming)
+    video with the new "-hls" option.* Click on the airplay icon in the
+    YouTube app to stream video. (You may need to wait until
+    advertisements have finished or been skipped before clicking the
+    YouTube airplay icon.) **Please report any issues with this new
+    feature of UxPlay**.
 
 ## Highlights:
 
 -   GPLv3, open source.
 -   Originally supported only AirPlay Mirror protocol, now has added
     support for AirPlay Audio-only (Apple Lossless ALAC) streaming from
-    current iOS/iPadOS clients. **There is no current support for
-    Airplay HLS video-streaming (e.g., YouTube video) but this is in
-    development.**
+    current iOS/iPadOS clients. **Now with support for Airplay HLS
+    video-streaming (currently only YouTube video).**
 -   macOS computers (2011 or later, both Intel and "Apple Silicon" M1/M2
     systems) can act either as AirPlay clients, or as the server running
     UxPlay. Using AirPlay, UxPlay can emulate a second display for macOS
@@ -84,12 +81,15 @@ After installation:
     from terminal commands "ps waux \| grep pulse" or "pactl info" will
     contain "pipewire" if your Linux/BSD system uses it).*
 
--   On Raspberry Pi: If you use Ubuntu 22.10 or earlier, GStreamer must
-    be
+-   On Raspberry Pi: models using hardware h264 video decoding by the
+    Broadcom GPU (models 4B and earlier) may require the uxplay option
+    -bt709. If you use Ubuntu 22.10 or earlier, GStreamer must be
     [patched](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches)
     to use hardware video decoding by the Broadcom GPU (also recommended
-    but optional for Raspberry Pi OS (Bullseye): use option
-    "`uxplay -bt709`" if you do not use the patch).
+    but optional for Raspberry Pi OS (Bullseye): the patched GStreamer
+    does not need option " -bt709\`". The need for -bt709 when hardware
+    video decoding is used seems to have reappeared starting with
+    GStreamer-1.22.
 
 To (easily) compile the latest UxPlay from source, see the section
 [Getting UxPlay](#getting-uxplay).
@@ -159,17 +159,16 @@ stops/restarts as you leave/re-enter* **Audio** *mode.*
 -   **Note that Apple video-DRM (as found in "Apple TV app" content on
     the client) cannot be decrypted by UxPlay, and the Apple TV app
     cannot be watched using UxPlay's AirPlay Mirror mode (only the
-    unprotected audio will be streamed, in AAC format), but both video
-    and audio content from DRM-free apps like "YouTube app" will be
-    streamed by UxPlay in Mirror mode.**
+    unprotected audio will be streamed, in AAC format).**
 
--   **As UxPlay does not currently support non-Mirror AirPlay video
-    streaming (where the client controls a web server on the AirPlay
-    server that directly receives HLS content to avoid it being decoded
-    and re-encoded by the client), using the icon for AirPlay video in
-    apps such as the YouTube app will only send audio (in lossless ALAC
-    format) without the accompanying video (there are plans to support
-    HLS video in future releases of UxPlay)**
+-   **With the new "-hls" option, UxPlay now also supports non-Mirror
+    AirPlay video streaming (where the client controls a web server on
+    the AirPlay server that directly receives HLS content to avoid it
+    being decoded and re-encoded by the client). This currently only
+    supports streaming of YouTube videos. Without the -hls option, using
+    the icon for AirPlay video in apps such as the YouTube app will only
+    send audio (in lossless ALAC format) without the accompanying
+    video.**
 
 ### Possibility for using hardware-accelerated h264/h265 video-decoding, if available.
 
@@ -212,14 +211,19 @@ used.
     available with Raspberry Pi Imager. *(For GStreamer \< 1.22, see the
     [UxPlay
     Wiki](https://github.com/FDH2/UxPlay/wiki/Gstreamer-Video4Linux2-plugin-patches))*.
+    Pi model 5 has no support for hardware H264 decoding, as its CPU is
+    powerful enough for satisfactory software H264 decoding
 
--   **(New): Support for h265 (HEVC) hardware decoding on Raspberry Pi
-    (Pi 4 model B and Pi 5)**
+-   **Support for h265 (HEVC) hardware decoding on Raspberry Pi (Pi 4
+    model B and Pi 5)**
 
-    Support is present, but so far satisfactory results have not been
-    obtained. Pi model 5 only provides hardware-accelerated (GPU)
-    decoding for h265 video, but not H264, as its CPU is powerful enough
-    for satisfactory software H264 decoding
+    These Raspberry Pi models have a dedicated HEVC decoding block (not
+    the GPU), with a driver "rpivid" which is not yet in the mainline
+    Linux kernel (but is planned to be there in future). Unfortunately
+    it produces decoded video in a non-standard pixel format (NC30 or
+    "SAND") which will not be supported by GStreamer until the driver is
+    in the mainline kernel; without this support, UxPlay support for
+    HEVC hardware decoding on Raspberry Pi will not work.
 
 ### Note to packagers:
 
@@ -259,7 +263,7 @@ libraries installed. Debian-based systems provide a package
 "build-essential" for use in compiling software. You also need
 pkg-config: if it is not found by "`which pkg-config`", install
 pkg-config or its work-alike replacement pkgconf. Also make sure that
-cmake\>=3.5 is installed: "`sudo apt install cmake`" (add
+cmake\>=3.10 is installed: "`sudo apt install cmake`" (add
 `build-essential` and `pkg-config` (or `pkgconf`) to this if needed).
 
 Make sure that your distribution provides OpenSSL 1.1.1 or later, and
@@ -573,6 +577,13 @@ what is available. Some possibilites on Linux/\*BSD are:
 -   If the server is "headless" (no attached monitor, renders audio
     only) use `-vs 0`.
 
+Note that videosink options can set using quoted arguments to -vs:
+*e.g.*, `-vs "xvimagesink display=:0"`: ximagesink and xvimagesink allow
+an X11 display name to be specified, and waylandsink has a similar
+option. Videosink options ("properties") can be found in their GStreamer
+description pages,such as
+https://gstreamer.freedesktop.org/documentation/xvimagesink .
+
 GStreamer also searches for the best "audiosink"; override its choice
 with `-as <audiosink>`. Choices on Linux include pulsesink, alsasink,
 pipewiresink, oss4sink; see what is available with
@@ -621,6 +632,9 @@ See [Usage](#usage) for more run-time options.
     -v4l2); it is still better to apply the full patch from the UxPlay
     Wiki in this case.
 
+-   **It appears that when hardware h264 video decoding is used, the
+    option -bt709 became needed again in GStreamer-1.22 and later.**
+
 -   For "double-legacy" Raspberry Pi OS (Buster), there is no patch for
     GStreamer-1.14. Instead, first build a complete newer
     GStreamer-1.18.6 from source using [these
@@ -632,14 +646,17 @@ See [Usage](#usage) for more run-time options.
     this is broken by Pi 4 Model B firmware. OMX support was removed
     from Raspberry Pi OS (Bullseye), but is present in Buster.
 
--   **H265 (4K)** video is supported with hardware decoding by the
-    Broadcom GPU on Raspberry Pi 5 models, as well as on Raspberry Pi 4
-    model B. **While GStreamer seem to make use of this hardware
-    decoding, satisfactory rendering speed of 4K video by UxPlay on
-    these Raspberry Pi models has not yet been acheived.** The option
-    "-h265" is required for activating h265 support. A wired ethernet
-    connection is preferred in this mode (and may be required by the
-    client).
+-   **H265 (4K)** video is potentially supported by hardware decoding on
+    Raspberry Pi 5 models, as well as on Raspberry Pi 4 model B, using a
+    dedicated HEVC decoding block, but the "rpivid" kernel driver for
+    this is not yet supported by GStreamer (this driver decodes video
+    into a non-standard format that cannot be supported by GStreamer
+    until the driver is in the mainline Linux kernel). Raspberry Pi
+    provides a version of ffmpeg that can use that format, but at
+    present UxPlay cannot use this. The best solution would be for the
+    driver to be "upstreamed" to the kernel, allowing GStreamer support.
+    (Software HEVC decoding works, but does not seem to give
+    satisfactory results on the Pi).
 
 Even with GPU video decoding, some frames may be dropped by the
 lower-power models to keep audio and video synchronized using
@@ -726,12 +743,15 @@ be installed by Homebrew as dependencies. The [Homebrew gstreamer
 installation](https://formulae.brew.sh/formula/gstreamer#default) has
 recently been reworked into a single "formula" named `gstreamer`, which
 now works without needing GST_PLUGIN_PATH to be set in the enviroment.
-Homebrew installs gstreamer to `(HOMEBREW)/lib/gstreamer-1.0` where
-`(HOMEBREW)/*` is `/opt/homebrew/*` on Apple Silicon Macs, and
-`/usr/local/*` on Intel Macs; do not put any extra non-Homebrew plugins
-(that you build yourself) there, and instead set GST_PLUGIN_PATH to
-point to their location (Homebrew does not supply a complete GStreamer,
-but seems to have everything needed for UxPlay).
+Homebrew installs gstreamer to `HOMEBREW_PREFIX/lib/gstreamer-1.0` where
+by default `HOMEBREW_PREFIX/*` is `/opt/homebrew/*` on Apple Silicon
+Macs, and `/usr/local/*` on Intel Macs; do not put any extra
+non-Homebrew plugins (that you build yourself) there, and instead set
+GST_PLUGIN_PATH to point to their location (Homebrew does not supply a
+complete GStreamer, but seems to have everything needed for UxPlay).
+**New: the UxPlay build script will now also detect Homebrew
+installations in non-standard locations indicated by the environment
+variable `$HOMEBREW_PREFIX`.**
 
 **Using GStreamer installed from MacPorts**: this is **not**
 recommended, as currently the MacPorts GStreamer is old (v1.16.2),
@@ -934,10 +954,15 @@ the pipeline are specific for h264 or h265, the correct version will be
 used in each pipeline. A wired Client-Server ethernet connection is
 preferred over Wifi for 4K video, and might be required by the client.
 Only recent Apple devices (M1/M2 Macs or iPads, and some iPhones) can
-send h265 video if a resolut "-s wxh" with h \> 1080 is requested. The
-"-h265" option changes the default resolution ("-s" option) from
+send h265 video if a resolution "-s wxh" with h \> 1080 is requested.
+The "-h265" option changes the default resolution ("-s" option) from
 1920x1080 to 3840x2160, and leaves default maximum framerate ("-fps"
 option) at 30fps.
+
+**-hls** Activate HTTP Live Streaming support. With this option YouTube
+videos can be streamed directly from YouTube servers to UxPlay (without
+passing through the client) by clicking on the AirPlay icon in the
+YouTube app.
 
 **-pin \[nnnn\]**: (since v1.67) use Apple-style (one-time) "pin"
 authentication when a new client connects for the first time: a
@@ -1097,8 +1122,19 @@ Video4Linux2. Equivalent to `-vd v4l2h264dec -vc v4l2convert`.
 
 **-bt709** A workaround for the failure of the older Video4Linux2 plugin
 to recognize Apple's use of an uncommon (but permitted) "full-range
-color" variant of the bt709 color standard for digital TV. This is no
-longer needed by GStreamer-1.20.4 and backports from it.
+color" variant of the bt709 color standard for digital TV. This was no
+longer needed by GStreamer-1.20.4 and backports from it, but appears to
+again be required in GStreamer-1.22 and later.
+
+**-srgb** A workaround for a failure to display full-range 8-bit color
+\[0-255\], and instead restrict to limited range \[16-235\] "legal
+BT709" HDTV format. The workaround works on x86_64 desktop systems, but
+does not yet work on Raspberry Pi. The issue may be fixed in a future
+GStreamer release: it only occurs in Linux and \*BSD.
+
+**-srbg no**. Disables the -srgb option, which is enabled by default in
+Linux and \*BSD, but may be useless on Raspberry Pi, and may be
+unwanted, as it adds extra processing load.
 
 **-rpi** Equivalent to "-v4l2" (Not valid for Raspberry Pi model 5, and
 removed in UxPlay 1.67)
@@ -1611,6 +1647,9 @@ what version UxPlay claims to be.
 
 # Changelog
 
+1.71 2024-12-13 Add support for HTTP Live Streaming (HLS), initially
+only for YouTube movies. Fix issue with NTP timeout on Windows.
+
 1.70 2024-10-04 Add support for 4K (h265) video (resolution 3840 x
 2160). Fix issue with GStreamer \>= 1.24 when client sleeps, then wakes.
 
@@ -1743,7 +1782,7 @@ systems. Also modified timestamps from "DTS" to "PTS" for latency
 improvement, plus internal cleanups.
 
 1.49 2022-03-28 Addded options for dumping video and/or audio to file,
-for debugging, etc. h264 PPS/SPS NALU's are shown with -d. Fixed
+for debugging, etc. h264 PPS/SPS NALU's are shown with -d. Fixed
 video-not-working for M1 Mac clients.
 
 1.48 2022-03-11 Made the GStreamer video pipeline fully configurable,
