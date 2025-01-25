@@ -960,7 +960,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 if(!get_ports(3, arg, argv[++i], udp)) exit(1);
             } else {
                 if(!get_ports(3, arg, argv[i], tcp)) exit(1);
-                for (int j = 1; j < 3; j++) {
+                for (int j = 0; j < 3; j++) {
                     udp[j] = tcp[j];
                 }
             }
