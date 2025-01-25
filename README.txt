@@ -1180,16 +1180,16 @@ uxplay was put into the background). To quit, use `ctrl-C fg ctrl-C` to
 terminate the image viewer, bring `uxplay` into the foreground, and
 terminate it too.
 
-**-reset n** sets a limit of *n* consecutive timeout failures of the
-client to respond to ntp requests from the server (these are sent every
-3 seconds to check if the client is still present, and synchronize with
-it). After *n* failures, the client will be presumed to be offline, and
-the connection will be reset to allow a new connection. The default
-value of *n* is 5; the value *n* = 0 means "no limit" on timeouts.
+**-reset n** sets a limit of *n* consecutive failures of the client to
+send feedback requests (these "heartbeat signals" are sent by the client
+once per second to ask for a response showing that the server is still
+online). After *n* missing signals, the client will be presumed to be
+offline, and the connection will be reset to allow a new connection. The
+default value of *n* is 15 seconds; the value *n* = 0 means "no limit".
 
-**-nofreeze** closes the video window after a reset due to ntp timeout
-(default is to leave window open to allow a smoother reconection to the
-same client). This option may be useful in fullscreen mode.
+**-nofreeze** closes the video window after a reset due to client going
+offline (default is to leave window open to allow a smoother reconection
+to the same client). This option may be useful in fullscreen mode.
 
 **-nc** maintains previous UxPlay \< 1.45 behavior that does **not
 close** the video window when the the client sends the "Stop Mirroring"

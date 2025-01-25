@@ -58,8 +58,6 @@ struct raop_ntp_s {
     logger_t *logger;
     raop_callbacks_t callbacks;
 
-    int max_ntp_timeouts;
-
     thread_handle_t thread;
     mutex_handle_t run_mutex;
 
@@ -94,6 +92,8 @@ struct raop_ntp_s {
     int tsock;
 
     timing_protocol_t time_protocol;
+    bool client_time_received;
+
 };
 
 
@@ -153,6 +153,7 @@ raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const c
     raop_ntp->logger = logger;
     memcpy(&raop_ntp->callbacks, callbacks, sizeof(raop_callbacks_t));    
     raop_ntp->timing_rport = timing_rport;
+    raop_ntp->client_time_received = false;
 
     if (raop_ntp_parse_remote(raop_ntp, remote, remote_addr_len) < 0) {
         free(raop_ntp);
@@ -274,8 +275,6 @@ raop_ntp_thread(void *arg)
     };
     raop_ntp_data_t data_sorted[RAOP_NTP_DATA_COUNT];
     const unsigned  two_pow_n[RAOP_NTP_DATA_COUNT] = {2, 4, 8, 16, 32, 64, 128, 256};
-    int timeout_counter = 0;
-    bool conn_reset = false;
     bool logger_debug = (logger_get_level(raop_ntp->logger) >= LOGGER_DEBUG);
       
     while (1) {
@@ -308,20 +307,15 @@ raop_ntp_thread(void *arg)
             // Read response
             response_len = recvfrom(raop_ntp->tsock, (char *)response, sizeof(response), 0, NULL, NULL);
             if (response_len < 0) {
-                timeout_counter++;
                 char time[30];
-                int level = (timeout_counter == 1 ? LOGGER_DEBUG : LOGGER_ERR);
                 ntp_timestamp_to_time(send_time, time, sizeof(time));
-                logger_log(raop_ntp->logger, level, "raop_ntp receive timeout %d (limit %d) (request sent %s)",
-                           timeout_counter, raop_ntp->max_ntp_timeouts, time);
-                if (timeout_counter ==  raop_ntp->max_ntp_timeouts) {
-                    conn_reset = true;   /* client is no longer responding */
-                    break;
-                }
+                logger_log(raop_ntp->logger, LOGGER_DEBUG , "raop_ntp receive timeout (request sent %s)", time);
 	    } else {
+                if (!raop_ntp->client_time_received) {
+                    raop_ntp->client_time_received = true;
+                }
                 //local time of the server when the NTP response packet returns
                 int64_t t3 = (int64_t) raop_ntp_get_local_time(raop_ntp);
-                timeout_counter = 0;
 
                 // Local time of the server when the NTP request packet leaves the server
                 int64_t t0 = (int64_t) byteutils_get_ntp_timestamp(response, 8);
@@ -391,15 +385,11 @@ raop_ntp_thread(void *arg)
     MUTEX_UNLOCK(raop_ntp->run_mutex);
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp exiting thread");
-    if (conn_reset && raop_ntp->callbacks.conn_reset) {
-        const bool video_reset = false;   /* leave "frozen video" in place */
-        raop_ntp->callbacks.conn_reset(raop_ntp->callbacks.cls, timeout_counter, video_reset);
-    }
     return 0;
 }
 
 void
-raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_timeouts)
+raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport)
 {
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp starting time");
     int use_ipv6 = 0;
@@ -407,7 +397,6 @@ raop_ntp_start(raop_ntp_t *raop_ntp, unsigned short *timing_lport, int max_ntp_t
     assert(raop_ntp);
     assert(timing_lport);
 
-    raop_ntp->max_ntp_timeouts = max_ntp_timeouts;
     raop_ntp->timing_lport = *timing_lport;
 
     MUTEX_LOCK(raop_ntp->run_mutex);

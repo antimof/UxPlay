@@ -67,11 +67,12 @@ struct raop_callbacks_s {
     void  (*video_process)(void *cls, raop_ntp_t *ntp, video_decode_struct *data);
     void  (*video_pause)(void *cls);
     void  (*video_resume)(void *cls);
+    void  (*conn_feedback) (void *cls);
 
     /* Optional but recommended callback functions */
     void  (*conn_init)(void *cls);
     void  (*conn_destroy)(void *cls);
-    void  (*conn_reset) (void *cls, int timeouts, bool reset_video);
+    void  (*conn_reset) (void *cls);
     void  (*conn_teardown)(void *cls, bool *teardown_96, bool *teardown_110 );
     void  (*audio_flush)(void *cls);
     void  (*video_flush)(void *cls);

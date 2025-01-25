@@ -742,7 +742,7 @@ raop_handler_setup(raop_conn_t *conn,
         }
         conn->raop_ntp = raop_ntp_init(conn->raop->logger, &conn->raop->callbacks, remote,
                                        conn->remotelen, (unsigned short) timing_rport, &time_protocol);
-        raop_ntp_start(conn->raop_ntp, &timing_lport, conn->raop->max_ntp_timeouts);
+        raop_ntp_start(conn->raop_ntp, &timing_lport);
         conn->raop_rtp = raop_rtp_init(conn->raop->logger, &conn->raop->callbacks, conn->raop_ntp,
                                        remote, conn->remotelen, aeskey, aesiv);
         conn->raop_rtp_mirror = raop_rtp_mirror_init(conn->raop->logger, &conn->raop->callbacks,
@@ -983,6 +983,8 @@ raop_handler_feedback(raop_conn_t *conn,
                       char **response_data, int *response_datalen)
 {
     logger_log(conn->raop->logger, LOGGER_DEBUG, "raop_handler_feedback");
+    /* register receipt of client's "heartbeat" signal  */
+    conn->raop->callbacks.conn_feedback(conn->raop->callbacks.cls);
 }
 
 static void

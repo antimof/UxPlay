@@ -70,7 +70,7 @@
 #define DEFAULT_DEBUG_LOG false
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
-#define NTP_TIMEOUT_LIMIT 5
+#define MISSED_FEEDBACK_LIMIT 15
 #define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
 #define SRGB_FIX  " ! video/x-raw,colorimetry=sRGB,format=RGB  ! "
 #ifdef FULL_RANGE_RGB_FIX
@@ -104,7 +104,6 @@ static std::string video_parser = "h264parse";
 static std::string video_decoder = "decodebin";
 static std::string video_converter = "videoconvert";
 static bool show_client_FPS_data = false;
-static unsigned int max_ntp_timeouts = NTP_TIMEOUT_LIMIT;
 static FILE *video_dumpfile = NULL;
 static std::string video_dumpfile_name = "videodump";
 static int video_dump_limit = 0;
@@ -156,6 +155,8 @@ static std::string url = "";
 static guint gst_x11_window_id = 0;
 static guint gst_hls_position_id = 0;
 static bool preserve_connections = false;
+static guint missed_feedback_limit = MISSED_FEEDBACK_LIMIT;
+static guint missed_feedback = 0;
 
 /* logging */
 
@@ -365,6 +366,28 @@ static void dump_video_to_file(unsigned char *data, int datalen) {
     }
 }
 
+static gboolean feedback_callback(gpointer loop) {
+    if (open_connections) {
+        if (missed_feedback_limit && missed_feedback > missed_feedback_limit) {
+            LOGI("***ERROR lost connection with client (network problem?)");
+            LOGI("%u missed client feedback signals exceeds limit of %u", missed_feedback, missed_feedback_limit);
+            LOGI("   Sometimes the network connection may recover after a longer delay:\n"
+                 "   the default limit n = %d seconds, can be changed with the \"-reset n\" option", MISSED_FEEDBACK_LIMIT);
+            if (!nofreeze) {
+                close_window = false; /* leave "frozen" window open if reset_video is false */
+            }
+	    raop_stop(raop);
+	    reset_loop = true;	    
+        } else if (missed_feedback > 2) {
+            LOGE("%u missed client feedback signals (expected once per second); client may be offline", missed_feedback);
+        }
+        missed_feedback++;
+    } else {
+        missed_feedback = 0;
+    }
+    return TRUE;
+}
+
 static gboolean reset_callback(gpointer loop) {
     if (reset_loop) {
         g_main_loop_quit((GMainLoop *) loop);
@@ -435,6 +458,8 @@ static void main_loop()  {
             gst_bus_watch_id[i] = (guint) video_renderer_listen((void *)loop, i);
         }
     }
+    missed_feedback = 0;
+    guint feedback_watch_id = g_timeout_add_seconds(1, (GSourceFunc) feedback_callback, (gpointer) loop);
     guint reset_watch_id = g_timeout_add(100, (GSourceFunc) reset_callback, (gpointer) loop);
     guint video_reset_watch_id = g_timeout_add(100, (GSourceFunc) video_reset_callback, (gpointer) loop);
     guint sigterm_watch_id = g_unix_signal_add(SIGTERM, (GSourceFunc) sigterm_callback, (gpointer) loop);
@@ -449,6 +474,7 @@ static void main_loop()  {
     if (sigterm_watch_id > 0) g_source_remove(sigterm_watch_id);
     if (reset_watch_id > 0) g_source_remove(reset_watch_id);
     if (video_reset_watch_id > 0) g_source_remove(video_reset_watch_id);
+    if (feedback_watch_id > 0) g_source_remove(feedback_watch_id);
     g_main_loop_unref(loop);
 }    
 
@@ -657,7 +683,7 @@ static void print_info (char *name) {
     printf("-as 0     (or -a)  Turn audio off, streamed video only\n");
     printf("-al x     Audio latency in seconds (default 0.25) reported to client.\n");
     printf("-ca <fn>  In Airplay Audio (ALAC) mode, write cover-art to file <fn>\n");
-    printf("-reset n  Reset after 3n seconds client silence (default %d, 0=never)\n", NTP_TIMEOUT_LIMIT);
+    printf("-reset n  Reset after n seconds of client silence (default n=%d, 0=never)\n", MISSED_FEEDBACK_LIMIT);
     printf("-nofreeze Do NOT leave frozen screen in place after reset\n");
     printf("-nc       Do NOT Close video window when client stops mirroring\n");
     printf("-nohold   Drop current connection when new client connects.\n");
@@ -739,7 +765,7 @@ static bool get_value (const char *str, unsigned int *n) {
 static bool get_ports (int nports, std::string option, const char * value, unsigned short * const port) {
     /*valid entries are comma-separated values port_1,port_2,...,port_r, 0 < r <= nports */
     /*where ports are distinct, and are in the allowed range.                            */
-    /*missing values are consecutive to last given value (at least one value needed).    */
+    /*missed values are consecutive to last given value (at least one value needed).    */
     char *end;
     unsigned long l;
     std::size_t pos;
@@ -1020,9 +1046,11 @@ static void parse_arguments (int argc, char *argv[]) {
 	} else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
-            max_ntp_timeouts = 0;
-            if (!get_value(argv[++i], &max_ntp_timeouts)) {
-                fprintf(stderr, "invalid \"-reset %s\"; -reset n must have n >= 0,  default n = %d\n", argv[i], NTP_TIMEOUT_LIMIT);
+            /* now using feedback  (every 1 sec ) instead of ntp timeouts (every 3 secs) to detect offline client and reset connections */
+            fprintf(stderr,"*** NOTE CHANGE: -reset n now means reset n seconds (not 3n seconds) after client goes offline\n");	  
+            missed_feedback_limit = 0;
+            if (!get_value(argv[++i], &missed_feedback_limit)) {
+                fprintf(stderr, "invalid \"-reset %s\"; -reset n must have n >= 0,  default n = %d seconds\n", argv[i], MISSED_FEEDBACK_LIMIT);
                 exit(1);
             }
         } else if (arg == "-vdmp") {
@@ -1587,15 +1615,15 @@ extern "C" void conn_destroy (void *cls) {
     }
 }
 
-extern "C" void conn_reset (void *cls, int timeouts, bool reset_video) {
+extern "C" void conn_feedback (void *cls) {
+    /* received client heartbeat signal: connection still exists */
+    missed_feedback = 0;
+}
+
+extern "C" void conn_reset (void *cls) {
     LOGI("***ERROR lost connection with client (network problem?)");
-    if (timeouts) {
-        LOGI("   Client no-response limit of %d timeouts (%d seconds) reached:", timeouts, 3*timeouts);
-        LOGI("   Sometimes the network connection may recover after a longer delay:\n"
-             "   the default timeout limit n = %d can be changed with the \"-reset n\" option", NTP_TIMEOUT_LIMIT);
-    }
     if (!nofreeze) {
-        close_window = reset_video;    /* leave "frozen" window open if reset_video is false */
+        close_window = false;    /* leave "frozen" window open */
     }
     raop_stop(raop);
     reset_loop = true;
@@ -1931,6 +1959,7 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_cbs.conn_init = conn_init;
     raop_cbs.conn_destroy = conn_destroy;
     raop_cbs.conn_reset = conn_reset;
+    raop_cbs.conn_feedback = conn_feedback;
     raop_cbs.conn_teardown = conn_teardown;
     raop_cbs.audio_process = audio_process;
     raop_cbs.video_process = video_process;
@@ -1981,7 +2010,6 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     if (display[4]) raop_set_plist(raop, "overscanned", (int) display[4]);
 
     if (show_client_FPS_data) raop_set_plist(raop, "clientFPSdata", 1);
-    raop_set_plist(raop, "max_ntp_timeouts", max_ntp_timeouts);
     if (audiodelay >= 0) raop_set_plist(raop, "audio_delay_micros", audiodelay);
     if (require_password) raop_set_plist(raop, "pin", (int) pin);
     if (hls_support) raop_set_plist(raop, "hls", 1);
