@@ -9,6 +9,9 @@
     YouTube airplay icon.) **Please report any issues with this new
     feature of UxPlay**.
 
+***NEWS***: macOS Sequoia 15.2 has an AirPlay bug: update to macOS 15.3
+for mirroring screen with UxPlay.
+
 ## Highlights:
 
 -   GPLv3, open source.
