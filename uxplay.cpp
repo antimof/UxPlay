@@ -655,7 +655,7 @@ static void print_info (char *name) {
     printf("-s wxh[@r]Request to client for video display resolution [refresh_rate]\n"); 
     printf("          default 1920x1080[@60] (or 3840x2160[@60] with -h265 option)\n");
     printf("-o        Set display \"overscanned\" mode on (not usually needed)\n");
-    printf("-fs       Full-screen (only works with X11, Wayland, VAAPI, D3D11)\n");
+    printf("-fs       Full-screen (only with X11, Wayland, VAAPI, D3D11, kms)\n");
     printf("-p        Use legacy ports UDP 6000:6001:7011 TCP 7000:7001:7100\n");
     printf("-p n      Use TCP and UDP ports n,n+1,n+2. range %d-%d\n", LOWEST_ALLOWED_PORT, HIGHEST_PORT);
     printf("          use \"-p n1,n2,n3\" to set each port, \"n1,n2\" for n3 = n2+1\n");
@@ -2201,6 +2201,8 @@ int main (int argc, char *argv[]) {
     if (fullscreen && use_video) {
         if (videosink == "waylandsink" || videosink == "vaapisink") {
             videosink_options.append(" fullscreen=true");
+	} else if (videosink == "kmssink") {
+           videosink_options.append(" force_modesetting=true");	  
 	}
     }
 

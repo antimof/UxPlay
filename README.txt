@@ -1064,8 +1064,8 @@ display that overscans, and is not displayed by gstreamer).
 Recommendation: **don't use this option** unless there is some special
 reason to use it.
 
-**-fs** uses fullscreen mode, but only works with X11, Wayland, VAAPI,
-and D3D11 (Windows).
+**-fs** uses fullscreen mode, but currently only works with X11,
+Wayland, VAAPI, kms and D3D11 (Windows).
 
 **-p** allows you to select the network ports used by UxPlay (these need
 to be opened if the server is behind a firewall). By itself, -p sets
