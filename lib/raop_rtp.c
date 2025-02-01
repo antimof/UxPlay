@@ -385,22 +385,24 @@ raop_rtp_process_events(raop_rtp_t *raop_rtp, void *cb_data)
     return 0;
 }
 
-static uint64_t rtp_time_to_client_ntp(raop_rtp_t *raop_rtp,  uint32_t *rtp32) {
+static uint64_t rtp_time_to_client_ntp(raop_rtp_t *raop_rtp,  uint32_t rtp32) {
     if (!raop_rtp->initial_sync) {
         return 0;
     }
-    uint64_t client_ntp = raop_rtp->client_ntp_sync;
-    if (*rtp32 >= raop_rtp->rtp_sync) {
-        client_ntp += (uint64_t) raop_rtp->rtp_clock_rate * (*rtp32 - raop_rtp->rtp_sync);
+    int32_t rtp_change;
+    rtp32 -= raop_rtp->rtp_sync;
+    if (rtp32 <= INT32_MAX) {
+        rtp_change = (int32_t) rtp32;
     } else {
-        uint64_t ntp_shift = (uint64_t) raop_rtp->rtp_clock_rate * (raop_rtp->rtp_sync - *rtp32);
-        if (client_ntp > ntp_shift) {
-            client_ntp -= ntp_shift;
-        } else {
-            client_ntp = 0;
-        }
+        rtp_change = -(int32_t) (-rtp32);
     }
-    return client_ntp; 
+    double incr = raop_rtp->rtp_clock_rate * (double) rtp_change;
+    incr += (double) raop_rtp->client_ntp_sync;
+    if (incr < 0.0) {
+        return 0;
+    } else {
+        return (uint64_t) incr;
+    }
 }
 
 static THREAD_RETVAL
@@ -629,7 +631,7 @@ raop_rtp_thread_udp(void *arg)
                     audio_data.data_len = payload_size;
                     audio_data.data = payload;
                     audio_data.ct = raop_rtp->ct;
-                    audio_data.ntp_time_remote = rtp_time_to_client_ntp(raop_rtp, &rtp_timestamp);
+                    audio_data.ntp_time_remote = rtp_time_to_client_ntp(raop_rtp, rtp_timestamp);
                     audio_data.ntp_time_local  = raop_ntp_convert_remote_time(raop_rtp->ntp, audio_data.ntp_time_remote);
 
                     if (logger_debug) {
