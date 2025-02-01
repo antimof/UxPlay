@@ -418,6 +418,9 @@ bool waiting_for_x11_window() {
 	    return true;    /* window still not found */
         }
     }
+    if (fullscreen) {
+         set_fullscreen(renderer->gst_window, &fullscreen);
+    }
 #endif
     return false;
 }
