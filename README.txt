@@ -7,7 +7,9 @@
     YouTube app to stream video. (You may need to wait until
     advertisements have finished or been skipped before clicking the
     YouTube airplay icon.) **Please report any issues with this new
-    feature of UxPlay**.
+    feature of UxPlay**. *The default video player for HLS is GStreamer
+    playbin v3: use "-hls 2" to revert to playbin v2 if some videos fail
+    to play*.
 
 ***NEWS***: macOS Sequoia 15.2 has an AirPlay bug: update to macOS 15.3
 for mirroring screen with UxPlay.
@@ -962,10 +964,13 @@ The "-h265" option changes the default resolution ("-s" option) from
 1920x1080 to 3840x2160, and leaves default maximum framerate ("-fps"
 option) at 30fps.
 
-**-hls** Activate HTTP Live Streaming support. With this option YouTube
-videos can be streamed directly from YouTube servers to UxPlay (without
-passing through the client) by clicking on the AirPlay icon in the
-YouTube app.
+**-hls \[v\]** Activate HTTP Live Streaming support. With this option
+YouTube videos can be streamed directly from YouTube servers to UxPlay
+(without passing through the client) by clicking on the AirPlay icon in
+the YouTube app. Optional \[v\] (allowed values 2 or 3, default: 3)
+allows selection of the version of GStreamer's \"playbin\" video player
+to use for playing HLS video. *(Playbin v3 is the recommended player,
+but if some videos fail to play, you can try with version 2.)*
 
 **-pin \[nnnn\]**: (since v1.67) use Apple-style (one-time) "pin"
 authentication when a new client connects for the first time: a

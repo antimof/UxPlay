@@ -193,7 +193,7 @@ GstElement *make_video_sink(const char *videosink, const char *videosink_options
 
 void  video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser,
                           const char *decoder, const char *converter, const char *videosink, const char *videosink_options, 
-                          bool initial_fullscreen, bool video_sync, bool h265_support, const char *uri) {
+                          bool initial_fullscreen, bool video_sync, bool h265_support, guint playbin_version, const char *uri) {
     GError *error = NULL;
     GstCaps *caps = NULL;
     hls_video = (uri != NULL);
@@ -230,8 +230,19 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
 	renderer_type[i]->id = i;
 	renderer_type[i]->bus = NULL;
         if (hls_video) {
-            /* use playbin3 to play HLS video: replace "playbin3" by "playbin" to use playbin2 */ 
-            renderer_type[i]->pipeline = gst_element_factory_make("playbin3", "hls-playbin3");
+            /* use playbin3 to play HLS video: replace "playbin3" by "playbin" to use playbin2 */
+            switch (playbin_version)  {
+            case 2:
+                renderer_type[i]->pipeline = gst_element_factory_make("playbin", "hls-playbin2");
+                break;
+            case 3:
+                renderer_type[i]->pipeline = gst_element_factory_make("playbin3", "hls-playbin3");
+                break;
+            default:
+                logger_log(logger, LOGGER_ERR, "video_renderer_init: invalid playbin versiion %u", playbin_version);
+                g_assert(0);
+            }
+            logger_log(logger, LOGGER_INFO, "Will use GStreamer playbin version %u to play HLS streamed video", playbin_version);	    
             g_assert(renderer_type[i]->pipeline);
             renderer_type[i]->appsrc = NULL;
 	    renderer_type[i]->codec = hls;

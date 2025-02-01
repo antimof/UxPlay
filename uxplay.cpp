@@ -71,6 +71,7 @@
 #define LOWEST_ALLOWED_PORT 1024
 #define HIGHEST_PORT 65535
 #define MISSED_FEEDBACK_LIMIT 15
+#define DEFAULT_PLAYBIN_VERSION 3
 #define BT709_FIX "capssetter caps=\"video/x-h264, colorimetry=bt709\""
 #define SRGB_FIX  " ! video/x-raw,colorimetry=sRGB,format=RGB  ! "
 #ifdef FULL_RANGE_RGB_FIX
@@ -157,7 +158,7 @@ static guint gst_hls_position_id = 0;
 static bool preserve_connections = false;
 static guint missed_feedback_limit = MISSED_FEEDBACK_LIMIT;
 static guint missed_feedback = 0;
-
+static guint playbin_version = DEFAULT_PLAYBIN_VERSION;
 /* logging */
 
 static void log(int level, const char* format, ...) {
@@ -639,7 +640,8 @@ static void print_info (char *name) {
     printf("-n name   Specify the network name of the AirPlay server\n");
     printf("-nh       Do not add \"@hostname\" at the end of AirPlay server name\n");
     printf("-h265     Support h265 (4K) video (with h265 versions of h264 plugins)\n");
-    printf("-hls      Support HTTP Live Streaming (currently Youtube video only) \n");
+    printf("-hls [v]  Support HTTP Live Streaming (currently Youtube video only) \n");
+    printf("          v = 2 or 3 (default 3) optionally selects video player version\n");
     printf("-pin[xxxx]Use a 4-digit pin code to control client access (default: no)\n");
     printf("          default pin is random: optionally use fixed pin xxxx\n");
     printf("-reg [fn] Keep a register in $HOME/.uxplay.register to verify returning\n");
@@ -1220,6 +1222,14 @@ static void parse_arguments (int argc, char *argv[]) {
 	    printf("db range %f:%f\n", db_low, db_high);
         } else if (arg == "-hls") {
             hls_support = true;
+            if (i < argc - 1 && *argv[i+1] != '-') {
+                unsigned int n = 3;
+                if (!get_value(argv[++i], &n) || playbin_version < 2) {
+                    fprintf(stderr, "invalid \"-hls %s\"; -hls n only allows \"playbin\" video player versions 2 or 3\n", argv[i]);
+                    exit(1);
+                }
+		playbin_version = (guint) n;
+            } 
         } else if (arg == "-h265") {
             h265_support = true;
         } else if (arg == "-nofreeze") {
@@ -2295,7 +2305,7 @@ int main (int argc, char *argv[]) {
     if (use_video) {
         video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                             video_decoder.c_str(), video_converter.c_str(), videosink.c_str(),
-                            videosink_options.c_str(), fullscreen, video_sync, h265_support, NULL);
+                            videosink_options.c_str(), fullscreen, video_sync, h265_support, playbin_version, NULL);
         video_renderer_start();
     }
 
@@ -2370,7 +2380,7 @@ int main (int argc, char *argv[]) {
 	    const char *uri = (url.empty() ? NULL : url.c_str());
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str(),
-                                videosink_options.c_str(), fullscreen, video_sync, h265_support, uri);
+                                videosink_options.c_str(), fullscreen, video_sync, h265_support, playbin_version, uri);
             video_renderer_start();
         }
         if (relaunch_video) {
