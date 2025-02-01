@@ -205,6 +205,8 @@ httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
         http_request_destroy(connection->request);
         connection->request = NULL;
     }
+    logger_log(httpd->logger, LOGGER_DEBUG, "removing connection type %s socket %d conn %p", typename[connection->type],
+               connection->socket_fd, connection->user_data);
     httpd->callbacks.conn_destroy(connection->user_data);
     shutdown(connection->socket_fd, SHUT_WR);
     closesocket(connection->socket_fd);
@@ -297,6 +299,17 @@ httpd_remove_known_connections(httpd_t *httpd) {
     for (int i = 0; i < httpd->max_connections; i++) {
         http_connection_t *connection = &httpd->connections[i];
         if (!connection->connected || connection->type == CONNECTION_TYPE_UNKNOWN) {
+            continue;
+        }
+        httpd_remove_connection(httpd, connection);
+    }
+}
+
+void
+httpd_remove_connections_by_type(httpd_t *httpd, connection_type_t type) {
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+        if (!connection->connected || connection->type != type) {
             continue;
         }
         httpd_remove_connection(httpd, connection);

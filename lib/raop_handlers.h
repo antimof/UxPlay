@@ -1083,5 +1083,8 @@ raop_handler_teardown(raop_conn_t *conn,
             raop_rtp_mirror_destroy(conn->raop_rtp_mirror);
             conn->raop_rtp_mirror = NULL;
         }
+	/* shut down any HLS connections */
+	httpd_remove_connections_by_type(conn->raop->httpd, CONNECTION_TYPE_HLS);
+        conn->raop->callbacks.video_reset(conn->raop->callbacks.cls);	
     }	
 }
