@@ -836,12 +836,14 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
                       char **response_data, int *response_datalen) {
 
     char* playback_location = NULL;
+    char* client_proc_name = NULL;
     plist_t req_root_node = NULL;
     float start_position_seconds = 0.0f;
     bool data_is_binary_plist = false;
     bool data_is_text = false;
     bool data_is_octet = false;
- 
+    char supported_hls_proc_names[] = "YouTube;";
+
     logger_log(conn->raop->logger, LOGGER_DEBUG, "http_handler_play");
 
     const char* session_id = http_request_get_header(request, "X-Apple-Session-ID");
@@ -902,6 +904,17 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
             plist_get_string_val(req_content_location_node, &playback_location);
         }
 
+        plist_t req_client_proc_name_node = plist_dict_get_item(req_root_node, "clientProcName");
+        if (!req_client_proc_name_node) {
+            goto play_error;
+        } else {
+            plist_get_string_val(req_client_proc_name_node, &client_proc_name);
+            if (!strstr(supported_hls_proc_names, client_proc_name)){
+                logger_log(conn->raop->logger, LOGGER_WARNING, "Unsupported HLS streaming format: clientProcName %s not found in supported list: %s",
+                           client_proc_name, supported_hls_proc_names);
+            }
+        }
+	
         plist_t req_start_position_seconds_node = plist_dict_get_item(req_root_node, "Start-Position-Seconds");
         if (!req_start_position_seconds_node) {
             logger_log(conn->raop->logger, LOGGER_INFO, "No Start-Position-Seconds in Play request");	    
@@ -914,6 +927,10 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
     }
 
     char *ptr = strstr(playback_location, "/master.m3u8");
+    if (!ptr) {
+        logger_log(conn->raop->logger, LOGGER_ERR, "Content-Location has unsupported form:\n%s\n", playback_location);	    
+	goto play_error;
+    }
     int prefix_len =  (int) (ptr - playback_location);
     set_uri_prefix(conn->raop->airplay_video, playback_location, prefix_len);
     set_next_media_uri_id(conn->raop->airplay_video, 0);
@@ -932,8 +949,10 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
     if (req_root_node) {
         plist_free(req_root_node);
     }
-    logger_log(conn->raop->logger, LOGGER_ERR, "Could not find valid Plist Data for /play, Unhandled");
+    logger_log(conn->raop->logger, LOGGER_ERR, "Could not find valid Plist Data for POST/play request, Unhandled");
     http_response_init(response, "HTTP/1.1", 400, "Bad Request");
+    http_response_set_disconnect(response, 1);
+    conn->raop->callbacks.conn_reset(conn->raop->callbacks.cls, 2);
 }
 
 /* the HLS handler handles http requests GET /[uri] on the HLS channel from the media player to the Server, asking for

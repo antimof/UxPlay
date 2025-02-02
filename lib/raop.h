@@ -68,11 +68,13 @@ struct raop_callbacks_s {
     void  (*video_pause)(void *cls);
     void  (*video_resume)(void *cls);
     void  (*conn_feedback) (void *cls);
-
-    /* Optional but recommended callback functions */
+    void  (*conn_reset) (void *cls, int reason);
+    void  (*video_reset) (void *cls);
+  
+  
+    /* Optional but recommended callback functions (probably not optional, check this)*/
     void  (*conn_init)(void *cls);
     void  (*conn_destroy)(void *cls);
-    void  (*conn_reset) (void *cls);
     void  (*conn_teardown)(void *cls, bool *teardown_96, bool *teardown_110 );
     void  (*audio_flush)(void *cls);
     void  (*video_flush)(void *cls);
@@ -88,7 +90,6 @@ struct raop_callbacks_s {
     void  (*register_client) (void *cls, const char *device_id, const char *pk_str, const char *name);
     bool  (*check_register) (void *cls, const char *pk_str);
     void  (*export_dacp) (void *cls, const char *active_remote, const char *dacp_id);
-    void  (*video_reset) (void *cls);
     void  (*video_set_codec)(void *cls, video_codec_t codec);
     /* for HLS video player controls */
     void  (*on_video_play) (void *cls, const char *location, const float start_position);

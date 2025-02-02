@@ -1630,8 +1630,18 @@ extern "C" void conn_feedback (void *cls) {
     missed_feedback = 0;
 }
 
-extern "C" void conn_reset (void *cls) {
-    LOGI("***ERROR lost connection with client (network problem?)");
+extern "C" void conn_reset (void *cls, int reason) {
+    switch (reason) {
+    case 1:
+        LOGI("*** ERROR lost connection with client (network problem?)");
+	break;
+    case 2:
+        LOGI("*** ERROR Unsupported HLS streaming source: (exit attempt to stream)");
+	break;      
+    default:
+      break;
+    }
+    
     if (!nofreeze) {
         close_window = false;    /* leave "frozen" window open */
     }
