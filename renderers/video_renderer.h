@@ -54,6 +54,7 @@ void video_renderer_start ();
 void video_renderer_stop ();
 void video_renderer_pause ();
 void video_renderer_seek(float position);
+void video_renderer_set_start(float position);
 void video_renderer_resume ();
 bool video_renderer_is_paused();
 void video_renderer_render_buffer (unsigned char* data, int *data_len, int *nal_count, uint64_t *ntp_time);

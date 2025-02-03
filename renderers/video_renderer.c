@@ -25,6 +25,7 @@
 #include "video_renderer.h"
 
 #define SECOND_IN_NSECS 1000000000UL
+#define SECOND_IN_MICROSECS 1000000
 #ifdef X_DISPLAY_FIX
 #include <gst/video/navigation.h>
 #include "x_display_fix.h"
@@ -45,6 +46,7 @@ static bool use_x11 = false;
 #endif
 static bool logger_debug = false;
 static bool video_terminate = false;
+static gint64 start_position = 0;
 
 #define NCODECS  2   /* renderers for h264 and h265 */
 
@@ -239,7 +241,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
                 renderer_type[i]->pipeline = gst_element_factory_make("playbin3", "hls-playbin3");
                 break;
             default:
-                logger_log(logger, LOGGER_ERR, "video_renderer_init: invalid playbin versiion %u", playbin_version);
+                logger_log(logger, LOGGER_ERR, "video_renderer_init: invalid playbin version %u", playbin_version);
                 g_assert(0);
             }
             logger_log(logger, LOGGER_INFO, "Will use GStreamer playbin version %u to play HLS streamed video", playbin_version);	    
@@ -761,10 +763,17 @@ bool video_get_playback_info(double *duration, double *position, float *rate) {
     return true;
 }
 
+void video_renderer_set_start(float position) {
+    int pos_in_micros = (int) (position * SECOND_IN_MICROSECS);
+    start_position = (gint64) (pos_in_micros * GST_USECOND);
+    logger_log(logger, LOGGER_DEBUG, "register HLS video start position  %f %lld", position, start_position);    
+}
+
 void video_renderer_seek(float position) {
-    double pos = (double) position;
-    pos *=  GST_SECOND;
-    gint64 seek_position = (gint64) pos;
+    int pos_in_micros = (int) (position * SECOND_IN_MICROSECS);
+    gint64 seek_position = (gint64) (pos_in_micros * GST_USECOND);
+    /* don't seek to within 1  microsecond  of beginning or end of video */
+    if (renderer->duration < 2000) return;
     seek_position =  seek_position < 1000 ? 1000 : seek_position;
     seek_position =  seek_position > renderer->duration  - 1000 ? renderer->duration - 1000: seek_position;
     g_print("SCRUB: seek to %f secs =  %" GST_TIME_FORMAT ", duration = %" GST_TIME_FORMAT "\n", position,

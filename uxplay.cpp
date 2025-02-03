@@ -1910,6 +1910,7 @@ extern "C" bool check_register(void *cls, const char *client_pk) {
 
 extern "C" void on_video_play(void *cls, const char* location, const float start_position) {
     /* start_position needs to be implemented */
+    video_renderer_set_start(start_position);
     url.erase();
     url.append(location);
     reset_loop = true;
