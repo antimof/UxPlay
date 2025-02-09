@@ -399,8 +399,13 @@ void video_renderer_resume() {
 
 void video_renderer_start() {
     if (hls_video) {
+        GstState state;
         renderer->bus = gst_element_get_bus(renderer->pipeline);
-        gst_element_set_state (renderer->pipeline, GST_STATE_PLAYING);
+        gst_element_set_state (renderer->pipeline, GST_STATE_PAUSED);
+	gst_element_get_state(renderer->pipeline, &state, NULL, 1000 * GST_MSECOND);
+	const gchar *state_name;
+	state_name= gst_element_state_get_name(state);
+	logger_log(logger, LOGGER_DEBUG, "video renderer_start: state %s", state_name);
         return;
     } 
   /* when not hls, start both h264 and h265 pipelines; will shut down the "wrong" one when we know the codec */
@@ -547,19 +552,30 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
     g_assert(type != -1);
 
     if (logger_debug) {
-        g_print("GStreamer %s bus message: %s %s\n", renderer_type[type]->codec, GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message));
-    }
-
-    if (logger_debug && hls_video) {
-        gint64 pos;
-        gst_element_query_position (renderer_type[type]->pipeline, GST_FORMAT_TIME, &pos);
-        if (GST_CLOCK_TIME_IS_VALID(pos)) {
-            g_print("GStreamer bus message %s %s; position: %" GST_TIME_FORMAT "\n", GST_MESSAGE_SRC_NAME(message),
-            GST_MESSAGE_TYPE_NAME(message), GST_TIME_ARGS(pos));
+        if (hls_video) {
+            gint64 pos;
+            const gchar no_state[] = "";
+            const gchar *old_state_name, *new_state_name;
+            if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_STATE_CHANGED) {
+                GstState old_state, new_state;
+                gst_message_parse_state_changed (message, &old_state, &new_state, NULL);
+                old_state_name = gst_element_state_get_name (old_state);
+                new_state_name = gst_element_state_get_name (new_state);
+            } else {
+                 old_state_name = no_state;
+                 new_state_name = no_state;
+            }
+            gst_element_query_position (renderer_type[type]->pipeline, GST_FORMAT_TIME, &pos);
+            if (GST_CLOCK_TIME_IS_VALID(pos)) {
+                g_print("GStreamer bus message %s %s %s %s; position: %" GST_TIME_FORMAT "\n", GST_MESSAGE_SRC_NAME(message),
+			GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name, GST_TIME_ARGS(pos));
+            } else {
+                g_print("GStreamer bus message %s %s %s %s; position: none\n", GST_MESSAGE_SRC_NAME(message),
+			GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name);
+            }
         } else {
-            g_print("GStreamer bus message %s %s; position: none\n", GST_MESSAGE_SRC_NAME(message),
-                   GST_MESSAGE_TYPE_NAME(message));
-	}
+            g_print("GStreamer %s bus message: %s %s\n", renderer_type[type]->codec, GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message));
+        }
     }
 
     switch (GST_MESSAGE_TYPE (message)) {
@@ -619,6 +635,13 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
         }
         break;
     case GST_MESSAGE_STATE_CHANGED:
+        if (logger_debug && strstr(GST_MESSAGE_SRC_NAME(message), "hls-playbin")) {
+            GstState old_state, new_state;
+            gst_message_parse_state_changed (message, &old_state, &new_state, NULL);
+            g_print ("hls_playbin: Element %s changed state from %s to %s.\n", GST_OBJECT_NAME (message->src),
+                     gst_element_state_get_name (old_state),
+                     gst_element_state_get_name (new_state));
+        }
         if (renderer_type[type]->state_pending && strstr(GST_MESSAGE_SRC_NAME(message), "pipeline")) {
             GstState state;
             gst_element_get_state(renderer_type[type]->pipeline, &state, NULL, 100 * GST_MSECOND);
@@ -766,7 +789,7 @@ bool video_get_playback_info(double *duration, double *position, float *rate) {
 void video_renderer_set_start(float position) {
     int pos_in_micros = (int) (position * SECOND_IN_MICROSECS);
     start_position = (gint64) (pos_in_micros * GST_USECOND);
-    logger_log(logger, LOGGER_DEBUG, "register HLS video start position  %f %lld", position, start_position);    
+    logger_log(logger, LOGGER_DEBUG, "register HLS video start position %f %lld", position, start_position);    
 }
 
 void video_renderer_seek(float position) {
@@ -775,7 +798,7 @@ void video_renderer_seek(float position) {
     /* don't seek to within 1  microsecond  of beginning or end of video */
     if (renderer->duration < 2000) return;
     seek_position =  seek_position < 1000 ? 1000 : seek_position;
-    seek_position =  seek_position > renderer->duration  - 1000 ? renderer->duration - 1000: seek_position;
+    seek_position =  seek_position > renderer->duration  - 1000 ? renderer->duration - 1000 : seek_position;
     g_print("SCRUB: seek to %f secs =  %" GST_TIME_FORMAT ", duration = %" GST_TIME_FORMAT "\n", position,
             GST_TIME_ARGS(seek_position),  GST_TIME_ARGS(renderer->duration));
     gboolean result = gst_element_seek_simple(renderer->pipeline, GST_FORMAT_TIME,
