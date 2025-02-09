@@ -4,14 +4,14 @@
 
 -   ***NEW in v1.71**: Support for (YouTube) HLS (HTTP Live Streaming)
     video with the new "-hls" option.* **Only streaming from the YouTube
-    iOS app is currently supported**: (streaming using the AirPlay icon
-    in a browser window is **not** yet supported).Click on the airplay
-    icon in the YouTube app to stream video. (You may need to wait until
-    advertisements have finished or been skipped before clicking the
-    YouTube airplay icon.) **Please report any issues with this new
-    feature of UxPlay**. *The default video player for HLS is GStreamer
-    playbin v3: use "-hls 2" to revert to playbin v2 if some videos fail
-    to play*.
+    iOS app (in \"m3u8\" protocol) is currently supported**: (streaming
+    using the AirPlay icon in a browser window is **not** yet
+    supported).Click on the airplay icon in the YouTube app to stream
+    video. (You may need to wait until advertisements have finished or
+    been skipped before clicking the YouTube airplay icon.) **Please
+    report any issues with this new feature of UxPlay**. *The default
+    video player for HLS is GStreamer playbin v3: use "-hls 2" to revert
+    to playbin v2 if some videos fail to play*.
 
 ## Highlights:
 
@@ -683,9 +683,9 @@ framebuffer video, use `<videosink>` = `kmssink`.
 ```{=html}
 <!-- -->
 ```
-       ssh user@remote_host
-       export DISPLAY=:0
-       nohup uxplay [options] > FILE &
+    ssh user@remote_host
+           export DISPLAY=:0
+           nohup uxplay [options] > FILE &
 
 Sound and video will play on the remote host; "nohup" will keep uxplay
 running if the ssh session is closed. Terminal output is saved to FILE

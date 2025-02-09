@@ -4,7 +4,7 @@
 
 -   ***NEW in v1.71**: Support for (YouTube) HLS (HTTP Live Streaming)
     video with the new "-hls" option.* **Only streaming from the YouTube iOS app
-    is currently supported**: (streaming using the AirPlay icon in a browser window
+    (in \"m3u8\" protocol) is currently supported**: (streaming using the AirPlay icon in a browser window
     is **not** yet supported).Click on the airplay icon in the
     YouTube app to stream video. (You may need to wait until
     advertisements have finished or been skipped before clicking the
@@ -676,15 +676,14 @@ choice `<videosink>` = `glimagesink` is sometimes useful. With the
 Wayland video compositor, use `<videosink>` = `waylandsink`. With
 framebuffer video, use `<videosink>` = `kmssink`.
 
--   Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
+* Tip: to start UxPlay on a remote host (such as a Raspberry Pi) using
     ssh:
 
-```{=html}
-<!-- -->
 ```
-       ssh user@remote_host
+ssh user@remote_host
        export DISPLAY=:0
        nohup uxplay [options] > FILE &
+```
 
 Sound and video will play on the remote host; "nohup" will keep uxplay
 running if the ssh session is closed. Terminal output is saved to FILE
