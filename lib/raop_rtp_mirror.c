@@ -233,7 +233,9 @@ raop_rtp_mirror_thread(void *arg)
             /* Timeout happened */
             continue;
         } else if (ret == -1) {
-            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in select");
+            int sock_err = SOCKET_GET_ERROR();
+            logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
+                       "raop_rtp_mirror error in select %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             break;
         }
 
@@ -904,13 +906,13 @@ void raop_rtp_mirror_stop(raop_rtp_mirror_t *raop_rtp_mirror) {
     raop_rtp_mirror->running = 0;
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
+    /* Join the thread */
+    THREAD_JOIN(raop_rtp_mirror->thread_mirror);
+
     if (raop_rtp_mirror->mirror_data_sock != -1) {
         closesocket(raop_rtp_mirror->mirror_data_sock);
         raop_rtp_mirror->mirror_data_sock = -1;
     }
-
-    /* Join the thread */
-    THREAD_JOIN(raop_rtp_mirror->thread_mirror);
 
     /* Mark thread as joined */
     MUTEX_LOCK(raop_rtp_mirror->run_mutex);

@@ -457,7 +457,9 @@ raop_rtp_thread_udp(void *arg)
             /* Timeout happened */
             continue;
         } else if (ret == -1) {
-            logger_log(raop_rtp->logger, LOGGER_ERR, "raop_rtp error in select");
+            int sock_err = SOCKET_GET_ERROR();
+            logger_log(raop_rtp->logger, LOGGER_ERR,
+                       "raop_rtp error in select %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             break;
         }
 
@@ -832,8 +834,14 @@ raop_rtp_stop(raop_rtp_t *raop_rtp)
     /* Join the thread */
     THREAD_JOIN(raop_rtp->thread);
 
-    if (raop_rtp->csock != -1) closesocket(raop_rtp->csock);
-    if (raop_rtp->dsock != -1) closesocket(raop_rtp->dsock);
+    if (raop_rtp->csock != -1) {
+        closesocket(raop_rtp->csock);
+        raop_rtp->csock = -1;
+    }
+    if (raop_rtp->dsock != -1) {
+        closesocket(raop_rtp->dsock);
+        raop_rtp->dsock = -1;
+    }
 
     /* Flush buffer into initial state */
     raop_buffer_flush(raop_rtp->buffer, -1);

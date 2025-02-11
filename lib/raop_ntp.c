@@ -457,12 +457,12 @@ raop_ntp_stop(raop_ntp_t *raop_ntp)
     COND_SIGNAL(raop_ntp->wait_cond);
     MUTEX_UNLOCK(raop_ntp->wait_mutex);
 
+    THREAD_JOIN(raop_ntp->thread);
+
     if (raop_ntp->tsock != -1) {
         closesocket(raop_ntp->tsock);
         raop_ntp->tsock = -1;
     }
-
-    THREAD_JOIN(raop_ntp->thread);
 
     logger_log(raop_ntp->logger, LOGGER_DEBUG, "raop_ntp stopped time thread");
 
