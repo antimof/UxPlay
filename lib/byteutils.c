@@ -86,6 +86,12 @@ uint32_t byteutils_get_int_be(unsigned char* b, int offset) {
 uint64_t byteutils_get_long_be(unsigned char* b, int offset) {
     return ntohll(byteutils_get_long(b, offset));
 }
+/**
+ * Writes a big endian unsigned 64 bit integer to the buffer at position offset
+ */
+void byteutils_put_long_be(unsigned char* b, int offset, uint64_t value) {
+    *((uint64_t*)(b + offset)) = htonll(value);
+}
 
 /**
  * Reads a float from the buffer at position offset

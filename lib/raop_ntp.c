@@ -287,7 +287,8 @@ raop_ntp_thread(void *arg)
     raop_ntp_data_t data_sorted[RAOP_NTP_DATA_COUNT];
     const unsigned  two_pow_n[RAOP_NTP_DATA_COUNT] = {2, 4, 8, 16, 32, 64, 128, 256};
     bool logger_debug = (logger_get_level(raop_ntp->logger) >= LOGGER_DEBUG);
-      
+    uint64_t recv_time = 0, client_ref_time = 0;
+
     while (1) {
         MUTEX_LOCK(raop_ntp->run_mutex);
         if (!raop_ntp->running) {
@@ -302,6 +303,10 @@ raop_ntp_thread(void *arg)
         // Send request
         uint64_t send_time = raop_ntp_get_local_time();
         byteutils_put_ntp_timestamp(request, 24, send_time);
+        if (recv_time) {
+            byteutils_put_long_be(request, 8, client_ref_time);
+            byteutils_put_ntp_timestamp(request, 16, recv_time);
+        }
         int send_len = sendto(raop_ntp->tsock, (char *)request, sizeof(request), 0,
                               (struct sockaddr *) &raop_ntp->remote_saddr, raop_ntp->remote_saddr_len);
         if (logger_debug) {
@@ -322,11 +327,13 @@ raop_ntp_thread(void *arg)
                 ntp_timestamp_to_time(send_time, time, sizeof(time));
                 logger_log(raop_ntp->logger, LOGGER_DEBUG , "raop_ntp receive timeout (request sent %s)", time);
 	    } else {
+                recv_time = raop_ntp_get_local_time();
+                client_ref_time = byteutils_get_long_be(response, 24);
                 if (!raop_ntp->client_time_received) {
                     raop_ntp->client_time_received = true;
                 }
                 //local time of the server when the NTP response packet returns
-                int64_t t3 = (int64_t) raop_ntp_get_local_time();
+                int64_t t3 = (int64_t) recv_time;
 
                 // Local time of the server when the NTP request packet leaves the server
                 int64_t t0 = (int64_t) byteutils_get_ntp_timestamp(response, 8);
