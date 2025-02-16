@@ -612,7 +612,7 @@ void
 raop_destroy(raop_t *raop) {
     if (raop) {
         raop_destroy_airplay_video(raop);
-        raop_stop(raop);
+        raop_stop_httpd(raop);
         pairing_destroy(raop->pairing);
         httpd_destroy(raop->httpd);
         logger_destroy(raop->logger);
@@ -725,14 +725,14 @@ raop_set_dnssd(raop_t *raop, dnssd_t *dnssd) {
 
 
 int
-raop_start(raop_t *raop, unsigned short *port) {
+raop_start_httpd(raop_t *raop, unsigned short *port) {
     assert(raop);
     assert(port);
     return httpd_start(raop->httpd, port);
 }
 
 void
-raop_stop(raop_t *raop) {
+raop_stop_httpd(raop_t *raop) {
     assert(raop);
     httpd_stop(raop->httpd);
 }

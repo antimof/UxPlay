@@ -377,7 +377,7 @@ static gboolean feedback_callback(gpointer loop) {
             if (!nofreeze) {
                 close_window = false; /* leave "frozen" window open if reset_video is false */
             }
-	    raop_stop(raop);
+	    raop_stop_httpd(raop);
 	    reset_loop = true;	    
         } else if (missed_feedback > 2) {
             LOGE("%u missed client feedback signals (expected once per second); client may be offline", missed_feedback);
@@ -444,6 +444,7 @@ static void main_loop()  {
     g_assert(n_renderers <= 2);
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     relaunch_video = false;
+    reset_loop = false;
     if (use_video) {
         relaunch_video = true;
         if (url.empty()) {
@@ -1645,7 +1646,7 @@ extern "C" void conn_reset (void *cls, int reason) {
     if (!nofreeze) {
         close_window = false;    /* leave "frozen" window open */
     }
-    raop_stop(raop);
+    raop_stop_httpd(raop);
     reset_loop = true;
 }
 
@@ -2042,7 +2043,7 @@ static int start_raop_server (unsigned short display[5], unsigned short tcp[3], 
     raop_set_udp_ports(raop, udp);
 
     raop_port = raop_get_port(raop);
-    raop_start(raop, &raop_port);
+    raop_start_httpd(raop, &raop_port);
     raop_set_port(raop, raop_port);
 
     /* use raop_port for airplay_port (instead of tcp[2]) */
@@ -2374,10 +2375,8 @@ int main (int argc, char *argv[]) {
 
     main_loop();
     if (relaunch_video || reset_loop) {
-        if(reset_loop) {
-            reset_loop = false;
-        } else {
-            raop_stop(raop);
+        if(reset_loop == false) {
+            raop_stop_httpd(raop);
         }
         if (use_audio) audio_renderer_stop();
         if (use_video && (close_window || preserve_connections)) {
@@ -2396,7 +2395,7 @@ int main (int argc, char *argv[]) {
         }
         if (relaunch_video) {
             unsigned short port = raop_get_port(raop);
-            raop_start(raop, &port);
+            raop_start_httpd(raop, &port);
             raop_set_port(raop, port);
             goto reconnect;
         } else {
