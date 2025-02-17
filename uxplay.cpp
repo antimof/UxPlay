@@ -159,6 +159,7 @@ static bool preserve_connections = false;
 static guint missed_feedback_limit = MISSED_FEEDBACK_LIMIT;
 static guint missed_feedback = 0;
 static guint playbin_version = DEFAULT_PLAYBIN_VERSION;
+static bool reset_httpd = false;
 /* logging */
 
 static void log(int level, const char* format, ...) {
@@ -377,8 +378,10 @@ static gboolean feedback_callback(gpointer loop) {
             if (!nofreeze) {
                 close_window = false; /* leave "frozen" window open if reset_video is false */
             }
-	    raop_stop_httpd(raop);
-	    reset_loop = true;	    
+	    reset_httpd = true;
+	    relaunch_video = true;
+            g_main_loop_quit((GMainLoop *) loop);
+            return TRUE;
         } else if (missed_feedback > 2) {
             LOGE("%u missed client feedback signals (expected once per second); client may be offline", missed_feedback);
         }
@@ -445,6 +448,8 @@ static void main_loop()  {
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     relaunch_video = false;
     reset_loop = false;
+    reset_httpd = false;
+    preserve_connections = false;
     if (use_video) {
         relaunch_video = true;
         if (url.empty()) {
@@ -1569,9 +1574,9 @@ static bool check_blocked_client(char *deviceid) {
 extern "C" void video_reset(void *cls) {
     LOGD("video_reset");
     url.erase();
-    reset_loop = true;
     remote_clock_offset = 0;
     relaunch_video = true;
+    reset_loop = true;
 }
 
 extern "C" void video_set_codec(void *cls, video_codec_t codec) {
@@ -1646,12 +1651,14 @@ extern "C" void conn_reset (void *cls, int reason) {
     if (!nofreeze) {
         close_window = false;    /* leave "frozen" window open */
     }
-    raop_stop_httpd(raop);
+    reset_httpd = true;
+    relaunch_video = true;
     reset_loop = true;
 }
 
 extern "C" void conn_teardown(void *cls, bool *teardown_96, bool *teardown_110) {
     if (*teardown_110 && close_window) {
+        relaunch_video = true;
         reset_loop = true;
     }
 }
@@ -1914,10 +1921,10 @@ extern "C" void on_video_play(void *cls, const char* location, const float start
     video_renderer_set_start(start_position);
     url.erase();
     url.append(location);
-    reset_loop = true;
     relaunch_video = true;
     preserve_connections = true;
     LOGD("********************on_video_play: location = %s***********************", url.c_str());
+    reset_loop = true;
 }
 
 extern "C" void on_video_scrub(void *cls, const float position) {
@@ -2356,7 +2363,6 @@ int main (int argc, char *argv[]) {
         }	  
     }
 
- restart:
     if (start_dnssd(server_hw_addr, server_name)) {
         goto cleanup;
     }
@@ -2374,11 +2380,13 @@ int main (int argc, char *argv[]) {
     close_window = new_window_closing_behavior;
 
     main_loop();
-    if (relaunch_video || reset_loop) {
-        if(reset_loop == false) {
+    if (relaunch_video) {
+        if (reset_httpd) {
             raop_stop_httpd(raop);
         }
-        if (use_audio) audio_renderer_stop();
+        if (use_audio) {
+            audio_renderer_stop();
+        }
         if (use_video && (close_window || preserve_connections)) {
             video_renderer_destroy();
             if (!preserve_connections) {
@@ -2386,26 +2394,20 @@ int main (int argc, char *argv[]) {
                 url.erase();
                 raop_remove_known_connections(raop);
             }
-	    preserve_connections = false;
 	    const char *uri = (url.empty() ? NULL : url.c_str());
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str(),
                                 videosink_options.c_str(), fullscreen, video_sync, h265_support, playbin_version, uri);
             video_renderer_start();
         }
-        if (relaunch_video) {
+        if (reset_httpd) {
             unsigned short port = raop_get_port(raop);
             raop_start_httpd(raop, &port);
             raop_set_port(raop, port);
-            goto reconnect;
-        } else {
-            LOGI("Re-launching RAOP server...");
-            stop_raop_server();
-            stop_dnssd();
-            goto restart;
         }
+        goto reconnect;
     } else {
-        LOGI("Stopping...");
+        LOGI("Stopping RAOP Server...");
         stop_raop_server();
         stop_dnssd();
     }

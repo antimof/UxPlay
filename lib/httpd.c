@@ -584,7 +584,7 @@ httpd_thread(void *arg)
     httpd->running = 0;
     MUTEX_UNLOCK(httpd->run_mutex);
 
-    logger_log(httpd->logger, LOGGER_DEBUG, "Exiting HTTP thread");
+    logger_log(httpd->logger, LOGGER_DEBUG, "Exiting httpd thread");
 
     return 0;
 }
