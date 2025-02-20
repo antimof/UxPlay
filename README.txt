@@ -1305,12 +1305,13 @@ that (unlike dumped video) the dumped audio is currently only useful for
 debugging, as it is not containerized to make it playable with standard
 audio players.*
 
-**-d** Enable debug output. Note: this does not show GStreamer error or
-debug messages. To see GStreamer error and warning messages, set the
-environment variable GST_DEBUG with "export GST_DEBUG=2" before running
-uxplay. To see GStreamer information messages, set GST_DEBUG=4; for
-DEBUG messages, GST_DEBUG=5; increase this to see even more of the
-GStreamer inner workings.
+**-d \[n\]** Enable debug output; optional argument n=1 suppresses
+audio/video packet data in debug output. Note: this does not show
+GStreamer error or debug messages. To see GStreamer error and warning
+messages, set the environment variable GST_DEBUG with "export
+GST_DEBUG=2" before running uxplay. To see GStreamer information
+messages, set GST_DEBUG=4; for DEBUG messages, GST_DEBUG=5; increase
+this to see even more of the GStreamer inner workings.
 
 # Troubleshooting
 

@@ -421,6 +421,7 @@ raop_rtp_thread_udp(void *arg)
 
     assert(raop_rtp);
     bool logger_debug = (logger_get_level(raop_rtp->logger) >= LOGGER_DEBUG);
+    bool logger_debug_data = (logger_get_level(raop_rtp->logger) >= LOGGER_DEBUG_DATA);
     raop_rtp->ntp_start_time = raop_ntp_get_local_time();
     raop_rtp->rtp_clock_started = false;
 
@@ -636,7 +637,7 @@ raop_rtp_thread_udp(void *arg)
                     audio_data.ntp_time_remote = rtp_time_to_client_ntp(raop_rtp, rtp_timestamp);
                     audio_data.ntp_time_local  = raop_ntp_convert_remote_time(raop_rtp->ntp, audio_data.ntp_time_remote);
 
-                    if (logger_debug) {
+                    if (logger_debug_data) {
                         uint64_t ntp_now = raop_ntp_get_local_time();
                         int64_t latency = (audio_data.ntp_time_local ? ((int64_t) ntp_now) - ((int64_t) audio_data.ntp_time_local) : 0); 
                         logger_log(raop_rtp->logger, LOGGER_DEBUG,

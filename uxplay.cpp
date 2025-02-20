@@ -126,6 +126,7 @@ static bool do_append_hostname = true;
 static bool use_random_hw_addr = false;
 static unsigned short display[5] = {0}, tcp[3] = {0}, udp[3] = {0};
 static bool debug_log = DEFAULT_DEBUG_LOG;
+static bool suppress_packet_debug_data = false;
 static int log_level = LOGGER_INFO;
 static bool bt709_fix = false;
 static bool srgb_fix = DEFAULT_SRGB_FIX;
@@ -717,7 +718,7 @@ static void print_info (char *name) {
     printf("          =1,2,..; fn=\"audiodump\"; change with \"-admp [n] filename\".\n");
     printf("          x increases when audio format changes. If n is given, <= n\n");
     printf("          audio packets are dumped. \"aud\"= unknown format.\n");
-    printf("-d        Enable debug logging\n");
+    printf("-d [n]    Enable debug logging; optional: n=1 to skip normal packet data\n");
     printf("-v        Displays version information\n");
     printf("-h        Displays this help\n");
     printf("Startup options in $UXPLAYRC, ~/.uxplayrc, or ~/.config/uxplayrc are\n");
@@ -989,7 +990,18 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
-            debug_log = !debug_log;
+	    if (i < argc - 1 && *argv[i+1] != '-') {
+                unsigned int n = 1;
+                if (!get_value(argv[++i], &n)) {
+                    fprintf(stderr, "invalid \"-d %s\"; -d n : max n=1 (suppress packet data in debug output)\n", argv[i]);
+                    exit(1);
+                }
+                debug_log = true;
+		suppress_packet_debug_data = true;
+	    } else {
+                debug_log = !debug_log;
+		suppress_packet_debug_data = false;
+	    }
         } else if (arg == "-h"  || arg == "--help" || arg == "-?" || arg == "-help") {
             print_info(argv[0]);
             exit(0);
@@ -2180,7 +2192,11 @@ int main (int argc, char *argv[]) {
     }
     parse_arguments (argc, argv);
 
-    log_level = (debug_log ? LOGGER_DEBUG : LOGGER_INFO);
+    log_level = (debug_log ? LOGGER_DEBUG_DATA : LOGGER_INFO);
+    if (debug_log && suppress_packet_debug_data) {
+        log_level = LOGGER_DEBUG;
+    }
+
     
 #ifdef _WIN32    /*  use utf-8 terminal output; don't buffer stdout in WIN32 when debug_log = false */
     SetConsoleOutputCP(CP_UTF8);

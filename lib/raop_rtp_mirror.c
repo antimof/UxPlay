@@ -195,6 +195,7 @@ raop_rtp_mirror_thread(void *arg)
     uint64_t ntp_timestamp_local  = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
     bool logger_debug = (logger_get_level(raop_rtp_mirror->logger) >= LOGGER_DEBUG);
+    bool logger_debug_data = (logger_get_level(raop_rtp_mirror->logger) >= LOGGER_DEBUG_DATA);
     bool h265_video = false;
     video_codec_t codec = VIDEO_CODEC_UNKNOWN;
     const char h264[] = "h264";
@@ -396,7 +397,7 @@ raop_rtp_mirror_thread(void *arg)
                 // counting nano seconds since last boot.
 
                 ntp_timestamp_local = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
-                if (logger_debug) {
+                if (logger_debug_data) {
                     uint64_t ntp_now = raop_ntp_get_local_time();
                     int64_t latency = (ntp_timestamp_local ? ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local) : 0);
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
