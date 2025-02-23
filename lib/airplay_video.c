@@ -29,7 +29,7 @@
 struct media_item_s {
   char *uri;
   char *playlist;
-  int access;
+  int num;
 };
 
 struct airplay_video_s {
@@ -61,6 +61,8 @@ int airplay_video_service_init(raop_t *raop, unsigned short http_port,
       airplay_video_service_destroy(airplay_video);
     }
 
+    /* calloc guarantees that the 36-character strings apple_session_id and 
+       playback_uuid are null-terminated */
     airplay_video =  (airplay_video_t *) calloc(1, sizeof(airplay_video_t));
     if (!airplay_video) {
         return -1;
@@ -82,16 +84,12 @@ int airplay_video_service_init(raop_t *raop, unsigned short http_port,
     //printf(" %p %p\n", airplay_video, get_airplay_video(raop));
 
     airplay_video->raop = raop;
-
-
     airplay_video->FCUP_RequestID = 0;
-
 
     size_t len = strlen(session_id);
     assert(len == 36);
     strncpy(airplay_video->apple_session_id, session_id, len);
-    (airplay_video->apple_session_id)[len] = '\0';
-
+        
     airplay_video->start_position_seconds = 0.0f;
 
     airplay_video->master_uri = NULL;
@@ -143,6 +141,10 @@ void set_playback_uuid(airplay_video_t *airplay_video, const char *playback_uuid
     (airplay_video->playback_uuid)[len] = '\0';
 }
 
+const char *get_playback_uuid(airplay_video_t *airplay_video) {
+    return (const char *) airplay_video->playback_uuid; 
+}
+
 void set_uri_prefix(airplay_video_t *airplay_video, char *uri_prefix, int uri_prefix_len) {
   if (airplay_video->uri_prefix) {
       free (airplay_video->uri_prefix);
@@ -159,11 +161,9 @@ char *get_uri_local_prefix(airplay_video_t *airplay_video) {
   return airplay_video->local_uri_prefix;
 }
 
-
 char *get_master_uri(airplay_video_t *airplay_video) {
     return airplay_video->master_uri;
 }
-
 
 int get_next_FCUP_RequestID(airplay_video_t *airplay_video) {    
     return ++(airplay_video->FCUP_RequestID);
@@ -176,9 +176,6 @@ void  set_next_media_uri_id(airplay_video_t *airplay_video, int num) {
 int get_next_media_uri_id(airplay_video_t *airplay_video) {
     return airplay_video->next_uri;
 }
-
-
-/* master playlist */
 
 void store_master_playlist(airplay_video_t *airplay_video, char *master_playlist) {
     if (airplay_video->master_playlist) {
@@ -219,90 +216,50 @@ void create_media_data_store(airplay_video_t * airplay_video, char ** uri_list, 
     for (int i = 0; i < num_uri; i++) {
         media_data_store[i].uri = uri_list[i];
         media_data_store[i].playlist = NULL;
-        media_data_store[i].access = 0;
+        media_data_store[i].num = i;
     }
     airplay_video->media_data_store = media_data_store;
     airplay_video->num_uri = num_uri;
 }
 
-int store_media_data_playlist_by_num(airplay_video_t *airplay_video, char * media_playlist, int num) {
+int store_media_playlist(airplay_video_t *airplay_video, char * media_playlist, int num) {
     media_item_t *media_data_store = airplay_video->media_data_store;
     if ( num < 0 ||  num >= airplay_video->num_uri) {
-      return -1;
+        return -1;
     } else if (media_data_store[num].playlist) {
-      return -2;
+        return -2;
+    }
+    for (int i = 0; i < num ; i++) {
+        if (strcmp(media_data_store[i].uri, media_data_store[num].uri) == 0) {
+            assert(strcmp(media_data_store[i].playlist, media_playlist) == 0);
+            media_data_store[num].num = i;
+            free (media_playlist);
+            return 1;
+        }
     }
     media_data_store[num].playlist = media_playlist;
     return 0;
 }
 
-char * get_media_playlist_by_num(airplay_video_t *airplay_video, int num) {
+char * get_media_playlist(airplay_video_t *airplay_video, const char *uri) {
     media_item_t *media_data_store = airplay_video->media_data_store;
     if (media_data_store == NULL) {
         return NULL;
     }
-    if (num >= 0 && num <airplay_video->num_uri) {
-        return media_data_store[num].playlist;
-    }
-    return NULL;
-}
-
-int  get_media_playlist_by_uri(airplay_video_t *airplay_video, const char *uri) {
-  /* Problem: there can be more than one StreamInf playlist with the same uri:
-   * they differ by choice of partner Media (audio, subtitles) playlists 
-   * If the same uri is requested again, one of the other ones  will be returned
-   * (the least-previously-requested one will be served up)
-   */
-   // modified to return the  position of the media playlist in the master  playlist
-    media_item_t *media_data_store = airplay_video->media_data_store;
-    if (media_data_store == NULL) {
-        return -2;
-    }
-    int found = 0;;
-    int num = -1;
-    int access = -1;
     for (int i = 0; i < airplay_video->num_uri; i++) {
         if (strstr(media_data_store[i].uri, uri)) {
-            if (!found) {
-                found = 1;
-                num = i;
-                access  = media_data_store[i].access;
-            } else {
-                /* change > below to >= to reverse the order of choice */
-                if (access > media_data_store[i].access) {
-                    access = media_data_store[i].access;
-                    num = i;
-                }
-            }
+            return media_data_store[media_data_store[i].num].playlist;
         }
     }
-    if (found) {
-        //printf("found %s\n", media_data_store[num].uri);
-        ++media_data_store[num].access;
-        return num;
-    }
-    return -1;
+    return NULL;
 }
 
 char * get_media_uri_by_num(airplay_video_t *airplay_video, int num) {
     media_item_t * media_data_store = airplay_video->media_data_store;
-    if (media_data_store == NULL) {
-        return NULL;
-    }
     if (num >= 0 && num < airplay_video->num_uri) {
         return  media_data_store[num].uri;
-      }
-    return NULL;
-}
-
-int get_media_uri_num(airplay_video_t *airplay_video, char * uri) {
-    media_item_t *media_data_store = airplay_video->media_data_store;
-    for (int i = 0; i < airplay_video->num_uri ; i++) {
-        if (strstr(media_data_store[i].uri, uri)) {
-            return i;
-        }
     }
-    return -1;
+    return NULL;
 }
 
 int analyze_media_playlist(char *playlist, float *duration) {
@@ -319,4 +276,259 @@ int analyze_media_playlist(char *playlist, float *duration) {
         ptr = strstr(end, "#EXTINF:");
     }
     return count;
+}
+
+/* parse Master Playlist, make table of Media Playlist uri's that it lists */
+int create_media_uri_table(const char *url_prefix, const char *master_playlist_data,
+                           int datalen, char ***media_uri_table, int *num_uri) {
+    char *ptr = strstr(master_playlist_data, url_prefix);
+    char ** table = NULL;
+    if (ptr == NULL) {
+        return -1;
+    }
+    int count = 0;
+    while (ptr != NULL) {
+        char *end = strstr(ptr, "m3u8");
+        if (end == NULL) {
+            return 1;
+        }
+        end += sizeof("m3u8");
+        count++;
+        ptr = strstr(end, url_prefix);
+    }
+    table  = (char **)  calloc(count, sizeof(char *));
+    if (!table) {
+      return -1;
+    }
+    for (int i = 0; i < count; i++) {
+        table[i] = NULL;
+    }
+    ptr = strstr(master_playlist_data, url_prefix);
+    count = 0;
+    while (ptr != NULL) {
+        char *end = strstr(ptr, "m3u8");
+	char *uri;
+        if (end == NULL) {
+            return 0;
+        }
+        end += sizeof("m3u8");
+        size_t len = end - ptr - 1;
+	uri  = (char *) calloc(len + 1, sizeof(char));
+	memcpy(uri , ptr, len);
+        table[count] = uri;
+        uri =  NULL;	
+	count ++;
+	ptr = strstr(end, url_prefix);
+    }
+    *num_uri = count;
+
+    *media_uri_table = table;
+    return 0;
+}
+
+/* Adjust uri prefixes in the Master Playlist, for sending to the Media Player */
+char *adjust_master_playlist (char *fcup_response_data, int fcup_response_datalen,
+                              char *uri_prefix, char *uri_local_prefix) {
+    size_t uri_prefix_len = strlen(uri_prefix);
+    size_t uri_local_prefix_len = strlen(uri_local_prefix);
+    int counter = 0;
+    char *ptr = strstr(fcup_response_data, uri_prefix);
+    while (ptr != NULL) {
+        counter++;
+        ptr++;
+	ptr = strstr(ptr, uri_prefix);
+    }
+
+    size_t len = uri_local_prefix_len - uri_prefix_len;
+    len *= counter;
+    len += fcup_response_datalen;    
+    char *new_master = (char *) malloc(len + 1);
+    *(new_master + len) = '\0';
+    char *first = fcup_response_data;
+    char *new = new_master;
+    char *last = strstr(first, uri_prefix);
+    counter  = 0;
+    while (last != NULL) {
+        counter++;
+        len = last - first;
+        memcpy(new, first, len);
+	first = last + uri_prefix_len;
+        new += len;
+        memcpy(new, uri_local_prefix, uri_local_prefix_len);
+        new += uri_local_prefix_len;
+        last = strstr(last + uri_prefix_len, uri_prefix);
+	if (last  == NULL) {
+            len = fcup_response_data  + fcup_response_datalen  - first;
+            memcpy(new, first, len);
+            break;
+	}
+    }
+    return new_master;
+}
+
+char *adjust_yt_condensed_playlist(const char *media_playlist) {
+/* this copies a Media Playlist into a null-terminated string. 
+   If it has the "#YT-EXT-CONDENSED-URI" header, it is also expanded into 
+   the full Media Playlist format.
+   It  returns a pointer to the expanded playlist, WHICH MUST BE FREED AFTER USE */
+
+    const char *base_uri_begin;
+    const char *params_begin;
+    const char *prefix_begin;
+    size_t base_uri_len;
+    size_t params_len;
+    size_t prefix_len;
+    const char* ptr = strstr(media_playlist, "#EXTM3U\n");
+
+    ptr += strlen("#EXTM3U\n");
+    assert(ptr);
+    if (strncmp(ptr, "#YT-EXT-CONDENSED-URL", strlen("#YT-EXT-CONDENSED-URL"))) {
+        size_t len = strlen(media_playlist);
+        char * playlist_copy = (char *) malloc(len + 1);
+        memcpy(playlist_copy, media_playlist, len);
+        playlist_copy[len] = '\0';
+        return playlist_copy;
+    }
+    ptr = strstr(ptr, "BASE-URI=");
+    base_uri_begin = strchr(ptr, '"');
+    base_uri_begin++;
+    ptr = strchr(base_uri_begin, '"');
+    base_uri_len = ptr - base_uri_begin;
+    char *base_uri = (char *) calloc(base_uri_len + 1, sizeof(char));
+    assert(base_uri);
+    memcpy(base_uri, base_uri_begin, base_uri_len);  //must free
+
+    ptr = strstr(ptr, "PARAMS=");
+    params_begin = strchr(ptr, '"');
+    params_begin++;
+    ptr = strchr(params_begin,'"');
+    params_len = ptr - params_begin;
+    char *params = (char *) calloc(params_len + 1, sizeof(char));
+    assert(params);
+    memcpy(params, params_begin, params_len);  //must free
+
+    ptr = strstr(ptr, "PREFIX=");
+    prefix_begin = strchr(ptr, '"');
+    prefix_begin++;
+    ptr = strchr(prefix_begin,'"');
+    prefix_len = ptr - prefix_begin;
+    char *prefix = (char *) calloc(prefix_len + 1, sizeof(char));
+    assert(prefix);
+    memcpy(prefix, prefix_begin, prefix_len);  //must free
+
+    /* expand params */
+    int nparams = 0;
+    int *params_size = NULL;
+    const char **params_start = NULL;
+    if (strlen(params)) {
+        nparams = 1;
+        char * comma = strchr(params, ',');
+        while (comma) {
+            nparams++;
+            comma++;
+            comma = strchr(comma, ',');
+        }
+        params_start = (const char **) calloc(nparams, sizeof(char *));  //must free
+        params_size = (int *)  calloc(nparams, sizeof(int));     //must free
+        ptr = params;
+        for (int i = 0; i < nparams; i++) {
+            comma = strchr(ptr, ',');
+            params_start[i] = ptr;
+            if (comma) {
+                params_size[i] = (int) (comma - ptr);
+                ptr = comma;
+                ptr++;
+            } else {
+                params_size[i] = (int) (params + params_len - ptr);
+                break;
+            }
+        }
+    }
+
+    int count = 0;
+    ptr = strstr(media_playlist, "#EXTINF");
+    while (ptr) {
+        count++;
+        ptr = strstr(++ptr, "#EXTINF");
+    }
+
+    size_t old_size = strlen(media_playlist);
+    size_t new_size = old_size;
+    new_size += count * (base_uri_len + params_len);
+ 
+    char * new_playlist = (char *) calloc( new_size + 100, sizeof(char));
+    const char *old_pos = media_playlist;
+    char *new_pos = new_playlist;
+    ptr = old_pos;
+    ptr = strstr(old_pos, "#EXTINF:");
+    size_t len = ptr - old_pos;
+    /* copy header section before chunks */
+    memcpy(new_pos, old_pos, len);
+    old_pos += len;
+    new_pos += len;
+    while (ptr) {
+        /* for each chunk */
+        const char *end = NULL;
+        char *start = strstr(ptr, prefix);
+        len = start - ptr;
+        /* copy first line of chunk entry */
+        memcpy(new_pos, old_pos, len);
+        old_pos += len;
+        new_pos += len;
+	
+	/* copy base uri  to replace prefix*/
+        memcpy(new_pos, base_uri, base_uri_len);
+        new_pos += base_uri_len;
+        old_pos += prefix_len;
+        ptr = strstr(old_pos, "#EXTINF:");
+
+        /* insert the PARAMS separators on the slices line  */
+        end = old_pos;
+        int last = nparams - 1;
+        for (int i = 0; i < nparams; i++) {
+            if (i != last) {
+                end = strchr(end, '/');
+            } else {
+                /* the next line starts with either #EXTINF (usually) 
+                or #EXT-X-ENDLIST (at last chunk)*/
+	        end = strstr(end, "#EXT");
+            }
+            *new_pos = '/';
+            new_pos++;
+            memcpy(new_pos, params_start[i], params_size[i]);
+            new_pos += params_size[i];
+            *new_pos = '/';
+            new_pos++;
+
+            len = end - old_pos;
+            end++;
+
+            memcpy (new_pos, old_pos, len);
+            new_pos += len;
+            old_pos += len;
+            if (i != last) {
+                old_pos++; /* last entry is not followed by "/" separator */
+            }
+        }
+    }
+    /* copy tail */
+     
+    len = media_playlist + strlen(media_playlist) - old_pos;
+    memcpy(new_pos, old_pos, len);
+    new_pos += len;
+    old_pos += len;
+
+    new_playlist[new_size] = '\0';
+
+    free (prefix);
+    free (base_uri);
+    free (params);
+    if (params_size) {
+        free (params_size);
+    }
+    if (params_start) {
+        free (params_start);
+    }  
+
+    return new_playlist;
 }
