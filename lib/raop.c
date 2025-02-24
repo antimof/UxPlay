@@ -310,7 +310,8 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                     char * plist_xml;
                     uint32_t plist_len;
                     plist_to_xml(req_root_node, &plist_xml, &plist_len);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
+                    plist_xml = utils_strip_data_from_plist_xml(plist_xml);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);	
                     free(plist_xml);
                     plist_free(req_root_node);
                 } else if (data_is_text) {
@@ -444,9 +445,10 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
                 char * plist_xml;
                 uint32_t plist_len;
                 plist_to_xml(res_root_node, &plist_xml, &plist_len);
-                plist_free(res_root_node);
+                plist_xml = utils_strip_data_from_plist_xml(plist_xml);		
                 logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
                 free(plist_xml);
+                plist_free(res_root_node);
             } else if (data_is_text) {
                 char *data_str = utils_data_to_text((char*) response_data, response_datalen);
                 logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", data_str);                    

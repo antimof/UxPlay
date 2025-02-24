@@ -283,6 +283,64 @@ int utils_ipaddress_to_string(int addresslen, const unsigned char *address, unsi
     return ret;
 }
 
+char *utils_strip_data_from_plist_xml(char *plist_xml) {
+    /* returns pointer to *plist_xml unchanged  if no data needs to be stripped out.
+     * otherwise frees plist_xml and returns pointer to newly-allocated stripped text char *xml 
+     * WHICH (like plist_xml) MUST BE FREED AFTER USE*/
+    assert(plist_xml);
+    int len = (int) strlen(plist_xml);
+    char *last =  plist_xml + len * sizeof(char); // position of null termination of plist_xml
+ 
+    char *eol;
+    char *xml;
+    int nchars;
+    char line[81];
+    int count;
+    char *begin = strstr(plist_xml, "<data>");
+    char *end;
+
+    if (!begin) {
+        /* there are no data lines, nothing to do */
+        return plist_xml;
+    } else {
+        xml = (char *) calloc((len + 1), sizeof(char));
+    }
+
+    char *ptr1 = plist_xml;
+    char *ptr2 = xml;
+    do {
+        eol = strchr(begin,'\n');
+        nchars = eol + 1 - ptr1;
+        memcpy(ptr2, ptr1, nchars);
+        ptr2 += nchars;
+	ptr1 += nchars;
+        end = strstr(ptr1, "</data>");
+	assert(end);
+        count = 0;
+        do {
+            ptr1 = eol + 1;
+            eol = strchr(ptr1, '\n');
+            count++;
+        } while (eol < end);
+	count--;   // last '\n' counted ends the first non-data line (contains "</data>")
+	if (count) {
+	    snprintf(line, sizeof(line), "   ... (%d line%s of base64-encoded data not shown, 64 chars/line) ...\n",
+                     count, (count == 1 ? "" : "s"));
+        }
+	memcpy(ptr2, line, strlen(line));
+	ptr2 += strlen(line);
+	begin = strstr(ptr1, "<data>");
+	if (begin == NULL) {
+            nchars = (int) (last + 1 - ptr1);
+            memcpy(ptr2, ptr1, nchars);   //includes the  null terminator
+            break;
+        }
+    } while (ptr1 <= last);
+ 
+    free (plist_xml);
+    return xml;
+}
+
 const char *gmt_time_string() {
   static char date_buf[64];
   memset(date_buf, 0, 64);

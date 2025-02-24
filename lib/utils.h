@@ -33,4 +33,5 @@ void ntp_timestamp_to_seconds(uint64_t ntp_timestamp, char *timestamp, size_t ma
 const char *gmt_time_string();
 int utils_ipaddress_to_string(int addresslen, const unsigned char *address, 
                               unsigned int zone_id, char *string, int len);
+char *utils_strip_data_from_plist_xml(char * plist_xml);
 #endif
