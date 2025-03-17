@@ -315,8 +315,14 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
             logger_log(logger, LOGGER_DEBUG, "GStreamer video pipeline %d:\n\"%s\"", i + 1, launch->str);
             renderer_type[i]->pipeline = gst_parse_launch(launch->str, &error);
             if (error) {
-                g_error ("get_parse_launch error (video) :\n %s\n",error->message);
-                g_clear_error (&error);
+                logger_log(logger, LOGGER_ERR, "GStreamer gst_parse_launch failed to create video pipeline %d\n"
+                           "*** error message from gst_parse_launch was:\n%s\n"
+                           "launch string parsed was \n[%s]", i + 1, error->message, launch->str);
+		if (strstr(error->message, "no element")) {
+                    logger_log(logger, LOGGER_ERR, "This error usually means that a uxplay option was mistyped\n"
+                               "           or some requested part of GStreamer is not installed\n");
+                }
+                g_clear_error (&error);	
             }
             g_assert (renderer_type[i]->pipeline);
 
