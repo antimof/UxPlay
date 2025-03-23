@@ -559,12 +559,15 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
   /* identify which pipeline sent the message */ 
     int type = -1;
     for (int i = 0 ; i < n_renderers ; i ++ ) {
-        if (renderer_type[i]->bus == bus) {
+        if (renderer_type[i] && renderer_type[i]->bus == bus) {
             type = i;
             break;
         }
     }
-    g_assert(type != -1);
+    /* if the bus sending the message is not found, the renderer may already have been destroyed */
+    if (type == -1) {
+        return TRUE;
+    }
 
     if (logger_debug) {
         if (hls_video) {
@@ -749,7 +752,13 @@ int video_renderer_choose_codec (bool video_is_h265) {
                gst_element_state_get_name (old_state),gst_element_state_get_name (new_state));
     gst_video_pipeline_base_time = gst_element_get_base_time(renderer->appsrc);
     if (renderer_unused) {
-       gst_element_set_state (renderer_unused->pipeline, GST_STATE_NULL);
+        for (int i = 0; i < n_renderers; i++) {
+            if (renderer_type[i] != renderer_unused) {
+                continue;
+            }
+            renderer_type[i] = NULL;
+            video_renderer_destroy_instance(renderer_unused);
+        }
     }
     return 0;
 }
