@@ -307,12 +307,22 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
 	        if (data_is_plist) {
  		    plist_t req_root_node = NULL;
 		    plist_from_bin(request_data, request_datalen, &req_root_node);
-                    char * plist_xml;
+                    char * plist_xml = NULL;
+                    char * stripped_xml = NULL;
                     uint32_t plist_len;
                     plist_to_xml(req_root_node, &plist_xml, &plist_len);
-                    plist_xml = utils_strip_data_from_plist_xml(plist_xml);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);	
-                    free(plist_xml);
+                    stripped_xml = utils_strip_data_from_plist_xml(plist_xml);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", (stripped_xml ? stripped_xml : plist_xml));
+                    if (stripped_xml) {
+                        free(stripped_xml);
+                    }
+                    if (plist_xml) {
+#ifdef PLIST_230
+                        plist_mem_free(plist_xml);
+#else
+                        plist_to_xml_free(plist_xml);
+#endif
+                    }
                     plist_free(req_root_node);
                 } else if (data_is_text) {
                     char *data_str = utils_data_to_text((char *) request_data, request_datalen);
@@ -442,12 +452,22 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
             if (data_is_plist) {
                 plist_t res_root_node = NULL;
                 plist_from_bin(response_data, response_datalen, &res_root_node);
-                char * plist_xml;
+                char * plist_xml = NULL;
+                char * stripped_xml = NULL;
                 uint32_t plist_len;
                 plist_to_xml(res_root_node, &plist_xml, &plist_len);
-                plist_xml = utils_strip_data_from_plist_xml(plist_xml);		
-                logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", plist_xml);
-                free(plist_xml);
+                stripped_xml = utils_strip_data_from_plist_xml(plist_xml);
+                logger_log(conn->raop->logger, LOGGER_DEBUG, "%s", (stripped_xml ? stripped_xml : plist_xml));
+                if (stripped_xml) {
+                    free(stripped_xml);
+                }
+                if (plist_xml) {
+#ifdef PLIST_230
+                    plist_mem_free(plist_xml);
+#else
+                    plist_to_xml_free(plist_xml);
+#endif
+                }
                 plist_free(res_root_node);
             } else if (data_is_text) {
                 char *data_str = utils_data_to_text((char*) response_data, response_datalen);

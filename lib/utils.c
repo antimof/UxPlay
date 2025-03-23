@@ -284,7 +284,7 @@ int utils_ipaddress_to_string(int addresslen, const unsigned char *address, unsi
 }
 
 char *utils_strip_data_from_plist_xml(char *plist_xml) {
-    /* returns pointer to *plist_xml unchanged  if no data needs to be stripped out.
+    /* returns NULL   if no data needs to be stripped out.
      * otherwise frees plist_xml and returns pointer to newly-allocated stripped text char *xml 
      * WHICH (like plist_xml) MUST BE FREED AFTER USE*/
     assert(plist_xml);
@@ -292,20 +292,19 @@ char *utils_strip_data_from_plist_xml(char *plist_xml) {
     char *last =  plist_xml + len * sizeof(char); // position of null termination of plist_xml
  
     char *eol;
-    char *xml;
+    char *eol_data;
+    char *xml = NULL;
     int nchars;
     char line[81];
     int count;
     char *begin = strstr(plist_xml, "<data>");
     char *end;
-
     if (!begin) {
         /* there are no data lines, nothing to do */
-        return plist_xml;
+        return NULL;
     } else {
         xml = (char *) calloc((len + 1), sizeof(char));
     }
-
     char *ptr1 = plist_xml;
     char *ptr2 = xml;
     do {
@@ -318,17 +317,23 @@ char *utils_strip_data_from_plist_xml(char *plist_xml) {
 	assert(end);
         count = 0;
         do {
-            ptr1 = eol + 1;
-            eol = strchr(ptr1, '\n');
+            eol_data = eol;
+            eol = strchr(eol + 1, '\n');
             count++;
         } while (eol < end);
 	count--;   // last '\n' counted ends the first non-data line (contains "</data>")
-	if (count) {
-	    snprintf(line, sizeof(line), "   ... (%d line%s of base64-encoded data not shown, 64 chars/line) ...\n",
-                     count, (count == 1 ? "" : "s"));
-        }
-	memcpy(ptr2, line, strlen(line));
-	ptr2 += strlen(line);
+	if (count > 1) {
+             snprintf(line, sizeof(line), "        (%d lines data omitted, 64 chars/line)\n", count);
+             nchars = strlen(line);
+	     memcpy(ptr2, line, nchars);
+             ptr2 += nchars;
+             ptr1 = eol_data + 1;
+        } else {
+             nchars = eol_data + 1 - ptr1;
+             memcpy(ptr2, ptr1, nchars);
+             ptr2 += nchars;
+             ptr1 += nchars; 
+	}
 	begin = strstr(ptr1, "<data>");
 	if (begin == NULL) {
             nchars = (int) (last + 1 - ptr1);
@@ -336,8 +341,6 @@ char *utils_strip_data_from_plist_xml(char *plist_xml) {
             break;
         }
     } while (ptr1 <= last);
- 
-    free (plist_xml);
     return xml;
 }
 
