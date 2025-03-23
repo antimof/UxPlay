@@ -517,12 +517,12 @@ raop_handler_setup(raop_conn_t *conn,
                    http_request_t *request, http_response_t *response,
                    char **response_data, int *response_datalen)
 {
-    const char *dacp_id;
-    const char *active_remote_header;
+    const char *dacp_id = NULL;
+    const char *active_remote_header = NULL;
     bool logger_debug = (logger_get_level(conn->raop->logger) >= LOGGER_DEBUG);
     
-    const char *data;
-    int data_len;
+    const char *data = NULL;
+    int data_len = 0;
     data = http_request_get_data(request, &data_len);
 
     dacp_id = http_request_get_header(request, "DACP-ID");
@@ -548,9 +548,9 @@ raop_handler_setup(raop_conn_t *conn,
     if (PLIST_IS_DATA(req_eiv_node) && PLIST_IS_DATA(req_ekey_node)) {
         // The first SETUP call that initializes keys and timing
 
-        unsigned char aesiv[16];
-        unsigned char aeskey[16];
-        unsigned char eaeskey[72];
+      unsigned char aesiv[16] = { 0 };
+      unsigned char aeskey[16] = { 0 };
+      unsigned char eaeskey[72] = { 0 };
 
         logger_log(conn->raop->logger, LOGGER_DEBUG, "SETUP 1");
 
@@ -572,9 +572,9 @@ raop_handler_setup(raop_conn_t *conn,
             conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
         }
 	if (admit_client && deviceID && name && conn->raop->callbacks.register_client) {
-            bool pending_registration;
-            char *client_device_id;
-            char *client_pk;   /* encoded as null-terminated  base64 string*/
+            bool pending_registration = false;;
+            char *client_device_id = NULL;
+            char *client_pk = NULL;   /* encoded as null-terminated  base64 string*/
             access_client_session_data(conn->session, &client_device_id, &client_pk, &pending_registration);
             if (pending_registration) {
                 if (client_pk && !strcmp(deviceID, client_device_id)) { 
@@ -691,7 +691,7 @@ raop_handler_setup(raop_conn_t *conn,
             }
 	}
         char *timing_protocol = NULL;
-	timing_protocol_t time_protocol;
+	timing_protocol_t time_protocol = TP_NONE;
         plist_t req_timing_protocol_node = plist_dict_get_item(req_root_node, "timingProtocol");
         plist_get_string_val(req_timing_protocol_node, &timing_protocol);
         if (timing_protocol) {
@@ -730,7 +730,7 @@ raop_handler_setup(raop_conn_t *conn,
         conn->raop_ntp = NULL;
         conn->raop_rtp = NULL;
         conn->raop_rtp_mirror = NULL;
-        char remote[40];
+        char remote[40] = { 0 };
         int len = utils_ipaddress_to_string(conn->remotelen, conn->remote, conn->zone_id, remote, (int) sizeof(remote));
         if (!len || len > sizeof(remote)) {
             char *str = utils_data_to_string(conn->remote, conn->remotelen, 16);
@@ -776,7 +776,7 @@ raop_handler_setup(raop_conn_t *conn,
                     // Mirroring
                     unsigned short dport = conn->raop->mirror_data_lport;
                     plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
-                    uint64_t stream_connection_id;
+                    uint64_t stream_connection_id = 0;
                     plist_get_uint_val(stream_id_node, &stream_connection_id);
                     logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption"
                                " key and iv): %llu", stream_connection_id);
@@ -802,7 +802,7 @@ raop_handler_setup(raop_conn_t *conn,
                     // Audio
                     unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
                     unsigned short remote_cport = 0;
-                    unsigned char ct;
+                    unsigned char ct = 0;
                     unsigned int sr = AUDIO_SAMPLE_RATE; /* all AirPlay audio formats supported so far have sample rate 44.1kHz */
 
                     uint64_t uint_val = 0;
@@ -816,10 +816,10 @@ raop_handler_setup(raop_conn_t *conn,
 
                     if (conn->raop->callbacks.audio_get_format) {
 		        /* get additional audio format parameters  */
-                        uint64_t audioFormat;
-                        unsigned short spf;
-                        bool isMedia; 
-                        bool usingScreen;
+                        uint64_t audioFormat = 0;
+                        unsigned short spf = 0;
+                        bool isMedia = false;
+                        bool usingScreen = false;
                         uint8_t bool_val = 0;
 
                         plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
