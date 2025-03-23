@@ -322,7 +322,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
                     logger_log(logger, LOGGER_ERR, "This error usually means that a uxplay option was mistyped\n"
                                "           or some requested part of GStreamer is not installed\n");
                 }
-                g_clear_error (&error);	
+                g_clear_error (&error);
             }
             g_assert (renderer_type[i]->pipeline);
 
@@ -344,11 +344,14 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
         renderer_type[i]->gst_window = NULL;
         renderer_type[i]->use_x11 = false;
         X11_search_attempts = 0;
+	/* setting char *x11_display_name to NULL means the value is taken from $DISPLAY in the environment 
+         * (a uxplay option to specify a different value is possible)  */
+	char *x11_display_name = NULL;
         if (use_x11) {
             if (i == 0) {
                 renderer_type[0]->gst_window = (X11_Window_t *) calloc(1, sizeof(X11_Window_t));
                 g_assert(renderer_type[0]->gst_window);
-                get_X11_Display(renderer_type[0]->gst_window);
+                get_X11_Display(renderer_type[0]->gst_window, x11_display_name);
                 if (renderer_type[0]->gst_window->display) {
                     renderer_type[i]->use_x11 = true;
                 } else {
