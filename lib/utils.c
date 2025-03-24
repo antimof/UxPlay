@@ -285,7 +285,7 @@ int utils_ipaddress_to_string(int addresslen, const unsigned char *address, unsi
 
 char *utils_strip_data_from_plist_xml(char *plist_xml) {
     /* returns NULL   if no data needs to be stripped out.
-     * otherwise frees plist_xml and returns pointer to newly-allocated stripped text char *xml 
+     * returns pointer to newly-allocated stripped text char *xml 
      * WHICH (like plist_xml) MUST BE FREED AFTER USE*/
     assert(plist_xml);
     int len = (int) strlen(plist_xml);
