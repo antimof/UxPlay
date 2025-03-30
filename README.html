@@ -56,7 +56,8 @@ alt="Current Packaging status" /></a>.</p>
 <ul>
 <li><p>Install uxplay on Debian-based Linux systems with
 “<code>sudo apt install uxplay</code>”; on FreeBSD with
-“<code>sudo pkg install uxplay</code>”. Also available on Arch-based
+“<code>sudo pkg install uxplay</code>”; on OpenBSD with
+“<code>doas pkg_add uxplay</code>”. Also available on Arch-based
 systems through AUR. Since v. 1.66, uxplay is now also packaged in RPM
 format by Fedora 38 (“<code>sudo dnf install uxplay</code>”).</p></li>
 <li><p>For other RPM-based distributions which have not yet packaged
@@ -373,6 +374,10 @@ gst-plugins-base.</p></li>
 Either avahi-libdns or mDNSResponder must also be installed to provide
 the dns_sd library. OpenSSL is already installed as a System
 Library.</p></li>
+<li><p><strong>OpenBSD:</strong> (doas pkg_add) libplist
+gstreamer1-plugins-base. avahi-libs must also be installed to provide
+the dns_sd library. OpenSSL is already installed as a System
+Library.</p></li>
 </ul>
 <h4 id="building-an-installable-rpm-package">Building an installable RPM
 package</h4>
@@ -461,6 +466,9 @@ graphics).</p></li>
 gstreamer1-plugins, gstreamer1-plugins-* (* = core, good, bad, x, gtk,
 gl, vulkan, pulse, v4l2, …), (+ gstreamer1-vaapi for Intel/AMD
 graphics).</p></li>
+<li><p><strong>OpenBSD:</strong> Install gstreamer1-libav,
+gstreamer1-plugins-* (* = core, bad, base, good). avahi-main must also
+be installed for the avahi_daemon rc startup script.</p></li>
 </ul>
 <h3 id="starting-and-running-uxplay">Starting and running UxPlay</h3>
 <p>Since UxPlay-1.64, UxPlay can be started with options read from a
