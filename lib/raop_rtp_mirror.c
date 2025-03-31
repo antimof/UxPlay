@@ -62,6 +62,11 @@
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 
+/* for OpenBSD, where TCP_KEEPIDLE and TCP_KEEPALIVE are not defined */
+#if !defined(TCP_KEEPIDLE) && !defined(TCP_KEEPALIVE)
+#define TCP_KEEPIDLE SO_KEEPALIVE
+#endif
+
 //struct h264codec_s {
 //    unsigned char compatibility;
 //    short pps_size;
@@ -279,6 +284,8 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
                            "raop_rtp_mirror could not set stream socket keepalive time %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
+/* OpenBSD does not have these options.  */
+#ifndef __OpenBSD__
             option = 10;
             if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPINTVL, CAST &option, sizeof(option)) < 0) {
                 int sock_err = SOCKET_GET_ERROR();
@@ -291,6 +298,7 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
                            "raop_rtp_mirror could not set stream socket keepalive probes %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
+#endif /* !__OpenBSD__ */
             readstart = 0;
         }
 
