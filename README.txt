@@ -1,17 +1,19 @@
-# UxPlay 1.71: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.72 (beta): AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
 
 ### **Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).**
 
--   ***NEW in v1.71**: Support for (YouTube) HLS (HTTP Live Streaming)
-    video with the new "-hls" option.* **Only streaming from the YouTube
-    iOS app (in \"m3u8\" protocol) is currently supported**: (streaming
-    using the AirPlay icon in a browser window is **not** yet
+-   ***NEW in v1.72**: Improved Support for (YouTube) HLS (HTTP Live
+    Streaming) video with the new "-hls" option.* **Only streaming from
+    the YouTube iOS app (in \"m3u8\" protocol) is currently supported**:
+    (streaming using the AirPlay icon in a browser window is **not** yet
     supported).Click on the airplay icon in the YouTube app to stream
-    video. (You may need to wait until advertisements have finished or
-    been skipped before clicking the YouTube airplay icon.) **Please
-    report any issues with this new feature of UxPlay**. *The default
-    video player for HLS is GStreamer playbin v3: use "-hls 2" to revert
-    to playbin v2 if some videos fail to play*.
+    video. **Please report any issues with this new feature of UxPlay**.
+
+    *The default video player for HLS is GStreamer playbin v3: use "-hls
+    2" to revert to playbin v2 if some videos fail to play*.
+
+    -   added support for setting a password (as an alternative to
+        on-screen pin codes) to control client access (-pw option)
 
 ## Highlights:
 
@@ -499,7 +501,12 @@ below for help with this or other problems.
     [Usage](#usage) for details, if you wish to use it. *Some clients
     with MDM (Mobile Device Management, often present on employer-owned
     devices) are required to use pin-authentication: UxPlay will provide
-    this even when running without the pin option.*
+    this even when running without the pin option.* Password
+    authentication (-pw *pwd*)is also offered as an alternative solution
+    to pin codes: users need to know the password *pwd* and enter it on
+    their iOS/macOS device to access UxPlay, when prompted (if *pwd* is
+    not set, a displayed random pin code must be entered at **each** new
+    connection.)
 
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; since UxPlay-1.58, the option `-nohold`
@@ -1006,6 +1013,17 @@ and Device name; commenting out (with "\#") or deleting a line
 deregisters the corresponding client (see options -restrict, -block,
 -allow for more ways to control client access). *(Add a line "reg" in
 the startup file if you wish to use this feature.)*
+
+**-pw** \[*pwd*\]. (since 1.72). As an alternative to -pin, client
+access can be controlled with a password set when uxplay starts (set it
+in the .uxplay startup file, where it is stored as cleartext.) All users
+must then know this password. This uses HTTP md5 Digest authentication,
+which is now regarded as providing weak security, but it is only used to
+validate the uxplay password, and no user credentials are exposed.
+\_Note: -pin and -pw are alternatives: if both are specified at startup,
+the earlier of these two options is discarded. If *pwd* is not
+specified, a random 4-digit pin code is displayed, and must be entered
+on the client at **each** new conenction.
 
 **-vsync \[x\]** (In Mirror mode:) this option (**now the default**)
 uses timestamps to synchronize audio with video on the server, with an
@@ -1672,9 +1690,16 @@ what version UxPlay claims to be.
 
 # Changelog
 
+1.72 2025-05-15. Improved HLS Live Streaming (YouTube) support. Add
+support for password (HTTP Digest Authentication, -pw option) as
+alternative to on-screen pin codes.
+
 1.72 2024-04-22 Add requested options -md \<filename\> to output audio
 metadata text to a file for possible display (complements -ca option),
-and -vol `<v>`{=html} option to set initial audio-streaming volume.
+and -vol `<v>`{=html} option to set initial audio-streaming volume. Add
+support password user access control with HTTP digest Authentication
+(-pw \[pwd\]). If no pwd is set, a random pin is displayed for entry at
+each new connection.
 
 1.71 2024-12-13 Add support for HTTP Live Streaming (HLS), initially
 only for YouTube movies. Fix issue with NTP timeout on Windows.

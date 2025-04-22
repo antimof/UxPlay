@@ -1,24 +1,26 @@
 <h1
-id="uxplay-1.71-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
-1.71: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix
-(now also runs on Windows).</h1>
+id="uxplay-1.72-beta-airplay-mirror-and-airplay-audio-server-for-linux-macos-and-unix-now-also-runs-on-windows.">UxPlay
+1.72 (beta): AirPlay-Mirror and AirPlay-Audio server for Linux, macOS,
+and Unix (now also runs on Windows).</h1>
 <h3
 id="now-developed-at-the-github-site-httpsgithub.comfdh2uxplay-where-all-user-issues-should-be-posted-and-latest-versions-can-be-found."><strong>Now
 developed at the GitHub site <a href="https://github.com/FDH2/UxPlay"
 class="uri">https://github.com/FDH2/UxPlay</a> (where ALL user issues
 should be posted, and latest versions can be found).</strong></h3>
 <ul>
-<li><em><strong>NEW in v1.71</strong>: Support for (YouTube) HLS (HTTP
-Live Streaming) video with the new “-hls” option.</em> <strong>Only
-streaming from the YouTube iOS app (in "m3u8" protocol) is currently
-supported</strong>: (streaming using the AirPlay icon in a browser
-window is <strong>not</strong> yet supported).Click on the airplay icon
-in the YouTube app to stream video. (You may need to wait until
-advertisements have finished or been skipped before clicking the YouTube
-airplay icon.) <strong>Please report any issues with this new feature of
-UxPlay</strong>. <em>The default video player for HLS is GStreamer
-playbin v3: use “-hls 2” to revert to playbin v2 if some videos fail to
-play</em>.</li>
+<li><p><em><strong>NEW in v1.72</strong>: Improved Support for (YouTube)
+HLS (HTTP Live Streaming) video with the new “-hls” option.</em>
+<strong>Only streaming from the YouTube iOS app (in "m3u8" protocol) is
+currently supported</strong>: (streaming using the AirPlay icon in a
+browser window is <strong>not</strong> yet supported).Click on the
+airplay icon in the YouTube app to stream video. <strong>Please report
+any issues with this new feature of UxPlay</strong>.</p>
+<p><em>The default video player for HLS is GStreamer playbin v3: use
+“-hls 2” to revert to playbin v2 if some videos fail to play</em>.</p>
+<ul>
+<li>added support for setting a password (as an alternative to on-screen
+pin codes) to control client access (-pw option)</li>
+</ul></li>
 </ul>
 <h2 id="highlights">Highlights:</h2>
 <ul>
@@ -507,8 +509,12 @@ option: see “<code>-pin</code>” and “<code>-reg</code>” in <a
 href="#usage">Usage</a> for details, if you wish to use it. <em>Some
 clients with MDM (Mobile Device Management, often present on
 employer-owned devices) are required to use pin-authentication: UxPlay
-will provide this even when running without the pin
-option.</em></p></li>
+will provide this even when running without the pin option.</em>
+Password authentication (-pw <em>pwd</em>)is also offered as an
+alternative solution to pin codes: users need to know the password
+<em>pwd</em> and enter it on their iOS/macOS device to access UxPlay,
+when prompted (if <em>pwd</em> is not set, a displayed random pin code
+must be entered at <strong>each</strong> new connection.)</p></li>
 <li><p>By default, UxPlay is locked to its current client until that
 client drops the connection; since UxPlay-1.58, the option
 <code>-nohold</code> modifies this behavior so that when a new client
@@ -999,6 +1005,17 @@ key (base-64 format), Device ID, and Device name; commenting out (with
 options -restrict, -block, -allow for more ways to control client
 access). <em>(Add a line “reg” in the startup file if you wish to use
 this feature.)</em></p>
+<p><strong>-pw</strong> [<em>pwd</em>]. (since 1.72). As an alternative
+to -pin, client access can be controlled with a password set when uxplay
+starts (set it in the .uxplay startup file, where it is stored as
+cleartext.) All users must then know this password. This uses HTTP md5
+Digest authentication, which is now regarded as providing weak security,
+but it is only used to validate the uxplay password, and no user
+credentials are exposed. _Note: -pin and -pw are alternatives: if both
+are specified at startup, the earlier of these two options is discarded.
+If <em>pwd</em> is not specified, a random 4-digit pin code is
+displayed, and must be entered on the client at <strong>each</strong>
+new conenction.</p>
 <p><strong>-vsync [x]</strong> (In Mirror mode:) this option
 (<strong>now the default</strong>) uses timestamps to synchronize audio
 with video on the server, with an optional audio delay in (decimal)
@@ -1627,9 +1644,15 @@ an AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
 introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.72 2025-05-15. Improved HLS Live Streaming (YouTube) support. Add
+support for password (HTTP Digest Authentication, -pw option) as
+alternative to on-screen pin codes.</p>
 <p>1.72 2024-04-22 Add requested options -md &lt;filename&gt; to output
 audio metadata text to a file for possible display (complements -ca
-option), and -vol <v> option to set initial audio-streaming volume.</p>
+option), and -vol <v> option to set initial audio-streaming volume. Add
+support password user access control with HTTP digest Authentication
+(-pw [pwd]). If no pwd is set, a random pin is displayed for entry at
+each new connection.</p>
 <p>1.71 2024-12-13 Add support for HTTP Live Streaming (HLS), initially
 only for YouTube movies. Fix issue with NTP timeout on Windows.</p>
 <p>1.70 2024-10-04 Add support for 4K (h265) video (resolution 3840 x
