@@ -1,9 +1,9 @@
-# UxPlay 1.72 (beta): AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.72 (beta): AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (also runs on Windows).
 
 ### **Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).**
 
 -   ***NEW in v1.72**: Improved Support for (YouTube) HLS (HTTP Live Streaming)
-    video with the new "-hls" option.* **Only streaming from the YouTube iOS app
+    video with the new "-hls" option (introduced in 1.71).* **Only streaming from the YouTube iOS app
     (in \"m3u8\" protocol) is currently supported**: (streaming using the AirPlay icon in a browser window
     is **not** yet supported).Click on the airplay icon in the
     YouTube app to stream video.
@@ -13,10 +13,10 @@
     GStreamer playbin v3: use "-hls 2" to revert to playbin v2 if
     some videos fail to play_.
 
-    * added support for setting a password (as an alternative to on-screen
+    * user-requested features: added support for setting a password (as an alternative to on-screen
       pin codes) to control client access (-pw option); added support for
-      setting initial audion volume (--vol option), and output of audio-mode
-      metatdate to file (for display, -md option).
+      setting initial client audio-streaming  volume (-vol option), and output of audio-mode
+      metadata to file (for display by some external process, -md option).
     
 ## Highlights:
 

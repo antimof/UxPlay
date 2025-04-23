@@ -246,9 +246,10 @@ char *get_token(char **cursor, char *token_name, char start_char, char end_char)
 bool
 pairing_digest_verify(const char *method, const char * authorization, const char *password) {
   /* RFC 2617 HTTP md5 Digest password authentication */
-
-  char *sentence = (char *) calloc(strlen(authorization) + 1, sizeof(char));
-    strncpy(sentence, authorization, strlen(authorization));
+    size_t authlen = strlen(authorization);
+    char *sentence = (char *) malloc(authlen + 1);
+    memcpy(sentence, authorization, authlen);
+    *(sentence + authlen) = '\0';
     char *username = NULL;
     char *realm = NULL;
     char *nonce = NULL;
@@ -309,35 +310,50 @@ pairing_digest_verify(const char *method, const char * authorization, const char
     /* H1 = H(username : realm : password ) */
     len = strlen(username) + strlen(realm) + strlen(pwd) + 3;
     raw = (char *) calloc(len, sizeof(char));
-    snprintf(raw, len, "%s:%s:%s", username, realm, pwd);
+    strncat(raw, username, len - strlen(raw) - 1);
+    strncat(raw, ":", len - strlen(raw) - 1);
+    strncat(raw, realm, len - strlen(raw) - 1);
+    strncat(raw, ":", len - strlen(raw) - 1);
+    strncat(raw, pwd, len - strlen(raw) - 1);   
     char *hash1 = get_md5(raw);
     free (raw);    
     
 #ifdef test_digest
-    printf("hash1: should be %s, was: %s\n ", HA1, hash1_str);
+    printf("hash1: should be %s, was: %s\n", HA1, hash1);
 #endif
     
     /* H2 = H(method : uri) */
     len = strlen(mthd) + strlen(uri) + 2;
     raw  = (char *) calloc(len, sizeof(char));
-    snprintf(raw, len, "%s:%s", mthd, uri);
+    strncat(raw, mthd, len - strlen(raw) - 1);
+    strncat(raw, ":", len - strlen(raw) - 1);
+    strncat(raw, uri, len - strlen(raw) - 1);
     char *hash2 = get_md5(raw);
     free (raw);
 
 #ifdef test_digest
-    printf("hash2: should be %s, was:  %s\n", HA2, hash2_str);
+    printf("hash2: should be %s, was:  %s\n", HA2, hash2);
 #endif
 
     /* result = H(H1 : nonce (or nonce:nc:cnonce:qop) : H2) */    
     len = strlen(hash1) +  strlen(nonce) + strlen(hash2) + 3;
     if (qop) {
         len += strlen(nc) + strlen(cnonce) + strlen(qop) + 3;
-        raw = (char *) calloc(len, sizeof(char));
-        snprintf(raw, len, "%s:%s:%s:%s:%s:%s", hash1, nonce, nc, cnonce, qop, hash2);
-    } else {
-        raw = (char *) calloc(len, sizeof(char));
-        snprintf(raw, len, "%s:%s:%s", hash1, nonce, hash2);
     }
+    raw = (char *) calloc(len, sizeof(char));
+    strncat(raw, hash1, len - strlen(raw) - 1);
+    strncat(raw, ":", len - strlen(raw) - 1);
+    strncat(raw, nonce, len - strlen(raw) - 1);
+    strncat(raw, ":", len - strlen(raw) - 1);      
+    if (qop) {
+        strncat(raw, nc, len - strlen(raw) - 1);
+        strncat(raw, ":", len - strlen(raw) - 1);  
+        strncat(raw, cnonce, len - strlen(raw) - 1);
+        strncat(raw, ":", len - strlen(raw) - 1);  
+        strncat(raw, qop, len - strlen(raw) - 1);
+        strncat(raw, ":", len - strlen(raw) - 1);  
+    }
+    strncat(raw, hash2, len - strlen(raw) - 1);
     free (hash1);
     free (hash2);
     char *result = get_md5(raw);

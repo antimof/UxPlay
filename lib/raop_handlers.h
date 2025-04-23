@@ -597,18 +597,16 @@ raop_handler_setup(raop_conn_t *conn,
                 }
                 char pin[6] = {'\0'};
                 snprintf(pin, 5, "%04u", pin_4 % 10000);
-		printf("*** set new pin = [%s]\n", pin);
                 conn->raop->random_pw = strndup((const char *) pin, 6);
-		printf("*** stored new pin = [%s]\n", conn->raop->random_pw);
-            }
-            if (len == -1 && conn->raop->callbacks.display_pin) {
-                char *pin = conn->raop->random_pw;
-                assert(pin);
-                conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
+                if (conn->raop->callbacks.display_pin) {
+                    conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
+		}
                 logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", pin);
-                password = (const char *) pin;
             }
 	    if (len && !conn->authenticated) {
+ 	        if (len == -1) {
+                    password = (const char *) conn->raop->random_pw;
+                }
                 char nonce_string[33] = { '\0' };
                 //bool stale = false;  //not implemented
                 const char *authorization = NULL;
@@ -627,7 +625,6 @@ raop_handler_setup(raop_conn_t *conn,
                         }			
                     }
                     if (conn->authenticated && conn->raop->random_pw) {
-                        printf("*********free random_pw\n");
                         free (conn->raop->random_pw);
                         conn->raop->random_pw = NULL;
 		    }
@@ -649,8 +646,8 @@ raop_handler_setup(raop_conn_t *conn,
                     }
                     conn->raop->nonce = utils_hex_to_string(nonce, len);
                     char response_text[80] = "Digest realm=\"raop\", nonce=\"";
-                    strncat(response_text, conn->raop->nonce, strlen(conn->raop->nonce));
-                    strncat(response_text, "\"", 1);
+                    strncat(response_text, conn->raop->nonce, 80 - strlen(response_text) - 1);
+                    strncat(response_text, "\"", 80 - strlen(response_text) - 1);
                     http_response_init(response, "RTSP/1.0", 401, "Unauthorized");
                     http_response_add_header(response, "WWW-Authenticate", response_text);
                     return;

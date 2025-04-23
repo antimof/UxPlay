@@ -1232,9 +1232,7 @@ static void parse_arguments (int argc, char *argv[]) {
             }
         } else if (arg == "-pw") {
             setup_legacy_pairing = false;
-            if (!option_has_value(i, argc, arg, argv[i+1])) {
-                pin_pw = 3;
-            } else if (i < argc - 1 && *argv[i+1] != '-') {
+            if (i < argc - 1 && *argv[i+1] != '-') {
                 password.erase();
                 password.append(argv[++i]);
                 pin_pw = 2;
@@ -1242,6 +1240,8 @@ static void parse_arguments (int argc, char *argv[]) {
                     fprintf(stderr, "invalid client-access password \"%s\": length must be at least %u characters\n", password.c_str(), min_password_length);
                     exit(1);
                 }
+            } else {
+                pin_pw = 3;  //a random password (pin) will be displayed at each connection
             }
         } else if (arg == "-dacp") {
             dacpfile.erase();
