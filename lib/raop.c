@@ -80,7 +80,8 @@ struct raop_s {
 
     /* used in digest authentication */
     char *nonce;
-    char * random_pw;
+    char *random_pw;
+    unsigned char auth_fail_count;
 };
 
 struct raop_conn_s {
