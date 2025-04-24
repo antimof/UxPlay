@@ -1823,7 +1823,7 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, video_decode_struct *
             data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
             pts_mismatch = video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time_remote));
             if (pts_mismatch) {
-                LOGI("adjust timestamps by %8.6f secs", (double) (pts_mismatch / SECOND_IN_NSECS));
+                LOGI("adjust timestamps by %8.6f secs", (double) pts_mismatch / SECOND_IN_NSECS);
                 remote_clock_offset += pts_mismatch;
             }
             count++;

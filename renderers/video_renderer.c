@@ -469,7 +469,8 @@ uint64_t video_renderer_render_buffer(unsigned char* data, int *data_len, int *n
         if (pts >= gst_video_pipeline_base_time) {
             pts -= gst_video_pipeline_base_time;
         } else {
-            logger_log(logger, LOGGER_ERR, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
+            // adjust timestamps to be >= gst_video_pipeline_base time
+            logger_log(logger, LOGGER_DEBUG, "*** invalid ntp_time < gst_video_pipeline_base_time\n%8.6f ntp_time\n%8.6f base_time",
                        ((double) *ntp_time) / SECOND_IN_NSECS, ((double) gst_video_pipeline_base_time) / SECOND_IN_NSECS);
             return  (uint64_t)  gst_video_pipeline_base_time - pts;
         }
