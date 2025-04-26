@@ -471,7 +471,7 @@ httpd_thread(void *arg)
 		      } else {
                         int sock_err = SOCKET_GET_ERROR();
                         logger_log(httpd->logger, LOGGER_ERR, "httpd: recv socket error %d:%s",
-                                   sock_err, strerror(sock_err));
+                                   sock_err, SOCKET_ERROR_STRING(sock_err));
                         break;
 		      }
                     } else {
