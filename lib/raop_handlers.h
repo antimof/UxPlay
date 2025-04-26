@@ -600,11 +600,14 @@ raop_handler_setup(raop_conn_t *conn,
                 int pin_4  = random_pin();
                 if (pin_4 < 0) {
                     logger_log(conn->raop->logger, LOGGER_ERR, "Failed to generate random pin");
+                    pin_4 = 1234;
                 }
-                char pin[6] = {'\0'};
-                snprintf(pin, 5, "%04u", pin_4 % 10000);
-                conn->raop->random_pw = strndup((const char *) pin, 6);
-		conn->raop->auth_fail_count = 0;
+		size_t len = 4;
+		conn->raop->random_pw =  (char *) malloc(len + 1);
+                char *pin = conn->raop->random_pw;
+                snprintf(pin, len + 1, "%04u", pin_4 % 10000);
+                pin[len] = '\0';
+                conn->raop->auth_fail_count = 0;
                 if (conn->raop->callbacks.display_pin) {
                     conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
                 }
