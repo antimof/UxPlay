@@ -52,6 +52,8 @@ static gint64 hls_seek_end = 0;
 static gint64 hls_duration;
 static gboolean hls_seek_enabled;
 static gboolean hls_playing;
+static gboolean hls_buffer_empty;
+static gboolean hls_buffer_full;
 
 
 typedef enum {
@@ -232,6 +234,9 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
     hls_seek_start = -1;
     hls_seek_end = -1;
     hls_duration = -1;
+    hls_buffer_empty = TRUE;
+    hls_buffer_empty = FALSE;
+    
 
     /* this call to g_set_application_name makes server_name appear in the  X11 display window title bar, */
     /* (instead of the program name uxplay taken from (argv[0]). It is only set one time. */
@@ -660,12 +665,16 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
         if (hls_video) {
             gint percent = -1;
             gst_message_parse_buffering(message, &percent);
+            hls_buffer_empty = TRUE;
+	    hls_buffer_full = FALSE;
 	    if (percent > 0) {
+                hls_buffer_empty = FALSE;
                 renderer_type[type]->buffering_level = percent;
                 logger_log(logger, LOGGER_DEBUG, "Buffering :%d percent done", percent);
                 if (percent < 100) {
                     gst_element_set_state (renderer_type[type]->pipeline, GST_STATE_PAUSED);
                 } else {
+                    hls_buffer_full = TRUE;
                     gst_element_set_state (renderer_type[type]->pipeline, GST_STATE_PLAYING);
                 }
             }
@@ -852,16 +861,18 @@ unsigned int video_reset_callback(void * loop) {
     return (unsigned  int) TRUE;
 }
 
-bool video_get_playback_info(double *duration, double *position, float *rate) {
+bool video_get_playback_info(double *duration, double *position, float *rate, bool *buffer_empty, bool *buffer_full) {
     gint64 pos = 0;
     GstState state;
     *duration = 0.0;
     *position = -1.0;
     *rate = 0.0f;
     if (!renderer) {
-   
         return true;
     }
+
+    *buffer_empty = (bool) hls_buffer_empty;
+    *buffer_full = (bool) hls_buffer_full;
     gst_element_get_state(renderer->pipeline, &state, NULL, 0);
     *rate = 0.0f;
     switch (state) {

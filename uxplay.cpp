@@ -2071,7 +2071,12 @@ extern "C" void on_video_acquire_playback_info (void *cls, playback_info_t *play
     int buffering_level;
     LOGD("on_video_acquire_playback info\n");
     bool still_playing = video_get_playback_info(&playback_info->duration, &playback_info->position,
-                                                 &playback_info->rate);
+                                                 &playback_info->rate,
+                                                 &playback_info->playback_buffer_empty,
+                                                 &playback_info->playback_buffer_full);
+    playback_info->ready_to_play = true; //?
+    playback_info->playback_likely_to_keep_up = true; //?
+    
     LOGD("on_video_acquire_playback info done\n");
     if (!still_playing) {
         LOGI(" video has finished, %f", playback_info->position);

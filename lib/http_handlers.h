@@ -279,10 +279,10 @@ http_handler_playback_info(raop_conn_t *conn, http_request_t *request, http_resp
     playback_info_t playback_info;
 
     playback_info.stallcount = 0;
-    playback_info.ready_to_play = true; // ???;
-    playback_info.playback_buffer_empty = false;   // maybe  need to get this from playbin 
-    playback_info.playback_buffer_full = true;
-    playback_info.playback_likely_to_keep_up = true;
+    //playback_info.playback_buffer_empty = false;   // maybe  need to get this from playbin 
+    //playback_info.playback_buffer_full = true;
+    //ayback_info.ready_to_play = true; // ???;
+    //ayback_info.playback_likely_to_keep_up = true;
 
     conn->raop->callbacks.on_video_acquire_playback_info(conn->raop->callbacks.cls, &playback_info);
     if (playback_info.duration == -1.0) {
@@ -749,29 +749,44 @@ http_handler_hls(raop_conn_t *conn,  http_request_t *request, http_response_t *r
     const char *url = http_request_get_url(request);    
     const char* upgrade = http_request_get_header(request, "Upgrade");
     if (upgrade) {
-      //don't accept Upgrade: h2c request ?
-      return;
+        //don't accept Upgrade: h2c request ?
+        char *header_str = NULL;
+        http_request_get_header_string(request, &header_str);
+        logger_log(conn->raop->logger, LOGGER_INFO,
+                   "%s\nhls upgrade request declined", header_str); 
+        free (header_str);
+        return;
     }
 
     if (!strcmp(url, "/master.m3u8")){
         char * master_playlist  = get_master_playlist(conn->raop->airplay_video);
-        size_t len = strlen(master_playlist);
-        char * data = (char *) malloc(len + 1);
-        memcpy(data, master_playlist, len);
-        data[len] = '\0';
-        *response_data = data;
-        *response_datalen = (int ) len;
+	if (master_playlist) {
+            size_t len = strlen(master_playlist);
+            char * data = (char *) malloc(len + 1);
+            memcpy(data, master_playlist, len);
+            data[len] = '\0';
+            *response_data = data;
+            *response_datalen = (int ) len;
+        } else {
+            logger_log(conn->raop->logger, LOGGER_ERR,"requested master playlist %s not found", url); 
+            *response_datalen = 0;
+        }
+
     } else {
         char *media_playlist = get_media_playlist(conn->raop->airplay_video, url);
-        assert(media_playlist);
-        char *data  = adjust_yt_condensed_playlist(media_playlist);
-        *response_data = data;
-        *response_datalen = strlen(data);
-        float duration = 0.0f;
-        int chunks = analyze_media_playlist(data, &duration);
-        logger_log(conn->raop->logger, LOGGER_INFO,
-                   "Requested media_playlist %s has %5d chunks, total duration %9.3f secs", url, chunks, duration); 
-    } 
+        if (media_playlist) {
+            char *data  = adjust_yt_condensed_playlist(media_playlist);
+            *response_data = data;
+            *response_datalen = strlen(data);
+            float duration = 0.0f;
+            int chunks = analyze_media_playlist(data, &duration);
+            logger_log(conn->raop->logger, LOGGER_INFO,
+                       "Requested media_playlist %s has %5d chunks, total duration %9.3f secs", url, chunks, duration); 
+        } else {
+            logger_log(conn->raop->logger, LOGGER_ERR,"requested media playlist %s not found", url); 
+            *response_datalen = 0;
+        }
+    }
 
     http_response_add_header(response, "Access-Control-Allow-Headers", "Content-type");
     http_response_add_header(response, "Access-Control-Allow-Origin", "*");
