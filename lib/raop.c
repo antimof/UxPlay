@@ -386,7 +386,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
             handler = &raop_handler_flush;
         } else if (!strcmp(method, "TEARDOWN")) {
             handler = &raop_handler_teardown;
-        }
+        } else {
+            http_response_init(*response, protocol, 501, "Not Implemented");
+	}
     } else if (!hls_request && !strcmp(protocol, "HTTP/1.1")) {
         if (!strcmp(method, "POST")) {
             if (!strcmp(url, "/reverse")) {
@@ -415,7 +417,6 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         } else if (!strcmp(method, "PUT")) {
 	  if (!strncmp (url, "/setProperty?", strlen("/setProperty?"))) {
                 handler = &http_handler_set_property;
-	  } else {
 	  }
         }
     } else if (hls_request) {
