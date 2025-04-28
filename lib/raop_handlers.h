@@ -1012,6 +1012,11 @@ raop_handler_get_parameter(raop_conn_t *conn,
     int datalen;
 
     content_type = http_request_get_header(request, "Content-Type");
+    if (!content_type) {
+        http_response_init(response, "RTSP/1.0", 451, "Parameter not understood");
+        return;
+    }
+
     data = http_request_get_data(request, &datalen);
     if (!strcmp(content_type, "text/parameters")) {
         const char *current = data;
@@ -1060,6 +1065,10 @@ raop_handler_set_parameter(raop_conn_t *conn,
     int datalen;
 
     content_type = http_request_get_header(request, "Content-Type");
+    if (!content_type) {
+        http_response_init(response, "RTSP/1.0", 451, "Parameter not understood");
+        return;
+    }
     data = http_request_get_data(request, &datalen);
     if (!strcmp(content_type, "text/parameters")) {
         char *datastr;

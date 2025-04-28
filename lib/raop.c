@@ -198,8 +198,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
      */
 
     const char *method = http_request_get_method(request);
+    const char *url = http_request_get_url(request);
 
-    if (!method) {
+    if (!method  || !url) {
         return;
     }
 
@@ -211,7 +212,6 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response) {
         return;
     }
 
-    const char *url = http_request_get_url(request);
     const char *client_session_id = http_request_get_header(request, "X-Apple-Session-ID");
     const char *host = http_request_get_header(request, "Host");
     hls_request =  (host && !cseq && !client_session_id);
