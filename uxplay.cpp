@@ -1665,6 +1665,7 @@ static bool check_blocked_client(char *deviceid) {
 
 extern "C" void video_reset(void *cls) {
     LOGD("video_reset");
+    video_renderer_stop();
     url.erase();
     remote_clock_offset = 0;
     relaunch_video = true;
