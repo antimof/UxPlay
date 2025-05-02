@@ -1,19 +1,33 @@
-# UxPlay 1.72 (beta): AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (now also runs on Windows).
+# UxPlay 1.72: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (also runs on Windows).
 
 ### **Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).**
 
--   ***NEW in v1.72**: Improved Support for (YouTube) HLS (HTTP Live
-    Streaming) video with the new "-hls" option.* **Only streaming from
-    the YouTube iOS app (in \"m3u8\" protocol) is currently supported**:
-    (streaming using the AirPlay icon in a browser window is **not** yet
-    supported).Click on the airplay icon in the YouTube app to stream
-    video. **Please report any issues with this new feature of UxPlay**.
+-   **NEW in v1.72**: Improved Support for (YouTube) HLS (HTTP Live
+    Streaming) video with the new "-hls" option (introduced in 1.71).\*
+    **Only streaming from the YouTube iOS app (in \"m3u8\" protocol) is
+    currently supported**: (streaming using the AirPlay icon in a
+    browser window is **not** yet supported).Click on the airplay icon
+    in the YouTube app to stream video. **Please report any issues with
+    this new feature of UxPlay**.
 
     *The default video player for HLS is GStreamer playbin v3: use "-hls
     2" to revert to playbin v2 if some videos fail to play*.
 
-    -   added support for setting a password (as an alternative to
-        on-screen pin codes) to control client access (-pw option)
+    -   user-requested features: added support for setting a password
+        (as an alternative to on-screen pin codes) to control client
+        access (-pw option, see "man pw" or this README for details);
+        added support for setting initial client audio-streaming volume
+        (-vol option), and output of audio-mode metadata to file (for
+        display by some external process, -md option).
+
+    **ISSUES** ***(Please help to solve if you have expertise)***
+
+    -   in HLS video streaming from the YouTube app (-hls option),
+        rendered using GStreamer's media player "playbin3" (or playbin2,
+        with option -hls 2), we don't understand how to correctly deal
+        with "interstitials" (= 15 sec commercials) when "skip" is
+        pressed on the client. (HLS is handled by handlers in
+        lib/http_handlers.h)
 
 ## Highlights:
 
@@ -773,22 +787,15 @@ complete GStreamer, but seems to have everything needed for UxPlay).
 installations in non-standard locations indicated by the environment
 variable `$HOMEBREW_PREFIX`.**
 
-**Using GStreamer installed from MacPorts**: this is **not**
-recommended, as currently the MacPorts GStreamer is old (v1.16.2),
-unmaintained, and built to use X11:
-
--   Instead [build gstreamer
-    yourself](https://github.com/FDH2/UxPlay/wiki/Building-GStreamer-from-Source-on-macOS-with-MacPorts)
-    if you use MacPorts and do not want to use the "Official" Gstreamer
-    binaries.
-
-*(If you really wish to use the MacPorts GStreamer-1.16.2, install
-pkgconf ("sudo port install pkgconf"), then "sudo port install
+**Using GStreamer installed from MacPorts**: MacPorts is now providing
+recent GStreamer releases: install pkgconf ("sudo port install
+pkgconf"), then "sudo port install gstreamer1
 gstreamer1-gst-plugins-base gstreamer1-gst-plugins-good
-gstreamer1-gst-plugins-bad gstreamer1-gst-libav". For X11 support on
-macOS, compile UxPlay using a special cmake option `-DUSE_X11=ON`, and
-run it from an XQuartz terminal with -vs ximagesink; older non-retina
-macs require a lower resolution when using X11: `uxplay -s 800x600`.)*
+gstreamer1-gst-plugins-bad gstreamer1-gst-libav". (The following may no
+longer be relevant: *For X11 support on macOS, compile UxPlay using a
+special cmake option `-DUSE_X11=ON`, and run it from an XQuartz terminal
+with -vs ximagesink; older non-retina macs require a lower resolution
+when using X11: `uxplay -s 800x600`.)*
 
 After installing GStreamer, build and install uxplay: open a terminal
 and change into the UxPlay source directory ("UxPlay-master" for zipfile
@@ -1690,9 +1697,11 @@ what version UxPlay claims to be.
 
 # Changelog
 
-1.72 2025-05-15. Improved HLS Live Streaming (YouTube) support. Add
+1.72 2025-05-03. Improved HLS Live Streaming (YouTube) support. Add
 support for password (HTTP Digest Authentication, -pw option) as
-alternative to on-screen pin codes.
+alternative to on-screen one-time pin codes. Add requested options -md
+to export audio-mode metadata text to a file for display, and -vol for
+setting initial audio-streaming volume on client.
 
 1.72 2024-04-22 Add requested options -md \<filename\> to output audio
 metadata text to a file for possible display (complements -ca option),
