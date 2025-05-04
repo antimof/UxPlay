@@ -664,7 +664,7 @@ raop_rtp_mirror_thread(void *arg)
                     vps = ptr;
                     if (logger_debug) {
                         char *str = utils_data_to_string(vps, vps_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "h265 vps size %d\n%s",vps_size, str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 vps size %d\n%s",vps_size, str);
                         free(str);
                     }
                     ptr += vps_size;
@@ -678,7 +678,7 @@ raop_rtp_mirror_thread(void *arg)
                     sps = ptr;
                     if (logger_debug) {
                         char *str = utils_data_to_string(sps, sps_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "h265 sps size %d\n%s",vps_size, str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 sps size %d\n%s",vps_size, str);
                         free(str);
                     }
                     ptr += sps_size;
@@ -692,7 +692,7 @@ raop_rtp_mirror_thread(void *arg)
                     pps = ptr;
                     if (logger_debug) {
                         char *str = utils_data_to_string(pps, pps_size, 16);
-		        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "h265 pps size %d\n%s",pps_size, str);
+		        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 pps size %d\n%s",pps_size, str);
                         free(str);
                     }
 
@@ -734,23 +734,23 @@ raop_rtp_mirror_thread(void *arg)
                     int data_size = 6;
                     if (logger_debug) {
                         char *str = utils_data_to_string(payload, data_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: SPS+PPS header size = %d", data_size);		
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 SPS+PPS header:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror: SPS+PPS header size = %d", data_size);		
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror h264 SPS+PPS header:\n%s", str);
                         free(str);
                         str = utils_data_to_string(sequence_parameter_set, sps_size,16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror SPS NAL size = %d",  sps_size);		
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror SPS NAL size = %d",  sps_size);		
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
                         free(str);
                         str = utils_data_to_string(picture_parameter_set, pps_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror PPS NAL size = %d", pps_size);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror PPS NAL size = %d", pps_size);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
                         free(str);
                     }
                     data_size = payload_size - sps_size - pps_size - 11; 
                     if (data_size > 0 && logger_debug) {
                         char *str = utils_data_to_string (picture_parameter_set + pps_size, data_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder size = %d", data_size);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder of SPS+PPS packet:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "remainder size = %d", data_size);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "remainder of SPS+PPS packet:\n%s", str);
                         free(str);
                     } else if (data_size < 0) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_ERR, " pps_sps error: packet remainder size = %d < 0", data_size);
