@@ -22,7 +22,8 @@
 
     * in HLS video streaming from the YouTube app  (-hls option), rendered using GStreamer's media player "playbin3" (or playbin2, with option -hls 2),
       we don't understand how to correctly deal with "interstitials" (= 15 sec commercials) when "skip" is pressed on the client.
-      (HLS is handled by handlers in lib/http_handlers.h)
+      (HLS is handled by handlers in lib/http_handlers.h). (Should response to HTTP requests POST /action (playlistRemove) and POST
+      /Stop be modified? _Wireshark data from HLS on an AppleTV model 3 with  UN-upgraded original OS (unencrypted communications) could be useful!_
      
 ## Highlights:
 
@@ -1690,13 +1691,9 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.
 
 # Changelog
-1.72 2025-05-03. Improved HLS Live Streaming (YouTube) support.
-Add support for password (HTTP Digest Authentication, -pw option) as
-alternative to on-screen one-time pin codes.  Add requested options
--md to export audio-mode metadata text to a file for display, and
--vol for setting initial audio-streaming volume on client. 
-
-1.72 2024-04-22 Add requested options -md \<filename\> to output audio
+1.72 2025-05-07. Improved HLS Live Streaming (YouTube) support, including
+"scrub".
+Add requested options -md \<filename\> to output audio
 metadata text to a file for possible display (complements -ca option),
 and -vol <v> option to set initial audio-streaming volume.  Add support
 password user access control with HTTP digest Authentication (-pw [pwd]).

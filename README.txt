@@ -27,7 +27,10 @@
         with option -hls 2), we don't understand how to correctly deal
         with "interstitials" (= 15 sec commercials) when "skip" is
         pressed on the client. (HLS is handled by handlers in
-        lib/http_handlers.h)
+        lib/http_handlers.h). (Should response to HTTP requests POST
+        /action (playlistRemove) and POST /Stop be modified? *Wireshark
+        data from HLS on an AppleTV model 3 with UN-upgraded original OS
+        (unencrypted communications) could be useful!*
 
 ## Highlights:
 
@@ -1697,18 +1700,13 @@ what version UxPlay claims to be.
 
 # Changelog
 
-1.72 2025-05-03. Improved HLS Live Streaming (YouTube) support. Add
-support for password (HTTP Digest Authentication, -pw option) as
-alternative to on-screen one-time pin codes. Add requested options -md
-to export audio-mode metadata text to a file for display, and -vol for
-setting initial audio-streaming volume on client.
-
-1.72 2024-04-22 Add requested options -md \<filename\> to output audio
-metadata text to a file for possible display (complements -ca option),
-and -vol `<v>`{=html} option to set initial audio-streaming volume. Add
-support password user access control with HTTP digest Authentication
-(-pw \[pwd\]). If no pwd is set, a random pin is displayed for entry at
-each new connection.
+1.72 2025-05-07. Improved HLS Live Streaming (YouTube) support,
+including "scrub". Add requested options -md \<filename\> to output
+audio metadata text to a file for possible display (complements -ca
+option), and -vol `<v>`{=html} option to set initial audio-streaming
+volume. Add support password user access control with HTTP digest
+Authentication (-pw \[pwd\]). If no pwd is set, a random pin is
+displayed for entry at each new connection.
 
 1.71 2024-12-13 Add support for HTTP Live Streaming (HLS), initially
 only for YouTube movies. Fix issue with NTP timeout on Windows.
