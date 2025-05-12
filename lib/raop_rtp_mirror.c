@@ -579,6 +579,9 @@ raop_rtp_mirror_thread(void *arg)
                            " payload_size %d header %s ts_client = %8.6f",
 			   payload_size, packet_description, (double) ntp_timestamp_remote / SEC);
 
+                if (packet[6] == 0x56 || packet[6] == 0x5e) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "This packet indicates video stream is stopping");
+                }
                 if (!video_stream_suspended && (packet[6] == 0x56 || packet[6] == 0x5e)) {
                     video_stream_suspended = true;
                     raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);

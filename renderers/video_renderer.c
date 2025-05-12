@@ -543,6 +543,7 @@ void video_renderer_flush() {
 
 void video_renderer_stop() {
     if (renderer) {
+        logger_log(logger, LOGGER_DEBUG,"video_renderer_stop");
         if (renderer->appsrc) {
             gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
         }
@@ -563,7 +564,7 @@ static void video_renderer_destroy_instance(video_renderer_t *renderer) {
                 gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
             }
             ret = gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-	    logger_log(logger, LOGGER_DEBUG,"pipeline state change to NULL: %s",
+	    logger_log(logger, LOGGER_DEBUG,"pipeline_state_change_return: %s",
 		       gst_element_state_change_return_get_name(ret));
 	    gst_element_get_state(renderer->pipeline, NULL, NULL, 1000 * GST_MSECOND);
         }
@@ -591,9 +592,47 @@ void video_renderer_destroy() {
     }
 }
 
+static void get_stream_status_name(GstStreamStatusType type, char *name, size_t len) {
+  switch (type) {
+  case GST_STREAM_STATUS_TYPE_CREATE:
+    strncpy(name, "CREATE", len);
+    return;
+  case GST_STREAM_STATUS_TYPE_ENTER:
+    strncpy(name, "ENTER", len);
+    return;
+  case GST_STREAM_STATUS_TYPE_LEAVE:
+    strncpy(name, "LEAVE", len);
+    return;
+  case GST_STREAM_STATUS_TYPE_DESTROY:
+    strncpy(name, "DESTROY", len);
+    return;
+  case GST_STREAM_STATUS_TYPE_START:
+    strncpy(name, "START", len);
+    return;
+  case GST_STREAM_STATUS_TYPE_PAUSE:
+    strncpy(name, "PAUSE", len);
+    return;
+  case GST_STREAM_STATUS_TYPE_STOP:
+    strncpy(name, "STOP", len);
+    return;
+  default:
+    strncpy(name, "", len);
+    return;
+  }
+}
+  
 gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void *loop) {
+    GstState old_state, new_state;
+    const gchar no_state[] = "";
+    const gchar *old_state_name = no_state, *new_state_name = no_state;
+    if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_STATE_CHANGED) {
+        GstState old_state, new_state;
+        gst_message_parse_state_changed (message, &old_state, &new_state, NULL);
+        old_state_name = gst_element_state_get_name (old_state);
+        new_state_name = gst_element_state_get_name (new_state);
+    }
 
-  /* identify which pipeline sent the message */ 
+    /* identify which pipeline sent the message */ 
     int type = -1;
     for (int i = 0 ; i < n_renderers ; i ++ ) {
         if (renderer_type[i] && renderer_type[i]->bus == bus) {
@@ -601,36 +640,42 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
             break;
         }
     }
+
     /* if the bus sending the message is not found, the renderer may already have been destroyed */
     if (type == -1) {
+        if (logger_debug) {
+            g_print("GStreamer(UNKNOWN, now destroyed?) bus message: %s %s %s %s\n",
+                     GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name);
+        }     
         return TRUE;
     }
 
     if (logger_debug) {
-        if (hls_video) {
-            gint64 pos;
-            const gchar no_state[] = "";
-            const gchar *old_state_name, *new_state_name;
-            if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_STATE_CHANGED) {
-                GstState old_state, new_state;
-                gst_message_parse_state_changed (message, &old_state, &new_state, NULL);
-                old_state_name = gst_element_state_get_name (old_state);
-                new_state_name = gst_element_state_get_name (new_state);
-            } else {
-                 old_state_name = no_state;
-                 new_state_name = no_state;
-            }
-            gst_element_query_position (renderer_type[type]->pipeline, GST_FORMAT_TIME, &pos);
-            if (GST_CLOCK_TIME_IS_VALID(pos)) {
-                g_print("GStreamer bus message %s %s %s %s; position: %" GST_TIME_FORMAT "\n", GST_MESSAGE_SRC_NAME(message),
-			GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name, GST_TIME_ARGS(pos));
-            } else {
-                g_print("GStreamer bus message %s %s %s %s; position: none\n", GST_MESSAGE_SRC_NAME(message),
-			GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name);
-            }
-        } else {
-            g_print("GStreamer %s bus message: %s %s\n", renderer_type[type]->codec, GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message));
+        gchar *name = NULL;
+	GstElement *element = NULL;
+        gchar type_name[8] = { 0 };
+        if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_STREAM_STATUS) {
+            GstStreamStatusType type;
+            gst_message_parse_stream_status(message, &type, &element);
+            name = gst_element_get_name(element);
+            get_stream_status_name(type, type_name, 8);
+            old_state_name = name;
+            new_state_name = type_name;
         }
+        gint64 pos = -1;
+        if (hls_video) {
+            gst_element_query_position (renderer_type[type]->pipeline, GST_FORMAT_TIME, &pos);
+        }
+        if (GST_CLOCK_TIME_IS_VALID(pos)) {
+            g_print("GStreamer %s  bus message %s %s %s %s; position: %" GST_TIME_FORMAT "\n" ,renderer_type[type]->codec,
+                     GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name, GST_TIME_ARGS(pos));
+        } else {
+            g_print("GStreamer %s bus message %s %s %s %s\n", renderer_type[type]->codec,
+                    GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message), old_state_name, new_state_name);
+        }
+	if (name) {
+	  g_free(name);
+	}
     }
 
     /* monitor hls video position until seek to hls_start_position is achieved */
