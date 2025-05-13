@@ -79,7 +79,12 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
     See the section on using this specfile for [building an installable
     RPM package](#building-an-installable-rpm-package).
 
-After installation:
+-   If your distribution does not supply UxPlay, or you want the latest
+    version, it is very easy to build it yourself: see the very
+    [detailed instructions for building UxPlay from
+    source](#building-uxplay-from-source). later in this document.
+
+## After installation:
 
 -   (On Linux and \*BSD): if a firewall is active on the server hosting
     UxPlay, make sure the default network port (UDP 5353) for
@@ -97,6 +102,10 @@ After installation:
     with the option "uxplay -async", but there is then a 2 second
     latency imposed by iOS.
 
+-   If you are using UxPlay just to mirror the client's screen (without
+    showing videos that need audio synchronized with video), it is best
+    to use the option "uxplay -vsync no".
+
 -   Add any UxPlay options you want to use as defaults to a startup file
     `~/.uxplayrc` (see "`man uxplay`" or "`uxplay -h`" for format and
     other possible locations). In particular, if your system uses
@@ -104,6 +113,26 @@ After installation:
     pipewiresink" or "vs waylandsink" as defaults to the file. *(Output
     from terminal commands "ps waux \| grep pulse" or "pactl info" will
     contain "pipewire" if your Linux/BSD system uses it).*
+
+-   For Linux systems using systemd, there is a **systemd** service file
+    **uxplay.service** found in the UxPlay top directory of the
+    distribution, and also installed in `<DOCDIR>/uxplay/systemd/`
+    (where DOCDIR is usually `/usr/local/share/doc`), that allows users
+    to start their own instance of UxPlay as a rootless daemon: it
+    should either be added to the directory /etc/systemd/user, or the
+    user can just create their own systemd directory
+    `~/.config/systemd/user/` and then copy uxplay.service into it. To
+    save uxplay terminal output to a file \~/uxplay.log, uncomment the
+    StandardOutput entry in uxplay.service. Then
+
+    `systemctl --user [start/stop/enable/disable/status] uxplay`
+
+    can be used to control the daemon. If it is enabled, the daemon will
+    start at the user's first login and stop when they no longer have
+    any open sessions. See
+    https://www.baeldung.com/linux/systemd-create-user-services for more
+    about systemd user services. **Note: it is NOT recommended to run
+    UxPlay as a root service.**
 
 -   On Raspberry Pi: models using hardware h264 video decoding by the
     Broadcom GPU (models 4B and earlier) may require the uxplay option
@@ -115,8 +144,11 @@ After installation:
     video decoding is used seems to have reappeared starting with
     GStreamer-1.22.
 
-To (easily) compile the latest UxPlay from source, see the section
-[Getting UxPlay](#getting-uxplay).
+-   If UxPlay is used in a public space, there are security options for
+    requiring an AppleTV-style one-time pin (displayed on the terminal)
+    to be entered, or a password, and for barring/permitting client
+    access by their device ID. See options -pin, -reg, -pw, -restrict,
+    -allow, -block.
 
 # Detailed description of UxPlay
 
@@ -259,7 +291,7 @@ clause incompatible with the GPL unless OpenSSL can be regarded as a
 OpenSSL as a "System Library", but some (e.g. Debian) do not: in this
 case, the issue is solved by linking with OpenSSL-3.0.0 or later.
 
-# Getting UxPlay
+# Building UxPlay from source
 
 Either download and unzip
 [UxPlay-master.zip](https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip),
@@ -519,11 +551,11 @@ below for help with this or other problems.
     with MDM (Mobile Device Management, often present on employer-owned
     devices) are required to use pin-authentication: UxPlay will provide
     this even when running without the pin option.* Password
-    authentication (-pw *pwd*)is also offered as an alternative solution
-    to pin codes: users need to know the password *pwd* and enter it on
-    their iOS/macOS device to access UxPlay, when prompted (if *pwd* is
-    not set, a displayed random pin code must be entered at **each** new
-    connection.)
+    authentication (-pw *pwd*) is also offered as an alternative
+    solution to pin codes: users need to know the password *pwd* and
+    enter it on their iOS/macOS device to access UxPlay, when prompted
+    (if *pwd* is not set, a displayed random pin code must be entered at
+    **each** new connection.)
 
 -   By default, UxPlay is locked to its current client until that client
     drops the connection; since UxPlay-1.58, the option `-nohold`

@@ -86,8 +86,12 @@ href="https://github.com/FDH2/UxPlay/releases">releases</a> (see their
 the section on using this specfile for <a
 href="#building-an-installable-rpm-package">building an installable RPM
 package</a>.</p></li>
+<li><p>If your distribution does not supply UxPlay, or you want the
+latest version, it is very easy to build it yourself: see the very <a
+href="#building-uxplay-from-source">detailed instructions for building
+UxPlay from source</a>. later in this document.</p></li>
 </ul>
-<p>After installation:</p>
+<h2 id="after-installation">After installation:</h2>
 <ul>
 <li><p>(On Linux and *BSD): if a firewall is active on the server
 hosting UxPlay, make sure the default network port (UDP 5353) for
@@ -104,6 +108,9 @@ also install.</p></li>
 <li><p>For Audio-only mode (Apple Music, etc.) best quality is obtained
 with the option “uxplay -async”, but there is then a 2 second latency
 imposed by iOS.</p></li>
+<li><p>If you are using UxPlay just to mirror the client’s screen
+(without showing videos that need audio synchronized with video), it is
+best to use the option “uxplay -vsync no”.</p></li>
 <li><p>Add any UxPlay options you want to use as defaults to a startup
 file <code>~/.uxplayrc</code> (see “<code>man uxplay</code>” or
 “<code>uxplay -h</code>” for format and other possible locations). In
@@ -112,6 +119,24 @@ you may wish to add “as pipewiresink” or “vs waylandsink” as defaults to
 the file. <em>(Output from terminal commands “ps waux | grep pulse” or
 “pactl info” will contain “pipewire” if your Linux/BSD system uses
 it).</em></p></li>
+<li><p>For Linux systems using systemd, there is a
+<strong>systemd</strong> service file <strong>uxplay.service</strong>
+found in the UxPlay top directory of the distribution, and also
+installed in <code>&lt;DOCDIR&gt;/uxplay/systemd/</code> (where DOCDIR
+is usually <code>/usr/local/share/doc</code>), that allows users to
+start their own instance of UxPlay as a rootless daemon: it should
+either be added to the directory /etc/systemd/user, or the user can just
+create their own systemd directory <code>~/.config/systemd/user/</code>
+and then copy uxplay.service into it. To save uxplay terminal output to
+a file ~/uxplay.log, uncomment the StandardOutput entry in
+uxplay.service. Then</p>
+<p><code>systemctl --user [start/stop/enable/disable/status] uxplay</code></p>
+<p>can be used to control the daemon. If it is enabled, the daemon will
+start at the user’s first login and stop when they no longer have any
+open sessions. See
+https://www.baeldung.com/linux/systemd-create-user-services for more
+about systemd user services. <strong>Note: it is NOT recommended to run
+UxPlay as a root service.</strong></p></li>
 <li><p>On Raspberry Pi: models using hardware h264 video decoding by the
 Broadcom GPU (models 4B and earlier) may require the uxplay option
 -bt709. If you use Ubuntu 22.10 or earlier, GStreamer must be <a
@@ -120,9 +145,12 @@ to use hardware video decoding by the Broadcom GPU (also recommended but
 optional for Raspberry Pi OS (Bullseye): the patched GStreamer does not
 need option ” -bt709`“. The need for -bt709 when hardware video decoding
 is used seems to have reappeared starting with GStreamer-1.22.</p></li>
+<li><p>If UxPlay is used in a public space, there are security options
+for requiring an AppleTV-style one-time pin (displayed on the terminal)
+to be entered, or a password, and for barring/permitting client access
+by their device ID. See options -pin, -reg, -pw, -restrict, -allow,
+-block.</p></li>
 </ul>
-<p>To (easily) compile the latest UxPlay from source, see the section <a
-href="#getting-uxplay">Getting UxPlay</a>.</p>
 <h1 id="detailed-description-of-uxplay">Detailed description of
 UxPlay</h1>
 <p>This project is a GPLv3 open source unix AirPlay2 Mirror server for
@@ -261,7 +289,7 @@ can be regarded as a “System Library”, which it is in *BSD). Many Linux
 distributions treat OpenSSL as a “System Library”, but some
 (e.g. Debian) do not: in this case, the issue is solved by linking with
 OpenSSL-3.0.0 or later.</p>
-<h1 id="getting-uxplay">Getting UxPlay</h1>
+<h1 id="building-uxplay-from-source">Building UxPlay from source</h1>
 <p>Either download and unzip <a
 href="https://github.com/FDH2/UxPlay/archive/refs/heads/master.zip">UxPlay-master.zip</a>,
 or (if git is installed): “git clone https://github.com/FDH2/UxPlay”.
@@ -526,7 +554,7 @@ href="#usage">Usage</a> for details, if you wish to use it. <em>Some
 clients with MDM (Mobile Device Management, often present on
 employer-owned devices) are required to use pin-authentication: UxPlay
 will provide this even when running without the pin option.</em>
-Password authentication (-pw <em>pwd</em>)is also offered as an
+Password authentication (-pw <em>pwd</em>) is also offered as an
 alternative solution to pin codes: users need to know the password
 <em>pwd</em> and enter it on their iOS/macOS device to access UxPlay,
 when prompted (if <em>pwd</em> is not set, a displayed random pin code

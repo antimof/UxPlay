@@ -7,6 +7,7 @@ After=avahi-daemon
 Type=simple
 ExecStart=uxplay
 Restart=on-failure
+#StandardOutput=file:%h/uxplay.log
 
 [Install]
 WantedBy=default.target
