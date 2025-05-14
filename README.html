@@ -113,7 +113,8 @@ imposed by iOS.</p></li>
 best to use the option “uxplay -vsync no”.</p></li>
 <li><p>Add any UxPlay options you want to use as defaults to a startup
 file <code>~/.uxplayrc</code> (see “<code>man uxplay</code>” or
-“<code>uxplay -h</code>” for format and other possible locations). In
+“<code>uxplay -h</code>” for format and other possible locations; the
+location can also be set with “uxplay -rc <em>location</em>”). In
 particular, if your system uses PipeWire audio or Wayland video systems,
 you may wish to add “as pipewiresink” or “vs waylandsink” as defaults to
 the file. <em>(Output from terminal commands “ps waux | grep pulse” or
@@ -135,8 +136,10 @@ uxplay.service. Then</p>
 start at the user’s first login and stop when they no longer have any
 open sessions. See
 https://www.baeldung.com/linux/systemd-create-user-services for more
-about systemd user services. <strong>Note: it is NOT recommended to run
-UxPlay as a root service.</strong></p></li>
+about systemd user services. If more than one user might simultaneously
+run uxplay this way, they should specify distinct -p and -m options
+(ports and deviceID) in their startup files. <strong>Note: it is NOT
+recommended to run UxPlay as a root service.</strong></p></li>
 <li><p>On Raspberry Pi: models using hardware h264 video decoding by the
 Broadcom GPU (models 4B and earlier) may require the uxplay option
 -bt709. If you use Ubuntu 22.10 or earlier, GStreamer must be <a
@@ -422,8 +425,8 @@ the dns_sd library. OpenSSL is already installed as a System
 Library.</p></li>
 <li><p><strong>OpenBSD:</strong> (doas pkg_add) libplist
 gstreamer1-plugins-base. avahi-libs must also be installed to provide
-the dns_sd library. OpenSSL is already installed as a System
-Library.</p></li>
+the dns_sd library; (avahi-main must also be installed). OpenSSL is
+already installed as a System Library.</p></li>
 </ul>
 <h4 id="building-an-installable-rpm-package">Building an installable RPM
 package</h4>
@@ -513,8 +516,7 @@ gstreamer1-plugins, gstreamer1-plugins-* (* = core, good, bad, x, gtk,
 gl, vulkan, pulse, v4l2, …), (+ gstreamer1-vaapi for Intel/AMD
 graphics).</p></li>
 <li><p><strong>OpenBSD:</strong> Install gstreamer1-libav,
-gstreamer-plugins-* (* = core, bad, base, good). avahi-main must also be
-installed for the avahi_daemon rc startup script.</p></li>
+gstreamer-plugins-* (* = core, bad, base, good).</p></li>
 </ul>
 <h3 id="starting-and-running-uxplay">Starting and running UxPlay</h3>
 <p>Since UxPlay-1.64, UxPlay can be started with options read from a
@@ -1007,6 +1009,9 @@ or <code>~/.config/uxplayrc</code>); lines begining with
 “<code>#</code>” are treated as comments, and ignored. Command line
 options supersede options in the startup file.</li>
 </ul>
+<p><strong>-rc <em>file</em></strong> can also be used to specify the
+startup file location: this overrides <code>$UXPLAYRC</code>,
+<code>~/.uxplayrc</code>, etc.</p>
 <p><strong>-n server_name</strong> (Default: UxPlay);
 server_name@_hostname_ will be the name that appears offering AirPlay
 services to your iPad, iPhone etc, where <em>hostname</em> is the name

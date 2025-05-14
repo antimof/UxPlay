@@ -741,6 +741,7 @@ static void print_info (char *name) {
     printf("-d [n]    Enable debug logging; optional: n=1 to skip normal packet data\n");
     printf("-v        Displays version information\n");
     printf("-h        Displays this help\n");
+    printf("-rc fn    Read startup options from file \"fn\" instead of ~/.uxplayrc, etc\n");
     printf("Startup options in $UXPLAYRC, ~/.uxplayrc, or ~/.config/uxplayrc are\n");
     printf("applied first (command-line options may modify them): format is one \n");
     printf("option per line, no initial \"-\"; lines starting with \"#\" are ignored.\n");
@@ -882,7 +883,9 @@ static void parse_arguments (int argc, char *argv[]) {
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
-	if (arg == "-allow") {
+	if (arg == "-rc") {
+            i++;  //specifies startup file: has already been processed
+        } else if (arg == "-allow") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             i++;
 	    allowed_clients.push_back(argv[i]);
@@ -2310,7 +2313,29 @@ int main (int argc, char *argv[]) {
     if (!getenv("AVAHI_COMPAT_NOWARN")) putenv(avahi_compat_nowarn);
 #endif
 
-    config_file = find_uxplay_config_file();
+    char *rcfile = NULL;
+    /* see if option -rc was given */
+    for (int i = 1; i < argc ; i++) {
+        std::string arg(argv[i]);
+        if (arg == "-rc") {
+            struct stat sb;
+            if (i+1 == argc) {
+                LOGE ("option -rc requires a filename  (-rc <filename>)");
+                exit(1);
+            }
+            rcfile = argv[i+1];
+	    if (stat(rcfile, &sb) == -1) {
+                LOGE("startup file %s specified by option -rc was not found", rcfile);
+                exit(0);
+            }
+            break;
+        }
+    }
+    if (rcfile) {
+        config_file = rcfile;
+    } else {	
+        config_file = find_uxplay_config_file();
+    }
     if (config_file.length()) {
         read_config_file(config_file.c_str(), argv[0]);
     }

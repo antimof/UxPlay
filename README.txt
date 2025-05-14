@@ -108,11 +108,12 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
 
 -   Add any UxPlay options you want to use as defaults to a startup file
     `~/.uxplayrc` (see "`man uxplay`" or "`uxplay -h`" for format and
-    other possible locations). In particular, if your system uses
-    PipeWire audio or Wayland video systems, you may wish to add "as
-    pipewiresink" or "vs waylandsink" as defaults to the file. *(Output
-    from terminal commands "ps waux \| grep pulse" or "pactl info" will
-    contain "pipewire" if your Linux/BSD system uses it).*
+    other possible locations; the location can also be set with "uxplay
+    -rc *location*"). In particular, if your system uses PipeWire audio
+    or Wayland video systems, you may wish to add "as pipewiresink" or
+    "vs waylandsink" as defaults to the file. *(Output from terminal
+    commands "ps waux \| grep pulse" or "pactl info" will contain
+    "pipewire" if your Linux/BSD system uses it).*
 
 -   For Linux systems using systemd, there is a **systemd** service file
     **uxplay.service** found in the UxPlay top directory of the
@@ -131,8 +132,10 @@ status](https://repology.org/badge/vertical-allrepos/uxplay.svg)](https://repolo
     start at the user's first login and stop when they no longer have
     any open sessions. See
     https://www.baeldung.com/linux/systemd-create-user-services for more
-    about systemd user services. **Note: it is NOT recommended to run
-    UxPlay as a root service.**
+    about systemd user services. If more than one user might
+    simultaneously run uxplay this way, they should specify distinct -p
+    and -m options (ports and deviceID) in their startup files. **Note:
+    it is NOT recommended to run UxPlay as a root service.**
 
 -   On Raspberry Pi: models using hardware h264 video decoding by the
     Broadcom GPU (models 4B and earlier) may require the uxplay option
@@ -426,8 +429,9 @@ package](#building-an-installable-rpm-package).
     dns_sd library. OpenSSL is already installed as a System Library.
 
 -   **OpenBSD:** (doas pkg_add) libplist gstreamer1-plugins-base.
-    avahi-libs must also be installed to provide the dns_sd library.
-    OpenSSL is already installed as a System Library.
+    avahi-libs must also be installed to provide the dns_sd library;
+    (avahi-main must also be installed). OpenSSL is already installed as
+    a System Library.
 
 #### Building an installable RPM package
 
@@ -511,8 +515,7 @@ repositories for those distributions.
     pulse, v4l2, ...), (+ gstreamer1-vaapi for Intel/AMD graphics).
 
 -   **OpenBSD:** Install gstreamer1-libav, gstreamer-plugins-\* (\* =
-    core, bad, base, good). avahi-main must also be installed for the
-    avahi_daemon rc startup script.
+    core, bad, base, good).
 
 ### Starting and running UxPlay
 
@@ -1018,6 +1021,9 @@ Options:
     `~/.config/uxplayrc`); lines begining with "`#`" are treated as
     comments, and ignored. Command line options supersede options in the
     startup file.
+
+**-rc *file*** can also be used to specify the startup file location:
+this overrides `$UXPLAYRC`, `~/.uxplayrc`, etc.
 
 **-n server_name** (Default: UxPlay); server_name@\_hostname\_ will be
 the name that appears offering AirPlay services to your iPad, iPhone
