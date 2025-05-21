@@ -850,25 +850,20 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     the uxplayrc configuration file).
 
 -   On macOS with this installation of GStreamer, the only videosinks
-    available seem to be glimagesink (default choice made by
-    autovideosink) and osxvideosink. The window title does not show the
-    Airplay server name, but the window is visible to screen-sharing
-    apps (e.g., Zoom). The only available audiosink seems to be
-    osxaudiosink.
+    available are glimagesink (default choice made by autovideosink) and
+    osxvideosink. The window title does not show the Airplay server
+    name, but the window can be shared on Zoom. Because of issues with
+    glimagesink, you may find osxvideosink works better. The only
+    available audiosink is osxaudiosink.
 
--   The option -nc is always used, whether or not it is selected. This
-    is a workaround for a problem with GStreamer videosinks on macOS: if
-    the GStreamer pipeline is destroyed while the mirror window is still
-    open, a segfault occurs.
+-   The option -nc is currently used by default om macOS, This is a
+    workaround for window-closing problems with GStreamer videosinks on
+    macOS. In anticipation of fixes, this option can be canceled with
+    "-nc no", if not needed.
 
--   In the case of glimagesink, the resolution settings "-s wxh" do not
+-   In the case of glimagesink, the resolution settings "-s wxh" may not
     affect the (small) initial OpenGL mirror window size, but the window
-    can be expanded using the mouse or trackpad. In contrast, a window
-    created with "-vs osxvideosink" is initially big, but has the wrong
-    aspect ratio (stretched image); in this case the aspect ratio
-    changes when the window width is changed by dragging its side; the
-    option `-vs "osxvideosink force-aspect-ratio=true"` can be used to
-    make the window have the correct aspect ratio when it first opens.
+    can be expanded using the mouse or trackpad.
 
 ## Building UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64 compiler.
 

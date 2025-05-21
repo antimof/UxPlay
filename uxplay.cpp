@@ -103,7 +103,11 @@ static unsigned char compression_type = 0;
 static std::string audiosink = "autoaudiosink";
 static int  audiodelay = -1;
 static bool use_audio = true;
+#if __APPLE__
+static bool new_window_closing_behavior = false;
+#else
 static bool new_window_closing_behavior = true;
+#endif
 static bool close_window;
 static std::string video_parser = "h264parse";
 static std::string video_decoder = "decodebin";
@@ -714,7 +718,8 @@ static void print_info (char *name) {
     printf("-md <fn>  In Airplay Audio (ALAC) mode, write metadata text to file <fn>\n");
     printf("-reset n  Reset after n seconds of client silence (default n=%d, 0=never)\n", MISSED_FEEDBACK_LIMIT);
     printf("-nofreeze Do NOT leave frozen screen in place after reset\n");
-    printf("-nc       Do NOT Close video window when client stops mirroring\n");
+    printf("-nc       Do NOT  Close video window when client stops mirroring\n");
+    printf("-nc no    Cancel the -nc option (DO close video window) \n");
     printf("-nohold   Drop current connection when new client connects.\n");
     printf("-restrict Restrict clients to those specified by \"-allow <deviceID>\"\n");
     printf("          UxPlay displays deviceID when a client attempts to connect\n");
@@ -1063,6 +1068,13 @@ static void parse_arguments (int argc, char *argv[]) {
             exit(1);
         } else if (arg == "-nc") {
             new_window_closing_behavior = false;
+	    if (i <  argc - 1) {
+                if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
+                    new_window_closing_behavior = true;
+                    i++;
+                    continue;
+                }
+            }
         } else if (arg == "-avdec") {
             video_parser.erase();
             video_parser = "h264parse";
@@ -2376,9 +2388,10 @@ int main (int argc, char *argv[]) {
     }
 
 #if __APPLE__
-    /* force use of -nc option on macOS */
-    LOGI("macOS detected: using -nc option as workaround for GStreamer problem");
-    new_window_closing_behavior = false;
+    /* warn about default  use of -nc option on macOS */
+    if (!new_window_closing_behavior) {
+        LOGI("UxPlay on macOS is using -nc option as workaround for GStreamer problem: use \"-nc no\" to omit workaround");
+    }
 #endif
 
 #ifdef _WIN32
