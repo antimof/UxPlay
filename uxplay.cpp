@@ -1226,7 +1226,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 pairing_register.append(argv[++i]);
                 const char * fn = pairing_register.c_str();
                 if (!file_has_write_access(fn)) {
-                    fprintf(stderr, "%s cannot be written to:\noption \"-key <fn>\" must be to a file with write access\n", fn);
+                    fprintf(stderr, "%s cannot be written to:\noption \"-reg <fn>\" must be to a file with write access\n", fn);
                     exit(1);
                 }   
             }

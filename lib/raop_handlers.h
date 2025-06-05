@@ -690,16 +690,11 @@ raop_handler_setup(raop_conn_t *conn,
             conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
         }
 	if (admit_client && deviceID && name && conn->raop->callbacks.register_client) {
-            bool pending_registration = false;;
             char *client_device_id = NULL;
-            char *client_pk = NULL;   /* encoded as null-terminated  base64 string*/
-            access_client_session_data(conn->session, &client_device_id, &client_pk, &pending_registration);
-            if (pending_registration) {
-                if (client_pk && !strcmp(deviceID, client_device_id)) { 
-                    conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk, name); 
-		}
-	    }
-            if (client_pk) {
+            char *client_pk = NULL;   /* encoded as null-terminated  base64 string, must be freed*/
+            get_pairing_session_client_data(conn->session, &client_device_id, &client_pk);
+            if (client_pk && !strcmp(deviceID, client_device_id)) { 
+                conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk, name); 
                 free (client_pk);
             }
 	}
