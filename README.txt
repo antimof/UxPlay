@@ -761,10 +761,10 @@ running if the ssh session is closed. Terminal output is saved to FILE
 
 ## Building UxPlay on macOS: **(Intel X86_64 and "Apple Silicon" M1/M2 Macs)**
 
-*Note: A native AirPlay Server feature is included in macOS 12 Monterey,
-but is restricted to recent hardware. UxPlay can run on older macOS
-systems that will not be able to run Monterey, or can run Monterey but
-not AirPlay.*
+*Note: A native AirPlay Server feature is included in macOS since macOS
+12 Monterey, but is restricted to recent hardware. As well as running on
+latest macOS, UxPlay can run on older macOS systems that will cannot run
+Monterey, or can run Monterey but not AirPlay.*
 
 These instructions for macOS assume that the Xcode command-line
 developer tools are installed (if Xcode is installed, open the Terminal,
@@ -845,9 +845,9 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     default (since UxPlay 1.64) use of timestamps for video
     synchonization, many video frames are being dropped (only on macOS),
     perhaps due to another error (about videometa) that shows up in the
-    GStreamer warnings. **Recommendation: use the new UxPlay "no
-    timestamp" option "`-vsync no`"** (you can add a line "vsync no" in
-    the uxplayrc configuration file).
+    GStreamer warnings. **Recommendation: use the UxPlay "no timestamp"
+    option "`-vsync no`"** (you can add a line "vsync no" in the
+    uxplayrc configuration file).
 
 -   On macOS with this installation of GStreamer, the only videosinks
     available are glimagesink (default choice made by autovideosink) and
@@ -856,10 +856,9 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     glimagesink, you may find osxvideosink works better. The only
     available audiosink is osxaudiosink.
 
--   The option -nc is currently used by default om macOS, This is a
+-   The option -nc is currently used by default on macOS, This is a
     workaround for window-closing problems with GStreamer videosinks on
-    macOS. In anticipation of fixes, this option can be canceled with
-    "-nc no", if not needed.
+    macOS. This option can be canceled with "-nc no", if not needed.
 
 -   In the case of glimagesink, the resolution settings "-s wxh" may not
     affect the (small) initial OpenGL mirror window size, but the window
@@ -1751,6 +1750,12 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.
 
 # Changelog
+
+1.72.1 2025-06-06 minor update: fix regression in -reg option; add
+option -rc `<rcfile>`{=html} to specify initialization file; add "-nc
+no" to unset "-nc" option (for macOS users, where -nc is default); add
+user-installable systemd script for running UxPlay as an
+always-available "rootless daemon"
 
 1.72 2025-05-07. Improved HLS Live Streaming (YouTube) support,
 including "scrub". Add requested options -md \<filename\> to output

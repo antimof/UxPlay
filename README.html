@@ -754,10 +754,10 @@ FILE (which can be /dev/null to discard it)</p>
 id="building-uxplay-on-macos-intel-x86_64-and-apple-silicon-m1m2-macs">Building
 UxPlay on macOS: <strong>(Intel X86_64 and “Apple Silicon” M1/M2
 Macs)</strong></h2>
-<p><em>Note: A native AirPlay Server feature is included in macOS 12
-Monterey, but is restricted to recent hardware. UxPlay can run on older
-macOS systems that will not be able to run Monterey, or can run Monterey
-but not AirPlay.</em></p>
+<p><em>Note: A native AirPlay Server feature is included in macOS since
+macOS 12 Monterey, but is restricted to recent hardware. As well as
+running on latest macOS, UxPlay can run on older macOS systems that will
+cannot run Monterey, or can run Monterey but not AirPlay.</em></p>
 <p>These instructions for macOS assume that the Xcode command-line
 developer tools are installed (if Xcode is installed, open the Terminal,
 type “sudo xcode-select –install” and accept the conditions).</p>
@@ -837,7 +837,7 @@ with “export GST_DEBUG=2” before runnng UxPlay) reveals that with the
 default (since UxPlay 1.64) use of timestamps for video synchonization,
 many video frames are being dropped (only on macOS), perhaps due to
 another error (about videometa) that shows up in the GStreamer warnings.
-<strong>Recommendation: use the new UxPlay “no timestamp” option
+<strong>Recommendation: use the UxPlay “no timestamp” option
 “<code>-vsync no</code>”</strong> (you can add a line “vsync no” in the
 uxplayrc configuration file).</p></li>
 <li><p>On macOS with this installation of GStreamer, the only videosinks
@@ -846,10 +846,10 @@ osxvideosink. The window title does not show the Airplay server name,
 but the window can be shared on Zoom. Because of issues with
 glimagesink, you may find osxvideosink works better. The only available
 audiosink is osxaudiosink.</p></li>
-<li><p>The option -nc is currently used by default om macOS, This is a
+<li><p>The option -nc is currently used by default on macOS, This is a
 workaround for window-closing problems with GStreamer videosinks on
-macOS. In anticipation of fixes, this option can be canceled with “-nc
-no”, if not needed.</p></li>
+macOS. This option can be canceled with “-nc no”, if not
+needed.</p></li>
 <li><p>In the case of glimagesink, the resolution settings “-s wxh” may
 not affect the (small) initial OpenGL mirror window size, but the window
 can be expanded using the mouse or trackpad.</p></li>
@@ -1700,6 +1700,11 @@ an AppleTV6,2 with sourceVersion 380.20.1 (an AppleTV 4K 1st gen,
 introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.</p>
 <h1 id="changelog">Changelog</h1>
+<p>1.72.1 2025-06-06 minor update: fix regression in -reg option; add
+option -rc <rcfile> to specify initialization file; add “-nc no” to
+unset “-nc” option (for macOS users, where -nc is default); add
+user-installable systemd script for running UxPlay as an
+always-available “rootless daemon”</p>
 <p>1.72 2025-05-07. Improved HLS Live Streaming (YouTube) support,
 including “scrub”. Add requested options -md &lt;filename&gt; to output
 audio metadata text to a file for possible display (complements -ca
