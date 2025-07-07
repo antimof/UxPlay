@@ -164,8 +164,8 @@ dnssd_init(const char* name, int name_len, const char* hw_addr, int hw_addr_len,
     unsigned long features;
     /* pin_pw = 0: no pin or password
                 1: use onscreen pin for client access control
-                2: require password for client accress control. 
-     */
+                2 or 3: require password for client access control  
+    */
     
     if (error) *error = DNSSD_ERROR_NOERROR;
 
@@ -308,6 +308,7 @@ dnssd_register_raop(dnssd_t *dnssd, unsigned short port)
     dnssd->TXTRecordSetValue(&dnssd->raop_record, "rhd", strlen(RAOP_RHD), RAOP_RHD);
     switch (dnssd->pin_pw) {
     case 2:
+    case 3:
         dnssd->TXTRecordSetValue(&dnssd->raop_record, "pw", strlen("true"), "true");
 	dnssd->TXTRecordSetValue(&dnssd->raop_record, "sf", 4, "0x84");
 	break;
@@ -316,7 +317,7 @@ dnssd_register_raop(dnssd_t *dnssd, unsigned short port)
 	dnssd->TXTRecordSetValue(&dnssd->raop_record, "sf", 3, "0x8c");
 	break;
     default:
-        dnssd->TXTRecordSetValue(&dnssd->raop_record, "pw", strlen("true"), "false");
+        dnssd->TXTRecordSetValue(&dnssd->raop_record, "pw", strlen("false"), "false");
 	dnssd->TXTRecordSetValue(&dnssd->raop_record, "sf", strlen(RAOP_SF), RAOP_SF);
 	break;
     }
@@ -384,6 +385,7 @@ dnssd_register_airplay(dnssd_t *dnssd, unsigned short port)
 	dnssd->TXTRecordSetValue(&dnssd->airplay_record, "flags", 3, "0x4");
 	break;  
     case 2:  // require password
+    case 3:
         dnssd->TXTRecordSetValue(&dnssd->airplay_record, "pw", strlen("true"), "true");
         dnssd->TXTRecordSetValue(&dnssd->airplay_record, "flags", 3, "0x4");
         break;

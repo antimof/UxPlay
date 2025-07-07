@@ -588,7 +588,7 @@ raop_handler_setup(raop_conn_t *conn,
         if (!conn->authenticated && conn->raop->callbacks.passwd) {
             int len;
             const char *password = conn->raop->callbacks.passwd(conn->raop->callbacks.cls, &len);
-            // len = -1 means use a random password for this connection
+            // len = -1 means use a random password for this connection; len = 0 means no password
             if (len == -1 && conn->raop->random_pw && conn->raop->auth_fail_count >= 5) {
                 // change random_pw after 5 failed authentication attempts
                 logger_log(conn->raop->logger, LOGGER_INFO, "Too many authentication failures: generate new random password");

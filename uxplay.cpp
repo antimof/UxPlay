@@ -1543,8 +1543,9 @@ static int start_dnssd(std::vector<char> hw_addr, std::string name) {
         return 2;
     }
     /* pin_pw controls client access
-      pin_pw = 1: client must enter pin displayed onscreen (first access only)
+      pin_pw  = 1: client must enter pin displayed onscreen (first access only)
               = 2: client must enter password (same password for all clients)
+              = 3: client must enter randoe 4-digit password displayed like an  onscreen pin (every access)
               = 0:  no access control
     */
     dnssd = dnssd_init(name.c_str(), strlen(name.c_str()), hw_addr.data(), hw_addr.size(), &dnssd_error, pin_pw);
@@ -1705,12 +1706,15 @@ extern "C" void display_pin(void *cls, char *pin) {
 }
 
 extern "C" const char *passwd(void *cls, int *len){
-    if (pin_pw == 3) {
+    if (pin_pw == 2) {
+        *len = password.size();
+        return password.c_str();
+    } else if  (pin_pw == 3) {
         *len = -1;
-        return NULL;
+    } else {
+        *len = 0;   /* no password used */
     }
-    *len = password.size();
-    return password.c_str();
+    return NULL;
 }
 
 extern "C" void export_dacp(void *cls, const char *active_remote, const char *dacp_id) {
