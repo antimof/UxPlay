@@ -1751,6 +1751,9 @@ what version UxPlay claims to be.
 
 # Changelog
 
+1.72.2 2025-07-07 Fix bug (typo) in DNS_SD advertisement introduced with
+-pw option. Update llhttp to v 9.3.0
+
 1.72.1 2025-06-06 minor update: fix regression in -reg option; add
 option -rc `<rcfile>`{=html} to specify initialization file; add "-nc
 no" to unset "-nc" option (for macOS users, where -nc is default); add
