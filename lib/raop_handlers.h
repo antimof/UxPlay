@@ -26,6 +26,7 @@
 #define AUDIO_SAMPLE_RATE 44100   /* all supported AirPlay audio format use this sample rate */
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000
+#define MAX_PW_ATTEMPTS 5
 
 typedef void (*raop_handler_t)(raop_conn_t *, http_request_t *,
                                http_response_t *, char **, int *);
@@ -584,14 +585,23 @@ raop_handler_setup(raop_conn_t *conn,
 
         // First setup
 
+        char *deviceID = NULL;
+        plist_t req_deviceid_node = plist_dict_get_item(req_root_node, "deviceID");
+        plist_get_string_val(req_deviceid_node, &deviceID);  
+
+
         /* RFC2617 Digest authentication (md5 hash) of uxplay client-access password, if set */
         if (!conn->authenticated && conn->raop->callbacks.passwd) {
+            size_t pin_len = 4;
+            if (conn->raop->random_pw && strncmp(conn->raop->random_pw + pin_len + 1,  deviceID, 17)) {
+                conn->raop->auth_fail_count = MAX_PW_ATTEMPTS;
+            }
             int len;
             const char *password = conn->raop->callbacks.passwd(conn->raop->callbacks.cls, &len);
             // len = -1 means use a random password for this connection; len = 0 means no password
-            if (len == -1 && conn->raop->random_pw && conn->raop->auth_fail_count >= 5) {
-                // change random_pw after 5 failed authentication attempts
-                logger_log(conn->raop->logger, LOGGER_INFO, "Too many authentication failures: generate new random password");
+            if (len == -1 && conn->raop->random_pw && conn->raop->auth_fail_count >= MAX_PW_ATTEMPTS) {
+                // change random_pw after MAX_PW_ATTEMPTS  failed authentication attempts
+                logger_log(conn->raop->logger, LOGGER_INFO, "Too many authentication failures or new client: generate new random password");
                 free(conn->raop->random_pw);
                 conn->raop->random_pw = NULL;
             }
@@ -602,11 +612,11 @@ raop_handler_setup(raop_conn_t *conn,
                     logger_log(conn->raop->logger, LOGGER_ERR, "Failed to generate random pin");
                     pin_4 = 1234;
                 }
-		size_t len = 4;
-		conn->raop->random_pw =  (char *) malloc(len + 1);
+		conn->raop->random_pw =  (char *) malloc(pin_len + 1 + 18);
                 char *pin = conn->raop->random_pw;
-                snprintf(pin, len + 1, "%04u", pin_4 % 10000);
-                pin[len] = '\0';
+                snprintf(pin, pin_len + 1, "%04u", pin_4 % 10000);
+                pin[pin_len] = '\0';
+                snprintf(pin + pin_len + 1, 18, "%s", deviceID);
                 conn->raop->auth_fail_count = 0;
                 if (conn->raop->callbacks.display_pin) {
                     conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
@@ -635,7 +645,7 @@ raop_handler_setup(raop_conn_t *conn,
                         logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", conn->raop->random_pw);
                     }
                     if (conn->authenticated) {
-                        printf("initial authenticatication OK\n");
+                        //printf("initial authenticatication OK\n");
                         conn->authenticated = conn->authenticated && !strcmp(nonce_string, conn->raop->nonce);
                         if (!conn->authenticated) {
                             logger_log(conn->raop->logger, LOGGER_INFO, "authentication rejected (nonce mismatch) %s %s",
@@ -675,13 +685,9 @@ raop_handler_setup(raop_conn_t *conn,
 	
         char* eiv = NULL;
         uint64_t eiv_len = 0;
-
-        char *deviceID = NULL;
-        char *model = NULL;
+	char *model = NULL;
         char *name = NULL;
         bool admit_client = true;
-        plist_t req_deviceid_node = plist_dict_get_item(req_root_node, "deviceID");
-        plist_get_string_val(req_deviceid_node, &deviceID);  
         plist_t req_model_node = plist_dict_get_item(req_root_node, "model");
         plist_get_string_val(req_model_node, &model);  
         plist_t req_name_node = plist_dict_get_item(req_root_node, "name");
