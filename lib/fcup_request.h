@@ -94,7 +94,7 @@ int fcup_request(void *conn_opaque, const char *media_url, const char *client_se
     if (send_len < 0) {
         int sock_err = SOCKET_GET_ERROR();
 	logger_log(conn->raop->logger, LOGGER_ERR, "fcup_request: send  error %d:%s\n",
-		 sock_err, strerror(sock_err));
+		 sock_err, SOCKET_ERROR_STRING(sock_err));
 	http_response_destroy(request);
         /* shut down connection? */
         return -1;

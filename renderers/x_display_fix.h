@@ -43,8 +43,8 @@ struct X11_Window_s {
     Window window;
 } typedef X11_Window_t;
 
-static void get_X11_Display(X11_Window_t * X11) {
-    X11->display = XOpenDisplay(NULL);
+static void get_X11_Display(X11_Window_t * X11, char *display_name) {
+    X11->display = XOpenDisplay(display_name);
     X11->window = (Window) NULL;
 }
 

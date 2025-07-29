@@ -279,10 +279,10 @@ http_handler_playback_info(raop_conn_t *conn, http_request_t *request, http_resp
     playback_info_t playback_info;
 
     playback_info.stallcount = 0;
-    playback_info.ready_to_play = true; // ???;
-    playback_info.playback_buffer_empty = false;   // maybe  need to get this from playbin 
-    playback_info.playback_buffer_full = true;
-    playback_info.playback_likely_to_keep_up = true;
+    //playback_info.playback_buffer_empty = false;   // maybe  need to get this from playbin 
+    //playback_info.playback_buffer_full = true;
+    //ayback_info.ready_to_play = true; // ???;
+    //ayback_info.playback_likely_to_keep_up = true;
 
     conn->raop->callbacks.on_video_acquire_playback_info(conn->raop->callbacks.cls, &playback_info);
     if (playback_info.duration == -1.0) {
@@ -353,262 +353,6 @@ http_handler_reverse(raop_conn_t *conn, http_request_t *request, http_response_t
     }    
 }
 
-/* this copies a Media Playlist into a null-terminated string. If it has the "#YT-EXT-CONDENSED-URI"
-   header, it is also expanded into the full Media Playlist format */
-
-char *adjust_yt_condensed_playlist(const char *media_playlist) {
-   /* expands a YT-EXT_CONDENSED-URL  media playlist into a full media playlist 
-    * returns a pointer to the expanded playlist, WHICH MUST BE FREED AFTER USE */
-
-    const char *base_uri_begin;
-    const char *params_begin;
-    const char *prefix_begin;
-    size_t base_uri_len;
-    size_t params_len;
-    size_t prefix_len;
-    const char* ptr = strstr(media_playlist, "#EXTM3U\n");
-
-    ptr += strlen("#EXTM3U\n");
-    assert(ptr);
-    if (strncmp(ptr, "#YT-EXT-CONDENSED-URL", strlen("#YT-EXT-CONDENSED-URL"))) {
-        size_t len = strlen(media_playlist);
-        char * playlist_copy = (char *) malloc(len + 1);
-        memcpy(playlist_copy, media_playlist, len);
-        playlist_copy[len] = '\0';
-        return playlist_copy;
-    }
-    ptr = strstr(ptr, "BASE-URI=");
-    base_uri_begin = strchr(ptr, '"');
-    base_uri_begin++;
-    ptr = strchr(base_uri_begin, '"');
-    base_uri_len = ptr - base_uri_begin;
-    char *base_uri = (char *) calloc(base_uri_len + 1, sizeof(char));
-    assert(base_uri);
-    memcpy(base_uri, base_uri_begin, base_uri_len);  //must free
-
-    ptr = strstr(ptr, "PARAMS=");
-    params_begin = strchr(ptr, '"');
-    params_begin++;
-    ptr = strchr(params_begin,'"');
-    params_len = ptr - params_begin;
-    char *params = (char *) calloc(params_len + 1, sizeof(char));
-    assert(params);
-    memcpy(params, params_begin, params_len);  //must free
-
-    ptr = strstr(ptr, "PREFIX=");
-    prefix_begin = strchr(ptr, '"');
-    prefix_begin++;
-    ptr = strchr(prefix_begin,'"');
-    prefix_len = ptr - prefix_begin;
-    char *prefix = (char *) calloc(prefix_len + 1, sizeof(char));
-    assert(prefix);
-    memcpy(prefix, prefix_begin, prefix_len);  //must free
-
-    /* expand params */
-    int nparams = 0;
-    int *params_size = NULL;
-    const char **params_start = NULL;
-    if (strlen(params)) {
-        nparams = 1;
-        char * comma = strchr(params, ',');
-        while (comma) {
-            nparams++;
-            comma++;
-            comma = strchr(comma, ',');
-        }
-        params_start = (const char **) calloc(nparams, sizeof(char *));  //must free
-        params_size = (int *)  calloc(nparams, sizeof(int));     //must free
-        ptr = params;
-        for (int i = 0; i < nparams; i++) {
-            comma = strchr(ptr, ',');
-            params_start[i] = ptr;
-            if (comma) {
-                params_size[i] = (int) (comma - ptr);
-                ptr = comma;
-                ptr++;
-            } else {
-                params_size[i] = (int) (params + params_len - ptr);
-                break;
-            }
-        }
-    }
-
-    int count = 0;
-    ptr = strstr(media_playlist, "#EXTINF");
-    while (ptr) {
-        count++;
-        ptr = strstr(++ptr, "#EXTINF");
-    }
-
-    size_t old_size = strlen(media_playlist);
-    size_t new_size = old_size;
-    new_size += count * (base_uri_len + params_len);
- 
-    char * new_playlist = (char *) calloc( new_size + 100, sizeof(char));
-    const char *old_pos = media_playlist;
-    char *new_pos = new_playlist;
-    ptr = old_pos;
-    ptr = strstr(old_pos, "#EXTINF:");
-    size_t len = ptr - old_pos;
-    /* copy header section before chunks */
-    memcpy(new_pos, old_pos, len);
-    old_pos += len;
-    new_pos += len;
-    while (ptr) {
-        /* for each chunk */
-        const char *end = NULL;
-        char *start = strstr(ptr, prefix);
-        len = start - ptr;
-        /* copy first line of chunk entry */
-        memcpy(new_pos, old_pos, len);
-        old_pos += len;
-        new_pos += len;
-	
-	/* copy base uri  to replace prefix*/
-        memcpy(new_pos, base_uri, base_uri_len);
-        new_pos += base_uri_len;
-        old_pos += prefix_len;
-        ptr = strstr(old_pos, "#EXTINF:");
-
-        /* insert the PARAMS separators on the slices line  */
-	end = old_pos;
-        int last = nparams - 1;
-        for (int i = 0; i < nparams; i++) {
-	    if (i != last) {
-	      end = strchr(end, '/');
-	    } else {
-	      end = strstr(end, "#EXT");   /* the next line starts with either #EXTINF (usually) or #EXT-X-ENDLIST (at last chunk)*/
-	    }
-            *new_pos = '/';
-            new_pos++;
-            memcpy(new_pos, params_start[i], params_size[i]);
-            new_pos += params_size[i];
-            *new_pos = '/';
-            new_pos++;
-
-            len = end - old_pos;
-            end++;
-
-            memcpy (new_pos, old_pos, len);
-            new_pos += len;
-            old_pos += len;
-            if (i != last) {
-                old_pos++; /* last entry is not followed by "/" separator */
-            }
-        }
-    }
-    /* copy tail */
-     
-    len = media_playlist + strlen(media_playlist) - old_pos;
-    memcpy(new_pos, old_pos, len);
-    new_pos += len;
-    old_pos += len;
-
-    new_playlist[new_size] = '\0';
-
-    free (prefix);
-    free (base_uri);
-    free (params);
-    if (params_size) {
-        free (params_size);
-    }
-    if (params_start) {
-        free (params_start);
-    }  
-
-    return new_playlist;
-}
-
-/* this adjusts the uri prefixes in the Master Playlist, for sending to the Media Player running on the Server Host */
-
-char *adjust_master_playlist (char *fcup_response_data, int fcup_response_datalen, char *uri_prefix, char *uri_local_prefix) {
-
-    size_t uri_prefix_len = strlen(uri_prefix);
-    size_t uri_local_prefix_len = strlen(uri_local_prefix);
-    int counter = 0;
-    char *ptr = strstr(fcup_response_data, uri_prefix);
-    while (ptr != NULL) {
-        counter++;
-        ptr++;
-	ptr = strstr(ptr, uri_prefix);
-    }
-
-    size_t len = uri_local_prefix_len - uri_prefix_len;
-    len *= counter;
-    len += fcup_response_datalen;    
-    char *new_master = (char *) malloc(len + 1);
-    *(new_master + len) = '\0';
-    char *first = fcup_response_data;
-    char *new = new_master;
-    char *last = strstr(first, uri_prefix);
-    counter  = 0;
-    while (last != NULL) {
-        counter++;
-        len = last - first;
-        memcpy(new, first, len);
-	first = last + uri_prefix_len;
-        new += len;
-        memcpy(new, uri_local_prefix, uri_local_prefix_len);
-        new += uri_local_prefix_len;
-        last = strstr(last + uri_prefix_len, uri_prefix);
-	if (last  == NULL) {
-            len = fcup_response_data  + fcup_response_datalen  - first;
-            memcpy(new, first, len);
-            break;
-	}
-    }
-    return new_master;
-}
-
-/* this parses the Master Playlist to make a table of the Media Playlist uri's that it lists */
-
-int create_media_uri_table(const char *url_prefix, const char *master_playlist_data, int datalen,
-			    char ***media_uri_table, int *num_uri) {
-    char *ptr = strstr(master_playlist_data, url_prefix);
-    char ** table = NULL;
-    if (ptr == NULL) {
-        return -1;
-    }
-    int count = 0;
-    while (ptr != NULL) {
-        char *end = strstr(ptr, "m3u8");
-        if (end == NULL) {
-            return 1;
-        }
-        end += sizeof("m3u8");
-        count++;
-        ptr = strstr(end, url_prefix);
-    }
-    table  = (char **)  calloc(count, sizeof(char *));
-    if (!table) {
-      return -1;
-    }
-    for (int i = 0; i < count; i++) {
-        table[i] = NULL;
-    }
-    ptr = strstr(master_playlist_data, url_prefix);
-    count = 0;
-    while (ptr != NULL) {
-        char *end = strstr(ptr, "m3u8");
-	char *uri;
-        if (end == NULL) {
-            return 0;
-        }
-        end += sizeof("m3u8");
-        size_t len = end - ptr - 1;
-	uri  = (char *) calloc(len + 1, sizeof(char));
-	memcpy(uri , ptr, len);
-        table[count] = uri;
-        uri =  NULL;	
-	count ++;
-	ptr = strstr(end, url_prefix);
-    }
-    *num_uri = count;
-
-    *media_uri_table = table;
-    return 0;
-}
-
 /* the POST /action request from Client to Server on the AirPlay http channel follows a POST /event "FCUP Request"
  from Server to Client on the reverse http channel, for a HLS playlist (first the Master Playlist, then the Media Playlists
  listed in the Master Playlist.     The POST /action request contains the playlist requested by the Server in
@@ -664,31 +408,65 @@ http_handler_action(raop_conn_t *conn, http_request_t *request, http_response_t 
       goto post_action_error;
     }
 
+    plist_t req_params_node = NULL;
+    
     /* three possible types are known */
     char *type = NULL;
-    int action_type = 0;
     plist_get_string_val(req_type_node, &type);
     logger_log(conn->raop->logger, LOGGER_DEBUG, "action type is %s", type);
     if (strstr(type, "unhandledURLResponse")) {
-      action_type =  1;
-    } else if (strstr(type, "playlistInsert")) {
-      action_type = 2;
+        goto unhandledURLResponse;      
     } else if (strstr(type, "playlistRemove")) {
-      action_type = 3;
-    } 
-    free (type);
-
-    plist_t req_params_node = NULL;
-    switch (action_type) {
-    case 1:
-        goto unhandledURLResponse;
-    case 2:
-        logger_log(conn->raop->logger, LOGGER_INFO, "unhandled action type playlistInsert (add new playback)");
-        goto finish;
-    case 3:
         logger_log(conn->raop->logger, LOGGER_INFO, "unhandled action type playlistRemove (stop playback)");
+        req_params_node = plist_dict_get_item(req_root_node, "params");    
+        if (!req_params_node || !PLIST_IS_DICT (req_params_node)) {
+            goto post_action_error;
+        }
+        plist_t req_params_item_node = plist_dict_get_item(req_params_node, "item");
+        if (!req_params_item_node) {
+            goto post_action_error;
+        } else {
+            if (!PLIST_IS_DICT (req_params_item_node)) {
+                goto post_action_error;
+            }
+            plist_t req_params_item_uuid_node = plist_dict_get_item(req_params_item_node, "uuid");
+            char* remove_uuid = NULL;
+	    plist_get_string_val(req_params_item_uuid_node, &remove_uuid);
+            const char *playback_uuid = get_playback_uuid(conn->raop->airplay_video);
+	    if (strcmp(remove_uuid, playback_uuid)) {
+                logger_log(conn->raop->logger, LOGGER_ERR, "uuid of playlist removal action request did not match current playlist:\n"
+                           "   current: %s\n   remove: %s", playback_uuid, remove_uuid);
+            } else {
+                logger_log(conn->raop->logger, LOGGER_DEBUG, "removal_uuid matches playback_uuid\n");
+	    }	  
+	    free (remove_uuid);
+        }
+        logger_log(conn->raop->logger, LOGGER_ERR, "FIXME: playlist removal not yet implemented");
         goto finish;
-    default:
+    } else if (strstr(type, "playlistInsert")) {
+        logger_log(conn->raop->logger, LOGGER_INFO, "unhandled action type playlistInsert (add new playback)");
+        printf("\n***************FIXME************************\nPlaylist insertion needs more information for it to be implemented:\n"
+               "please report following output as an \"Issue\" at http://github.com/FDH2/UxPlay:\n");
+        char *header_str = NULL;
+        http_request_get_header_string(request, &header_str);
+        printf("\n\n%s\n", header_str);
+        bool is_plist = (bool) strstr(header_str,"apple-binary-plist");
+        free(header_str);
+        if (is_plist) {
+            int request_datalen;
+            const char *request_data = http_request_get_data(request, &request_datalen);
+            plist_t req_root_node = NULL;
+            plist_from_bin(request_data, request_datalen, &req_root_node);
+            char * plist_xml;
+            uint32_t plist_len;
+            plist_to_xml(req_root_node, &plist_xml, &plist_len);
+            plist_xml = utils_strip_data_from_plist_xml(plist_xml);
+            printf("%s", plist_xml);	
+            free(plist_xml);
+            plist_free(req_root_node);
+        }
+        assert(0);
+    } else {
         logger_log(conn->raop->logger, LOGGER_INFO, "unknown action type (unhandled)"); 
         goto finish;
     }
@@ -705,45 +483,45 @@ http_handler_action(raop_conn_t *conn, http_request_t *request, http_response_t 
     int fcup_response_datalen = 0;
 
     if  (logger_debug) {
-        plist_t plist_fcup_response_statuscode_node = plist_dict_get_item(req_params_node,
+        plist_t req_params_fcup_response_statuscode_node = plist_dict_get_item(req_params_node,
                                                                       "FCUP_Response_StatusCode");
-        if (plist_fcup_response_statuscode_node) {
-            plist_get_uint_val(plist_fcup_response_statuscode_node, &uint_val);
+        if (req_params_fcup_response_statuscode_node) {
+            plist_get_uint_val(req_params_fcup_response_statuscode_node, &uint_val);
             fcup_response_statuscode = (int) uint_val;
             uint_val = 0;
             logger_log(conn->raop->logger, LOGGER_DEBUG, "FCUP_Response_StatusCode = %d",
                        fcup_response_statuscode);
         }
 
-        plist_t plist_fcup_response_requestid_node = plist_dict_get_item(req_params_node,
+        plist_t req_params_fcup_response_requestid_node = plist_dict_get_item(req_params_node,
                                                                      "FCUP_Response_RequestID");
-        if (plist_fcup_response_requestid_node) {
-            plist_get_uint_val(plist_fcup_response_requestid_node, &uint_val);
+        if (req_params_fcup_response_requestid_node) {
+            plist_get_uint_val(req_params_fcup_response_requestid_node, &uint_val);
             request_id = (int) uint_val;
             uint_val = 0;
             logger_log(conn->raop->logger, LOGGER_DEBUG, "FCUP_Response_RequestID =  %d", request_id);
         }
     }
 
-    plist_t plist_fcup_response_url_node = plist_dict_get_item(req_params_node, "FCUP_Response_URL");
-    if (!PLIST_IS_STRING(plist_fcup_response_url_node)) {
+    plist_t req_params_fcup_response_url_node = plist_dict_get_item(req_params_node, "FCUP_Response_URL");
+    if (!PLIST_IS_STRING(req_params_fcup_response_url_node)) {
         goto post_action_error;
     }
     char *fcup_response_url = NULL;
-    plist_get_string_val(plist_fcup_response_url_node, &fcup_response_url);
+    plist_get_string_val(req_params_fcup_response_url_node, &fcup_response_url);
     if (!fcup_response_url) {
         goto post_action_error;
     }
     logger_log(conn->raop->logger, LOGGER_DEBUG, "FCUP_Response_URL =  %s", fcup_response_url);
 	
-    plist_t plist_fcup_response_data_node = plist_dict_get_item(req_params_node, "FCUP_Response_Data");
-    if (!PLIST_IS_DATA(plist_fcup_response_data_node)){
+    plist_t req_params_fcup_response_data_node = plist_dict_get_item(req_params_node, "FCUP_Response_Data");
+    if (!PLIST_IS_DATA(req_params_fcup_response_data_node)){
         goto post_action_error;
     }
 
     uint_val = 0;
     char *fcup_response_data = NULL;    
-    plist_get_data_val(plist_fcup_response_data_node, &fcup_response_data, &uint_val);
+    plist_get_data_val(req_params_fcup_response_data_node, &fcup_response_data, &uint_val);
     fcup_response_datalen = (int) uint_val;
 
     if (!fcup_response_data) {
@@ -782,7 +560,7 @@ http_handler_action(raop_conn_t *conn, http_request_t *request, http_response_t 
 	memcpy(playlist, fcup_response_data, fcup_response_datalen);
         int uri_num = get_next_media_uri_id(conn->raop->airplay_video);
 	--uri_num;    // (next num is current num + 1)
-	store_media_data_playlist_by_num(conn->raop->airplay_video, playlist, uri_num);
+	store_media_playlist(conn->raop->airplay_video, playlist, uri_num);
         float duration = 0.0f;
         int count = analyze_media_playlist(playlist, &duration);
         if (count) {
@@ -836,12 +614,14 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
                       char **response_data, int *response_datalen) {
 
     char* playback_location = NULL;
+    char* client_proc_name = NULL;
     plist_t req_root_node = NULL;
     float start_position_seconds = 0.0f;
     bool data_is_binary_plist = false;
     bool data_is_text = false;
     bool data_is_octet = false;
- 
+    char supported_hls_proc_names[] = "YouTube;";
+
     logger_log(conn->raop->logger, LOGGER_DEBUG, "http_handler_play");
 
     const char* session_id = http_request_get_header(request, "X-Apple-Session-ID");
@@ -902,6 +682,17 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
             plist_get_string_val(req_content_location_node, &playback_location);
         }
 
+        plist_t req_client_proc_name_node = plist_dict_get_item(req_root_node, "clientProcName");
+        if (!req_client_proc_name_node) {
+            goto play_error;
+        } else {
+            plist_get_string_val(req_client_proc_name_node, &client_proc_name);
+            if (!strstr(supported_hls_proc_names, client_proc_name)){
+                logger_log(conn->raop->logger, LOGGER_WARNING, "Unsupported HLS streaming format: clientProcName %s not found in supported list: %s",
+                           client_proc_name, supported_hls_proc_names);
+            }
+        }
+	
         plist_t req_start_position_seconds_node = plist_dict_get_item(req_root_node, "Start-Position-Seconds");
         if (!req_start_position_seconds_node) {
             logger_log(conn->raop->logger, LOGGER_INFO, "No Start-Position-Seconds in Play request");	    
@@ -914,6 +705,10 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
     }
 
     char *ptr = strstr(playback_location, "/master.m3u8");
+    if (!ptr) {
+        logger_log(conn->raop->logger, LOGGER_ERR, "Content-Location has unsupported form:\n%s\n", playback_location);	    
+	goto play_error;
+    }
     int prefix_len =  (int) (ptr - playback_location);
     set_uri_prefix(conn->raop->airplay_video, playback_location, prefix_len);
     set_next_media_uri_id(conn->raop->airplay_video, 0);
@@ -932,8 +727,10 @@ http_handler_play(raop_conn_t *conn, http_request_t *request, http_response_t *r
     if (req_root_node) {
         plist_free(req_root_node);
     }
-    logger_log(conn->raop->logger, LOGGER_ERR, "Could not find valid Plist Data for /play, Unhandled");
+    logger_log(conn->raop->logger, LOGGER_ERR, "Could not find valid Plist Data for POST/play request, Unhandled");
     http_response_init(response, "HTTP/1.1", 400, "Bad Request");
+    http_response_set_disconnect(response, 1);
+    conn->raop->callbacks.conn_reset(conn->raop->callbacks.cls, 2);
 }
 
 /* the HLS handler handles http requests GET /[uri] on the HLS channel from the media player to the Server, asking for
@@ -952,26 +749,32 @@ http_handler_hls(raop_conn_t *conn,  http_request_t *request, http_response_t *r
     const char *url = http_request_get_url(request);    
     const char* upgrade = http_request_get_header(request, "Upgrade");
     if (upgrade) {
-      //don't accept Upgrade: h2c request ?
-      return;
+        //don't accept Upgrade: h2c request ?
+        char *header_str = NULL;
+        http_request_get_header_string(request, &header_str);
+        logger_log(conn->raop->logger, LOGGER_INFO,
+                   "%s\nhls upgrade request declined", header_str); 
+        free (header_str);
+        return;
     }
 
     if (!strcmp(url, "/master.m3u8")){
         char * master_playlist  = get_master_playlist(conn->raop->airplay_video);
-        size_t len = strlen(master_playlist);
-        char * data = (char *) malloc(len + 1);
-        memcpy(data, master_playlist, len);
-        data[len] = '\0';
-        *response_data = data;
-        *response_datalen = (int ) len;
+	if (master_playlist) {
+            size_t len = strlen(master_playlist);
+            char * data = (char *) malloc(len + 1);
+            memcpy(data, master_playlist, len);
+            data[len] = '\0';
+            *response_data = data;
+            *response_datalen = (int ) len;
+        } else {
+            logger_log(conn->raop->logger, LOGGER_ERR,"requested master playlist %s not found", url); 
+            *response_datalen = 0;
+        }
+
     } else {
-        int num  =  get_media_playlist_by_uri(conn->raop->airplay_video, url);
-	if (num < 0) {
-            logger_log(conn->raop->logger, LOGGER_ERR,"Requested playlist %s not found", url);
-            assert(0);
-	} else {
-            char *media_playlist = get_media_playlist_by_num(conn->raop->airplay_video, num);
-	    assert(media_playlist);
+        char *media_playlist = get_media_playlist(conn->raop->airplay_video, url);
+        if (media_playlist) {
             char *data  = adjust_yt_condensed_playlist(media_playlist);
             *response_data = data;
             *response_datalen = strlen(data);
@@ -979,8 +782,11 @@ http_handler_hls(raop_conn_t *conn,  http_request_t *request, http_response_t *r
             int chunks = analyze_media_playlist(data, &duration);
             logger_log(conn->raop->logger, LOGGER_INFO,
                        "Requested media_playlist %s has %5d chunks, total duration %9.3f secs", url, chunks, duration); 
+        } else {
+            logger_log(conn->raop->logger, LOGGER_ERR,"requested media playlist %s not found", url); 
+            *response_datalen = 0;
         }
-    } 
+    }
 
     http_response_add_header(response, "Access-Control-Allow-Headers", "Content-type");
     http_response_add_header(response, "Access-Control-Allow-Origin", "*");

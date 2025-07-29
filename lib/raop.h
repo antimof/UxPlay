@@ -67,17 +67,22 @@ struct raop_callbacks_s {
     void  (*video_process)(void *cls, raop_ntp_t *ntp, video_decode_struct *data);
     void  (*video_pause)(void *cls);
     void  (*video_resume)(void *cls);
-
-    /* Optional but recommended callback functions */
+    void  (*conn_feedback) (void *cls);
+    void  (*conn_reset) (void *cls, int reason);
+    void  (*video_reset) (void *cls);
+  
+  
+    /* Optional but recommended callback functions (probably not optional, check this)*/
     void  (*conn_init)(void *cls);
     void  (*conn_destroy)(void *cls);
-    void  (*conn_reset) (void *cls, int timeouts, bool reset_video);
     void  (*conn_teardown)(void *cls, bool *teardown_96, bool *teardown_110 );
     void  (*audio_flush)(void *cls);
     void  (*video_flush)(void *cls);
+    double (*audio_set_client_volume)(void *cls);
     void  (*audio_set_volume)(void *cls, float volume);
     void  (*audio_set_metadata)(void *cls, const void *buffer, int buflen);
     void  (*audio_set_coverart)(void *cls, const void *buffer, int buflen);
+    void  (*audio_stop_coverart_rendering) (void* cls);
     void  (*audio_remote_control_id)(void *cls, const char *dacp_id, const char *active_remote_header);
     void  (*audio_set_progress)(void *cls, unsigned int start, unsigned int curr, unsigned int end);
     void  (*audio_get_format)(void *cls, unsigned char *ct, unsigned short *spf, bool *usingScreen, bool *isMedia, uint64_t *audioFormat);
@@ -86,17 +91,17 @@ struct raop_callbacks_s {
     void  (*display_pin) (void *cls, char * pin);
     void  (*register_client) (void *cls, const char *device_id, const char *pk_str, const char *name);
     bool  (*check_register) (void *cls, const char *pk_str);
+    const char*  (*passwd) (void *cls, int *len);
     void  (*export_dacp) (void *cls, const char *active_remote, const char *dacp_id);
-    void  (*video_reset) (void *cls);
-    void  (*video_set_codec)(void *cls, video_codec_t codec);
+    int   (*video_set_codec)(void *cls, video_codec_t codec);
     /* for HLS video player controls */
     void  (*on_video_play) (void *cls, const char *location, const float start_position);
     void  (*on_video_scrub) (void *cls, const float position);
     void  (*on_video_rate) (void *cls, const float rate);
     void  (*on_video_stop) (void *cls);
     void  (*on_video_acquire_playback_info) (void *cls, playback_info_t *playback_video);
-  
 };
+
 typedef struct raop_callbacks_s raop_callbacks_t;
 raop_ntp_t *raop_ntp_init(logger_t *logger, raop_callbacks_t *callbacks, const char *remote,
                           int remote_addr_len, unsigned short timing_rport,
@@ -107,7 +112,8 @@ int airplay_video_service_init(raop_t *raop, unsigned short port, const char *se
 bool register_airplay_video(raop_t *raop, airplay_video_t *airplay_video);
 airplay_video_t *get_airplay_video(raop_t *raop);
 airplay_video_t *deregister_airplay_video(raop_t *raop);
-  
+uint64_t get_local_time();
+
 RAOP_API raop_t *raop_init(raop_callbacks_t *callbacks);
 RAOP_API int raop_init2(raop_t *raop, int nohold, const char *device_id, const char *keyfile);
 RAOP_API void raop_set_log_level(raop_t *raop, int level);
@@ -118,9 +124,9 @@ RAOP_API void raop_set_udp_ports(raop_t *raop, unsigned short port[3]);
 RAOP_API void raop_set_tcp_ports(raop_t *raop, unsigned short port[2]);
 RAOP_API unsigned short raop_get_port(raop_t *raop);
 RAOP_API void *raop_get_callback_cls(raop_t *raop);
-RAOP_API int raop_start(raop_t *raop, unsigned short *port);
+RAOP_API int raop_start_httpd(raop_t *raop, unsigned short *port);
 RAOP_API int raop_is_running(raop_t *raop);
-RAOP_API void raop_stop(raop_t *raop);
+RAOP_API void raop_stop_httpd(raop_t *raop);
 RAOP_API void raop_set_dnssd(raop_t *raop, dnssd_t *dnssd);
 RAOP_API void raop_destroy(raop_t *raop);
 RAOP_API void raop_remove_known_connections(raop_t * raop);

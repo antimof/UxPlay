@@ -205,13 +205,25 @@ httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
         http_request_destroy(connection->request);
         connection->request = NULL;
     }
-    httpd->callbacks.conn_destroy(connection->user_data);
-    shutdown(connection->socket_fd, SHUT_WR);
-    closesocket(connection->socket_fd);
-    connection->connected = 0;
-    connection->user_data = NULL;
+    logger_log(httpd->logger, LOGGER_DEBUG, "removing connection type %s socket %d conn %p", typename[connection->type],
+               connection->socket_fd, connection->user_data);
+    if (connection->user_data) {
+        httpd->callbacks.conn_destroy(connection->user_data);
+        connection->user_data = NULL;
+    }
+    if (connection->socket_fd) {
+        shutdown(connection->socket_fd, SHUT_WR);
+        int ret = closesocket(connection->socket_fd);
+        if (ret == -1) {
+            logger_log(httpd->logger, LOGGER_ERR, "httpd error in closesocket (close): %d %s", errno, strerror(errno));
+        }
+        connection->socket_fd = 0;
+    }
+    if (connection->connected) {
+        connection->connected = 0;
+        httpd->open_connections--;
+    }
     connection->type = CONNECTION_TYPE_UNKNOWN;
-    httpd->open_connections--;
 }
 
 static int
@@ -297,6 +309,17 @@ httpd_remove_known_connections(httpd_t *httpd) {
     for (int i = 0; i < httpd->max_connections; i++) {
         http_connection_t *connection = &httpd->connections[i];
         if (!connection->connected || connection->type == CONNECTION_TYPE_UNKNOWN) {
+            continue;
+        }
+        httpd_remove_connection(httpd, connection);
+    }
+}
+
+void
+httpd_remove_connections_by_type(httpd_t *httpd, connection_type_t type) {
+    for (int i = 0; i < httpd->max_connections; i++) {
+        http_connection_t *connection = &httpd->connections[i];
+        if (!connection->connected || connection->type != type) {
             continue;
         }
         httpd_remove_connection(httpd, connection);
@@ -450,7 +473,7 @@ httpd_thread(void *arg)
 		      } else {
                         int sock_err = SOCKET_GET_ERROR();
                         logger_log(httpd->logger, LOGGER_ERR, "httpd: recv socket error %d:%s",
-                                   sock_err, strerror(sock_err));
+                                   sock_err, SOCKET_ERROR_STRING(sock_err));
                         break;
 		      }
                     } else {
@@ -571,7 +594,7 @@ httpd_thread(void *arg)
     httpd->running = 0;
     MUTEX_UNLOCK(httpd->run_mutex);
 
-    logger_log(httpd->logger, LOGGER_DEBUG, "Exiting HTTP thread");
+    logger_log(httpd->logger, LOGGER_DEBUG, "Exiting httpd thread");
 
     return 0;
 }

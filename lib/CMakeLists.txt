@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.5)
 include_directories( playfair llhttp )
 
 message( STATUS "*** CFLAGS \"" ${CMAKE_C_FLAGS} "\" from build environment will be postpended to CMAKE_CFLAGS" )
@@ -102,7 +101,11 @@ else ()
   target_link_libraries ( airplay PUBLIC ${LIBPLIST} )
 endif()
 if ( PLIST_FOUND )
-   message( STATUS "found libplist-${PLIST_VERSION}" )
+   message( STATUS "found libplist-${PLIST_VERSION}")
+   pkg_check_modules ( PLIST_23 libplist-2.0>=2.3.0 )
+   if ( PLIST_23_FOUND )
+     add_definitions( -DPLIST_230 )
+   endif()
 endif()
 target_include_directories( airplay PRIVATE ${PLIST_INCLUDE_DIRS} )
 

@@ -62,6 +62,11 @@
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 
+/* for OpenBSD, where TCP_KEEPIDLE and TCP_KEEPALIVE are not defined */
+#if !defined(TCP_KEEPIDLE) && !defined(TCP_KEEPALIVE)
+#define TCP_KEEPIDLE SO_KEEPALIVE
+#endif
+
 //struct h264codec_s {
 //    unsigned char compatibility;
 //    short pps_size;
@@ -195,12 +200,14 @@ raop_rtp_mirror_thread(void *arg)
     uint64_t ntp_timestamp_local  = 0;
     unsigned char nal_start_code[4] = { 0x00, 0x00, 0x00, 0x01 };
     bool logger_debug = (logger_get_level(raop_rtp_mirror->logger) >= LOGGER_DEBUG);
+    bool logger_debug_data = (logger_get_level(raop_rtp_mirror->logger) >= LOGGER_DEBUG_DATA);
     bool h265_video = false;
-    video_codec_t codec;
+    video_codec_t codec = VIDEO_CODEC_UNKNOWN;
     const char h264[] = "h264";
     const char h265[] = "h265";
     bool unsupported_codec = false;
     bool video_stream_suspended = false;
+    bool first_packet = true;
     
     while (1) {
         fd_set rfds;
@@ -232,7 +239,9 @@ raop_rtp_mirror_thread(void *arg)
             /* Timeout happened */
             continue;
         } else if (ret == -1) {
-            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "raop_rtp_mirror error in select");
+            int sock_err = SOCKET_GET_ERROR();
+            logger_log(raop_rtp_mirror->logger, LOGGER_ERR,
+                       "raop_rtp_mirror error in select %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             break;
         }
 
@@ -275,6 +284,8 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
                            "raop_rtp_mirror could not set stream socket keepalive time %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
+/* OpenBSD does not have these options.  */
+#ifndef __OpenBSD__
             option = 10;
             if (setsockopt(stream_fd, SOL_TCP, TCP_KEEPINTVL, CAST &option, sizeof(option)) < 0) {
                 int sock_err = SOCKET_GET_ERROR();
@@ -287,6 +298,7 @@ raop_rtp_mirror_thread(void *arg)
                 logger_log(raop_rtp_mirror->logger, LOGGER_WARNING,
                            "raop_rtp_mirror could not set stream socket keepalive probes %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
             }
+#endif /* !__OpenBSD__ */
             readstart = 0;
         }
 
@@ -327,6 +339,11 @@ raop_rtp_mirror_thread(void *arg)
 	    }
             ntp_timestamp_raw = byteutils_get_long(packet, 8);
             ntp_timestamp_remote = raop_ntp_timestamp_to_nano_seconds(ntp_timestamp_raw, false);
+            if (first_packet) {
+	        uint64_t offset  = raop_ntp_get_local_time() - ntp_timestamp_remote;
+                raop_ntp_set_video_arrival_offset(raop_rtp_mirror->ntp, &offset);
+                first_packet = false;
+            }
 
 	    /* packet[4] + packet[5] identify the payload type:   values seen are:               *
              * 0x00 0x00: encrypted packet containing a non-IDR  type 1 VCL NAL unit             *
@@ -388,11 +405,11 @@ raop_rtp_mirror_thread(void *arg)
                 // counting nano seconds since last boot.
 
                 ntp_timestamp_local = raop_ntp_convert_remote_time(raop_rtp_mirror->ntp, ntp_timestamp_remote);
-                if (logger_debug) {
-                    uint64_t ntp_now = raop_ntp_get_local_time(raop_rtp_mirror->ntp);
-                    int64_t latency = ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local);
+                if (logger_debug_data) {
+                    uint64_t ntp_now = raop_ntp_get_local_time();
+                    int64_t latency = (ntp_timestamp_local ? ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local) : 0);
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
-                               "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %8.6f, ts = %8.6f, %s %s",
+                               "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %9.6f, ts = %8.6f, %s %s",
                                (double) ntp_now / SEC, (double) ntp_timestamp_local / SEC, (double) latency / SEC,
                                (double) ntp_timestamp_remote / SEC, packet_description, h265_video ? h265 : h264);
                 }
@@ -562,6 +579,9 @@ raop_rtp_mirror_thread(void *arg)
                            " payload_size %d header %s ts_client = %8.6f",
 			   payload_size, packet_description, (double) ntp_timestamp_remote / SEC);
 
+                if (packet[6] == 0x56 || packet[6] == 0x5e) {
+                    logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "This packet indicates video stream is stopping");
+                }
                 if (!video_stream_suspended && (packet[6] == 0x56 || packet[6] == 0x5e)) {
                     video_stream_suspended = true;
                     raop_rtp_mirror->callbacks.video_pause(raop_rtp_mirror->callbacks.cls);
@@ -570,7 +590,6 @@ raop_rtp_mirror_thread(void *arg)
                     video_stream_suspended = false;
                 }
 
-                codec = VIDEO_CODEC_UNKNOWN;
                 assert (raop_rtp_mirror->callbacks.video_set_codec);
                 ntp_timestamp_nal = ntp_timestamp_raw;
 
@@ -611,9 +630,21 @@ raop_rtp_mirror_thread(void *arg)
 
                 if (!memcmp(payload + 4, hvc1, 4)) {
                     /* hvc1 HECV detected */
-                    codec = VIDEO_CODEC_H265;
-                    h265_video = true;
-                    raop_rtp_mirror->callbacks.video_set_codec(raop_rtp_mirror->callbacks.cls, codec);
+                    if (codec == VIDEO_CODEC_UNKNOWN) {
+                        codec = VIDEO_CODEC_H265;
+                        h265_video = true;
+                        if (raop_rtp_mirror->callbacks.video_set_codec(raop_rtp_mirror->callbacks.cls, codec) < 0) {
+                            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "failed to set video codec as H265 ");
+                            /* drop connection */
+                            conn_reset = true;
+                            break;
+                        }
+                    } else if (codec != VIDEO_CODEC_H265) {
+                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "invalid video codec change to H265: codec was set previously");
+                        /* drop connection */
+                        conn_reset = true;
+                        break;
+                    }
                     unsigned char vps_start_code[] = { 0xa0, 0x00, 0x01, 0x00 };
                     unsigned char sps_start_code[] = { 0xa1, 0x00, 0x01, 0x00 };
                     unsigned char pps_start_code[] = { 0xa2, 0x00, 0x01, 0x00 };
@@ -636,7 +667,7 @@ raop_rtp_mirror_thread(void *arg)
                     vps = ptr;
                     if (logger_debug) {
                         char *str = utils_data_to_string(vps, vps_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "h265 vps size %d\n%s",vps_size, str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 vps size %d\n%s",vps_size, str);
                         free(str);
                     }
                     ptr += vps_size;
@@ -650,7 +681,7 @@ raop_rtp_mirror_thread(void *arg)
                     sps = ptr;
                     if (logger_debug) {
                         char *str = utils_data_to_string(sps, sps_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "h265 sps size %d\n%s",vps_size, str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 sps size %d\n%s",vps_size, str);
                         free(str);
                     }
                     ptr += sps_size;
@@ -664,7 +695,7 @@ raop_rtp_mirror_thread(void *arg)
                     pps = ptr;
                     if (logger_debug) {
                         char *str = utils_data_to_string(pps, pps_size, 16);
-		        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "h265 pps size %d\n%s",pps_size, str);
+		        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "h265 pps size %d\n%s",pps_size, str);
                         free(str);
                     }
 
@@ -684,9 +715,21 @@ raop_rtp_mirror_thread(void *arg)
                     ptr += 4;
                     memcpy(ptr, pps, pps_size);
                 } else {
-                    codec = VIDEO_CODEC_H264;
-                    h265_video = false;
-		    raop_rtp_mirror->callbacks.video_set_codec(raop_rtp_mirror->callbacks.cls, codec);
+                    if (codec == VIDEO_CODEC_UNKNOWN) {
+                        codec = VIDEO_CODEC_H264;
+                        h265_video = false;
+                        if (raop_rtp_mirror->callbacks.video_set_codec(raop_rtp_mirror->callbacks.cls, codec) < 0) {
+                            logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "failed to set video codec as H264 ");
+                            /* drop connection */
+                            conn_reset = true;
+                            break;
+                        }
+                    } else if (codec != VIDEO_CODEC_H264) {
+                        logger_log(raop_rtp_mirror->logger, LOGGER_ERR, "invalid codec change to H264: codec was set previously");
+                        /* drop connection */
+                        conn_reset = true;
+                        break;
+                    }
                     short sps_size = byteutils_get_short_be(payload,6);
                     unsigned char *sequence_parameter_set = payload + 8;
                     short pps_size = byteutils_get_short_be(payload, sps_size + 9);
@@ -694,23 +737,23 @@ raop_rtp_mirror_thread(void *arg)
                     int data_size = 6;
                     if (logger_debug) {
                         char *str = utils_data_to_string(payload, data_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror: SPS+PPS header size = %d", data_size);		
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 SPS+PPS header:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror: SPS+PPS header size = %d", data_size);		
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror h264 SPS+PPS header:\n%s", str);
                         free(str);
                         str = utils_data_to_string(sequence_parameter_set, sps_size,16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror SPS NAL size = %d",  sps_size);		
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror SPS NAL size = %d",  sps_size);		
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror h264 Sequence Parameter Set:\n%s", str);
                         free(str);
                         str = utils_data_to_string(picture_parameter_set, pps_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror PPS NAL size = %d", pps_size);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror PPS NAL size = %d", pps_size);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "raop_rtp_mirror h264 Picture Parameter Set:\n%s", str);
                         free(str);
                     }
                     data_size = payload_size - sps_size - pps_size - 11; 
                     if (data_size > 0 && logger_debug) {
                         char *str = utils_data_to_string (picture_parameter_set + pps_size, data_size, 16);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder size = %d", data_size);
-                        logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "remainder of SPS+PPS packet:\n%s", str);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "remainder size = %d", data_size);
+                        logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "remainder of SPS+PPS packet:\n%s", str);
                         free(str);
                     } else if (data_size < 0) {
                         logger_log(raop_rtp_mirror->logger, LOGGER_ERR, " pps_sps error: packet remainder size = %d < 0", data_size);
@@ -804,9 +847,8 @@ raop_rtp_mirror_thread(void *arg)
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
-    if (conn_reset && raop_rtp_mirror->callbacks.conn_reset) {
-        const bool video_reset = false;   /* leave "frozen video" showing */
-        raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 0, video_reset);
+    if (conn_reset&& raop_rtp_mirror->callbacks.conn_reset) {
+      raop_rtp_mirror->callbacks.conn_reset(raop_rtp_mirror->callbacks.cls, 1);
     }
 
     if (unsupported_codec) {
@@ -899,13 +941,13 @@ void raop_rtp_mirror_stop(raop_rtp_mirror_t *raop_rtp_mirror) {
     raop_rtp_mirror->running = 0;
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
 
+    /* Join the thread */
+    THREAD_JOIN(raop_rtp_mirror->thread_mirror);
+
     if (raop_rtp_mirror->mirror_data_sock != -1) {
         closesocket(raop_rtp_mirror->mirror_data_sock);
         raop_rtp_mirror->mirror_data_sock = -1;
     }
-
-    /* Join the thread */
-    THREAD_JOIN(raop_rtp_mirror->thread_mirror);
 
     /* Mark thread as joined */
     MUTEX_LOCK(raop_rtp_mirror->run_mutex);
