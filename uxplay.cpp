@@ -464,8 +464,8 @@ static guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_d
 #endif
 
 static void main_loop()  {
-    guint gst_bus_watch_id[2] = { 0 };
-    g_assert(n_renderers <= 2);
+    guint gst_bus_watch_id[3] = { 0 };
+    g_assert(n_renderers <= 3);
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     relaunch_video = false;
     reset_loop = false;
@@ -474,10 +474,11 @@ static void main_loop()  {
     if (use_video) {
         relaunch_video = true;
         if (url.empty()) {
-            n_renderers = h265_support ? 2 : 1;
+            /* renderer[0] : jpeg coverart; renderer[1] h264 video; renderer[2] h265 video (optional)  */
+            n_renderers = h265_support ? 3 : 2;
             gst_x11_window_id = 0;           
         } else {
-            /* hls video will be rendered */
+            /* hls video will be rendered: renderer[0] : hls  */
 	    n_renderers = 1;
             url.erase();
             gst_x11_window_id = g_timeout_add(100, (GSourceFunc) x11_window_callback, (gpointer) loop);
