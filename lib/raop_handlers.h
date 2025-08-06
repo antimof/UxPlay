@@ -26,7 +26,7 @@
 #define AUDIO_SAMPLE_RATE 44100   /* all supported AirPlay audio format use this sample rate */
 #define SECOND_IN_USECS 1000000
 #define SECOND_IN_NSECS 1000000000
-#define MAX_PW_ATTEMPTS 5
+#define MAX_PW_ATTEMPTS 3
 
 typedef void (*raop_handler_t)(raop_conn_t *, http_request_t *,
                                http_response_t *, char **, int *);
@@ -593,15 +593,21 @@ raop_handler_setup(raop_conn_t *conn,
         /* RFC2617 Digest authentication (md5 hash) of uxplay client-access password, if set */
         if (!conn->authenticated && conn->raop->callbacks.passwd) {
             size_t pin_len = 4;
-            if (conn->raop->random_pw && strncmp(conn->raop->random_pw + pin_len + 1,  deviceID, 17)) {
-                conn->raop->auth_fail_count = MAX_PW_ATTEMPTS;
+            const char *authorization = NULL;
+            authorization = http_request_get_header(request, "Authorization");
+            if (!authorization) {
+                // if random_pw is set, but client has changed, unset it 
+                if (conn->raop->random_pw && strncmp(conn->raop->random_pw + pin_len + 1,  deviceID, 17)) {
+                    free(conn->raop->random_pw);
+                    conn->raop->random_pw = NULL;
+                }
             }
             int len;
             const char *password = conn->raop->callbacks.passwd(conn->raop->callbacks.cls, &len);
             // len = -1 means use a random password for this connection; len = 0 means no password
             if (len == -1 && conn->raop->random_pw && conn->raop->auth_fail_count >= MAX_PW_ATTEMPTS) {
                 // change random_pw after MAX_PW_ATTEMPTS  failed authentication attempts
-                logger_log(conn->raop->logger, LOGGER_INFO, "Too many authentication failures or new client: generate new random password");
+                logger_log(conn->raop->logger, LOGGER_INFO, "Too many authentication failures: generate new random password");
                 free(conn->raop->random_pw);
                 conn->raop->random_pw = NULL;
             }
@@ -618,10 +624,13 @@ raop_handler_setup(raop_conn_t *conn,
                 pin[pin_len] = '\0';
                 snprintf(pin + pin_len + 1, 18, "%s", deviceID);
                 conn->raop->auth_fail_count = 0;
+            }
+            if (len == -1 && !authorization && conn->raop->random_pw) {
                 if (conn->raop->callbacks.display_pin) {
-                    conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, pin);
+                    conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, conn->raop->random_pw);
                 }
-                logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", pin);
+                logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", conn->raop->random_pw);
+                conn->raop->auth_fail_count++;
             }
 	    if (len && !conn->authenticated) {
  	        if (len == -1) {
@@ -629,20 +638,17 @@ raop_handler_setup(raop_conn_t *conn,
                 }
                 char nonce_string[33] = { '\0' };
                 //bool stale = false;  //not implemented
-                const char *authorization = NULL;
-                authorization = http_request_get_header(request, "Authorization");
-                if (authorization) {
+                if (len && authorization) {
                     char *ptr = strstr(authorization, "nonce=\"") +  strlen("nonce=\"");
                     strncpy(nonce_string, ptr, 32);
                     const char *method = http_request_get_method(request);
                     conn->authenticated = pairing_digest_verify(method, authorization, password);
 		    if (!conn->authenticated) {
-                        conn->raop->auth_fail_count++;
-                        logger_log(conn->raop->logger, LOGGER_INFO, "*** authentication failure: count = %u", conn->raop->auth_fail_count);
-		        if (conn->raop->callbacks.display_pin && conn->raop->auth_fail_count > 1) {
-                            conn->raop->callbacks.display_pin(conn->raop->callbacks.cls, conn->raop->random_pw);
+                        // if random_pw is used, the auth_fail_count will be the number of times it is displayed after creation
+                        if (len != -1) {
+                            conn->raop->auth_fail_count++;
                         }
-                        logger_log(conn->raop->logger, LOGGER_INFO, "*** CLIENT MUST NOW ENTER PIN = \"%s\" AS AIRPLAY PASSWORD", conn->raop->random_pw);
+                        logger_log(conn->raop->logger, LOGGER_INFO, "*** authentication failure: count = %u", conn->raop->auth_fail_count);
                     }
                     if (conn->authenticated) {
                         //printf("initial authenticatication OK\n");

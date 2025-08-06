@@ -216,6 +216,8 @@ httpd_remove_connection(httpd_t *httpd, http_connection_t *connection)
         int ret = closesocket(connection->socket_fd);
         if (ret == -1) {
             logger_log(httpd->logger, LOGGER_ERR, "httpd error in closesocket (close): %d %s", errno, strerror(errno));
+        } else {
+            logger_log(httpd->logger, LOGGER_INFO, "Connection closed on socket %d", connection->socket_fd);
         }
         connection->socket_fd = 0;
     }
@@ -464,7 +466,7 @@ httpd_thread(void *arg)
                 while (readstart < 8) {
                     ret = recv(connection->socket_fd, buffer + readstart, sizeof(buffer) - 1 - readstart, 0);
                     if (ret == 0) {
-                        logger_log(httpd->logger, LOGGER_INFO, "Connection closed for socket %d",
+                        logger_log(httpd->logger, LOGGER_DEBUG, "client closed connection on  socket %d",
                                    connection->socket_fd);
                         break;
                     } else if (ret == -1) {
@@ -487,8 +489,6 @@ httpd_thread(void *arg)
             } else {
                 ret = recv(connection->socket_fd, buffer, sizeof(buffer) - 1, 0);
                 if (ret == 0) {
-                    logger_log(httpd->logger, LOGGER_INFO, "Connection closed for socket %d",
-                               connection->socket_fd);
                     httpd_remove_connection(httpd, connection);
                     continue;
                 }
