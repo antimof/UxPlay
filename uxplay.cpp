@@ -2632,7 +2632,7 @@ int main (int argc, char *argv[]) {
                 url.erase();
                 raop_remove_known_connections(raop);
             }
-	    const char *uri = (url.empty() ? NULL : url.c_str());
+            const char *uri = (url.empty() ? NULL : url.c_str());
             video_renderer_init(render_logger, server_name.c_str(), videoflip, video_parser.c_str(),
                                 video_decoder.c_str(), video_converter.c_str(), videosink.c_str(),
                                 videosink_options.c_str(), fullscreen, video_sync, h265_support, playbin_version, uri);

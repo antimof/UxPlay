@@ -472,7 +472,7 @@ void video_renderer_start() {
         gst_element_set_state (renderer_type[i]->pipeline, GST_STATE_PAUSED);
 	gst_element_get_state(renderer_type[i]->pipeline, &state, NULL, 1000 * GST_MSECOND);
 	state_name= gst_element_state_get_name(state);
-	logger_log(logger, LOGGER_DEBUG, "video renderer_start: renderer %d state %s", i, state_name);
+	logger_log(logger, LOGGER_DEBUG, "video renderer_start: renderer %d %p state %s", i, renderer_type[i], state_name);
     }
     renderer = NULL;
     first_packet = true;
@@ -537,6 +537,10 @@ uint64_t video_renderer_render_buffer(unsigned char* data, int *data_len, int *n
             logger_log(logger, LOGGER_INFO, "Begin streaming to GStreamer video pipeline");
             first_packet = false;
         }
+        if (!renderer || !(renderer->appsrc)) {
+            logger_log(logger, LOGGER_DEBUG, "*** no video renderer found");
+            return 0;
+        }
         buffer = gst_buffer_new_allocate(NULL, *data_len, NULL);
         g_assert(buffer != NULL);
         //g_print("video latency %8.6f\n", (double) latency / SECOND_IN_NSECS);
@@ -582,21 +586,23 @@ static void video_renderer_destroy_instance(video_renderer_t *renderer) {
         GstState state;
 	GstStateChangeReturn ret;
         gst_element_get_state(renderer->pipeline, &state, NULL, 100 * GST_MSECOND);
-	logger_log(logger, LOGGER_DEBUG,"pipeline state is %s", gst_element_state_get_name(state));
+        logger_log(logger, LOGGER_DEBUG,"pipeline state is %s", gst_element_state_get_name(state));
         if (state != GST_STATE_NULL) {
             if (!hls_video) {
                 gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
             }
             ret = gst_element_set_state (renderer->pipeline, GST_STATE_NULL);
-	    logger_log(logger, LOGGER_DEBUG,"pipeline_state_change_return: %s",
-		       gst_element_state_change_return_get_name(ret));
-	    gst_element_get_state(renderer->pipeline, NULL, NULL, 1000 * GST_MSECOND);
+            logger_log(logger, LOGGER_DEBUG,"pipeline_state_change_return: %s",
+                       gst_element_state_change_return_get_name(ret));
+            gst_element_get_state(renderer->pipeline, &state, NULL, 1000 * GST_MSECOND);
+            logger_log(logger, LOGGER_DEBUG,"pipeline state is %s", gst_element_state_get_name(state));
+        }
+        if (renderer->appsrc) {
+            gst_object_unref (renderer->appsrc);
+            renderer->appsrc = NULL;
         }
         gst_object_unref(renderer->bus);
-	if (renderer->appsrc) {
-            gst_object_unref (renderer->appsrc);
-        }
-        gst_object_unref (renderer->pipeline);
+        gst_object_unref(renderer->pipeline);
 #ifdef X_DISPLAY_FIX
         if (renderer->gst_window) {
             free(renderer->gst_window);
@@ -605,6 +611,7 @@ static void video_renderer_destroy_instance(video_renderer_t *renderer) {
 #endif
         free (renderer);
         renderer = NULL;
+        logger_log(logger, LOGGER_DEBUG,"renderer destroyed\n");	
     }
 }
 
@@ -908,7 +915,7 @@ int video_renderer_choose_codec (bool video_is_jpeg, bool video_is_h265) {
         logger_log(logger, LOGGER_INFO, "*** video format is h265 high definition (HD/4K) video %dx%d", width, height);
     }
     /* destroy unused renderers */
-    for (int i = 1; i < n_renderers; i++) {
+    for (int i = 0; i < n_renderers; i++) {
         if (renderer_type[i] == renderer) {
             continue;
         }
