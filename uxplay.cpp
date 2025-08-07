@@ -164,7 +164,8 @@ static double db_high = 0.0;
 static bool taper_volume = false;
 static double initial_volume = 0.0;
 static bool h265_support = false;
-static int n_renderers = 0;
+static int n_video_renderers = 0;
+static int n_audio_renderers = 0;
 static bool hls_support = false;
 static std::string url = "";
 static guint gst_x11_window_id = 0;
@@ -464,8 +465,10 @@ static guint g_unix_signal_add(gint signum, GSourceFunc handler, gpointer user_d
 #endif
 
 static void main_loop()  {
-    guint gst_bus_watch_id[3] = { 0 };
-    g_assert(n_renderers <= 3);
+    guint gst_video_bus_watch_id[3] = { 0 };
+    g_assert(n_video_renderers <= 3);
+    guint gst_audio_bus_watch_id[2] = { 0 };
+    g_assert(n_audio_renderers <= 2);
     GMainLoop *loop = g_main_loop_new(NULL,FALSE);
     relaunch_video = false;
     reset_loop = false;
@@ -475,18 +478,25 @@ static void main_loop()  {
         relaunch_video = true;
         if (url.empty()) {
             /* renderer[0] : jpeg coverart; renderer[1] h264 video; renderer[2] h265 video (optional)  */
-            n_renderers = h265_support ? 3 : 2;
+            n_video_renderers = h265_support ? 3 : 2;
             gst_x11_window_id = 0;           
         } else {
             /* hls video will be rendered: renderer[0] : hls  */
-	    n_renderers = 1;
+	    n_video_renderers = 1;
             url.erase();
             gst_x11_window_id = g_timeout_add(100, (GSourceFunc) x11_window_callback, (gpointer) loop);
         }
-        for (int i = 0; i < n_renderers; i++) {
-            gst_bus_watch_id[i] = (guint) video_renderer_listen((void *)loop, i);
+        for (int i = 0; i < n_video_renderers; i++) {
+            gst_video_bus_watch_id[i] = (guint) video_renderer_listen((void *)loop, i);
         }
     }
+    if (use_audio) {
+        n_audio_renderers = 2;
+        for (int i = 0; i < n_audio_renderers; i++) {
+            gst_audio_bus_watch_id[i] = (guint) audio_renderer_listen((void *)loop, i);      
+        }
+    }
+
     missed_feedback = 0;
     guint feedback_watch_id = g_timeout_add_seconds(1, (GSourceFunc) feedback_callback, (gpointer) loop);
     guint reset_watch_id = g_timeout_add(100, (GSourceFunc) reset_callback, (gpointer) loop);
@@ -495,8 +505,11 @@ static void main_loop()  {
     guint sigint_watch_id = g_unix_signal_add(SIGINT, (GSourceFunc) sigint_callback, (gpointer) loop);
     g_main_loop_run(loop);
 
-    for (int i = 0; i < n_renderers; i++) {
-        if (gst_bus_watch_id[i] > 0) g_source_remove(gst_bus_watch_id[i]);
+    for (int i = 0; i < n_video_renderers; i++) {
+        if (gst_video_bus_watch_id[i] > 0) g_source_remove(gst_video_bus_watch_id[i]);
+    }
+    for (int i = 0; i < n_audio_renderers; i++) {
+        if (gst_audio_bus_watch_id[i] > 0) g_source_remove(gst_audio_bus_watch_id[i]);
     }
     if (gst_x11_window_id > 0) g_source_remove(gst_x11_window_id);
     if (sigint_watch_id > 0) g_source_remove(sigint_watch_id);

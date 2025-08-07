@@ -45,6 +45,7 @@ typedef struct audio_renderer_s {
     GstElement *appsrc; 
     GstElement *pipeline;
     GstElement *volume;
+    GstBus *bus;
     unsigned char ct;
 } audio_renderer_t ;
 static audio_renderer_t *renderer_type[NFORMATS];
@@ -186,7 +187,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
 
         g_assert (renderer_type[i]->pipeline);
         gst_pipeline_use_clock(GST_PIPELINE_CAST(renderer_type[i]->pipeline), clock);
-
+	renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
         switch (i) {
@@ -367,6 +368,8 @@ void audio_renderer_flush() {
 void audio_renderer_destroy() {
     audio_renderer_stop();
     for (int i = 0; i < NFORMATS ; i++ ) {
+        gst_object_unref (renderer_type[i]->bus);
+	renderer_type[i]->bus = NULL;
         gst_object_unref (renderer_type[i]->volume);
 	renderer_type[i]->volume = NULL;
         gst_object_unref (renderer_type[i]->appsrc);
@@ -375,4 +378,42 @@ void audio_renderer_destroy() {
         renderer_type[i]->pipeline = NULL;
         free(renderer_type[i]);
     }
+}
+
+static gboolean gstreamer_audio_pipeline_bus_callback(GstBus *bus, GstMessage *message, void *loop) {
+    switch (GST_MESSAGE_TYPE(message)) {
+    case GST_MESSAGE_ERROR: {
+        GError *err;
+        gchar *debug;
+        gst_message_parse_error (message, &err, &debug);
+        logger_log(logger, LOGGER_INFO, "GStreamer error (audio): %s %s", GST_MESSAGE_SRC_NAME(message),err->message);
+        g_error_free(err);
+        g_free(debug);
+        if (renderer->appsrc) {
+            gst_app_src_end_of_stream (GST_APP_SRC(renderer->appsrc));
+        }
+        gst_bus_set_flushing(bus, TRUE);
+        gst_element_set_state (renderer->pipeline, GST_STATE_READY);
+        g_main_loop_quit( (GMainLoop *) loop);
+	break;
+    }
+    case GST_MESSAGE_EOS:
+        logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream (audio)");
+        break;
+    case GST_MESSAGE_ELEMENT:
+      // many "level" messages may be sent
+        break;
+    default:
+        /* unhandled message */
+        logger_log(logger, LOGGER_DEBUG,"GStreamer unhandled audio bus message: src = %s type = %s",
+                   GST_MESSAGE_SRC_NAME(message), GST_MESSAGE_TYPE_NAME(message));
+        break;
+    }
+    return TRUE;
+}
+
+unsigned int audio_renderer_listen(void *loop, int id) {
+    g_assert(id >= 0 && id < NFORMATS);
+    return (unsigned int) gst_bus_add_watch(renderer_type[id]->bus,(GstBusFunc)
+                                            gstreamer_audio_pipeline_bus_callback, (gpointer) loop); 
 }

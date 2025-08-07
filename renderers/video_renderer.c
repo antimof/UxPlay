@@ -647,7 +647,7 @@ static void get_stream_status_name(GstStreamStatusType type, char *name, size_t 
   }
 }
   
-gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void *loop) {
+static gboolean gstreamer_video_pipeline_bus_callback(GstBus *bus, GstMessage *message, void *loop) {
     GstState old_state, new_state;
     const gchar no_state[] = "";
     const gchar *old_state_name = no_state, *new_state_name = no_state;
@@ -756,7 +756,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
         gchar *debug;
         gboolean flushing;
         gst_message_parse_error (message, &err, &debug);
-        logger_log(logger, LOGGER_INFO, "GStreamer error: %s %s", GST_MESSAGE_SRC_NAME(message),err->message);
+        logger_log(logger, LOGGER_INFO, "GStreamer error (video): %s %s", GST_MESSAGE_SRC_NAME(message),err->message);
         if (!hls_video && strstr(err->message,"Internal data stream error")) {
             logger_log(logger, LOGGER_INFO,
                      "*** This is a generic GStreamer error that usually means that GStreamer\n"
@@ -780,7 +780,7 @@ gboolean gstreamer_pipeline_bus_callback(GstBus *bus, GstMessage *message, void 
     }
     case GST_MESSAGE_EOS:
       /* end-of-stream */
-        logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream");
+        logger_log(logger, LOGGER_INFO, "GStreamer: End-Of-Stream (video)");
 	if (hls_video) {
             gst_bus_set_flushing(bus, TRUE);
             gst_element_set_state (renderer_type[type]->pipeline, GST_STATE_READY);
@@ -1007,5 +1007,5 @@ void video_renderer_seek(float position) {
 unsigned int video_renderer_listen(void *loop, int id) {
     g_assert(id >= 0 && id < n_renderers);
     return (unsigned int) gst_bus_add_watch(renderer_type[id]->bus,(GstBusFunc)
-                                            gstreamer_pipeline_bus_callback, (gpointer) loop);    
+                                            gstreamer_video_pipeline_bus_callback, (gpointer) loop);    
 }
