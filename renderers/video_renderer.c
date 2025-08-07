@@ -267,6 +267,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
         renderer_type[i]->autovideo = auto_videosink;
         renderer_type[i]->id = i;
         renderer_type[i]->bus = NULL;
+        renderer_type[i]->appsrc = NULL;
         if (hls_video) {
             /* use playbin3 to play HLS video: replace "playbin3" by "playbin" to use playbin2 */
             switch (playbin_version)  {
@@ -282,7 +283,6 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
             }
             logger_log(logger, LOGGER_INFO, "Will use GStreamer playbin version %u to play HLS streamed video", playbin_version);	    
             g_assert(renderer_type[i]->pipeline);
-            renderer_type[i]->appsrc = NULL;
 	    renderer_type[i]->codec = hls;
             /* if we are not using an autovideosink, build a videosink based on the string "videosink" */
             if (!auto_videosink) { 
@@ -377,7 +377,6 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
                 g_clear_error (&error);
             }
             g_assert (renderer_type[i]->pipeline);
-
             GstClock *clock = gst_system_clock_obtain();
             g_object_set(clock, "clock-type", GST_CLOCK_TYPE_REALTIME, NULL);
             gst_pipeline_use_clock(GST_PIPELINE_CAST(renderer_type[i]->pipeline), clock);
@@ -417,6 +416,7 @@ void  video_renderer_init(logger_t *render_logger, const char *server_name, vide
             }
         }
 #endif
+        renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);	
         gst_element_set_state (renderer_type[i]->pipeline, GST_STATE_READY);
         GstState state;
         if (gst_element_get_state (renderer_type[i]->pipeline, &state, NULL, 100 * GST_MSECOND)) {
@@ -461,7 +461,6 @@ void video_renderer_start() {
     GstState state;
     const gchar *state_name;
     if (hls_video) {
-        renderer->bus = gst_element_get_bus(renderer->pipeline);
         gst_element_set_state (renderer->pipeline, GST_STATE_PAUSED);
 	gst_element_get_state(renderer->pipeline, &state, NULL, 1000 * GST_MSECOND);
 	state_name= gst_element_state_get_name(state);
@@ -470,7 +469,6 @@ void video_renderer_start() {
     } 
   /* when not hls, start both h264 and h265 pipelines; will shut down the "wrong" one when we know the codec */
     for (int i = 0; i < n_renderers; i++) {
-        renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);
         gst_element_set_state (renderer_type[i]->pipeline, GST_STATE_PAUSED);
 	gst_element_get_state(renderer_type[i]->pipeline, &state, NULL, 1000 * GST_MSECOND);
 	state_name= gst_element_state_get_name(state);
