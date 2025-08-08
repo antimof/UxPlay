@@ -409,9 +409,9 @@ raop_rtp_mirror_thread(void *arg)
                     uint64_t ntp_now = raop_ntp_get_local_time();
                     int64_t latency = (ntp_timestamp_local ? ((int64_t) ntp_now) - ((int64_t) ntp_timestamp_local) : 0);
                     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG,
-                               "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %9.6f, ts = %8.6f, %s %s",
+                               "raop_rtp video: now = %8.6f, ntp = %8.6f, latency = %9.6f, ts = %8.6f, %s %s, size: %d",
                                (double) ntp_now / SEC, (double) ntp_timestamp_local / SEC, (double) latency / SEC,
-                               (double) ntp_timestamp_remote / SEC, packet_description, h265_video ? h265 : h264);
+                               (double) ntp_timestamp_remote / SEC, packet_description, (h265_video ? h265 : h264), payload_size);
                 }
 
                 unsigned char* payload_out;
@@ -452,7 +452,7 @@ raop_rtp_mirror_thread(void *arg)
                     payload_out = (unsigned char*)  malloc(payload_size);
                     payload_decrypted = payload_out;
                 }
-                // Decrypt data
+                // Decrypt data: AES-CTR encryption/decryption  does not change the size of the data
                 mirror_buffer_decrypt(raop_rtp_mirror->buffer, payload, payload_decrypted, payload_size);
 
                 // It seems the AirPlay protocol prepends NALs with their size, which we're replacing with the 4-byte
