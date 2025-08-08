@@ -60,9 +60,9 @@ raop_handler_info(raop_conn_t *conn,
 	    printf("qualifier: %s\n", qualifier_string);
 	    txtAirPlay = true;
         }
-	if (qualifier_string) {
+        if (qualifier_string) {
             free(qualifier_string);
-	}
+        }
     }
 #endif
     plist_t res_node = plist_new_dict();
@@ -265,9 +265,9 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
     if (PLIST_IS_STRING(req_method_node) && PLIST_IS_STRING(req_user_node)) {
         /* this is the initial pair-setup-pin request */
         const char *salt;
-	char pin[6];
-	const char *pk;
-	int len_pk, len_salt;
+        char pin[6];
+        const char *pk;
+        int len_pk, len_salt;
         char *method = NULL;
         char *user = NULL;
         plist_get_string_val(req_method_node, &method);
@@ -280,13 +280,13 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
             return;
         }
         free (method);
-	plist_get_string_val(req_user_node, &user);
+        plist_get_string_val(req_user_node, &user);
         logger_log(conn->raop->logger, LOGGER_INFO, "pair-setup-pin:  device_id = %s", user);
         snprintf(pin, 6, "%04u", conn->raop->pin % 10000);
         if (conn->raop->pin < 10000) {
             conn->raop->pin = 0;
         }
-	int ret = srp_new_user(conn->session, conn->raop->pairing, (const char *) user,
+        int ret = srp_new_user(conn->session, conn->raop->pairing, (const char *) user,
                                (const char *) pin, &salt, &len_salt, &pk, &len_pk);
         free(user);	
         plist_free(req_root_node);
@@ -302,19 +302,19 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
         plist_free(res_root_node);
         http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
-	return;
+        return;
     } else if (PLIST_IS_DATA(req_pk_node) && PLIST_IS_DATA(req_proof_node)) {
         /* this is the second part of pair-setup-pin request */
         char *client_pk = NULL;
         char *client_proof = NULL;
-	unsigned char proof[64];
-	memset(proof, 0, sizeof(proof));
+        unsigned char proof[64];
+        memset(proof, 0, sizeof(proof));
         uint64_t client_pk_len;
         uint64_t client_proof_len;
         plist_get_data_val(req_pk_node, &client_pk, &client_pk_len); 
         plist_get_data_val(req_proof_node, &client_proof, &client_proof_len);
         if (logger_debug) {
-	  char *str = utils_data_to_string((const unsigned char *) client_proof, client_proof_len, 20);
+            char *str = utils_data_to_string((const unsigned char *) client_proof, client_proof_len, 20);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "client SRP6a proof <M> :\n%s", str);	    
             free (str);
         }
@@ -339,7 +339,7 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
         plist_free(res_root_node);
         http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
-	return;
+        return;
     } else if (PLIST_IS_DATA(req_epk_node) && PLIST_IS_DATA(req_authtag_node)) {
         /* this is the third part of pair-setup-pin request */
         char *client_epk = NULL;
@@ -347,25 +347,25 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         uint64_t client_epk_len;
         uint64_t client_authtag_len;
         unsigned char epk[ED25519_KEY_SIZE];
-	unsigned char authtag[GCM_AUTHTAG_SIZE];
-	int ret;
+        unsigned char authtag[GCM_AUTHTAG_SIZE];
+        int ret;
         plist_get_data_val(req_epk_node, &client_epk, &client_epk_len); 
         plist_get_data_val(req_authtag_node, &client_authtag, &client_authtag_len);
 
-	if (logger_debug) {
+        if (logger_debug) {
             char *str = utils_data_to_string((const unsigned char *) client_epk, client_epk_len, 16);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "client_epk %d:\n%s\n", (int) client_epk_len, str);
             str = utils_data_to_string((const unsigned char *) client_authtag, client_authtag_len, 16);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "client_authtag  %d:\n%s\n", (int) client_authtag_len, str);
             free (str);
-	}
+        }
 
-	memcpy(epk, client_epk, ED25519_KEY_SIZE);
-	memcpy(authtag, client_authtag, GCM_AUTHTAG_SIZE);
+        memcpy(epk, client_epk, ED25519_KEY_SIZE);
+        memcpy(authtag, client_authtag, GCM_AUTHTAG_SIZE);
         free (client_authtag);
         free (client_epk);
         plist_free(req_root_node);
-	ret = srp_confirm_pair_setup(conn->session, conn->raop->pairing, epk, authtag);
+        ret = srp_confirm_pair_setup(conn->session, conn->raop->pairing, epk, authtag);
         if (ret < 0) {
             logger_log(conn->raop->logger, LOGGER_ERR, "pair-pin-setup (step 3): client authentication failed\n");
             goto authentication_failed;
@@ -375,13 +375,13 @@ raop_handler_pairsetup_pin(raop_conn_t *conn,
         pairing_session_set_setup_status(conn->session);
         plist_t res_root_node = plist_new_dict();
         plist_t res_epk_node = plist_new_data((const char *) epk, 32);
-	plist_t res_authtag_node = plist_new_data((const char *) authtag, 16);
+        plist_t res_authtag_node = plist_new_data((const char *) authtag, 16);
         plist_dict_set_item(res_root_node, "epk", res_epk_node);
         plist_dict_set_item(res_root_node, "authTag", res_authtag_node);	
         plist_to_bin(res_root_node, response_data, (uint32_t*) response_datalen);
         plist_free(res_root_node);
         http_response_add_header(response, "Content-Type", "application/x-apple-binary-plist");
-	return;
+        return;
     }
  authentication_failed:;
     http_response_init(response, "RTSP/1.0", 470, "Client Authentication Failure");
@@ -439,58 +439,58 @@ raop_handler_pairverify(raop_conn_t *conn,
         return;
     }
     switch (data[0]) {
-        case 1:
-            if (datalen != 4 + X25519_KEY_SIZE + ED25519_KEY_SIZE) {
-                logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
-                return;
-            }
-            /* We can fall through these errors, the result will just be garbage... */
-            if (pairing_session_handshake(conn->session, data + 4, data + 4 + X25519_KEY_SIZE)) {
-                logger_log(conn->raop->logger, LOGGER_ERR, "Error initializing pair-verify handshake");
-            }
-            if (pairing_session_get_public_key(conn->session, public_key)) {
-                logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ECDH public key");
-            }
-            if (pairing_session_get_signature(conn->session, signature)) {
-                logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ED25519 signature");
-            }
-            if (register_check) {
-                bool registered_client = true;
-		if (conn->raop->callbacks.check_register) {
-		    const unsigned char *pk = data + 4 + X25519_KEY_SIZE;
-		    char *pk64;
-		    ed25519_pk_to_base64(pk, &pk64);
-                    registered_client = conn->raop->callbacks.check_register(conn->raop->callbacks.cls, pk64);
-		    free (pk64);
-                }
-
-                if (!registered_client) {
-                    return;
-                }
-            }
-            *response_data = malloc(sizeof(public_key) + sizeof(signature));
-            if (*response_data) {
-                http_response_add_header(response, "Content-Type", "application/octet-stream");
-                memcpy(*response_data, public_key, sizeof(public_key));
-                memcpy(*response_data + sizeof(public_key), signature, sizeof(signature));
-                *response_datalen = sizeof(public_key) + sizeof(signature);
-            }
-            break;
-        case 0:
-            logger_log(conn->raop->logger, LOGGER_DEBUG, "2nd pair-verify step: checking signature");
-            if (datalen != 4 + PAIRING_SIG_SIZE) {
-                logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
-                return;
+    case 1:
+        if (datalen != 4 + X25519_KEY_SIZE + ED25519_KEY_SIZE) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
+            return;
+        }
+        /* We can fall through these errors, the result will just be garbage... */
+        if (pairing_session_handshake(conn->session, data + 4, data + 4 + X25519_KEY_SIZE)) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Error initializing pair-verify handshake");
+        }
+        if (pairing_session_get_public_key(conn->session, public_key)) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ECDH public key");
+        }
+        if (pairing_session_get_signature(conn->session, signature)) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Error getting ED25519 signature");
+        }
+        if (register_check) {
+            bool registered_client = true;
+            if (conn->raop->callbacks.check_register) {
+                const unsigned char *pk = data + 4 + X25519_KEY_SIZE;
+                char *pk64;
+                ed25519_pk_to_base64(pk, &pk64);
+                registered_client = conn->raop->callbacks.check_register(conn->raop->callbacks.cls, pk64);
+                free (pk64);
             }
 
-            if (pairing_session_finish(conn->session, data + 4)) {
-                logger_log(conn->raop->logger, LOGGER_ERR, "Incorrect pair-verify signature");
-                http_response_set_disconnect(response, 1);
+            if (!registered_client) {
                 return;
             }
-            logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-verify: signature is verified");	    
+        }
+        *response_data = malloc(sizeof(public_key) + sizeof(signature));
+        if (*response_data) {
             http_response_add_header(response, "Content-Type", "application/octet-stream");
-            break;
+            memcpy(*response_data, public_key, sizeof(public_key));
+            memcpy(*response_data + sizeof(public_key), signature, sizeof(signature));
+            *response_datalen = sizeof(public_key) + sizeof(signature);
+        }
+        break;
+    case 0:
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "2nd pair-verify step: checking signature");
+        if (datalen != 4 + PAIRING_SIG_SIZE) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Invalid pair-verify data");
+            return;
+        }
+
+        if (pairing_session_finish(conn->session, data + 4)) {
+            logger_log(conn->raop->logger, LOGGER_ERR, "Incorrect pair-verify signature");
+            http_response_set_disconnect(response, 1);
+            return;
+        }
+        logger_log(conn->raop->logger, LOGGER_DEBUG, "pair-verify: signature is verified");	    
+        http_response_add_header(response, "Content-Type", "application/octet-stream");
+        break;
     }
 }
 
@@ -618,7 +618,7 @@ raop_handler_setup(raop_conn_t *conn,
                     logger_log(conn->raop->logger, LOGGER_ERR, "Failed to generate random pin");
                     pin_4 = 1234;
                 }
-		conn->raop->random_pw =  (char *) malloc(pin_len + 1 + 18);
+                conn->raop->random_pw =  (char *) malloc(pin_len + 1 + 18);
                 char *pin = conn->raop->random_pw;
                 snprintf(pin, pin_len + 1, "%04u", pin_4 % 10000);
                 pin[pin_len] = '\0';
@@ -661,7 +661,7 @@ raop_handler_setup(raop_conn_t *conn,
                     if (conn->authenticated && conn->raop->random_pw) {
                         free (conn->raop->random_pw);
                         conn->raop->random_pw = NULL;
-		    }
+                    }
                     if (conn->raop->nonce) {
                         free(conn->raop->nonce);
                         conn->raop->nonce = NULL;
@@ -691,17 +691,17 @@ raop_handler_setup(raop_conn_t *conn,
 	
         char* eiv = NULL;
         uint64_t eiv_len = 0;
-	char *model = NULL;
+        char *model = NULL;
         char *name = NULL;
         bool admit_client = true;
         plist_t req_model_node = plist_dict_get_item(req_root_node, "model");
         plist_get_string_val(req_model_node, &model);  
         plist_t req_name_node = plist_dict_get_item(req_root_node, "name");
         plist_get_string_val(req_name_node, &name);  
-	if (conn->raop->callbacks.report_client_request) {
+        if (conn->raop->callbacks.report_client_request) {
             conn->raop->callbacks.report_client_request(conn->raop->callbacks.cls, deviceID, model, name, &admit_client);
         }
-	if (admit_client && deviceID && name && conn->raop->callbacks.register_client) {
+        if (admit_client && deviceID && name && conn->raop->callbacks.register_client) {
             char *client_device_id = NULL;
             char *client_pk = NULL;   /* encoded as null-terminated  base64 string, must be freed*/
             get_pairing_session_client_data(conn->session, &client_device_id, &client_pk);
@@ -709,7 +709,7 @@ raop_handler_setup(raop_conn_t *conn,
                 conn->raop->callbacks.register_client(conn->raop->callbacks.cls, client_device_id, client_pk, name); 
                 free (client_pk);
             }
-	}
+        }
         if (deviceID) {
             free (deviceID);
             deviceID = NULL;
@@ -727,17 +727,17 @@ raop_handler_setup(raop_conn_t *conn,
             plist_free(res_root_node);
             plist_free(req_root_node);
             return;
-	}
+        }
 
         plist_get_data_val(req_eiv_node, &eiv, &eiv_len);
         memcpy(aesiv, eiv, 16);
         free(eiv);	
         logger_log(conn->raop->logger, LOGGER_DEBUG, "eiv_len = %llu", eiv_len);
-	if (logger_debug) {
+        if (logger_debug) {
             char* str = utils_data_to_string(aesiv, 16, 16);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "16 byte aesiv (needed for AES-CBC audio decryption iv):\n%s", str);
             free(str);
-	}
+        }
 
         char* ekey = NULL;
         uint64_t ekey_len = 0;
@@ -746,7 +746,7 @@ raop_handler_setup(raop_conn_t *conn,
         free(ekey);
         logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey_len = %llu", ekey_len);
         // eaeskey is 72 bytes, aeskey is 16 bytes
-	if (logger_debug) {
+        if (logger_debug) {
             char *str = utils_data_to_string((unsigned char *) eaeskey, ekey_len, 16);
             logger_log(conn->raop->logger, LOGGER_DEBUG, "ekey:\n%s", str);
             free (str);
@@ -814,9 +814,9 @@ raop_handler_setup(raop_conn_t *conn,
                 logger_log(conn->raop->logger, LOGGER_ERR, "Client specified AirPlay2 \"Remote Control\" protocol\n"
 			   " Only AirPlay v1 protocol (using NTP and timing port) is supported");
             }
-	}
+        }
         char *timing_protocol = NULL;
-	timing_protocol_t time_protocol = TP_NONE;
+        timing_protocol_t time_protocol = TP_NONE;
         plist_t req_timing_protocol_node = plist_dict_get_item(req_root_node, "timingProtocol");
         plist_get_string_val(req_timing_protocol_node, &timing_protocol);
         if (timing_protocol) {
@@ -841,7 +841,7 @@ raop_handler_setup(raop_conn_t *conn,
         }
         uint64_t timing_rport = 0;
         plist_t req_timing_port_node = plist_dict_get_item(req_root_node, "timingPort");
-	if (req_timing_port_node) {
+        if (req_timing_port_node) {
              plist_get_uint_val(req_timing_port_node, &timing_rport);
         }
         if (timing_rport) {
@@ -897,106 +897,107 @@ raop_handler_setup(raop_conn_t *conn,
             logger_log(conn->raop->logger, LOGGER_DEBUG, "type = %llu", type);
 
             switch (type) {
-                case 110: {
-                    // Mirroring
-                    unsigned short dport = conn->raop->mirror_data_lport;
-                    plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
-                    uint64_t stream_connection_id = 0;
-                    plist_get_uint_val(stream_id_node, &stream_connection_id);
-                    logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption"
-                               " key and iv): %llu", stream_connection_id);
+            case 110: {
+                // Mirroring
+                unsigned short dport = conn->raop->mirror_data_lport;
+                plist_t stream_id_node = plist_dict_get_item(req_stream_node, "streamConnectionID");
+                uint64_t stream_connection_id = 0;
+                plist_get_uint_val(stream_id_node, &stream_connection_id);
+                logger_log(conn->raop->logger, LOGGER_DEBUG, "streamConnectionID (needed for AES-CTR video decryption"
+                           " key and iv): %llu", stream_connection_id);
 
-                    if (conn->raop_rtp_mirror) {
-                        raop_rtp_mirror_init_aes(conn->raop_rtp_mirror, &stream_connection_id);
-                        raop_rtp_mirror_start(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
-                        logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
-                    } else {
-                        logger_log(conn->raop->logger, LOGGER_ERR, "Mirroring not initialized at SETUP, playing will fail!");
-                        http_response_set_disconnect(response, 1);
-                    }
-
-                    plist_t res_stream_node = plist_new_dict();
-                    plist_t res_stream_data_port_node = plist_new_uint(dport);
-                    plist_t res_stream_type_node = plist_new_uint(110);
-                    plist_dict_set_item(res_stream_node, "dataPort", res_stream_data_port_node);
-                    plist_dict_set_item(res_stream_node, "type", res_stream_type_node);
-                    plist_array_append_item(res_streams_node, res_stream_node);
-
-                    break;
-                } case 96: {
-                    // Audio
-                    unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
-                    unsigned short remote_cport = 0;
-                    unsigned char ct = 0;
-                    unsigned int sr = AUDIO_SAMPLE_RATE; /* all AirPlay audio formats supported so far have sample rate 44.1kHz */
-
-                    uint64_t uint_val = 0;
-                    plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
-                    plist_get_uint_val(req_stream_control_port_node, &uint_val);
-                    remote_cport = (unsigned short) uint_val;   /* must != 0 to activate audio resend requests */
-
-                    plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
-                    plist_get_uint_val(req_stream_ct_node, &uint_val);
-                    ct = (unsigned char) uint_val;
-
-                    if (conn->raop->callbacks.audio_get_format) {
-		        /* get additional audio format parameters  */
-                        uint64_t audioFormat = 0;
-                        unsigned short spf = 0;
-                        bool isMedia = false;
-                        bool usingScreen = false;
-                        uint8_t bool_val = 0;
-
-                        plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
-                        plist_get_uint_val(req_stream_spf_node, &uint_val);
-                        spf = (unsigned short) uint_val;
-
-                        plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
-                        plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
-
-                        plist_t req_stream_is_media_node = plist_dict_get_item(req_stream_node, "isMedia");
-                        if (req_stream_is_media_node) {
-                            plist_get_bool_val(req_stream_is_media_node, &bool_val);
-                            isMedia = (bool) bool_val;
-                        } else {
-                            isMedia = false;
-                        }
-
-                        plist_t req_stream_using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
-                        if (req_stream_using_screen_node) {
-                            plist_get_bool_val(req_stream_using_screen_node, &bool_val);
-                            usingScreen = (bool) bool_val;
-                        } else {
-                            usingScreen = false;
-                        }
-
-                        conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, &ct, &spf, &usingScreen, &isMedia, &audioFormat);
-                    }
-
-                    if (conn->raop_rtp) {
-                        raop_rtp_start_audio(conn->raop_rtp, &remote_cport, &cport, &dport, &ct, &sr);
-                        logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
-                    } else {
-                        logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");
-                        http_response_set_disconnect(response, 1);
-                    }
-
-                    plist_t res_stream_node = plist_new_dict();
-                    plist_t res_stream_data_port_node = plist_new_uint(dport);
-                    plist_t res_stream_control_port_node = plist_new_uint(cport);
-                    plist_t res_stream_type_node = plist_new_uint(96);
-                    plist_dict_set_item(res_stream_node, "dataPort", res_stream_data_port_node);
-                    plist_dict_set_item(res_stream_node, "controlPort", res_stream_control_port_node);
-                    plist_dict_set_item(res_stream_node, "type", res_stream_type_node);
-                    plist_array_append_item(res_streams_node, res_stream_node);
-
-                    break;
+                if (conn->raop_rtp_mirror) {
+                    raop_rtp_mirror_init_aes(conn->raop_rtp_mirror, &stream_connection_id);
+                    raop_rtp_mirror_start(conn->raop_rtp_mirror, &dport, conn->raop->clientFPSdata);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "Mirroring initialized successfully");
+                } else {
+                    logger_log(conn->raop->logger, LOGGER_ERR, "Mirroring not initialized at SETUP, playing will fail!");
+                    http_response_set_disconnect(response, 1);
                 }
 
-                default:
-                    logger_log(conn->raop->logger, LOGGER_ERR, "SETUP tries to setup stream of unknown type %llu", type);
+                plist_t res_stream_node = plist_new_dict();
+                plist_t res_stream_data_port_node = plist_new_uint(dport);
+                plist_t res_stream_type_node = plist_new_uint(110);
+                plist_dict_set_item(res_stream_node, "dataPort", res_stream_data_port_node);
+                plist_dict_set_item(res_stream_node, "type", res_stream_type_node);
+                plist_array_append_item(res_streams_node, res_stream_node);
+
+                break;
+                }
+            case 96: {
+                // Audio
+                unsigned short cport = conn->raop->control_lport, dport = conn->raop->data_lport; 
+                unsigned short remote_cport = 0;
+                unsigned char ct = 0;
+                unsigned int sr = AUDIO_SAMPLE_RATE; /* all AirPlay audio formats supported so far have sample rate 44.1kHz */
+
+                uint64_t uint_val = 0;
+                plist_t req_stream_control_port_node = plist_dict_get_item(req_stream_node, "controlPort");
+                plist_get_uint_val(req_stream_control_port_node, &uint_val);
+                remote_cport = (unsigned short) uint_val;   /* must != 0 to activate audio resend requests */
+
+                plist_t req_stream_ct_node = plist_dict_get_item(req_stream_node, "ct");
+                plist_get_uint_val(req_stream_ct_node, &uint_val);
+                ct = (unsigned char) uint_val;
+
+                if (conn->raop->callbacks.audio_get_format) {
+                    /* get additional audio format parameters  */
+                    uint64_t audioFormat = 0;
+                    unsigned short spf = 0;
+                    bool isMedia = false;
+                    bool usingScreen = false;
+                    uint8_t bool_val = 0;
+
+                    plist_t req_stream_spf_node = plist_dict_get_item(req_stream_node, "spf");
+                    plist_get_uint_val(req_stream_spf_node, &uint_val);
+                    spf = (unsigned short) uint_val;
+
+                    plist_t req_stream_audio_format_node = plist_dict_get_item(req_stream_node, "audioFormat");
+                    plist_get_uint_val(req_stream_audio_format_node, &audioFormat);
+
+                    plist_t req_stream_is_media_node = plist_dict_get_item(req_stream_node, "isMedia");
+                    if (req_stream_is_media_node) {
+                        plist_get_bool_val(req_stream_is_media_node, &bool_val);
+                        isMedia = (bool) bool_val;
+                    } else {
+                        isMedia = false;
+                    }
+
+                    plist_t req_stream_using_screen_node = plist_dict_get_item(req_stream_node, "usingScreen");
+                    if (req_stream_using_screen_node) {
+                        plist_get_bool_val(req_stream_using_screen_node, &bool_val);
+                        usingScreen = (bool) bool_val;
+                    } else {
+                        usingScreen = false;
+                    }
+
+                    conn->raop->callbacks.audio_get_format(conn->raop->callbacks.cls, &ct, &spf, &usingScreen, &isMedia, &audioFormat);
+                }
+
+                if (conn->raop_rtp) {
+                    raop_rtp_start_audio(conn->raop_rtp, &remote_cport, &cport, &dport, &ct, &sr);
+                    logger_log(conn->raop->logger, LOGGER_DEBUG, "RAOP initialized success");
+                } else {
+                    logger_log(conn->raop->logger, LOGGER_ERR, "RAOP not initialized at SETUP, playing will fail!");
                     http_response_set_disconnect(response, 1);
-                    break;
+                }
+
+                plist_t res_stream_node = plist_new_dict();
+                plist_t res_stream_data_port_node = plist_new_uint(dport);
+                plist_t res_stream_control_port_node = plist_new_uint(cport);
+                plist_t res_stream_type_node = plist_new_uint(96);
+                plist_dict_set_item(res_stream_node, "dataPort", res_stream_data_port_node);
+                plist_dict_set_item(res_stream_node, "controlPort", res_stream_control_port_node);
+                plist_dict_set_item(res_stream_node, "type", res_stream_type_node);
+                plist_array_append_item(res_streams_node, res_stream_node);
+
+                break;
+                }
+
+            default:
+                logger_log(conn->raop->logger, LOGGER_ERR, "SETUP tries to setup stream of unknown type %llu", type);
+                http_response_set_disconnect(response, 1);
+                break;
             }
         }
 
@@ -1036,7 +1037,7 @@ raop_handler_get_parameter(raop_conn_t *conn,
                 char volume[25] = "volume: 0.0\r\n";
                 if (conn->raop->callbacks.audio_set_client_volume) {
                     snprintf(volume, 25, "volume: %9.6f\r\n", conn->raop->callbacks.audio_set_client_volume(conn->raop->callbacks.cls));
-		}
+                }
                 http_response_add_header(response, "Content-Type", "text/parameters");
                 *response_data = strdup(volume);
                 if (*response_data) {
@@ -1045,9 +1046,11 @@ raop_handler_get_parameter(raop_conn_t *conn,
                 return;
             }
 
-            for (next = current ; (datalen - (next - data) > 0) ; ++next)
-                if (*next == '\r')
+            for (next = current ; (datalen - (next - data) > 0) ; ++next) {
+                if (*next == '\r') {
                     break;
+                }
+            }
 
             if ((datalen - (next - data) >= 2) && !strncmp(next, "\r\n", 2)) {
                 if ((next - current) > 0) {
@@ -1187,7 +1190,7 @@ raop_handler_teardown(raop_conn_t *conn,
             if (val == 96) {
                 teardown_96 = true;
             } else if (val == 110) { 
-	        teardown_110 = true;
+                teardown_110 = true;
             }
         }
     }
