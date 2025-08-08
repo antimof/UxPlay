@@ -103,15 +103,15 @@ static gboolean check_plugin_feature (const gchar *needed_feature)
 
     plugin_feature = gst_registry_find_feature (registry, needed_feature, GST_TYPE_ELEMENT_FACTORY);
     if (!plugin_feature) {
-      g_print ("Required gstreamer libav plugin feature '%s' not found:\n\n"
-	       "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
-	       "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
-	       "in such cases a complete version for that distribution is usually made available elsewhere)\n",
-	       needed_feature);
-      ret = FALSE;
+        g_print ("Required gstreamer libav plugin feature '%s' not found:\n\n"
+	         "This may be missing because the FFmpeg package used by GStreamer-1.x-libav is incomplete.\n"
+	         "(Some distributions provide an incomplete FFmpeg due to License or Patent issues:\n"
+	         "in such cases a complete version for that distribution is usually made available elsewhere)\n",
+	         needed_feature);
+        ret = FALSE;
     } else {
-      gst_object_unref (plugin_feature);
-      plugin_feature = NULL;
+        gst_object_unref (plugin_feature);
+        plugin_feature = NULL;
     }
     if (ret == FALSE) {
         g_print ("\nif the plugin feature is installed, but not found, your gstreamer registry may have been corrupted.\n"
@@ -187,7 +187,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
 
         g_assert (renderer_type[i]->pipeline);
         gst_pipeline_use_clock(GST_PIPELINE_CAST(renderer_type[i]->pipeline), clock);
-	renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);
+        renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
         switch (i) {
@@ -369,12 +369,12 @@ void audio_renderer_destroy() {
     audio_renderer_stop();
     for (int i = 0; i < NFORMATS ; i++ ) {
         gst_object_unref (renderer_type[i]->bus);
-	renderer_type[i]->bus = NULL;
+        renderer_type[i]->bus = NULL;
         gst_object_unref (renderer_type[i]->volume);
-	renderer_type[i]->volume = NULL;
+        renderer_type[i]->volume = NULL;
         gst_object_unref (renderer_type[i]->appsrc);
         renderer_type[i]->appsrc = NULL;
-	gst_object_unref (renderer_type[i]->pipeline);
+        gst_object_unref (renderer_type[i]->pipeline);
         renderer_type[i]->pipeline = NULL;
         free(renderer_type[i]);
     }
