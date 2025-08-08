@@ -372,7 +372,7 @@ static void dump_video_to_file(unsigned char *data, int datalen) {
             video_dumpfile_count++;
             snprintf(suffix, sizeof(suffix), ".%d", video_dumpfile_count);
             fn.append(suffix);
-	}
+        }
         fn.append(".h264");
         video_dumpfile = fopen (fn.c_str(),"w");
         if (video_dumpfile == NULL) {
@@ -848,17 +848,17 @@ static bool get_ports (int nports, std::string option, const char * value, unsig
 static bool get_videoflip (const char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
-        case 'I':
-            *videoflip = INVERT;
-            break;
-        case 'H':
-            *videoflip = HFLIP;
-            break;
-        case 'V':
-            *videoflip = VFLIP;
-            break;
-        default:
-            return false;
+    case 'I':
+        *videoflip = INVERT;
+        break;
+    case 'H':
+        *videoflip = HFLIP;
+        break;
+    case 'V':
+        *videoflip = VFLIP;
+        break;
+    default:
+        return false;
     }
     return true;
 }
@@ -866,14 +866,14 @@ static bool get_videoflip (const char *str, videoflip_t *videoflip) {
 static bool get_videorotate (const char *str, videoflip_t *videoflip) {
     if (strlen(str) > 1) return false;
     switch (str[0]) {
-        case 'L':
-            *videoflip = LEFT;
-            break;
-        case 'R':
-            *videoflip = RIGHT;
-            break;
-        default:
-            return false;
+    case 'L':
+        *videoflip = LEFT;
+        break;
+    case 'R':
+        *videoflip = RIGHT;
+        break;
+    default:
+        return false;
     }
     return true;
 }
@@ -903,17 +903,17 @@ static void parse_arguments (int argc, char *argv[]) {
     // Parse arguments
     for (int i = 1; i < argc; i++) {
         std::string arg(argv[i]);
-	if (arg == "-rc") {
+        if (arg == "-rc") {
             i++;  //specifies startup file: has already been processed
         } else if (arg == "-allow") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             i++;
-	    allowed_clients.push_back(argv[i]);
-	} else if (arg == "-block") {
+            allowed_clients.push_back(argv[i]);
+        } else if (arg == "-block") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
             i++;
-	    blocked_clients.push_back(argv[i]);    
-	} else if (arg == "-restrict") {
+            blocked_clients.push_back(argv[i]);    
+        } else if (arg == "-restrict") {
             if (i <  argc - 1) {
                 if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
                     restrict_clients = false;
@@ -942,7 +942,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     if (n > -SECOND_IN_USECS && n < SECOND_IN_USECS) {
                         audio_delay_alac = n * 1000; /* units are nsecs */
                     } else {
-		      fprintf(stderr, "invalid -async %s: requested delays must be smaller than +/- 1000 millisecs\n", argv[i] );
+                        fprintf(stderr, "invalid -async %s: requested delays must be smaller than +/- 1000 millisecs\n", argv[i] );
                         exit (1);
                     }
                 }
@@ -962,7 +962,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     if (n > -SECOND_IN_USECS && n < SECOND_IN_USECS) {
                         audio_delay_aac = n * 1000;     /* units are nsecs */
                     } else {
-		      fprintf(stderr, "invalid -vsync %s: requested delays must be smaller than +/- 1000 millisecs\n", argv[i]);
+                        fprintf(stderr, "invalid -vsync %s: requested delays must be smaller than +/- 1000 millisecs\n", argv[i]);
                         exit (1);
                     }
                 }
@@ -1017,7 +1017,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 }
             }
         } else if (arg == "-m") {
-	    if (i < argc - 1 && *argv[i+1] != '-') {
+            if (i < argc - 1 && *argv[i+1] != '-') {
                 if (validate_mac(argv[++i])) {
                     mac_address.erase();
                     mac_address = argv[i];
@@ -1033,18 +1033,18 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-a") {
             use_audio = false;
         } else if (arg == "-d") {
-	    if (i < argc - 1 && *argv[i+1] != '-') {
+            if (i < argc - 1 && *argv[i+1] != '-') {
                 unsigned int n = 1;
                 if (!get_value(argv[++i], &n)) {
                     fprintf(stderr, "invalid \"-d %s\"; -d n : max n=1 (suppress packet data in debug output)\n", argv[i]);
                     exit(1);
                 }
                 debug_log = true;
-		suppress_packet_debug_data = true;
-	    } else {
+                suppress_packet_debug_data = true;
+            } else {
                 debug_log = !debug_log;
-		suppress_packet_debug_data = false;
-	    }
+                suppress_packet_debug_data = false;
+            }
         } else if (arg == "-h"  || arg == "--help" || arg == "-?" || arg == "-help") {
             print_info(argv[0]);
             exit(0);
@@ -1068,10 +1068,10 @@ static void parse_arguments (int argc, char *argv[]) {
             videosink.erase();
             videosink.append(argv[++i]);
             std::size_t pos = videosink.find(" ");
-	    if (pos != std::string::npos) {
+            if (pos != std::string::npos) {
                 videosink_options.erase();
                 videosink_options = videosink.substr(pos);
-	        videosink.erase(pos);
+                videosink.erase(pos);
             }
         } else if (arg == "-as") {
             if (!option_has_value(i, argc, arg, argv[i+1])) exit(1);
@@ -1083,7 +1083,7 @@ static void parse_arguments (int argc, char *argv[]) {
             exit(1);
         } else if (arg == "-nc") {
             new_window_closing_behavior = false;
-	    if (i <  argc - 1) {
+            if (i <  argc - 1) {
                 if (strlen(argv[i+1]) == 2 && strncmp(argv[i+1], "no", 2) == 0) {
                     new_window_closing_behavior = true;
                     i++;
@@ -1113,7 +1113,7 @@ static void parse_arguments (int argc, char *argv[]) {
             exit(1);
         } else if (arg == "-fs" ) {
             fullscreen = true;
-	} else if (arg == "-FPSdata") {
+        } else if (arg == "-FPSdata") {
             show_client_FPS_data = true;
         } else if (arg == "-reset") {
             /* now using feedback  (every 1 sec ) instead of ntp timeouts (every 3 secs) to detect offline client and reset connections */
@@ -1214,7 +1214,7 @@ static void parse_arguments (int argc, char *argv[]) {
 	    int n;
             char *end;
             if (i < argc - 1 && *argv[i+1] != '-') {
-	      n = (int) (strtof(argv[++i], &end) * SECOND_IN_USECS);
+                n = (int) (strtof(argv[++i], &end) * SECOND_IN_USECS);
                 if (*end == '\0' && n >=0 && n <= 10 * SECOND_IN_USECS) {
                     audiodelay = n;
                     continue;
@@ -1226,7 +1226,7 @@ static void parse_arguments (int argc, char *argv[]) {
         } else if (arg == "-pin") {
             setup_legacy_pairing = true;
             pin_pw = 1;
-	    if (i < argc - 1 && *argv[i+1] != '-') {
+            if (i < argc - 1 && *argv[i+1] != '-') {
                 unsigned int n = 9999;
                 if (!get_value(argv[++i], &n)) {
                     fprintf(stderr, "invalid \"-pin %s\"; -pin nnnn : max nnnn=9999, (4 digits)\n", argv[i]);
@@ -1255,10 +1255,10 @@ static void parse_arguments (int argc, char *argv[]) {
                     exit(1);
                 }   
             } else {
-	      //                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
-	      // exit(1);
-	      keyfile.erase();
-	      keyfile.append("0");
+	        //                fprintf(stderr, "option \"-key <fn>\" requires a path <fn> to a file for persistent key storage\n");
+	        // exit(1);
+                keyfile.erase();
+                keyfile.append("0");
             }
         } else if (arg == "-pw") {
             setup_legacy_pairing = false;
@@ -1282,15 +1282,15 @@ static void parse_arguments (int argc, char *argv[]) {
                     fprintf(stderr, "%s cannot be written to:\noption \"-dacp <fn>\" must be to a file with write access\n", fn);
                     exit(1);
                 }   
-	    } else {
+            } else {
                 dacpfile.append(get_homedir());
                 dacpfile.append("/.uxplay.dacp");
             }
-	} else if (arg == "-taper") {
+        } else if (arg == "-taper") {
             taper_volume = true;
         } else if (arg == "-db") {
             bool db_bad = true;
- 	    double db1, db2;
+            double db1, db2;
             if ( i < argc -1) {
                 char *end1, *end2;
                 db1 = strtod(argv[i+1], &end1);
@@ -1308,7 +1308,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 fprintf(stderr, "invalid \"-db  %s\": db value must be \"low\" or \"low:high\", low < 0 and high > low are decibel gains\n", argv[i+1]); 
                 exit(1);
             }
-	    i++;
+            i++;
             db_low = db1;
             db_high = db2;
             printf("db range %f:%f\n", db_low, db_high);
@@ -1337,7 +1337,7 @@ static void parse_arguments (int argc, char *argv[]) {
                 fprintf(stderr, "invalid \"-vol %s\", value must be between 0.0 (mute) and 1.0 (full volume)\n", argv[i+1]);
                 exit(1);
             }
-           i++;
+            i++;
         } else if (arg == "-hls") {
             hls_support = true;
             if (i < argc - 1 && *argv[i+1] != '-') {
@@ -1346,7 +1346,7 @@ static void parse_arguments (int argc, char *argv[]) {
                     fprintf(stderr, "invalid \"-hls %s\"; -hls n only allows \"playbin\" video player versions 2 or 3\n", argv[i]);
                     exit(1);
                 }
-		playbin_version = (guint) n;
+                playbin_version = (guint) n;
             } 
         } else if (arg == "-h265") {
             h265_support = true;
@@ -1463,7 +1463,7 @@ static void process_metadata(int count, const char *dmap_tag, const unsigned cha
         char *str = (char *) calloc(datalen + 1, sizeof(char));
         memcpy(str, metadata, datalen);
         metadata_text->append(str);
-	metadata_text->append("\n");
+        metadata_text->append("\n");
         free(str);
     } else if (debug_log) {
         std::string md = "";
@@ -1485,7 +1485,7 @@ static int parse_dmap_header(const unsigned char *metadata, char *tag, int *len)
     bool istag = true;
     for (int i = 0; i < 4; i++) {
         tag[i] =  (char) *header;
-	if (!isalpha(tag[i])) {
+        if (!isalpha(tag[i])) {
             istag = false;
         }
         header++;
@@ -1801,10 +1801,10 @@ extern "C" void report_client_request(void *cls, char *deviceid, char * model, c
     LOGI("connection request from %s (%s) with deviceID = %s\n", name, model, deviceid);
     if (restrict_clients) {
         *admit = check_client(deviceid);
-	if (*admit == false) {
+        if (*admit == false) {
             LOGI("client connections have been restricted to those with listed deviceID,\nuse \"-allow %s\" to allow this client to connect.\n",
                  deviceid);
-	}
+        }
     } else {
         *admit = true;
     }
@@ -1853,8 +1853,8 @@ extern "C" void video_process (void *cls, raop_ntp_t *ntp, video_decode_struct *
             remote_clock_offset = local_time - data->ntp_time_remote;
         }
         int count = 0;
-	uint64_t pts_mismatch = 0;
-	do {
+        uint64_t pts_mismatch = 0;
+        do {
             data->ntp_time_remote = data->ntp_time_remote + remote_clock_offset;
             pts_mismatch = video_renderer_render_buffer(data->data, &(data->data_len), &(data->nal_count), &(data->ntp_time_remote));
             if (pts_mismatch) {
@@ -1926,15 +1926,15 @@ extern "C" void audio_set_volume (void *cls, float volume) {
       /* flat rescaling of decibel range from {-30dB : 0dB} to {db_low : db_high} */  
         db_flat = db_low + (db_high-db_low) * frac;
         if (taper_volume) {
-          /* taper the volume reduction by the (rescaled) Airplay {-30:0} range so each reduction of
-	   * the remaining slider length by 50% reduces the perceived volume by 50% (-10dB gain)
-           * (This is the "dasl-tapering" scheme offered by shairport-sync) */
+            /* taper the volume reduction by the (rescaled) Airplay {-30:0} range so each reduction of
+             * the remaining slider length by 50% reduces the perceived volume by 50% (-10dB gain)
+             * (This is the "dasl-tapering" scheme offered by shairport-sync) */
             db = db_high + 10.0 * (log10(frac) / log10(2.0));
             db = (db  > db_flat) ? db : db_flat;
-         } else {
+        } else {
             db = db_flat;
         }
-	/* conversion from (gain) decibels to GStreamer's linear volume scale */
+        /* conversion from (gain) decibels to GStreamer's linear volume scale */
         gst_volume = pow(10.0, 0.05*db);
     }
     audio_renderer_set_volume(gst_volume);
@@ -2132,24 +2132,20 @@ extern "C" void on_video_acquire_playback_info (void *cls, playback_info_t *play
 
 extern "C" void log_callback (void *cls, int level, const char *msg) {
     switch (level) {
-        case LOGGER_DEBUG: {
-            LOGD("%s", msg);
-            break;
-        }
-        case LOGGER_WARNING: {
-            LOGW("%s", msg);
-            break;
-        }
-        case LOGGER_INFO: {
-            LOGI("%s", msg);
-            break;
-        }
-        case LOGGER_ERR: {
-            LOGE("%s", msg);
-            break;
-        }
-        default:
-            break;
+    case LOGGER_DEBUG:
+        LOGD("%s", msg);
+        break;
+    case LOGGER_WARNING:
+        LOGW("%s", msg);
+        break;
+    case LOGGER_INFO:
+        LOGI("%s", msg);
+        break;
+    case LOGGER_ERR:
+        LOGE("%s", msg);
+        break;
+    default:
+        break;
     }
 }
 
@@ -2306,7 +2302,7 @@ static void read_config_file(const char * filename, const char * uxplay_name) {
                     } else {
                         options.push_back(token.c_str());
                     }
-		}
+                }
 	    }
 	}
         file.close();
@@ -2365,7 +2361,7 @@ int main (int argc, char *argv[]) {
                 exit(1);
             }
             rcfile = argv[i+1];
-	    if (stat(rcfile, &sb) == -1) {
+            if (stat(rcfile, &sb) == -1) {
                 LOGE("startup file %s specified by option -rc was not found", rcfile);
                 exit(0);
             }
@@ -2404,7 +2400,7 @@ int main (int argc, char *argv[]) {
     if (dump_video) {
         if (video_dump_limit > 0) {
              LOGI("dump video using \"-vdmp %d %s\"", video_dump_limit, video_dumpfile_name.c_str());
-	} else {
+        } else {
              LOGI("dump video using \"-vdmp %s\"", video_dumpfile_name.c_str());
         }
     }
@@ -2449,9 +2445,9 @@ int main (int argc, char *argv[]) {
     if (fullscreen && use_video) {
         if (videosink == "waylandsink" || videosink == "vaapisink") {
             videosink_options.append(" fullscreen=true");
-	} else if (videosink == "kmssink") {
+        } else if (videosink == "kmssink") {
            videosink_options.append(" force_modesetting=true");	  
-	}
+        }
     }
 
     if (videosink == "d3d11videosink"  && videosink_options.empty() && use_video) {
@@ -2487,8 +2483,8 @@ int main (int argc, char *argv[]) {
         if (pairing_register == "") {
             const char * homedir = get_homedir();
             if (homedir) {
-	        pairing_register = homedir;
-	        pairing_register.append("/.uxplay.register");
+                pairing_register = homedir;
+                pairing_register.append("/.uxplay.register");
              }
         }
     }
@@ -2498,13 +2494,13 @@ int main (int argc, char *argv[]) {
         size_t len = 0;
         std::string  key;
         int clients = 0;
-	std::ifstream file(pairing_register);
+        std::ifstream file(pairing_register);
         if (file.is_open()) {
             std::string line;
             while (std::getline(file, line)) {
                 /*32 bytes pk -> base64 -> strlen(pk64) = 44 chars = line[0:43]; add '\0' at line[44] */ 
                 line[44] = '\0';
-		std::string pk = line.c_str();
+                std::string pk = line.c_str();
                 registered_keys.push_back(key.assign(pk));
                 clients ++;
             }
@@ -2544,7 +2540,7 @@ int main (int argc, char *argv[]) {
     logger_set_level(render_logger, log_level);
 
     if (use_audio) {
-      audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync);
+        audio_renderer_init(render_logger, audiosink.c_str(), &audio_sync, &video_sync);
     } else {
         LOGI("audio_disabled");
     }
