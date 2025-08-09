@@ -473,7 +473,7 @@ raop_rtp_thread_udp(void *arg)
                     raop_rtp->control_saddr_len = saddrlen;
                     got_remote_control_saddr = true;
                 }
-	    } else {
+            } else {
                 packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0, NULL, NULL);
             }
             int type_c = packet[1] & ~0x80;
