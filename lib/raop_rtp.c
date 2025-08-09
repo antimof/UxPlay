@@ -195,7 +195,6 @@ raop_rtp_init(logger_t *logger, raop_callbacks_t *callbacks, raop_ntp_t *ntp, co
     return raop_rtp;
 }
 
-
 void
 raop_rtp_destroy(raop_rtp_t *raop_rtp)
 {
@@ -474,7 +473,7 @@ raop_rtp_thread_udp(void *arg)
                     raop_rtp->control_saddr_len = saddrlen;
                     got_remote_control_saddr = true;
                 }
-	    } else {
+            } else {
                 packetlen = recvfrom(raop_rtp->csock, (char *)packet, sizeof(packet), 0, NULL, NULL);
             }
             int type_c = packet[1] & ~0x80;
@@ -515,7 +514,7 @@ raop_rtp_thread_udp(void *arg)
                 } else {
                    client_ntp_sync_prev = raop_rtp->client_ntp_sync;
                    rtp_sync_prev = raop_rtp->rtp_sync;
-		}
+                }
                 raop_rtp->rtp_sync = byteutils_get_int_be(packet, 4);
                 uint64_t sync_ntp_raw = byteutils_get_long_be(packet, 8);
                 raop_rtp->client_ntp_sync = raop_remote_timestamp_to_nano_seconds(raop_rtp->ntp, sync_ntp_raw);
@@ -564,20 +563,20 @@ raop_rtp_thread_udp(void *arg)
          * three times; the secnum and rtp_timestamp increment according to the same pattern as 
          * AAC-ELD packets with audio content.*/
 
-	 /* When the ALAC audio stream starts, the initial packets are length-44 packets with 
-	  * the same 32-byte encrypted payload which after decryption is the beginning of a
-          * 32-byte ALAC packet, presumably with format information, but not actual audio data.
-          * The secnum and rtp_timestamp in the packet header increment according to the same
-          * pattern as ALAC packets with audio content */	
+        /* When the ALAC audio stream starts, the initial packets are length-44 packets with 
+         * the same 32-byte encrypted payload which after decryption is the beginning of a
+         * 32-byte ALAC packet, presumably with format information, but not actual audio data.
+         * The secnum and rtp_timestamp in the packet header increment according to the same
+         * pattern as ALAC packets with audio content */	
 
-         /* The first ALAC packet with data seems to be decoded just before the first sync event
-          * so its dequeuing should be delayed until the first rtp sync has occurred */
+        /* The first ALAC packet with data seems to be decoded just before the first sync event
+         * so its dequeuing should be delayed until the first rtp sync has occurred */
 
 
-	if (FD_ISSET(raop_rtp->dsock, &rfds)) {
-	    if (!raop_rtp->initial_sync && !video_arrival_offset) {
+        if (FD_ISSET(raop_rtp->dsock, &rfds)) {
+            if (!raop_rtp->initial_sync && !video_arrival_offset) {
                 video_arrival_offset = raop_ntp_get_video_arrival_offset(raop_rtp->ntp);
-	    }
+            }
             //logger_log(raop_rtp->logger, LOGGER_INFO, "Would have data packet in queue");
             // Receiving audio data here
             saddrlen = sizeof(saddr);
@@ -594,17 +593,17 @@ raop_rtp_thread_udp(void *arg)
                     free (str);
                 }
                 continue;
-	    }
+            }
 
-	    if (!raop_rtp->initial_sync &&  raop_rtp->ct == 8 && video_arrival_offset) {
+            if (!raop_rtp->initial_sync &&  raop_rtp->ct == 8 && video_arrival_offset) {
                 /* estimate a fake initial remote timestamp for video  synchronization  with AAC audio before the first rtp sync */
- 	         uint64_t ts = raop_ntp_get_local_time() - video_arrival_offset;
-	         double delay = DELAY_AAC;
-		 ts += (uint64_t) (delay * SEC);
-		 raop_rtp->client_ntp_sync = ts;
-		 raop_rtp->rtp_sync = byteutils_get_int_be(packet, 4);
-		 raop_rtp->initial_sync = true;
-	    }	    
+                 uint64_t ts = raop_ntp_get_local_time() - video_arrival_offset;
+                 double delay = DELAY_AAC;
+                 ts += (uint64_t) (delay * SEC);
+                 raop_rtp->client_ntp_sync = ts;
+                 raop_rtp->rtp_sync = byteutils_get_int_be(packet, 4);
+                 raop_rtp->initial_sync = true;
+            }	    
 
             if (packetlen == 16 && memcmp(packet + 12, no_data_marker, 4) == 0) {
                 /* this is a "no data" packet */
@@ -612,12 +611,12 @@ raop_rtp_thread_udp(void *arg)
                 continue;
             }
 	    
-	    if (raop_rtp->ct == 2 && packetlen == 44)  continue;   /* ignore the ALAC packets with format information only. */
+            if (raop_rtp->ct == 2 && packetlen == 44)  continue;   /* ignore the ALAC packets with format information only. */
 
             int result = raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, 1);
             assert(result >= 0);
 
-	    if (!raop_rtp->initial_sync) {
+            if (!raop_rtp->initial_sync) {
                 /* wait until the first sync before dequeing ALAC */
                 continue;
             } else {

@@ -1064,13 +1064,23 @@ deregisters the corresponding client (see options -restrict, -block,
 the startup file if you wish to use this feature.)*
 
 **-pw** [*pwd*].  (since 1.72). As an alternative to -pin, client access
-can be controlled with a password set when uxplay starts (set it in
-the .uxplay startup file, where it is stored as cleartext.)  All users must
-then know this password.    This uses HTTP md5 Digest authentication,
+can be controlled with a password.   If a password *pwd* (of length at least
+six characters) is set when uxplay
+starts (usually set in the startup file, where it is stored as
+cleartext), all users must know this password to connect to UxPlay
+(the client prompts for it).
+This method uses HTTP md5 Digest authentication,
 which is now regarded as providing weak security, but it is only used to
 validate the uxplay password, and no user credentials are exposed.
-If *pwd* is **not** specified, a random 4-digit pin code is displayed, and must
-be entered on the client at **each** new connection.
+After a successful authentication, the client stores the password, and will use
+it initially for future authentications without prompting, so long as
+the UxPlay deviceID has not changed (this initial authentication will fail
+if the UxPlay password has changed).
+If *pwd* is **not** specified with the -pw option when UxPlay starts, a
+new random 4-digit pin code is generated and displayed on the UxPlay terminal
+for **each** new connection, and must
+be entered on the client (there are three
+chances to enter it, before it is changed).
 _Note: -pin and -pw are alternatives: if both are specified at startup, the
 earlier of these two options is discarded._
 
