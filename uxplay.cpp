@@ -697,7 +697,7 @@ static void print_info (char *name) {
     printf("-vp ...   Choose the GSteamer h264 parser: default \"h264parse\"\n");
     printf("-vd ...   Choose the GStreamer h264 decoder; default \"decodebin\"\n");
     printf("          choices: (software) avdec_h264; (hardware) v4l2h264dec,\n");
-    printf("          nvdec, nvh264dec, vaapih64dec, vtdec,etc.\n");
+    printf("          nvdec, nvh264dec, vaapih264dec, vtdec,etc.\n");
     printf("          choices: avdec_h264,vaapih264dec,nvdec,nvh264dec,v4l2h264dec\n");
     printf("-vc ...   Choose the GStreamer videoconverter; default \"videoconvert\"\n");
     printf("          another choice when using v4l2h264dec: v4l2convert\n");
