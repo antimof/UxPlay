@@ -625,12 +625,15 @@ raop_rtp_thread_udp(void *arg)
                  raop_rtp->initial_sync = true;
             }	    
 
-            if (packetlen == 12 ||(packetlen == 16 && memcmp(packet + 12, no_data_marker, 4) == 0)) {
-                /* this is a "no data" packet */
-	        /* the first such packet could be used to provide the initial rtptime and seqnum formerly given in the RECORD request */
-                continue;
+
+            /* the first no-data  packet (len 12 or len 16 (12 + 4 byte marker) could be used to provide the initial rtptime and seqnum
+	       formerly given in the RECORD request */	    
+            if (packetlen == 12) {
+                /* this is an empty packet, without the 4-byte "no-data" marker (add the Marker, it appears to be an older protocal AirMyPC variant */
+                memcpy(packet + 12, no_data_marker, 4);
+                packetlen = 16;
             }
-	    
+
             if (raop_rtp->ct == 2 && packetlen == 44)  continue;   /* ignore the ALAC packets with format information only. */
 
             raop_buffer_enqueue(raop_rtp->buffer, packet, packetlen, 1);
@@ -646,6 +649,10 @@ raop_rtp_thread_udp(void *arg)
                 uint32_t rtp_timestamp = 0;
 
                 while ((payload = raop_buffer_dequeue(raop_rtp->buffer, &payload_size, &rtp_timestamp, &seqnum, no_resend))) {
+                    if (payload_size == 4 && memcmp(payload, no_data_marker, 4) == 0) {
+                        free (payload);
+                        continue;
+                    }
                     audio_decode_struct audio_data; 
                     audio_data.rtp_time = rtp_timestamp;
                     audio_data.seqnum = seqnum;
