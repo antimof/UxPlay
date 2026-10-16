@@ -98,7 +98,6 @@ struct raop_rtp_s {
     /* Sockets for control and data */
     int csock, dsock;
     /* add-ons for accessing kernel recv timetamps */
-    kernel_timestamp_session_t *rtp_session_csock;
     kernel_timestamp_session_t *rtp_session_dsock;
 
     /* Local control, timing and data ports */
@@ -247,12 +246,6 @@ raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6)
         goto sockets_cleanup;
     }
 
-    raop_rtp->rtp_session_csock = kernel_timestamp_session_create(raop_rtp->ntp, csock);
-    if (raop_rtp->rtp_session_csock == NULL) {
-        logger_log(raop_rtp->logger, LOGGER_ERR, "raop_rtp: Failed to allocate high-precision session context (csock)");
-        goto sockets_cleanup;
-    }
-
     raop_rtp->rtp_session_dsock = kernel_timestamp_session_create(raop_rtp->ntp, dsock);
     if (raop_rtp->rtp_session_dsock == NULL) {
         logger_log(raop_rtp->logger, LOGGER_ERR, "raop_rtp: Failed to allocate high-precision session context (dsock)");
@@ -271,10 +264,7 @@ raop_rtp_init_sockets(raop_rtp_t *raop_rtp, int use_ipv6)
     return 0;
 
     sockets_cleanup:
-    if (raop_rtp->rtp_session_csock != NULL) {
-        kernel_timestamp_session_destroy(raop_rtp->rtp_session_csock);
-        raop_rtp->rtp_session_csock = NULL;
-    } else if (csock != -1) {
+    if (csock != -1) {
         // Fallback to protect if the handle crashed out before session instantiation
         CLOSESOCKET(csock);
     }
@@ -480,19 +470,22 @@ raop_rtp_thread_udp(void *arg)
         if (FD_ISSET(raop_rtp->csock, &rfds)) {
             if (got_remote_control_saddr== false) {
                 saddrlen = sizeof(saddr);
-                packetlen = kernel_timestamp_session_recv(raop_rtp->rtp_session_csock, (char *) packet, sizeof(packet),
-                                                          (void *) &saddr, (int *) &saddrlen,
-                                                          &recv_time_kernel, &recv_time_clock);
+                packetlen = recvfrom(raop_rtp->csock, (char *) packet, sizeof(packet), 0,
+                                      (struct sockaddr *) &saddr, &saddrlen);
                 if (packetlen > 0) {
                     memcpy(&raop_rtp->control_saddr, &saddr, saddrlen);
                     raop_rtp->control_saddr_len = saddrlen;
                     got_remote_control_saddr = true;
                 }
             } else {
-                packetlen = kernel_timestamp_session_recv(raop_rtp->rtp_session_csock, (char *) packet, sizeof(packet),
-                                                          NULL, NULL, &recv_time_kernel, &recv_time_clock);
+                packetlen = recvfrom(raop_rtp->csock, (char *) packet, sizeof(packet), 0, NULL, NULL);
             }
-
+            if (packetlen == -1) {
+                int sock_err = SOCKET_GET_ERROR();
+                logger_log(raop_rtp->logger, LOGGER_ERR,
+                           "raop_rtp error in recvfrom  %d %s", sock_err, SOCKET_ERROR_STRING(sock_err));
+                continue;
+            }
             int type_c = packet[1] & ~0x80;
             logger_log(raop_rtp->logger, LOGGER_DEBUG, "\nraop_rtp type_c 0x%02x, packetlen = %d", type_c, packetlen);
 
