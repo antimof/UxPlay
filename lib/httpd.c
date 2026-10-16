@@ -44,6 +44,9 @@ struct http_connection_s {
     connection_type_t type;
     http_request_t *request;
     int pending_remove;
+    char staging[8];
+    int staging_len;
+    time_t last_active;
 };
 typedef struct http_connection_s http_connection_t;
 
@@ -179,6 +182,9 @@ httpd_init(logger_t *logger, httpd_callbacks_t *callbacks, int nohold)
         httpd->connections[i].type = CONNECTION_TYPE_UNKNOWN;
         httpd->connections[i].request = NULL;
         httpd->connections[i].pending_remove = 0;
+        httpd->connections[i].staging_len = 0;
+        httpd->connections[i].staging[0] = '\0';
+        httpd->connections[i].last_active = time(NULL);
     }
 
     /* Use the logger provided */
@@ -243,6 +249,8 @@ httpd_remove_connection(httpd_t *httpd, http_connection_t *connection, int sock_
         httpd->open_connections--;
     }
     connection->type = CONNECTION_TYPE_UNKNOWN;
+    connection->staging_len = 0;
+    connection->staging[0] = '\0';
 }
 
 static int
@@ -274,6 +282,9 @@ httpd_add_connection(httpd_t *httpd, int fd, unsigned char *local, int local_len
     httpd->connections[i].user_data = user_data;
     httpd->connections[i].pending_remove = 0;
     httpd->connections[i].type = CONNECTION_TYPE_UNKNOWN;   //should not be necessary ...
+    httpd->connections[i].staging_len = 0;
+    httpd->connections[i].staging[0] = '\0';
+    httpd->connections[i].last_active = time(NULL);
     return 0;
 }
 
@@ -363,6 +374,7 @@ httpd_thread(void *arg)
     char http[] = "HTTP/1.1";
     char event[] = "EVENT/1.0";
     char buffer[1024];
+    int timeout_limit = 60; //drop connection after 60 secs of silence
 
     bool logger_debug = (logger_get_level(httpd->logger) >= LOGGER_DEBUG);
     assert(httpd);
@@ -437,6 +449,7 @@ httpd_thread(void *arg)
                 continue;
             }
         }
+        time_t now = time(NULL);
         if (httpd->open_connections < httpd->max_connections &&
             httpd->server_fd6 != -1 && FD_ISSET(httpd->server_fd6, &rfds)) {
             int ret = httpd_accept_connection(httpd, httpd->server_fd6, 1);
@@ -449,7 +462,6 @@ httpd_thread(void *arg)
         }
         for (int i = 0; i < httpd->max_connections; i++) {
             int recv_datalen = 0;
-            int new_request = 0;
             http_connection_t *connection = &httpd->connections[i];
 
             if (!connection->connected) {
@@ -458,19 +470,21 @@ httpd_thread(void *arg)
             if (!FD_ISSET(connection->socket_fd, &rfds)) {
                 continue;
             }
-
+            if (now - connection->last_active > timeout_limit) {
+                logger_log(httpd->logger, LOGGER_WARNING,
+                           "httpd closing dead connection on socket %d after timeout_limit = %d seconds of inactivity",
+                            connection->socket_fd, timeout_limit);
+                httpd_remove_connection(httpd, connection, 0);
+            }
             /* If not in the middle of request, allocate one */
             if (!connection->request) {
                 connection->request = http_request_init();
                 assert(connection->request);
-                new_request = 1;
                 if (connection->type == CONNECTION_TYPE_PTTH) {
                     http_request_is_reverse(connection->request);
                 }
                 logger_log(httpd->logger, LOGGER_DEBUG, "new request, connection %d, socket %d type %s",
                            i, connection->socket_fd, typename [connection->type]);
-            } else {
-                new_request = 0;
             }
 
             logger_log(httpd->logger, LOGGER_DEBUG, "httpd receiving on socket %d, connection %d",
@@ -494,34 +508,34 @@ httpd_thread(void *arg)
                 logger_log(httpd->logger, LOGGER_DEBUG, " ");
             }
             /* reverse-http responses from the client must not be sent to the llhttp parser:
-             * such messages start with "HTTP/1.1" (or sometimes with "EVENT/1.0")  */
-            if (new_request) {
-                int readstart = 0;
-                new_request = 0;
-                while (readstart < 8) {
-                    int ret = recv(connection->socket_fd, buffer + readstart, sizeof(buffer) - readstart, 0);
-                    if (ret == 0) {
-                        logger_log(httpd->logger, LOGGER_DEBUG, "client closed connection on socket %d",
-                                   connection->socket_fd);
-                        httpd_remove_connection(httpd, connection, 0);
-                        break;
-                    } else if (ret == -1) {
-                        if (errno == SOCKET_ERRORNAME(EAGAIN) || errno == SOCKET_ERRORNAME(EWOULDBLOCK) || errno == SOCKET_ERRORNAME(EINTR)) {
-                            continue;
-                        } else {
-                            httpd_remove_connection(httpd, connection, SOCKET_GET_ERROR());
-                            break;
-                        }
+               such messages start with "HTTP/1.1" (or sometimes with "EVENT/1.0") */
+            if (connection->staging_len < 8) {
+                int bytes_needed = 8 - connection->staging_len;
+                int ret = recv(connection->socket_fd, 
+                               connection->staging + connection->staging_len, 
+                               bytes_needed, 0);
+                if (ret == 0) {
+                    logger_log(httpd->logger, LOGGER_DEBUG, "client closed connection on socket %d", connection->socket_fd);
+                    httpd_remove_connection(httpd, connection, 0);
+                    continue;
+                } else if (ret == -1) {
+                    if (errno == SOCKET_ERRORNAME(EAGAIN) || errno == SOCKET_ERRORNAME(EWOULDBLOCK) || errno == SOCKET_ERRORNAME(EINTR)) {
+                        continue;
                     } else {
-                        readstart += ret;
-                        recv_datalen = readstart;
+                        httpd_remove_connection(httpd, connection, SOCKET_GET_ERROR());
+                        continue;
                     }
                 }
-                if (connection->socket_fd == -1) {
-                    /* connection was removed */
+                connection->last_active = time(NULL);
+                connection->staging_len += ret;
+                if (connection->staging_len < 8) {
+                    connection->staging[connection->staging_len] = '\0';
                     continue;
-                }
-                if (!memcmp(buffer, http, 8) || !memcmp(buffer, event, 8)) {
+                } else {
+                    memcpy(buffer, connection->staging, 8);
+                    recv_datalen = 8;
+                }		  
+                if (!memcmp(connection->staging, http, 8) || !memcmp(connection->staging, event, 8)) {
                     http_request_set_reverse(connection->request);  
                 }
             } else {
@@ -537,9 +551,11 @@ httpd_thread(void *arg)
                         continue;
                     }
                 } else {
+                    connection->last_active = time(NULL);
                     recv_datalen = ret;
                 }
             }
+
             if (http_request_is_reverse(connection->request)) {
                 /* this is a response from the client to a
                  * GET /event reverse HTTP request from the server */

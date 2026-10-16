@@ -30,10 +30,35 @@ extern "C" {
 #define DNSSD_ERROR_LIBNOTFOUND   3
 #define DNSSD_ERROR_PROCNOTFOUND  4
 #define DNSSD_ERROR_BADFEATURES   5
+#define DNSSD_ERROR_BADNAME       6
 
-typedef struct dnssd_s dnssd_t;
+typedef struct dnssd_s {
 
-DNSSD_API dnssd_t *dnssd_init(const char *name, int name_len, const char *hw_addr, int hw_addr_len, int *error, unsigned char pin_pw);
+    char *name;
+    int name_len;
+
+    char *hw_addr;
+    int hw_addr_len;
+
+    char *pk;
+
+    uint32_t features1;
+    uint32_t features2;
+
+    unsigned char pin_pw;
+    void *dnssd_private;
+  
+/* p2p support (macOS only) */
+#if defined(__APPLE__) && defined(UXPLAY_HAVE_APPLE_P2P)
+    int peer_to_peer;
+#endif
+} dnssd_t;
+
+void *dnssd_private_init(dnssd_t *dnssd_public, int *error);
+void dnssd_private_destroy(void *dnssd_private);
+void dnssd_error_text(int *error, const char *appname);
+
+DNSSD_API dnssd_t *dnssd_init(const char *name, int name_len, const char *hw_addr, int hw_addr_len, unsigned char pin_pw, int *error);
 
 DNSSD_API int dnssd_register_raop(dnssd_t *dnssd, unsigned short port);
 DNSSD_API int dnssd_register_airplay(dnssd_t *dnssd, unsigned short port);
@@ -49,7 +74,24 @@ DNSSD_API void dnssd_set_airplay_features(dnssd_t *dnssd, int bit, int val);
 DNSSD_API uint64_t dnssd_get_airplay_features(dnssd_t *dnssd);
 DNSSD_API void dnssd_set_pk(dnssd_t *dnssd, char * pk_str);
 
+/* An external dns_sd.h library (Avahi's compat layer, Bonjour) hands each
+   registered service a socket that the application must service with
+   DNSServiceProcessResult() whenever it is readable; otherwise the library never
+   reads its daemon connection and the messages queue up in the daemon (for Avahi,
+   in the system dbus-daemon, without bound). DNSSD_SERVICE_RAOP / _AIRPLAY select
+   the service. dnssd_get_service_fd() returns -1 when there is nothing to service
+   (not registered, or the internal mdnsd backend). */
+#define DNSSD_SERVICE_RAOP     0
+#define DNSSD_SERVICE_AIRPLAY  1
+DNSSD_API int dnssd_get_service_fd(dnssd_t *dnssd, int service);
+DNSSD_API int dnssd_process_service(dnssd_t *dnssd, int service);
+
 DNSSD_API void dnssd_destroy(dnssd_t *dnssd);
+
+/* p2p support (macOS only) */
+#if defined(__APPLE__) && defined(UXPLAY_HAVE_APPLE_P2P)
+DNSSD_API void dnssd_set_peer_to_peer(dnssd_t *dnssd, int enabled);
+#endif
 
 #ifdef __cplusplus
 }

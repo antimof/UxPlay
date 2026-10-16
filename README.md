@@ -1,6 +1,29 @@
-# UxPlay 1.73: AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (also runs on Windows).
+# UxPlay 1.74 (Experimental): AirPlay-Mirror and AirPlay-Audio server for Linux, macOS, and Unix (also runs on Windows).
 
 ### **Now developed at the GitHub site <https://github.com/FDH2/UxPlay> (where ALL user issues should be posted, and latest versions can be found).**
+
+-   **NEW in v 1.74 (Experimental) (June 2026)
+
+     **This is a trial of a future release with new contributed code that provides
+     a minimal internal mDNSResponder implemention that removes dependence
+     on avahi (linux) or Apple's Bonjour (Windows and macOS).  The previous
+     implementation based on Apple's dns_sd.h is still available by compiling
+     UxPlay using `cmake -DUSE_DNS_SD=1`**    (By default, UxPlay on macOS continues to use
+     Bonjour: to test the UxPlay internal mDNS implementation on macOS, use `cmake -DUSE_MDNS=1`).
+
+     *Comments about issues with this new internal mDNS implementation, and
+     whether it should become the default (with the external Avahi/Bonjour
+     implementation remaining as an alternative build option), or vice versa,
+     are extremely welcome.*  (Issue [#529](https://github.com/FDH2/UxPlay/issues/529)
+
+     Reworked HLS language choice with complete rewrite (unwanted langauge renderings are now removed from
+     master playlist manifest before playing): (1) can now independently give subtitle language preferences with e.g. `-slang pt-BR:pt`;
+     (2) `-lang`, ``-slang`` with no arguments clear the selections.  (-lang entries are used if -slang is absent);
+     detection of dubbed vs. undubbed audio renditions is removed.
+
+     Added AWDL (Apple Wireless Direct Link) point-to-point client connection option for macOS only (requires Bonjour): this
+     offers a direct wireless connection to the client.  This uses a feature only present in macOS, so is unavailable on other operating systems.
+     
 
 -  **NEW in v1.73, up to  v1.73.6** (March 2026):
 
@@ -13,7 +36,7 @@
 
 -   Support for **service discovery using a Bluetooth LE "beacon"** for both Linux/\*BSD and Windows (as an alternative to Bonjour/Rendezvous DNS-SD
     service discovery) was introduced in v1.73 and improved in 1.73.4 - 1.73.6.  This can be used on networks that do not allow the user to run a  DNS_SD service.**
-    The user must run a Bluetooth LE "beacon", (Bluetooth  4.0 or later is needed, a cheap USD "dongle" will do.). The
+    The user must run a Bluetooth LE "beacon", (Bluetooth  4.0 or later is needed, a cheap USB "dongle" will do.). The
     beacon is managed by a Python >= 3.6 script `uxplay-beacon.py`. Loadable Python modules provide appropriate Bluetooth LE  support for Linux, Windows,
     and FreeBSD;  _macOS is only supported by the BleuIO USB dongle which uniquely has its own Bluetooth LE stack based on a Renesas SoC, and is seen by the
     host as a serial modem (this can be used on all the operating systems supported by Uxplay, including other BSD variants)._    The beacon runs independently
@@ -402,9 +425,14 @@ GStreamer \< 1.20 is detected, a fix needed by screen-sharing apps
 
 1.  `sudo apt install libssl-dev libplist-dev`". (*unless you need to
     build OpenSSL and libplist from source*).
-2.  `sudo apt install libavahi-compat-libdnssd-dev`
+
+2.  `sudo apt install libavahi-compat-libdnssd-dev` (*only needed if you
+     are building with `cmake -DUSE_DNS_SD=1` to use an Avahi as an external DNS_SD service
+     to provide Service Discovery*).
+
 3.  `sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`.
     (\**Skip if you built Gstreamer from source*)
+    
 4.  `cmake .` (*For a cleaner build, which is useful if you modify the
     source, replace this by* "`mkdir build; cd build; cmake ..`": *you
     can then delete the contents of the `build` directory if needed,
@@ -466,7 +494,7 @@ package](#building-an-installable-rpm-package).
 First-time RPM builders should first install the rpm-build and
 rpmdevtools packages, then create the rpmbuild tree with
 "`rpmdev-setuptree`". Then download and copy uxplay.spec into `~/rpmbuild/SPECS`. In
-that directory, run "`pmdev-spectool -g -R  uxplay.spec`" to download the corresponding
+that directory, run "`rpmdev-spectool -g -R  uxplay.spec`" to download the corresponding
 source file `uxplay-*.tar.gz` into `~/rpmbuild/SOURCES`
 ("rpmdev-spectool" may also be just called "spectool"); then run
 "`rpmbuild -ba uxplay.spec`" (you will need to install any required
@@ -556,6 +584,21 @@ are provided by *-plugins-bad._
 
 ### Starting and running UxPlay
 
+
+* A method to enable Service Discovery (so AirPlay clients on the local network can find
+the  AirPlay service provided by UxPlay) must be set up.  The standard method used by UxPlay
+is to  announce the service on the **mDNS network port UDP 5353, which must be opened for mdns queries if
+a firewall is active on the host computer **.     Previously, UxPlay needed an external `DNS_SD` service
+(Apple's Bonjour service, usually implemented on Linux/\*BSD by Avahi or mDNSResponder, but
+UxPlay now also supplies  its own built-in 'minimal' version of mDNSResponder.   The choice between
+using the built-in version or an external  service is a compile-time option.
+
+* If use  of
+mdns is not  possible on your network, or you prefer not to use it, there is now an
+alternative Service Discovery method using a Bluetooth LE beacon.
+See the instructions on [Bluetooth beacon setup](#bluetooth-le-beacon-setup).
+
+
 Since UxPlay-1.64, UxPlay can be started with options read from a
 configuration file, which will be the first found of (1) a file with a
 path given by environment variable `$UXPLAYRC`, (2) `~/.uxplayrc` in the
@@ -570,23 +613,23 @@ fullscreen mode with F11 or (held-down left Alt)+Enter keys. Use Ctrl-C
 (or close the window) to terminate it when done.
 
 If the UxPlay server is
-not seen by the iOS client's drop-down "Screen Mirroring" panel, check
-that your DNS-SD server (usually avahi-daemon) is running: do this in a
+not seen by the iOS client's drop-down "Screen Mirroring" panel,
+Service Discovery is not working.    If you are using an
+external DNS_SD service (usually avahi-daemon)
+check
+that it is running: do this in a
 terminal window with `systemctl status avahi-daemon`. If this shows the
 avahi-daemon is not running, control it with
 `sudo systemctl [start,stop,enable,disable] avahi-daemon` (on
 non-systemd systems, such as \*BSD, use
-`sudo service avahi-daemon [status, start, stop, restart, ...]`). If
+`sudo service avahi-daemon [status, start, stop, restart, ...]`).
+
+If
 UxPlay is seen, but the client fails to connect when it is selected,
 there may be a firewall on the server that prevents UxPlay from
-receiving client connection requests unless some network ports are
-opened: **if a firewall is active, also open UDP port 5353 (for mDNS
-queries) needed by Avahi**. See [Troubleshooting](#troubleshooting)
+receiving client connection requests unless some additional network ports  are
+opened: See [Troubleshooting](#troubleshooting)
 below for help with this or other problems.
-
-Note that there is now an
-alternative Service Discovery method using a Bluetooth LE beacon.
-See the instructions on [Bluetooth beacon setup](#bluetooth-le-beacon-setup).
 
 -   Unlike an Apple TV, the UxPlay server does not by default require
     clients to initially "pair" with it using a pin code displayed by
@@ -804,7 +847,7 @@ Sound and video will play on the remote host; "nohup" will keep uxplay
 running if the ssh session is closed. Terminal output is saved to FILE
 (which can be /dev/null to discard it)
 
-## Building UxPlay on macOS: **(Intel X86_64 and "Apple Silicon" M1/M2 Macs)**
+## Building UxPlay on macOS: **(Intel X86_64 and "Apple Silicon"  Macs)**
 
 *Note: A native AirPlay Server feature is included in macOS since macOS 12 Monterey,
 but is restricted to recent hardware. As well as running on  latest macOS,
@@ -843,7 +886,14 @@ users)**: install the GStreamer release for macOS from
 its own pkg-config, so you don't have to install one.) Install both the
 gstreamer-1.0 and gstreamer-1.0-devel packages. After downloading,
 Shift-Click on them to install (they install to
-/Library/FrameWorks/GStreamer.framework). Homebrew or MacPorts users
+/Library/FrameWorks/GStreamer.framework).
+
+* **Because GStreamer packages are unsigned, recent macOS will reject your
+initial attempt to install them with "Shift-Click":
+you then have to go to System Settings->Privacy & Security->Security  and
+click on "Open Anyway" to proceed with the installation.**
+
+Homebrew or MacPorts users
 should **not** install (or should uninstall) the GStreamer supplied by
 their package manager, if they use the "official" release.
 
@@ -886,6 +936,15 @@ and change into the UxPlay source directory ("UxPlay-master" for zipfile
 downloads, "UxPlay" for "git clone" downloads) and build/install with
 "cmake . ; make ; sudo make install" (same as for Linux).
 
+
+-   **NEW**: UxPlay now optionally supplies its own minimal implementation of
+    an mDNSResponder,  which can replace use of Apple's built in Apple
+    Bonjour service.   Since there seems no advantage in using it on
+    Apple, the default will be to use the native Bonjour service on macOS. To
+    use the UxPlay implementation (which is tested and works on macOS), compile
+    with `cmake -DUSE_MDNS=1`.
+    
+
 -   Running UxPlay while checking for GStreamer warnings (do this with
     "export GST_DEBUG=2" before runnng UxPlay) reveals that with the
     default (since UxPlay 1.64) use of timestamps for video
@@ -912,17 +971,37 @@ downloads, "UxPlay" for "git clone" downloads) and build/install with
     affect the (small) initial OpenGL mirror window size, but the window
     can be expanded using the mouse or trackpad.
 
+-   With `-vs osxvideosink`, the image expands to fill the window, not preserving the
+    image's aspect ratio. You may
+    wish to use `-vs "osxvideosink force-aspect-ratio=true"` to maintain the
+    original aspect ratio.
+
+-   *On older releases of GStreamer, there were issues involving windows not
+    closing properly, that required the UxPlay  option "-nc": these issues
+    in GStreamer seem fixed now, but if you experience them, try using "-nc".*
+
 Unfortunately, it seems that the macOS  Bluetooth stack does not allow users to broadcast Bluetooth LE advertisements
 of the type needed for Bluetooth LE service discovery ("manufacture-specific" advertisements),
 but this can be achieved if you acquire a BleuIO  USB dongle which provides its own Bluetooth LE
 stack, as a USB serial modem.   Bluetooth Service Discovery is an alternative to Rendezvous/Bonjour DNS_SD,
 and can be used on networks that don't allow DNS_SD.  See [instructions below](#bluetooth-le-beacon-setup).
 
+**NEW**: (Only on macOS)  AWDL (Apple Wireless Direct Link) point-to-point AirPlay connections from clients are now supported on macOS hosts by UxPlay when
+it is compiled to use Bonjour.  Make sure the macOS host has enabled the AirPlay receiver (in System Settings->General->AirDrop & Continuity -> AirPlay; you may need to switch
+AirPlay Receiver off and then on again to get it working).  Use option `-p2p`, which acts as if the  option ``-pin``
+has been used, requiring a random  one-time pin (displayed on the UxPlay terminal) to be entered, if the client has not previously authenticated with UxPlay by pin.
+After the first time a pin authentication has been done, a client will not need to authenticate again, unless the UxPlay deviceID is changed.
+(To set a fixed non-random  pin as e.g. 3939, use the combination `-p2p -pin 3939`.)
+
 ## Building UxPlay on Microsoft Windows, using MSYS2 with the MinGW-64 compiler.
 
--   tested on Windows 10 and 11, 64-bit.
+-   tested on Windows 10 and 11, 64-bit on x86_64, and Windows 11 on ARM.
 
-1.  Download and install **Bonjour SDK for Windows v3.0**. You can
+* **NEW: Uxplay >=1.74  now supplies its own self-contained mdns replacement for Bonjour, making step 1 unnecessary unless
+    you choose to use Bonjour.**  To use Bonjour, compile with `cmake -DUSE_DNS_SD=1`.
+
+1.  On UxPlay < 1.74 (and to optionally still use Bonjour on UxPlay >= 1.74), you must
+    download and install **Bonjour SDK for Windows v3.0**. You can
     download the SDK without any registration at
     [softpedia.com](https://www.softpedia.com/get/Programming/SDK-DDK/Bonjour-SDK.shtml),
     or get it from the official Apple site
@@ -931,8 +1010,10 @@ and can be used on networks that don't allow DNS_SD.  See [instructions below](#
     site). This should install the Bonjour SDK as
     `C:\Program Files\Bonjour SDK`.
 
-  * **NEW: while you still need to install the Bonjour SDK to build UxPlay, there is now an alternative method for
+  * **NEW: There is also now an alternative (non-mdns) method for
     Service Discovery using a Bluetooth Low Energy (BLE) beacon on Windows. See [instructions below](#bluetooth-le-beacon-setup).
+
+
 
 2.  (This is for 64-bit Windows; a build for 32-bit Windows should be
     possible, but is not tested.) The unix-like MSYS2 build environment
@@ -946,16 +1027,19 @@ and can be used on networks that don't allow DNS_SD.  See [instructions below](#
     Start menu, and update the new MSYS2 installation with "pacman
     -Syu". 
 
-    * _NEW: MSYS2 now recommends using the newer UCRT64 terminal environment (which uses the newer Microsoft
+    * _NEW: On Intel x84-64 systems,  MSYS2 now recommends using the newer UCRT64 terminal environment (which uses the newer Microsoft
     UCRT "Universal C RunTime Library", included as part of the Windows OS since Windows 10)
     rather than the MINGW64 terminal environment
     (which uses the older Microsoft MSVCRT C library, which has "legacy" status, but is available on all Windows systems).
     If you wish to use the legacy MSVCRT library, to support older Windows versions, modify the instructions below as follows:
     (1) change the MSYS2 terminal type from UCRT64 to MINGW64; (2)  modify mingw-w64-ucrt-x86_64-* package names to mingw-w64-x86_64-*, (just omit "-ucrt");
-    (3) replace `ucrt64` by ``mingw64`` in directory names._
+    (3) replace `ucrt64` by ``mingw64`` in paths and  directory names._
 
+    * _NEW: on ARM (e.g. Snapdragon-based PC's): modify all instructions below as follows:
+    (1) change the MSYS2 terminal type from UCRT64 to CLANGARM64; (2) modify mingw-w64-ucrt-x86_64-* package names to mingw-w64-clang-aarch64-*;
+    (3) replace `ucrt64` by ``clangarm64`` in paths and  directory names._
 
-    Open a new MSYS2 UCRT64 terminal, and install the gcc compiler and cmake:
+    Open a new MSYS2 terminal (UCRT64, CLANGARM64 or MINGW64, as appropriate), and install the gcc compiler and cmake:
 
        `pacman -S mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-gcc`
 
@@ -1024,7 +1108,30 @@ app through firewall**. If your virus protection flags uxplay.exe as
 "suspicious" (but without a true malware signature) you may need to give
 it an exception.
 
-Now test by running "`uxplay`" (in a MSYS2 UCRT64 terminal window.  If you need
+Now test by running "`uxplay`" in the appropriate MSYS2 terminal window (UCRT64/CLANGARM64/MINGW64).
+If UxPlay starts  with no error, but is not seen by the client, this is
+almost always a Windows firewall issue.   In addition to the above firewall setting,
+you may also need to add an explicit "Inbound-Allow"
+rule for uxplay.exe, which can be done from an **elevated** PowerShell:
+
+    ```powershell
+    New-NetFirewallRule -DisplayName "UxPlay" -Direction Inbound `
+        -Program "C:\path\to\uxplay.exe" -Action Allow `
+        -Profile Private -Protocol Any
+    ```
+
+Also check that: your PC's network connection is on the **Private**
+network profile, not Public (`Get-NetConnectionProfile` in
+PowerShell shows this -- Windows restricts discovery traffic more
+aggressively on Public networks); the iPhone/iPad and the PC are on
+the *same* Wi-Fi network (not one of them on cellular/VPN, and not
+a router/AP with "client/AP isolation" enabled on a guest network,
+which blocks devices from discovering each other even on the same
+SSID); and that no third-party antivirus/firewall is separately
+blocking the app.
+
+
+If you need
 to specify the audiosink, there are two main choices on Windows: the
 older DirectSound plugin "`-as directsoundsink`", and the more modern
 Windows Audio Session API (wasapi) plugin "`-as wasapisink`", which
@@ -1058,7 +1165,11 @@ that is apparently now fixed (a workaround is to use d3d11)._
 
 
 The executable uxplay.exe can also be run without the MSYS2 environment,
-in the Windows Terminal, with `C:\msys64\ucrt64\bin\uxplay`.
+in the Windows Terminal, using the full path, e.g.  `C:\msys64\ucrt64\bin\uxplay`.  (This makes Windows search
+the executable's directory for needed MSYS2 DLL libraries).  Use of the full path can be avoided by 
+permanently adding `C:\msys64\ucrt64\bin` (with any necessary modifications of ``ucrt64``) to your user path:
+(do this in Windows Settings -> System -> About -> Advanced System Settings -> Environment Varianbles: this only
+becomes active after a new user terminal is opened).
 
 There is a new modernized Windows Terminal application available from Microsoft that
 provides various terminals, and can be customized to also provide the MSYS2 terminals.
@@ -1075,6 +1186,17 @@ _This method must be activated in the Windows Registry:  using
 regedit, find the Registry section 'HKEY_Current_User/Control Panel/Input Method",
 and add a new Key "EnableHexNumpad" with value "1", then reboot the computer._
 
+**New (in v1.74)**: A reworked NTP subsystem that can use kernel (as opposed to user-space) packet arrival timestamps,
+for higher NTP accuracy.   Supported on most  modern Windows systems.  A console
+message when UxPlay connects with a client, and starts NTP, may tell you that Windows on your server suppports kernel timestamps,
+but they are not yet enabled.   To enable: use Windows PowerShell as an Administrator, and issue the command
+
+```
+Set-NetAdapterAdvancedProperty -Name "<name>" -DisplayName "Software Timestamp" -DisplayValue "RxAll"
+```
+Here "`<name>`" is the adapter name on Windows: _e.g._ "Ethernet", "Wi-Fi", "Ethernet 2", _etc_.	If your Windows system does **not** support kernel
+timestamps, you will see a message confirming this when  the "`uxplay -d`" debug option is used.  With this option you will also see the arrival
+times of NTP packets, flagged  as either  `(kernel)` or ``(clock)`` showing whether or not  kernel timestamps are being used.
 
 # Usage
 
@@ -1128,12 +1250,16 @@ is the recommended player, but if some videos fail to play, you can try
 with version 2.)_
 
 **-lang \[list\]**  Specify language preferences for YouTube app HLS videos,
-some of which now which offer a choice of language (based on AI dubbing). If this option is not 
-used, preferences will be taken from environment variable $LANGUAGE, if set.    Both 
-methods specify the preference order by a list: e.g.,  `fr:es:en`, for French (first 
-choice), Spanish (second choice), and  English (third choice).   If option `-lang` is not
-followed by a list  (or `-list 0` is used), $LANGUAGE is ignored and undubbed audio is played.
+some of which now which offer a choice of language renditions (using AI dubbing of the original). If this option is not 
+used, preferences will be taken from environment variables ($LANGUAGE, $LC_ALL, $LC_MESSAGES, $LANG, searched
+in that order, until one is found).   Specify
+the preference order by a colon-separated list: e.g.,  `fr:en-US:en`, for French (first 
+choice, any variant), English (second choice, US regional variant), English (third choice, any variant).
+All blank characters in the string are removed before processing; if option `-lang` is not
+followed by a list, any previous language selection is removed. 
 
+**-slang \[list\]**. Similar to `-lang`, but specifies language preferences for subtitle languages.
+(If not present, preferences specified by  `-lang ...` will be used.)
 
 **-scrsv n**. (since 1.73) (So far, only implemented
 on Linux/*BSD systems using D-Bus). Inhibit the screensaver in the
@@ -1161,6 +1287,21 @@ address, which can be changed with the -m option; see the -key option
 for an alternative method of key generation). *(Add a line "pin" in the
 UxPlay startup file if you wish the UxPlay server to use the pin
 authentication protocol).*
+
+**-p2p**: (macOS with the Apple Bonjour DNS-SD backend only) also advertise
+UxPlay on Apple peer-to-peer interfaces, including AWDL, and accept
+connections arriving on those interfaces. This can make UxPlay available
+when the client and server do not share a usable local network. The option
+must be used with **-pin \[nnnn\]**, which enables the legacy-pairing path
+used for this feature. Because **-p2p** makes the receiver discoverable to
+nearby Apple devices, using a fixed or random pin is also an important access
+control. This feature uses the private macOS socket option
+`SO_RECV_ANYIF`; it is unavailable when UxPlay is built with `-DUSE_MDNS=1`.
+
+* ** To use this feature, make sure thet the macOS host on which UxPlay is running has
+enabled the AirPlay receiver, and allowed its use by the appropriate class of users.
+This is done on macOS 16 in System Settings->General->Airdrop & Continuity->AirPlay
+
 
 **-reg \[*filename*\]**: (since v1.68). If "-pin" is used, this option
 maintains a register of pin-authenticated "trusted clients" in
@@ -1917,6 +2058,25 @@ option "-nc" that leaves the video window open.
 
 ### 4. GStreamer issues (missing plugins, etc.):
 
+If UxPlay issues no error messages, but GStreamer video seems not to be working,
+test your GStreamer installation inside a terminal window with
+
+```
+gst-launch-1.0 videotestsrc ! autovideosink
+
+```
+If autovideosink finds a working videosink, a video test pattern should be displayed.
+Then test the various videosinks (see the -vs entry in `man uxplay` for a list) to see
+which work on your system.  Also use
+
+```
+gst-inspect-1.0 | grep sink | grep [V,v]ideo
+```
+
+to see which videosinks GStreamer believes are installed.   Repeat the gst-launch-1.0 command,
+replacing "autovideosink" by the name of each videosink you wish to test.
+
+
 -   clearing the user's GStreamer cache with
     `rm -rf ~/.cache/gstreamer-1.0/*` may be the solution to problems
     where gst-inspect-1.0 does not show a plugin that you believe is
@@ -2054,6 +2214,11 @@ introduced 2017, running tvOS 12.2.1), so it does not seem to matter
 what version UxPlay claims to be.
 
 # Changelog
+1.74  2026-09-14  Optional minimal internal mDNSResponder to replace
+Bonjour/Avahi.  Reworked language selection for HLS video.  Added AWDL direct
+connection option (only for macOS hosts).  Added use of kernel timestamps
+for NTP, and a rebuilt NTP subsystem.
+
 1.73.6 2026-03-22  Fix "not a socket" message uxplay bug.
 Futher uxplay-beacon.py improvements (Only use GLib in BlueZ module)
 

@@ -23,11 +23,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <netinet/tcp.h>
-#endif
 
 #include "raop.h"
 #include "netutils.h"
@@ -332,8 +327,9 @@ raop_rtp_mirror_thread(void *arg)
                 n -= 3;
                 p += 3;
             }
-            ntp_timestamp_raw = byteutils_get_long(packet, 8);
-            ntp_timestamp_remote = raop_ntp_timestamp_to_nano_seconds(ntp_timestamp_raw, false);
+	    /* include SECONDS_1900_TO_1970 in the offset adjustment */
+            ntp_timestamp_raw = raop_ntp_adjust_remote_timestamp_offset(raop_rtp_mirror->ntp, byteutils_get_long(packet, 8), true);
+            ntp_timestamp_remote = raop_ntp_timestamp_to_nano_seconds(raop_rtp_mirror->ntp, ntp_timestamp_raw);
             if (first_packet) {
 	        uint64_t offset  = raop_ntp_get_local_time() - ntp_timestamp_remote;
                 raop_ntp_set_video_arrival_offset(raop_rtp_mirror->ntp, &offset);
@@ -461,7 +457,10 @@ raop_rtp_mirror_thread(void *arg)
                 int nalus_count = 0;
                 while (nalu_size < payload_size) {
                     int nc_len = byteutils_get_int_be(payload_decrypted, nalu_size);
-                    if (nc_len < 0 || nalu_size + 4 > payload_size) {
+                    /* nc_len is read from the payload, so it is only a
+                     * length if the unit it claims fits in what is left. */
+                    if (nc_len < 0 || nalu_size + 4 > payload_size ||
+                        nc_len > payload_size - nalu_size - 4) {
                         valid_data = false;
                         break;
                     }
@@ -805,20 +804,15 @@ raop_rtp_mirror_thread(void *arg)
                         }
                     }
                     if (plist_size) {
-                        char *plist_xml = NULL;
-                        uint32_t plist_len = 0;
-                        plist_t root_node = NULL;
-                        plist_from_bin((char *) payload, plist_size, &root_node);
-                        if (raop_rtp_mirror->callbacks.mirror_video_activity) {
-                            double txusage = 0.0;
-                            plist_t tx_usage_avg_node = plist_dict_get_item(root_node, "txUsageAvg");
-                            plist_get_real_val(tx_usage_avg_node, &txusage);
-                            raop_rtp_mirror->callbacks.mirror_video_activity(raop_rtp_mirror->callbacks.cls, &txusage);
-                        }
                         if (raop_rtp_mirror->show_client_FPS_data) {
+                            char *plist_xml = NULL;
+                            uint32_t plist_len = 0;
+                            plist_t root_node = NULL;
+                            plist_from_bin((char *) payload, plist_size, &root_node);
                             plist_to_xml(root_node, &plist_xml, &plist_len);
                             logger_log(raop_rtp_mirror->logger, LOGGER_INFO, "%s", plist_xml);
                             free(plist_xml);
+                            plist_free(root_node);
                         }
                     }
                 }
@@ -847,6 +841,9 @@ raop_rtp_mirror_thread(void *arg)
     MUTEX_LOCK(raop_rtp_mirror->run_mutex);
     raop_rtp_mirror->running = false;
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);
+    if (raop_rtp_mirror->callbacks.mirror_video_running) {
+        raop_rtp_mirror->callbacks.mirror_video_running(raop_rtp_mirror->callbacks.cls, false);
+    }
 
     logger_log(raop_rtp_mirror->logger, LOGGER_DEBUG, "raop_rtp_mirror exiting TCP thread");
     if (conn_reset&& raop_rtp_mirror->callbacks.conn_reset) {
@@ -925,6 +922,9 @@ raop_rtp_mirror_start(raop_rtp_mirror_t *raop_rtp_mirror, unsigned short *mirror
     /* Create the thread and initialize running values */
     raop_rtp_mirror->running = 1;
     raop_rtp_mirror->joined = 0;
+    if (raop_rtp_mirror->callbacks.mirror_video_running) {
+        raop_rtp_mirror->callbacks.mirror_video_running(raop_rtp_mirror->callbacks.cls, true);
+    }
 
     THREAD_CREATE(raop_rtp_mirror->thread_mirror, raop_rtp_mirror_thread, raop_rtp_mirror);
     MUTEX_UNLOCK(raop_rtp_mirror->run_mutex);

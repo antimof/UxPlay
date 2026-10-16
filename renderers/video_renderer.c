@@ -23,9 +23,31 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include "video_renderer.h"
+#include <gst/video/videooverlay.h>
+
+static uintptr_t external_window_handle = 0;
+
+static GstBusSyncReply
+window_handle_bus_sync_handler(GstBus *bus, GstMessage *message, gpointer user_data) {
+    if (gst_is_video_overlay_prepare_window_handle_message(message)) {
+        if (external_window_handle) {
+            GstElement *sink = GST_ELEMENT(GST_MESSAGE_SRC(message));
+            gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(sink), (guintptr) external_window_handle);
+        }
+        gst_message_unref(message);
+        return GST_BUS_DROP;
+    }
+    return GST_BUS_PASS;
+}
+
+/* can be called to make a previously-prepared external video window available for GStreamer to use.
+ * If it has not already been called when the "prepare_window_handle" message is received, GStreamer
+ * will create its own window (which is currently the case on all supported platforms) */
+void video_renderer_set_window_handle(uintptr_t handle) {
+    external_window_handle = handle;
+}
 
 #define SECOND_IN_NSECS 1000000000UL
-#define SECOND_IN_MICROSECS 1000000
 #ifdef X_DISPLAY_FIX
 #include <gst/video/navigation.h>
 #include "x_display_fix.h"
@@ -53,6 +75,7 @@ static gboolean hls_seek_enabled = FALSE;
 static gboolean hls_playing = FALSE;
 static gboolean hls_buffer_empty = FALSE;
 static gboolean hls_buffer_full = FALSE;
+static gdouble hls_volume_level = 1.0; 
 static int type_264 = 0;
 static int type_265 = 0;
 static int type_hls = 0;
@@ -222,6 +245,33 @@ GstElement *make_video_sink(const char *videosink, const char *videosink_options
     return video_sink;
 }
 
+#ifdef NEED_G_STRING_REPLACE
+guint
+g_string_replace (GString     *string,
+                  const gchar *find,
+                  const gchar *replace,
+                  guint        limit)
+{
+  if (find == NULL || find[0] == '\0')
+    return 0;
+
+  gchar **parts = g_strsplit (string->str, find, limit + 1);
+  if (parts == NULL || parts[0] == NULL)
+    {
+      g_strfreev (parts);
+      return 0;
+    }
+
+  gchar *joined = g_strjoinv (replace, parts);
+  g_strfreev (parts);
+
+  g_string_assign (string, joined);
+  g_free (joined);
+
+  return g_strv_length (parts);
+}
+#endif
+
 void video_renderer_init(logger_t *render_logger, const char *server_name, videoflip_t videoflip[2], const char *parser, const char * rtp_pipeline,
                           const char *decoder, const char *converter, const char *videosink, const char *videosink_options, 
                           bool initial_fullscreen, bool video_sync, bool h265_support, bool coverart_support, guint playbin_version, const char *uri) {
@@ -314,6 +364,7 @@ void video_renderer_init(logger_t *render_logger, const char *server_name, video
             flags |= GST_PLAY_FLAG_DOWNLOAD;
             flags |= GST_PLAY_FLAG_BUFFERING;    // set by default in playbin3, but not in playbin2; is it needed?
             g_object_set(renderer_type[i]->pipeline, "flags", flags, NULL);
+            g_object_set(renderer_type[i]->pipeline, "volume", hls_volume_level, NULL);
             //g_object_set (G_OBJECT (renderer_type[i]->pipeline), "uri", uri, NULL);
         } else {
             bool jpeg_pipeline = false;
@@ -437,7 +488,8 @@ void video_renderer_init(logger_t *render_logger, const char *server_name, video
             }
         }
 #endif
-        renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);	
+        renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);
+        gst_bus_set_sync_handler(renderer_type[i]->bus, window_handle_bus_sync_handler, NULL, NULL);
         gst_element_set_state (renderer_type[i]->pipeline, GST_STATE_READY);
         GstState state;
         GstStateChangeReturn ret = gst_element_get_state (renderer_type[i]->pipeline, &state, NULL, 100 * GST_MSECOND);
@@ -505,19 +557,26 @@ void video_renderer_start() {
 #endif
 }
 
-/* used to find any X11 Window used by the playbin (HLS) pipeline after it starts playing. 
-*  if use_x11 is true, called every 100 ms after playbin state is READY until the x11 window is found*/
+/* this is a g_timeout_add (100ms interval) callback in the uxplay main_loop that watches to see if an X11 window has been
+   created by GStreamer's Playbin/Playbin3 (to activate X11 features such as full-screen toggle.).
+   Initially renderer->use_x11 is true if the requested videosink was either X11 (xvimagesink or ximagesink)
+   or auto (autovideosink, fpsdisplaysink).    In the auto case, renderer->use_x11 is set to false
+   once a bus message that the  videosink has been chosen is received, and the choice is NOT X11. */
 bool waiting_for_x11_window() {
     if (!hls_video) {
+        /* not HLS */
         return false;
     }
 #ifdef X_DISPLAY_FIX
-    if (use_x11 && renderer->gst_window) {
-        get_x_window(renderer->gst_window, renderer->server_name);
-        if (!renderer->gst_window->window) {
-	    return true;    /* window still not found */
-        }
+    /*not using X11 */
+    if (!renderer || !renderer->gst_window || !renderer->use_x11) {
+        return false;
     }
+    get_x_window(renderer->gst_window, renderer->server_name);
+    if (!renderer->gst_window->window) {
+        return true;    /* may be using X11, but window still not found */
+    }
+    /* have found X11 window */
     if (fullscreen) {
          set_fullscreen(renderer->gst_window, &fullscreen);
     }
@@ -737,8 +796,10 @@ void video_renderer_destroy() {
     for (int i = 0; i < n_renderers; i++) {
         if (renderer_type[i]) {
             video_renderer_destroy_instance(renderer_type[i]);
+            renderer_type[i] = NULL;
         }
     }
+    renderer = NULL;
 }
 
 static void get_stream_status_name(GstStreamStatusType type, char *name, size_t len) {
@@ -775,7 +836,8 @@ static void hls_video_seek_to_start_position(GstElement *pipeline) {
         && hls_requested_start_position  <= hls_seek_end) {
         g_print("***************** seek to hls_requested_start_position %" GST_TIME_FORMAT "\n", GST_TIME_ARGS(hls_requested_start_position));
         if (gst_element_seek_simple (pipeline, GST_FORMAT_TIME,
-				 GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT, hls_requested_start_position)) {
+                                     (GstSeekFlags) (GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
+                                     hls_requested_start_position)) {
             hls_requested_start_position = 0;
         } else {
             g_print("*** seek to requested_start_position failed\n"); 
@@ -1055,7 +1117,7 @@ int video_renderer_choose_codec (bool video_is_jpeg, bool video_is_h265) {
         if (renderer_type[i] == renderer) {
             continue;
         }
-	if (renderer_type[i]) {
+        if (renderer_type[i]) {
             video_renderer_t *renderer_unused = renderer_type[i];
             renderer_type[i] = NULL;
             video_renderer_destroy_instance(renderer_unused);
@@ -1113,23 +1175,21 @@ bool video_get_playback_info(double *duration, double *position, double *seek_st
 }
 
 void video_renderer_set_start(float position) {
-    int pos_in_micros = (int) (position * SECOND_IN_MICROSECS);
-    hls_requested_start_position = (gint64) (pos_in_micros * GST_USECOND);
+    hls_requested_start_position = (gint64) ((double) position * GST_SECOND);
     logger_log(logger, LOGGER_DEBUG, "register HLS video start position %f %lld", position,
                hls_requested_start_position);    
 }
 
 void video_renderer_seek(float position) {
-    int pos_in_micros = (int) (position * SECOND_IN_MICROSECS);
-    gint64 seek_position = (gint64) (pos_in_micros * GST_USECOND);
+     gint64 seek_position = (gint64) ((double) position * GST_SECOND);
     /* don't seek to within 1  microsecond  of beginning or end of video */
-    if (hls_duration < 2000) return;
+    if (!renderer || hls_duration < 2000) return;
     seek_position =  seek_position < 1000 ? 1000 : seek_position;
     seek_position =  seek_position > hls_duration  - 1000 ? hls_duration - 1000 : seek_position;
     g_print("SCRUB: seek to %f secs =  %" GST_TIME_FORMAT ", duration = %" GST_TIME_FORMAT "\n", position,
             GST_TIME_ARGS(seek_position),  GST_TIME_ARGS(hls_duration));
     gboolean result = gst_element_seek_simple(renderer->pipeline, GST_FORMAT_TIME,
-                                              (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT),
+                                              (GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
                                               seek_position);
     if (result) {
         g_print("seek succeeded\n");
@@ -1147,9 +1207,30 @@ unsigned int video_renderer_listen(void *loop, int id) {
 }
 
 bool video_renderer_eos_watch() {
-    if (hls_video && renderer->eos) {
+    if (hls_video && renderer && renderer->eos) {
         renderer->eos = FALSE;
 	return true;
     }
     return false; 
+}
+
+void video_renderer_hls_set_volume(double volume) {
+    if (!renderer || strcmp(renderer->codec, hls)) {
+       return;
+    }
+    volume = (volume > 10.0) ? 10.0 : volume;
+    volume = (volume < 0.0) ? 0.0 : volume;
+    hls_volume_level = (gdouble) volume;
+    if (renderer && !strcmp(renderer->codec, hls)) {
+        g_object_set(renderer->pipeline, "volume", volume, NULL);
+    }
+}
+
+bool gstreamer_decoder_check(const char *decoder) {
+    GstElementFactory *factory = gst_element_factory_find(decoder) ;
+    if (!factory) {
+        return false;
+    }
+    gst_object_unref(factory);
+    return true;
 }

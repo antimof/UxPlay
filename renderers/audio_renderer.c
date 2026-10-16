@@ -41,6 +41,7 @@ static gboolean async = FALSE;
 static gboolean vsync = FALSE;
 static gboolean sync = FALSE;
 static gboolean audio_rtp = FALSE;
+static gdouble volume_level = 1.0;
 
 typedef struct audio_renderer_s {
     GstElement *appsrc; 
@@ -58,14 +59,14 @@ static audio_renderer_t *renderer = NULL;
 static const char lpcm_caps[]="audio/x-raw,rate=(int)44100,channels=(int)2,format=S16LE,layout=interleaved";
 
 /* ct = 2; codec_data is ALAC magic cookie:  44100/16/2 spf = 352 */    
-static const char alac_caps[] = "audio/x-alac,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)"
+static const char alac_caps[] = "audio/x-alac,mpegversion=(int)4,channels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)"
                            "00000024""616c6163""00000000""00000160""0010280a""0e0200ff""00000000""00000000""0000ac44";
 
 /* ct = 4; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1:  AAC-LC 44100/2 spf = 1024 */
-static const char aac_lc_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)1210";
+static const char aac_lc_caps[] ="audio/mpeg,mpegversion=(int)4,channels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)1210";
 
 /* ct = 8; codec_data from MPEG v4 ISO 14996-3 Section 1.6.2.1: AAC_ELD 44100/2  spf = 480 */
-static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channnels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
+static const char aac_eld_caps[] ="audio/mpeg,mpegversion=(int)4,channels=(int)2,rate=(int)44100,stream-format=raw,codec_data=(buffer)f8e85000";
 
 static gboolean check_plugins (void)
 {
@@ -160,7 +161,7 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
             break;
         }
         g_string_append (launch, "audioconvert ! ");
-        g_string_append (launch, "audioresample ! ");    /* wasapisink must resample from 44.1 kHz to 48 kHz */
+        g_string_append (launch, "audioresample quality=10 ! ");    /* maximum resampling quality for 44.1kHz -> 48kHz audio */
         g_string_append (launch, "volume name=volume ! ");
 
         if (!audio_rtp) {
@@ -205,6 +206,9 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
         renderer_type[i]->bus = gst_element_get_bus(renderer_type[i]->pipeline);
         renderer_type[i]->appsrc = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "audio_source");
         renderer_type[i]->volume = gst_bin_get_by_name (GST_BIN (renderer_type[i]->pipeline), "volume");
+        if (renderer_type[i]->volume) {
+            g_object_set(renderer_type[i]->volume, "volume", volume_level, NULL);
+        }
         switch (i) {
         case 0:
             caps =  gst_caps_from_string(aac_eld_caps);
@@ -234,8 +238,8 @@ void audio_renderer_init(logger_t *render_logger, const char* audiosink, const b
         g_string_free(launch, TRUE);
         g_object_set(renderer_type[i]->appsrc, "caps", caps, "stream-type", 0, "is-live", TRUE, "format", GST_FORMAT_TIME, NULL);
         gst_caps_unref(caps);
-        g_object_unref(clock);
     }
+    g_object_unref(clock);
 }
 
 void audio_renderer_stop() {
@@ -372,9 +376,17 @@ void audio_renderer_render_buffer(unsigned char* data, int *data_len, unsigned s
 }
 
 void audio_renderer_set_volume(double volume) {
+    if (!renderer) {
+       return;
+    }
     volume = (volume > 10.0) ? 10.0 : volume;
     volume = (volume < 0.0) ? 0.0 : volume;
-    g_object_set(renderer->volume, "volume", volume, NULL);
+    volume_level = (gdouble) volume;
+    for (int i = 0; i < NFORMATS; i++) {
+        if (renderer_type[i] && renderer_type[i]->volume) {
+            g_object_set(renderer_type[i]->volume, "volume", volume_level, NULL);
+        }
+    }
 }
 
 void audio_renderer_flush() {

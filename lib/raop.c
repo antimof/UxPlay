@@ -94,8 +94,10 @@ struct raop_s {
     char *random_pw;
     unsigned char auth_fail_count;
 
-  /* used for setting HLS video language choices */
-    char *lang;
+    /* used for setting HLS video language choices */
+    const char *lang;
+    const char *lang_system;
+    const char *lang_subtitles;
 };
 
 struct raop_conn_s {
@@ -642,6 +644,8 @@ raop_init(raop_callbacks_t *callbacks) {
     raop->nonce = NULL;
 
     raop->lang = NULL;
+    raop->lang_subtitles = NULL;
+    raop->lang_system = NULL;
     return raop;
 }
 
@@ -706,10 +710,6 @@ raop_destroy(raop_t *raop) {
         }
         if (raop->random_pw) {
             free(raop->random_pw);
-        }
-
-        if (raop->lang) {
-            free(raop->lang);
         }
 
         free(raop);
@@ -820,20 +820,14 @@ raop_set_dnssd(raop_t *raop, dnssd_t *dnssd) {
 }
 
 void
-raop_set_lang(raop_t *raop, const char *lang) {
-    if (raop->lang) {
-        free (raop->lang);
-        raop->lang = NULL;
-    }
+raop_set_lang(raop_t *raop, const char *lang, const char *lang_subtitles, const char *lang_system) {
     if (lang && strlen(lang)) {
-        raop->lang = (char *) calloc(strlen(lang) + 1, sizeof(char));
-        memcpy(raop->lang, lang, strlen(lang));
+        raop->lang = lang;
     }
-}
-
-char *
-raop_get_lang(raop_t *raop) {
-    return raop->lang;
+    if (lang_subtitles && strlen(lang_subtitles)) {
+        raop->lang_subtitles = lang_subtitles;
+    }
+    raop->lang_system = lang_system;
 }
 
 int
@@ -886,4 +880,22 @@ void raop_handle_eos(raop_t *raop) {
 
 uint64_t get_local_time() {
     return raop_ntp_get_local_time();
+}
+
+void ntp_global_init(void) {
+    raop_ntp_global_init();
+}
+
+const char *get_codec_string(hls_video_codec_t codec) {
+    const char *codec_string[] = {
+      "AVC",
+      "HEVC",
+      "VP9",
+      "AV1",
+      "UNKNOWN"
+    };
+    if (codec < AVC || codec >= UNKNOWN) {
+        return NULL;
+    }
+    return codec_string[codec];
 }

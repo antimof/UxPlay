@@ -33,7 +33,7 @@
 #include "utils.h"
 #include "byteutils.h"
 
-#define RAOP_BUFFER_LENGTH 32
+#define RAOP_BUFFER_LENGTH 256
 
 typedef struct {
     /* Data available */
@@ -173,7 +173,7 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
         return -1;
     }
     /* before time is synchronized, some empty data packets are sent */
-    if (datalen == 12 || (datalen == 16 && !memcmp(&data[12], empty_packet_marker, 4))) {
+    if (datalen == 12 ) {
         return 0;
     }
     int payload_size = datalen - 12;
@@ -209,10 +209,14 @@ raop_buffer_enqueue(raop_buffer_t *raop_buffer, unsigned char *data, unsigned sh
     entry->filled = 1;
 
     entry->payload_data = malloc(payload_size);
-    int decrypt_ret = raop_buffer_decrypt(raop_buffer, data, entry->payload_data, payload_size, &entry->payload_size);
-    assert(decrypt_ret >= 0);
-    assert((int) entry->payload_size <= payload_size);
-
+    if (datalen == 16 && !memcmp(&data[12], empty_packet_marker, 4)) {
+        memcpy(entry->payload_data, &data[12], payload_size);
+        entry->payload_size = payload_size;
+    } else { 
+        raop_buffer_decrypt(raop_buffer, data, entry->payload_data, payload_size, &entry->payload_size);
+        assert((int) entry->payload_size <= payload_size);
+    }
+    
     /* Update the raop_buffer seqnums */
     if (raop_buffer->is_empty) {
         raop_buffer->first_seqnum = seqnum;
